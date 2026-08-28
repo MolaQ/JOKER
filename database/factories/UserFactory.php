@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use App\UserRole;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -30,6 +31,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'role' => UserRole::Guest,
         ];
     }
 
@@ -40,6 +42,56 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is an admin.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::Admin,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is a trainer.
+     */
+    public function trainer(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::Trainer,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is a parent.
+     */
+    public function parent(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::Parent,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is a player.
+     */
+    public function player(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::Player,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is a fan.
+     */
+    public function fan(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => UserRole::Fan,
         ]);
     }
 }
