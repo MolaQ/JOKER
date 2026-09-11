@@ -43,6 +43,11 @@ Route::middleware(['auth', 'role:admin,trainer'])->prefix('admin')->name('admin.
         return view('admin.articles.index');
     })->name('articles.index');
 
+    // Hero slider
+    Route::get('/hero-slides', function () {
+        return view('admin.hero-slides.index');
+    })->name('hero-slides.index');
+
     // Documents
     Route::get('/documents', function () {
         return view('admin.documents.index');

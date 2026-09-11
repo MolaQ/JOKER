@@ -3,80 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ asset('img/JOKER-18.png') }}">
+    <link rel="shortcut icon" href="{{ asset('img/JOKER-18.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('img/JOKER-18.png') }}">
     <title>@yield('title', 'Panel Administracyjny') - Joker Piła</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
 <body class="h-full">
-    <div class="min-h-full">
-        <!-- Navbar -->
-        <nav class="bg-gradient-to-r from-blue-600 via-blue-700 to-blue-900 shadow-lg">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between h-16">
-                    <div class="flex items-center">
-                        <a href="{{ route('admin.dashboard') }}" class="flex-shrink-0">
-                            <span class="text-white font-bold text-xl">🏐 Joker Piła Admin</span>
-                        </a>
-                        <div class="hidden md:block">
-                            <div class="ml-10 flex items-baseline space-x-4">
-                                <a href="{{ route('admin.dashboard') }}" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.dashboard') ? 'bg-blue-800' : '' }}">
-                                    Dashboard
-                                </a>
-                                <a href="{{ route('admin.teams.index') }}" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.teams.*') ? 'bg-blue-800' : '' }}">
-                                    Drużyny
-                                </a>
-                                <a href="{{ route('admin.players.index') }}" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.players.*') ? 'bg-blue-800' : '' }}">
-                                    Zawodnicy
-                                </a>
-                                <a href="{{ route('admin.games.index') }}" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.games.*') ? 'bg-blue-800' : '' }}">
-                                    Mecze
-                                </a>
-                                <a href="{{ route('admin.competitions.index') }}" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.competitions.*') ? 'bg-blue-800' : '' }}">
-                                    Rozgrywki
-                                </a>
-                                <a href="{{ route('admin.competition-levels.index') }}" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.competition-levels.*') ? 'bg-blue-800' : '' }}">
-                                    Poziomy rozgrywek
-                                </a>
-                                <a href="{{ route('admin.standings.index') }}" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.standings.*') ? 'bg-blue-800' : '' }}">
-                                    Tabele
-                                </a>
-                                <a href="{{ route('admin.seasons.index') }}" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.seasons.*') ? 'bg-blue-800' : '' }}">
-                                    Sezony
-                                </a>
-                                <a href="{{ route('admin.rival-teams.index') }}" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.rival-teams.*') ? 'bg-blue-800' : '' }}">
-                                    Rywale
-                                </a>
-                                <a href="{{ route('admin.articles.index') }}" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.articles.*') ? 'bg-blue-800' : '' }}">
-                                    Artykuły
-                                </a>
-                                <a href="{{ route('admin.documents.index') }}" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.documents.*') ? 'bg-blue-800' : '' }}">
-                                    Dokumenty
-                                </a>
-                                <a href="{{ route('admin.sponsors.index') }}" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.sponsors.*') ? 'bg-blue-800' : '' }}">
-                                    Sponsorzy
-                                </a>
-                                <a href="{{ route('admin.users.index') }}" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('admin.users.*') ? 'bg-blue-800' : '' }}">
-                                    Użytkownicy
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="text-white text-sm mr-4">{{ auth()->user()->name }}</span>
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button type="submit" class="text-white hover:bg-blue-800 px-3 py-2 rounded-md text-sm font-medium">
-                                Wyloguj
-                            </button>
-                        </form>
+    <div class="min-h-full md:flex">
+        <aside class="hidden md:flex md:w-56 md:flex-col bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 text-white shadow-xl">
+            <div class="px-4 py-4 border-b border-white/10">
+                <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center gap-2">
+                    <span class="text-lg font-bold">🏐 Joker Admin</span>
+                </a>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto px-2.5 py-3 space-y-2.5">
+                <a href="{{ route('admin.dashboard') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.dashboard') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Dashboard</a>
+                <a href="{{ route('admin.teams.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.teams.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Drużyny</a>
+                <a href="{{ route('admin.players.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.players.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Zawodnicy</a>
+                <a href="{{ route('admin.games.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.games.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Mecze</a>
+                <a href="{{ route('admin.competitions.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.competitions.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Rozgrywki</a>
+                <a href="{{ route('admin.competition-levels.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.competition-levels.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Poziomy rozgrywek</a>
+                <a href="{{ route('admin.standings.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.standings.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Tabele</a>
+                <a href="{{ route('admin.seasons.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.seasons.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Sezony</a>
+                <a href="{{ route('admin.rival-teams.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.rival-teams.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Rywale</a>
+                <a href="{{ route('admin.articles.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.articles.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Artykuły</a>
+                <a href="{{ route('admin.hero-slides.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.hero-slides.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Slider</a>
+                <a href="{{ route('admin.documents.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.documents.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Dokumenty</a>
+                <a href="{{ route('admin.sponsors.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.sponsors.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Sponsorzy</a>
+                <a href="{{ route('admin.users.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.users.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Użytkownicy</a>
+            </nav>
+
+            <div class="p-4 border-t border-white/10">
+                <p class="text-xs text-blue-200 mb-2">{{ auth()->user()->name }}</p>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="w-full rounded-lg border border-white/70 bg-white/90 px-3 py-2 text-sm font-medium text-blue-900 transition hover:bg-white">
+                        Wyloguj
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <div class="flex-1 min-w-0">
+            <div class="md:hidden bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white shadow">
+                <div class="px-4 py-4 flex items-center justify-between">
+                    <a href="{{ route('admin.dashboard') }}" class="text-base font-bold">🏐 Joker Piła Admin</a>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="rounded-md border border-white/70 bg-white/90 px-3 py-1.5 text-xs font-medium text-blue-900">Wyloguj</button>
+                    </form>
+                </div>
+                <div class="px-3 pb-4">
+                    <div class="flex flex-col gap-2.5">
+                        <a href="{{ route('admin.dashboard') }}" class="rounded-md border border-white/70 bg-white/90 px-3 py-2 text-xs text-blue-900 {{ request()->routeIs('admin.dashboard') ? 'ring-1 ring-white' : '' }}">Dashboard</a>
+                        <a href="{{ route('admin.teams.index') }}" class="rounded-md border border-white/70 bg-white/90 px-3 py-2 text-xs text-blue-900 {{ request()->routeIs('admin.teams.*') ? 'ring-1 ring-white' : '' }}">Drużyny</a>
+                        <a href="{{ route('admin.players.index') }}" class="rounded-md border border-white/70 bg-white/90 px-3 py-2 text-xs text-blue-900 {{ request()->routeIs('admin.players.*') ? 'ring-1 ring-white' : '' }}">Zawodnicy</a>
+                        <a href="{{ route('admin.games.index') }}" class="rounded-md border border-white/70 bg-white/90 px-3 py-2 text-xs text-blue-900 {{ request()->routeIs('admin.games.*') ? 'ring-1 ring-white' : '' }}">Mecze</a>
+                        <a href="{{ route('admin.standings.index') }}" class="rounded-md border border-white/70 bg-white/90 px-3 py-2 text-xs text-blue-900 {{ request()->routeIs('admin.standings.*') ? 'ring-1 ring-white' : '' }}">Tabele</a>
+                        <a href="{{ route('admin.hero-slides.index') }}" class="rounded-md border border-white/70 bg-white/90 px-3 py-2 text-xs text-blue-900 {{ request()->routeIs('admin.hero-slides.*') ? 'ring-1 ring-white' : '' }}">Slider</a>
                     </div>
                 </div>
             </div>
-        </nav>
 
-        <!-- Page Content -->
-        <main>
-            <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <!-- Page Content -->
+            <main>
+                <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
                 @if(session('success'))
                     <div class="mb-4 rounded-md bg-green-50 p-4">
                         <div class="flex">
@@ -109,7 +103,8 @@
 
                 @yield('content')
             </div>
-        </main>
+            </main>
+        </div>
     </div>
 
     @livewireScripts

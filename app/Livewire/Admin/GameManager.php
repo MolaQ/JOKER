@@ -8,6 +8,7 @@ use App\Models\RivalTeam;
 use App\Models\Season;
 use App\Models\Team;
 use App\Services\StandingsCalculator;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -47,6 +48,8 @@ class GameManager extends Component
 
     public ?int $away_points = null;
 
+    public string $sets_input = '';
+
     public string $match_report = '';
 
     public string $video_url = '';
@@ -76,6 +79,7 @@ class GameManager extends Component
             'away_score' => 'nullable|integer|min:0',
             'home_points' => 'nullable|integer|min:0',
             'away_points' => 'nullable|integer|min:0',
+            'sets_input' => 'nullable|string|max:1000',
             'match_report' => 'nullable|string',
             'video_url' => 'nullable|url',
         ];
@@ -125,6 +129,16 @@ class GameManager extends Component
         $this->away_score = $game->away_score;
         $this->home_points = $game->home_points;
         $this->away_points = $game->away_points;
+        $this->sets_input = collect($game->sets_score ?? [])
+            ->map(function ($set) {
+                if (! is_array($set) || count($set) !== 2) {
+                    return null;
+                }
+
+                return ((int) $set[0]).':'.((int) $set[1]);
+            })
+            ->filter()
+            ->implode(', ');
         $this->match_report = (string) $game->match_report;
         $this->video_url = (string) $game->video_url;
         $this->flashType = null;
@@ -136,6 +150,7 @@ class GameManager extends Component
     public function save(): void
     {
         $validated = $this->validate();
+        $this->applySetResults($validated);
 
         if ($this->editingId) {
             $game = Game::findOrFail($this->editingId);
@@ -192,9 +207,89 @@ class GameManager extends Component
         $this->away_score = null;
         $this->home_points = null;
         $this->away_points = null;
+        $this->sets_input = '';
         $this->match_report = '';
         $this->video_url = '';
         $this->resetErrorBag();
+    }
+
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function applySetResults(array &$validated): void
+    {
+        $setsInput = trim($this->sets_input);
+
+        if ($setsInput === '') {
+            return;
+        }
+
+        $parsedSets = $this->parseSetsScore($setsInput);
+
+        if ($parsedSets === []) {
+            return;
+        }
+
+        $homeSetsWon = 0;
+        $awaySetsWon = 0;
+        $homeSmallPoints = 0;
+        $awaySmallPoints = 0;
+
+        foreach ($parsedSets as [$homeSetPoints, $awaySetPoints]) {
+            if ($homeSetPoints === $awaySetPoints) {
+                throw ValidationException::withMessages([
+                    'sets_input' => 'W secie nie może być remisu.',
+                ]);
+            }
+
+            $homeSmallPoints += $homeSetPoints;
+            $awaySmallPoints += $awaySetPoints;
+
+            if ($homeSetPoints > $awaySetPoints) {
+                $homeSetsWon++;
+            } else {
+                $awaySetsWon++;
+            }
+        }
+
+        $validated['sets_score'] = $parsedSets;
+        $validated['home_score'] = $homeSetsWon;
+        $validated['away_score'] = $awaySetsWon;
+        $validated['home_points'] = $homeSmallPoints;
+        $validated['away_points'] = $awaySmallPoints;
+        $validated['status'] = 'finished';
+    }
+
+    /**
+     * @return array<int, array{0: int, 1: int}>
+     */
+    private function parseSetsScore(string $input): array
+    {
+        preg_match_all('/(\d{1,3})\s*[:\-]\s*(\d{1,3})/', $input, $matches, PREG_SET_ORDER);
+
+        if ($matches === []) {
+            throw ValidationException::withMessages([
+                'sets_input' => 'Podaj sety w formacie np. 25:23, 22:25, 25:20.',
+            ]);
+        }
+
+        /** @var array<int, array{0: int, 1: int}> $sets */
+        $sets = [];
+
+        foreach ($matches as $match) {
+            $home = (int) $match[1];
+            $away = (int) $match[2];
+
+            if ($home < 0 || $away < 0) {
+                throw ValidationException::withMessages([
+                    'sets_input' => 'Wyniki setów muszą być dodatnie.',
+                ]);
+            }
+
+            $sets[] = [$home, $away];
+        }
+
+        return $sets;
     }
 
     public function render()

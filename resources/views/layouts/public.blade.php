@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ asset('img/JOKER-18.png') }}">
+    <link rel="shortcut icon" href="{{ asset('img/JOKER-18.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('img/JOKER-18.png') }}">
     <title>@yield('title', 'Joker Piła - Klub Siatkówki')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
@@ -14,9 +17,7 @@
             <div class="flex justify-between items-center py-4">
                 <!-- Logo -->
                 <a href="{{ route('home') }}" class="flex items-center space-x-3">
-                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                        <span class="text-blue-900 font-bold text-xl">J</span>
-                    </div>
+                    <img src="{{ asset('img/JOKER-18.png') }}" alt="Logo Joker Piła" class="h-14 w-14 object-contain drop-shadow-lg md:h-16 md:w-16" />
                     <div>
                         <div class="text-xl font-bold">Joker Piła</div>
                         <div class="text-xs text-blue-200">Klub Siatkówki</div>
@@ -24,25 +25,20 @@
                 </a>
 
                 <!-- Desktop Menu -->
-                <div class="hidden md:flex items-center space-x-6">
-                    @livewire('global-search')
-
-                    <a href="{{ route('home') }}" class="hover:text-blue-200 transition {{ request()->routeIs('home') ? 'text-blue-200 font-semibold' : '' }}">
-                        Strona Główna
-                    </a>
-                    <a href="{{ route('teams.index') }}" class="hover:text-blue-200 transition {{ request()->routeIs('teams.*') ? 'text-blue-200 font-semibold' : '' }}">
-                        Drużyny
-                    </a>
-                    <a href="{{ route('articles.index') }}" class="hover:text-blue-200 transition {{ request()->routeIs('articles.*') ? 'text-blue-200 font-semibold' : '' }}">
+                <div class="hidden md:flex items-center space-x-2">
+                    <a href="{{ route('articles.index') }}" class="rounded-md border border-white/30 bg-white/15 px-3 py-1.5 text-xs font-medium text-blue-50 transition hover:bg-white/25 {{ request()->routeIs('articles.*') ? 'bg-white/30 font-semibold' : '' }}">
                         Aktualności
                     </a>
-                    <a href="{{ route('schedule.index') }}" class="hover:text-blue-200 transition {{ request()->routeIs('schedule.*') ? 'text-blue-200 font-semibold' : '' }}">
+                    <a href="{{ route('schedule.index') }}" class="rounded-md border border-white/30 bg-white/15 px-3 py-1.5 text-xs font-medium text-blue-50 transition hover:bg-white/25 {{ request()->routeIs('schedule.*') ? 'bg-white/30 font-semibold' : '' }}">
                         Terminarz
                     </a>
-                    <a href="{{ route('standings') }}" class="hover:text-blue-200 transition {{ request()->routeIs('standings') ? 'text-blue-200 font-semibold' : '' }}">
+                    <a href="{{ route('standings') }}" class="rounded-md border border-white/30 bg-white/15 px-3 py-1.5 text-xs font-medium text-blue-50 transition hover:bg-white/25 {{ request()->routeIs('standings') ? 'bg-white/30 font-semibold' : '' }}">
                         Tabela
                     </a>
-                    <a href="{{ route('contact.index') }}" class="hover:text-blue-200 transition {{ request()->routeIs('contact.*') ? 'text-blue-200 font-semibold' : '' }}">
+                    <a href="{{ route('teams.index') }}" class="rounded-md border border-white/30 bg-white/15 px-3 py-1.5 text-xs font-medium text-blue-50 transition hover:bg-white/25 {{ request()->routeIs('teams.*') ? 'bg-white/30 font-semibold' : '' }}">
+                        Drużyny
+                    </a>
+                    <a href="{{ route('contact.index') }}" class="rounded-md border border-white/30 bg-white/15 px-3 py-1.5 text-xs font-medium text-blue-50 transition hover:bg-white/25 {{ request()->routeIs('contact.*') ? 'bg-white/30 font-semibold' : '' }}">
                         Kontakt
                     </a>
 
@@ -52,16 +48,32 @@
                                 Panel Admina
                             </a>
                         @endif
-                        <a href="{{ route('profile.edit') }}" class="hover:text-blue-200 transition">Mój profil</a>
+                        <a href="{{ route('profile.edit') }}" class="rounded-md border border-white/30 bg-white/15 px-3 py-1.5 text-xs font-medium text-blue-50 transition hover:bg-white/25 {{ request()->routeIs('profile.*') ? 'bg-white/30 font-semibold' : '' }}">Mój profil</a>
+                    @endauth
+
+                    <div class="ml-2 flex items-center">
+                        <button id="desktop-search-toggle" type="button" class="flex h-8 w-8 items-center justify-center rounded-md border border-white/30 bg-white/15 text-blue-50 transition hover:bg-white/25" aria-label="Otwórz wyszukiwarkę" title="Szukaj">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-4.35-4.35m0 0A7.5 7.5 0 1 0 6 6a7.5 7.5 0 0 0 10.65 10.65z"></path>
+                            </svg>
+                        </button>
+                        <div id="desktop-search-wrapper" class="w-0 overflow-hidden opacity-0 pointer-events-none transition-all duration-300 ease-out">
+                            <div class="w-72 pl-2">
+                                @livewire('global-search')
+                            </div>
+                        </div>
+                    </div>
+
+                    @auth
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf
-                            <button type="submit" class="hover:text-blue-200 transition">
-                                Wyloguj
+                            <button type="submit" class="ml-2 flex h-8 w-8 items-center justify-center rounded-md border border-red-200/60 bg-red-100/90 text-sm font-bold text-red-700 transition hover:bg-red-200" title="Wyloguj" aria-label="Wyloguj">
+                                ⭘
                             </button>
                         </form>
                     @else
-                        <a href="{{ route('login') }}" class="bg-white text-blue-900 px-4 py-2 rounded-lg hover:bg-blue-50 transition font-medium">
-                            Zaloguj się
+                        <a href="{{ route('login') }}" class="ml-2 flex h-8 w-8 items-center justify-center rounded-md border border-emerald-200/70 bg-emerald-100/95 text-sm font-bold text-emerald-700 transition hover:bg-emerald-200" title="Zaloguj" aria-label="Zaloguj">
+                            ⏽
                         </a>
                     @endauth
                 </div>
@@ -77,28 +89,27 @@
             <!-- Mobile Menu -->
             <div class="hidden md:hidden pb-4" id="mobile-menu">
                 <div class="flex flex-col space-y-2">
-                    <a href="{{ route('home') }}" class="hover:text-blue-200 transition py-2">Strona Główna</a>
-                    <a href="{{ route('teams.index') }}" class="hover:text-blue-200 transition py-2">Drużyny</a>
-                    <a href="{{ route('articles.index') }}" class="hover:text-blue-200 transition py-2">Aktualności</a>
-                    <a href="{{ route('schedule.index') }}" class="hover:text-blue-200 transition py-2">Terminarz</a>
-                    <a href="{{ route('standings') }}" class="hover:text-blue-200 transition py-2">Tabela</a>
-                    <a href="{{ route('contact.index') }}" class="hover:text-blue-200 transition py-2">Kontakt</a>
+                    <a href="{{ route('articles.index') }}" class="rounded-md border border-white/30 bg-white/15 px-3 py-2 text-xs font-medium text-blue-50 transition hover:bg-white/25">Aktualności</a>
+                    <a href="{{ route('schedule.index') }}" class="rounded-md border border-white/30 bg-white/15 px-3 py-2 text-xs font-medium text-blue-50 transition hover:bg-white/25">Terminarz</a>
+                    <a href="{{ route('standings') }}" class="rounded-md border border-white/30 bg-white/15 px-3 py-2 text-xs font-medium text-blue-50 transition hover:bg-white/25">Tabela</a>
+                    <a href="{{ route('teams.index') }}" class="rounded-md border border-white/30 bg-white/15 px-3 py-2 text-xs font-medium text-blue-50 transition hover:bg-white/25">Drużyny</a>
+                    <a href="{{ route('contact.index') }}" class="rounded-md border border-white/30 bg-white/15 px-3 py-2 text-xs font-medium text-blue-50 transition hover:bg-white/25">Kontakt</a>
                     @auth
                         @if(auth()->user()->canManageContent())
                             <a href="{{ route('admin.dashboard') }}" class="bg-white text-blue-900 px-4 py-2 rounded-lg hover:bg-blue-50 transition font-medium inline-block text-center">
                                 Panel Admina
                             </a>
                         @endif
-                        <a href="{{ route('profile.edit') }}" class="hover:text-blue-200 transition py-2">Mój profil</a>
+                        <a href="{{ route('profile.edit') }}" class="rounded-md border border-white/30 bg-white/15 px-3 py-2 text-xs font-medium text-blue-50 transition hover:bg-white/25">Mój profil</a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="hover:text-blue-200 transition py-2 w-full text-left">
-                                Wyloguj
+                            <button type="submit" class="rounded-md border border-red-200/60 bg-red-100/90 px-3 py-2 text-xs font-bold text-red-700 transition hover:bg-red-200 w-full text-left">
+                                ⭘ Wyloguj
                             </button>
                         </form>
                     @else
-                        <a href="{{ route('login') }}" class="bg-white text-blue-900 px-4 py-2 rounded-lg hover:bg-blue-50 transition font-medium inline-block text-center">
-                            Zaloguj się
+                        <a href="{{ route('login') }}" class="rounded-md border border-emerald-200/70 bg-emerald-100/95 px-3 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-200 inline-block text-center">
+                            ⏽ Zaloguj
                         </a>
                     @endauth
                 </div>
@@ -188,6 +199,34 @@
         document.getElementById('mobile-menu-button').addEventListener('click', function() {
             document.getElementById('mobile-menu').classList.toggle('hidden');
         });
+
+        // Desktop search toggle
+        const desktopSearchToggle = document.getElementById('desktop-search-toggle');
+        const desktopSearchWrapper = document.getElementById('desktop-search-wrapper');
+
+        if (desktopSearchToggle && desktopSearchWrapper) {
+            desktopSearchToggle.addEventListener('click', function () {
+                const isHidden = desktopSearchWrapper.classList.contains('w-0');
+
+                if (isHidden) {
+                    desktopSearchWrapper.classList.remove('w-0', 'opacity-0', 'pointer-events-none');
+                    desktopSearchWrapper.classList.add('w-72', 'opacity-100');
+                } else {
+                    desktopSearchWrapper.classList.add('w-0', 'opacity-0', 'pointer-events-none');
+                    desktopSearchWrapper.classList.remove('w-72', 'opacity-100');
+                }
+            });
+
+            document.addEventListener('click', function (event) {
+                const clickedInsideSearch = desktopSearchWrapper.contains(event.target);
+                const clickedToggle = desktopSearchToggle.contains(event.target);
+
+                if (!clickedInsideSearch && !clickedToggle) {
+                    desktopSearchWrapper.classList.add('w-0', 'opacity-0', 'pointer-events-none');
+                    desktopSearchWrapper.classList.remove('w-72', 'opacity-100');
+                }
+            });
+        }
     </script>
 </body>
 </html>

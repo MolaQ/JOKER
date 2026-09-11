@@ -3,29 +3,100 @@
 @section('title', 'Joker Piła - Strona Główna')
 
 @section('content')
-<!-- Hero Section -->
-<div class="relative overflow-hidden bg-blue-950 text-white">
-    <div class="absolute inset-0 opacity-80">
-        <x-hero-team-image class="h-full w-full object-cover" />
-    </div>
+<style>
+    @keyframes heroLogoPulse {
+        0%,
+        100% {
+            transform: scale(1);
+        }
 
-    <div class="relative container mx-auto px-4 py-24">
-        <div class="max-w-3xl rounded-2xl bg-black/30 p-8 backdrop-blur-sm">
-            <h1 class="text-5xl md:text-6xl font-bold mb-6">Joker Piła</h1>
-            <p class="text-xl md:text-2xl text-blue-100 mb-8">
-                Nowoczesny klub siatkarski. Rozwój od młodzika do seniora — jedna drużyna, jeden charakter.
-            </p>
-            <div class="flex flex-wrap gap-4">
-                <a href="{{ route('teams.index') }}" class="bg-white text-blue-900 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
-                    Poznaj Drużyny
-                </a>
-                <a href="{{ route('articles.index') }}" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-900 transition">
-                    Aktualności
-                </a>
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    .hero-logo-pulse {
+        animation: heroLogoPulse 6s ease-in-out infinite;
+        will-change: transform;
+    }
+</style>
+
+<!-- Hero Slider -->
+<section class="relative overflow-hidden bg-blue-950 text-white">
+    @if($heroSlides->isNotEmpty())
+        <div id="home-hero-slider" class="relative" style="height: 68vh; min-height: 480px; max-height: 760px;">
+            <div class="pointer-events-none absolute inset-0 z-10 flex items-start justify-start p-4 md:p-6">
+                <img src="{{ asset('img/JOKER-18.png') }}" alt="Herb klubu Joker Piła" class="hero-logo-pulse h-20 w-20 object-contain drop-shadow-2xl md:h-32 md:w-32" />
+            </div>
+
+            @foreach($heroSlides as $slide)
+                <article class="hero-slide absolute inset-0 {{ $loop->first ? 'opacity-100' : 'opacity-0 pointer-events-none' }} transition-opacity duration-700 ease-in-out" data-slide-index="{{ $loop->index }}" aria-hidden="{{ $loop->first ? 'false' : 'true' }}">
+                    <img src="{{ Storage::url($slide->image_path) }}" alt="{{ $slide->title }}" class="h-full w-full object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-r from-black/75 via-black/55 to-blue-950/35"></div>
+
+                    <div class="absolute inset-0 z-20 flex items-center">
+                        <div class="container mx-auto px-4">
+                            <div class="max-w-3xl rounded-2xl border border-white/20 bg-white/10 p-8 shadow-xl backdrop-blur-sm md:p-10">
+                                <p class="mb-3 inline-flex rounded-full bg-blue-500/35 px-3 py-1 text-xs font-semibold tracking-wide text-blue-100 ring-1 ring-white/25">Joker Piła</p>
+                                <h1 class="text-4xl font-bold leading-tight md:text-6xl">{{ $slide->title }}</h1>
+
+                                @if($slide->subtitle)
+                                    <p class="mt-4 max-w-2xl text-base text-blue-100 md:text-xl">{{ $slide->subtitle }}</p>
+                                @endif
+
+                                @if($slide->cta_label && $slide->cta_url)
+                                    <div class="mt-7">
+                                        <a href="{{ $slide->cta_url }}" class="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-blue-900 shadow-md transition hover:bg-blue-50">
+                                            {{ $slide->cta_label }}
+                                            <span aria-hidden="true">→</span>
+                                        </a>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            @endforeach
+
+            <button id="home-hero-prev" type="button" class="absolute left-4 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/35 bg-black/35 p-3 text-white backdrop-blur-sm transition hover:bg-black/55" aria-label="Poprzedni slajd">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m15 19-7-7 7-7" />
+                </svg>
+            </button>
+            <button id="home-hero-next" type="button" class="absolute right-4 top-1/2 z-20 -translate-y-1/2 rounded-full border border-white/35 bg-black/35 p-3 text-white backdrop-blur-sm transition hover:bg-black/55" aria-label="Następny slajd">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m9 5 7 7-7 7" />
+                </svg>
+            </button>
+
+            <div id="home-hero-dots" class="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+                @foreach($heroSlides as $slide)
+                    <button
+                        type="button"
+                        class="hero-dot h-2.5 w-2.5 rounded-full border border-white/70 {{ $loop->first ? 'bg-white' : 'bg-white/30' }}"
+                        data-target-index="{{ $loop->index }}"
+                        aria-label="Przejdź do slajdu {{ $loop->iteration }}"
+                    ></button>
+                @endforeach
             </div>
         </div>
-    </div>
-</div>
+    @else
+        <div class="relative overflow-hidden bg-blue-950 text-white">
+            <div class="absolute inset-0 opacity-80">
+                <x-hero-team-image class="h-full w-full object-cover" />
+            </div>
+
+            <div class="relative container mx-auto px-4 py-24">
+                <div class="max-w-3xl rounded-2xl border border-white/20 bg-black/30 p-8 backdrop-blur-sm">
+                    <h1 class="text-5xl md:text-6xl font-bold mb-6">Joker Piła</h1>
+                    <p class="text-xl md:text-2xl text-blue-100">
+                        Nowoczesny klub siatkarski. Rozwój od młodzika do seniora — jedna drużyna, jeden charakter.
+                    </p>
+                </div>
+            </div>
+        </div>
+    @endif
+</section>
 
 <!-- Featured Articles -->
 @if($featured_articles->count() > 0)
@@ -258,3 +329,121 @@
 </section>
 @endif
 @endsection
+
+@if($heroSlides->count() > 1)
+    <script>
+        const initHomeHeroSlider = () => {
+            const heroSlider = document.getElementById('home-hero-slider');
+
+            if (!heroSlider) {
+                return;
+            }
+
+            if (heroSlider.dataset.initialized === 'true') {
+                return;
+            }
+
+            heroSlider.dataset.initialized = 'true';
+
+            const slides = Array.from(heroSlider.querySelectorAll('.hero-slide'));
+
+            if (slides.length <= 1) {
+                return;
+            }
+
+            const dots = Array.from(heroSlider.querySelectorAll('.hero-dot'));
+            const prevButton = document.getElementById('home-hero-prev');
+            const nextButton = document.getElementById('home-hero-next');
+            let activeIndex = 0;
+            let autoplayInterval = null;
+            let touchStartX = null;
+            let touchEndX = null;
+
+            const showSlide = (index) => {
+                activeIndex = (index + slides.length) % slides.length;
+
+                slides.forEach((slide, slideIndex) => {
+                    const isActive = slideIndex === activeIndex;
+                    slide.classList.toggle('opacity-100', isActive);
+                    slide.classList.toggle('opacity-0', !isActive);
+                    slide.classList.toggle('pointer-events-none', !isActive);
+                    slide.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+                });
+
+                dots.forEach((dot, dotIndex) => {
+                    const isActive = dotIndex === activeIndex;
+                    dot.classList.toggle('bg-white', isActive);
+                    dot.classList.toggle('bg-white/30', !isActive);
+                });
+            };
+
+            const startAutoplay = () => {
+                window.clearInterval(autoplayInterval);
+                autoplayInterval = window.setInterval(() => {
+                    showSlide(activeIndex + 1);
+                }, 5500);
+            };
+
+            const restartAutoplay = () => {
+                startAutoplay();
+            };
+
+            prevButton?.addEventListener('click', () => {
+                showSlide(activeIndex - 1);
+                restartAutoplay();
+            });
+
+            nextButton?.addEventListener('click', () => {
+                showSlide(activeIndex + 1);
+                restartAutoplay();
+            });
+
+            dots.forEach((dot, index) => {
+                dot.addEventListener('click', () => {
+                    showSlide(index);
+                    restartAutoplay();
+                });
+            });
+
+            heroSlider.addEventListener('mouseenter', () => window.clearInterval(autoplayInterval));
+            heroSlider.addEventListener('mouseleave', startAutoplay);
+
+            heroSlider.addEventListener('touchstart', (event) => {
+                touchStartX = event.changedTouches[0]?.clientX ?? null;
+            }, { passive: true });
+
+            heroSlider.addEventListener('touchend', (event) => {
+                touchEndX = event.changedTouches[0]?.clientX ?? null;
+
+                if (touchStartX === null || touchEndX === null) {
+                    return;
+                }
+
+                const delta = touchStartX - touchEndX;
+
+                if (Math.abs(delta) < 40) {
+                    return;
+                }
+
+                if (delta > 0) {
+                    showSlide(activeIndex + 1);
+                } else {
+                    showSlide(activeIndex - 1);
+                }
+
+                restartAutoplay();
+            }, { passive: true });
+
+            showSlide(0);
+            startAutoplay();
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initHomeHeroSlider, { once: true });
+        } else {
+            initHomeHeroSlider();
+        }
+
+        document.addEventListener('livewire:navigated', initHomeHeroSlider);
+    </script>
+@endif

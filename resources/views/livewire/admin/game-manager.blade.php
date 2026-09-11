@@ -52,7 +52,16 @@
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         @if(!is_null($game->home_score) && !is_null($game->away_score))
-                            {{ $game->home_score }} : {{ $game->away_score }}
+                            <div>{{ $game->home_score }} : {{ $game->away_score }}</div>
+                            @if(is_array($game->sets_score) && count($game->sets_score) > 0)
+                                <div class="text-xs text-gray-400 mt-0.5">
+                                    @foreach($game->sets_score as $set)
+                                        @if(is_array($set) && count($set) === 2)
+                                            {{ (int) $set[0] }}:{{ (int) $set[1] }}@if(! $loop->last), @endif
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @endif
                         @else
                             —
                         @endif
@@ -196,6 +205,13 @@
                                     <label class="block text-sm font-medium text-gray-700">Wynik gości (sety)</label>
                                     <input type="number" wire:model="away_score" min="0" max="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Wyniki setów</label>
+                                <input type="text" wire:model="sets_input" placeholder="np. 25:23, 22:25, 25:20, 25:18" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                @error('sets_input') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                <p class="mt-1 text-xs text-gray-500">Po wpisaniu setów system automatycznie wyliczy wynik meczu i małe punkty oraz ustawi status na „Zakończony”.</p>
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">

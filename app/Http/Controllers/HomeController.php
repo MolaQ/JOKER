@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Article;
 use App\Models\Game;
+use App\Models\HeroSlide;
 use App\Models\Player;
 use App\Models\Sponsor;
 use App\Models\Team;
@@ -21,6 +22,10 @@ class HomeController extends Controller
         $latest_articles = Article::published()
             ->withCount(['approvedComments', 'likes'])
             ->limit(6)
+            ->get();
+
+        $heroSlides = HeroSlide::activeNow()
+            ->ordered()
             ->get();
 
         $upcoming_games = Game::with(['team', 'competition'])
@@ -47,6 +52,6 @@ class HomeController extends Controller
             ->orderByDesc('id')
             ->first();
 
-        return view('home', compact('featured_articles', 'latest_articles', 'upcoming_games', 'sponsors', 'teams', 'popularPlayer', 'popularGame'));
+        return view('home', compact('featured_articles', 'latest_articles', 'upcoming_games', 'sponsors', 'teams', 'popularPlayer', 'popularGame', 'heroSlides'));
     }
 }
