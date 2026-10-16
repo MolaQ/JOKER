@@ -1,10 +1,26 @@
 @extends('admin.layout')
 
-@section('title', 'Dashboard')
+@section('title', 'Pulpit')
 
 @section('content')
 <div class="px-4 sm:px-6 lg:px-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
+    <h1 class="text-3xl font-bold text-gray-900">Cześć, {{ \Illuminate\Support\Str::before(auth()->user()->name, ' ') }}!</h1>
+    <p class="mt-1 mb-6 text-gray-600">Co chcesz dziś zrobić?</p>
+
+    <div class="mb-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        @foreach([
+            ['📰', 'Dodaj aktualność', 'Napisz wpis na stronę', 'admin.articles.index'],
+            ['🏐', 'Wpisz wynik meczu', 'Albo dodaj nowy mecz', 'admin.games.index'],
+            ['🎽', 'Dodaj zawodnika', 'Lub popraw dane w kadrze', 'admin.players.index'],
+            ['👥', 'Drużyny i sztab', 'Zdjęcie, trenerzy, funkcje', 'admin.teams.index'],
+        ] as [$icon, $title, $hint, $route])
+            <a href="{{ route($route) }}" class="group rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-200 transition hover:-translate-y-0.5 hover:ring-sky-400 hover:shadow-md">
+                <span class="text-3xl" aria-hidden="true">{{ $icon }}</span>
+                <span class="mt-3 block font-semibold text-gray-900 group-hover:text-sky-600">{{ $title }}</span>
+                <span class="block text-sm text-gray-500">{{ $hint }}</span>
+            </a>
+        @endforeach
+    </div>
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -101,7 +117,7 @@
                                 <p class="text-sm text-gray-500">{{ $game->game_date->format('d.m.Y H:i') }}</p>
                             </div>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{{ $game->status === 'scheduled' ? 'blue' : ($game->status === 'finished' ? 'green' : 'gray') }}-100 text-{{ $game->status === 'scheduled' ? 'blue' : ($game->status === 'finished' ? 'green' : 'gray') }}-800">
-                                {{ $game->status }}
+                                {{ ['scheduled' => 'zaplanowany', 'finished' => 'rozegrany', 'cancelled' => 'odwołany'][$game->status] ?? $game->status }}
                             </span>
                         </div>
                     </div>

@@ -23,6 +23,7 @@ class Team extends Model
         'category',
         'birth_year',
         'logo_path',
+        'photo_path',
         'trainer_id',
         'display_order',
     ];
@@ -37,7 +38,7 @@ class Team extends Model
      */
     public function assistantTrainers(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'team_trainers')->withTimestamps();
+        return $this->belongsToMany(User::class, 'team_trainers')->withPivot('role')->withTimestamps();
     }
 
     /**
@@ -52,6 +53,30 @@ class Team extends Model
             ->filter()
             ->unique('id')
             ->values();
+    }
+
+    /**
+     * Sztab drużyny z funkcjami: trener główny na początku, potem pozostali członkowie sztabu.
+     *
+     * @return Collection<int, array{user: User, role: string}>
+     */
+    public function staff(): Collection
+    {
+        $staff = collect();
+
+        if ($this->trainer) {
+            $staff->push(['user' => $this->trainer, 'role' => 'Trener główny']);
+        }
+
+        foreach ($this->assistantTrainers as $member) {
+            if ($member->id === $this->trainer_id) {
+                continue;
+            }
+
+            $staff->push(['user' => $member, 'role' => $member->pivot->role ?: 'Asystent trenera']);
+        }
+
+        return $staff;
     }
 
     public function players(): HasMany

@@ -33,6 +33,9 @@ Route::get('/trenerzy/{trainer}', [TrainerController::class, 'show'])->name('tra
 Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
 Route::get('/standings', [ScheduleController::class, 'standings'])->name('standings');
 
+// Zdjęcia (autorzy zdjęć tematycznych)
+Route::view('/zdjecia', 'credits')->name('credits');
+
 // Contact
 Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
 Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');

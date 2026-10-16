@@ -109,7 +109,18 @@ class User extends Authenticatable
      */
     public function assistantTeams(): BelongsToMany
     {
-        return $this->belongsToMany(Team::class, 'team_trainers')->withTimestamps();
+        return $this->belongsToMany(Team::class, 'team_trainers')->withPivot('role')->withTimestamps();
+    }
+
+    /**
+     * Czy użytkownik należy do sztabu jakiejkolwiek drużyny (ma publiczny profil).
+     */
+    public function isStaffMember(): bool
+    {
+        return $this->role === UserRole::Trainer
+            || $this->role === UserRole::Staff
+            || $this->headCoachTeams()->exists()
+            || $this->assistantTeams()->exists();
     }
 
     /**

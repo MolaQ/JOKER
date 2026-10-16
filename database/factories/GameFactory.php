@@ -18,8 +18,12 @@ class GameFactory extends Factory
     public function definition(): array
     {
         $isHome = fake()->boolean();
-        $status = fake()->randomElement(['scheduled', 'finished', 'cancelled']);
         $gameDate = fake()->dateTimeBetween('-2 months', '+3 months');
+        // Mecz w przeszłości jest rozegrany, w przyszłości - zaplanowany.
+        $status = $gameDate < now() ? 'finished' : 'scheduled';
+        $loserSets = fake()->numberBetween(0, 2);
+        [$homeScore, $awayScore] = fake()->boolean() ? [3, $loserSets] : [$loserSets, 3];
+        $gameDate->setTime(fake()->randomElement([11, 13, 16, 17, 18]), fake()->randomElement([0, 30]));
 
         return [
             'opponent' => fake()->randomElement([
@@ -32,11 +36,11 @@ class GameFactory extends Factory
             ]),
             'is_home' => $isHome,
             'game_date' => $gameDate,
-            'venue' => $isHome ? 'Hala Sportowa Joker Piła' : fake()->city(),
+            'venue' => $isHome ? 'Hala Sportowa Joker Piła' : 'Hala '.fake()->city(),
             'league' => 'Tauron 1 Liga',
             'status' => $status,
-            'home_score' => $status === 'finished' ? fake()->numberBetween(0, 3) : null,
-            'away_score' => $status === 'finished' ? fake()->numberBetween(0, 3) : null,
+            'home_score' => $status === 'finished' ? $homeScore : null,
+            'away_score' => $status === 'finished' ? $awayScore : null,
             'sets_score' => $status === 'finished' ? [
                 [25, fake()->numberBetween(15, 27)],
                 [fake()->numberBetween(15, 27), 25],

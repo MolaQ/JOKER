@@ -8,36 +8,29 @@ use Illuminate\Database\Seeder;
 class SponsorSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Przykładowi sponsorzy (bez logo - wyświetla się nazwa; logo dodasz w panelu).
      */
     public function run(): void
     {
-        // Sponsorzy platynowi
-        Sponsor::factory()->count(2)->create([
-            'tier' => 'platinum',
-            'display_order' => 1,
-            'is_active' => true,
-        ]);
+        $sponsors = [
+            ['name' => 'Miasto Piła', 'tier' => 'platinum'],
+            ['name' => 'Piekarnia Kłos', 'tier' => 'gold'],
+            ['name' => 'AutoSerwis Nowak', 'tier' => 'gold'],
+            ['name' => 'Drukarnia Rapid', 'tier' => 'silver'],
+            ['name' => 'Fizjo Plus', 'tier' => 'silver'],
+            ['name' => 'Budmax', 'tier' => 'bronze'],
+        ];
 
-        // Sponsorzy złoci
-        Sponsor::factory()->count(3)->create([
-            'tier' => 'gold',
-            'display_order' => 2,
-            'is_active' => true,
-        ]);
-
-        // Sponsorzy srebrni
-        Sponsor::factory()->count(5)->create([
-            'tier' => 'silver',
-            'display_order' => 3,
-            'is_active' => true,
-        ]);
-
-        // Sponsorzy brązowi
-        Sponsor::factory()->count(8)->create([
-            'tier' => 'bronze',
-            'display_order' => 4,
-            'is_active' => true,
-        ]);
+        foreach ($sponsors as $order => $sponsor) {
+            Sponsor::create([
+                'name' => $sponsor['name'],
+                'description' => null,
+                'logo_path' => null,
+                'website_url' => null,
+                'tier' => $sponsor['tier'],
+                'display_order' => $order + 1,
+                'is_active' => true,
+            ]);
+        }
     }
 }

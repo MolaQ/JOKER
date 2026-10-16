@@ -126,6 +126,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Trener główny</label>
+                                <p class="text-xs text-gray-500">Lista zawiera osoby z rolą Trener lub Członek sztabu (ustawisz w zakładce Użytkownicy).</p>
                                 <select wire:model="trainer_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     <option value="">Brak</option>
                                     @foreach($trainers as $trainer)
@@ -136,17 +137,36 @@
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Trenerzy pomocniczy</label>
-                                <p class="text-xs text-gray-500 mb-2">Drużyna może mieć więcej niż jednego trenera.</p>
-                                <div class="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border border-gray-200 rounded-md p-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Sztab drużyny</label>
+                                <p class="text-xs text-gray-500 mb-2">Zaznacz osoby ze sztabu i wpisz ich funkcję (np. Asystent trenera, Fizjoterapeuta, Statystyk, Kierownik drużyny). Puste pole = „Asystent trenera”.</p>
+                                <div class="space-y-2 max-h-56 overflow-y-auto border border-gray-200 rounded-md p-2">
                                     @foreach($trainers as $trainer)
-                                        <label class="flex items-center text-sm text-gray-700">
-                                            <input type="checkbox" wire:model="assistant_trainer_ids" value="{{ $trainer->id }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
-                                            {{ $trainer->name }}
-                                        </label>
+                                        <div class="flex items-center gap-2">
+                                            <label class="flex w-1/2 items-center text-sm text-gray-700">
+                                                <input type="checkbox" wire:model.live="assistant_trainer_ids" value="{{ $trainer->id }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
+                                                {{ $trainer->name }}
+                                            </label>
+                                            @if(in_array($trainer->id, array_map('intval', $assistant_trainer_ids)))
+                                                <input type="text" wire:model="staff_roles.{{ $trainer->id }}" placeholder="Funkcja" class="w-1/2 rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                            @endif
+                                        </div>
                                     @endforeach
                                 </div>
                                 @error('assistant_trainer_ids') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Zdjęcie drużyny (miniatura na stronie)</label>
+                                <p class="text-xs text-gray-500">Najlepiej poziome zdjęcie całej drużyny. Bez zdjęcia strona pokaże zdjęcie tematyczne.</p>
+                                @if($existingPhoto && !$photo)
+                                    <img src="{{ \App\Support\Media::url($existingPhoto) }}" class="mt-2 h-24 w-40 object-cover rounded" alt="Zdjęcie drużyny">
+                                @endif
+                                @if($photo)
+                                    <img src="{{ $photo->temporaryUrl() }}" class="mt-2 h-24 w-40 object-cover rounded" alt="Podgląd">
+                                @endif
+                                <input type="file" wire:model="photo" accept="image/*" class="mt-2 block w-full text-sm text-gray-700">
+                                <div wire:loading wire:target="photo" class="text-xs text-gray-500 mt-1">Wczytywanie...</div>
+                                @error('photo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
                             <div>

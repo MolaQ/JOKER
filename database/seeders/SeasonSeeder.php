@@ -8,31 +8,21 @@ use Illuminate\Database\Seeder;
 class SeasonSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Dwa sezony archiwalne i aktualny (sezon startuje 1 września).
      */
     public function run(): void
     {
-        // Archiwalne sezony
-        Season::create([
-            'name' => '2023/2024',
-            'start_date' => '2023-09-01',
-            'end_date' => '2024-06-30',
-            'is_current' => false,
-        ]);
+        $currentStartYear = now()->month >= 8 ? now()->year : now()->year - 1;
 
-        Season::create([
-            'name' => '2024/2025',
-            'start_date' => '2024-09-01',
-            'end_date' => '2025-06-30',
-            'is_current' => false,
-        ]);
+        foreach ([2, 1, 0] as $yearsAgo) {
+            $startYear = $currentStartYear - $yearsAgo;
 
-        // Aktualny sezon
-        Season::create([
-            'name' => '2025/2026',
-            'start_date' => '2025-09-01',
-            'end_date' => '2026-06-30',
-            'is_current' => true,
-        ]);
+            Season::create([
+                'name' => $startYear.'/'.($startYear + 1),
+                'start_date' => "{$startYear}-09-01",
+                'end_date' => ($startYear + 1).'-06-30',
+                'is_current' => $yearsAgo === 0,
+            ]);
+        }
     }
 }

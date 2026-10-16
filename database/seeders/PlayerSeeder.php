@@ -13,6 +13,22 @@ use Illuminate\Database\Seeder;
 class PlayerSeeder extends Seeder
 {
     /**
+     * Przykładowe opisy zawodników.
+     *
+     * @var array<int, string>
+     */
+    private const BIOS = [
+        'W klubie od pierwszych treningów. Najmocniejsza strona: zagrywka z wyskoku. Poza siatkówką - gitara i dobre książki.',
+        'Przyszedł do Jokera z koszykówki i szybko pokochał siatkę. Pracowity, zawsze ostatni schodzi z treningu.',
+        'Lider szatni i głośny doping na ławce. Marzy o grze w PlusLidze.',
+        'Świetnie czyta grę i potrafi uspokoić zespół w trudnych momentach seta.',
+        'Wychowanek klubu, powołany na konsultację kadry wojewódzkiej. Kibicuje Projektowi Warszawa.',
+        'Najlepszy blokujący drużyny w poprzednim sezonie. Uczy się programowania.',
+        'Szybki, zwinny i nieustępliwy w obronie. Po treningu zawsze z piłką do żonglerki.',
+        'Debiutant w tym sezonie, ale już zdobył zaufanie trenera. Lubi wyzwania.',
+    ];
+
+    /**
      * Run the database seeds.
      *
      * Każda drużyna dostaje własny skład (players.team_id = drużyna macierzysta).
@@ -42,8 +58,8 @@ class PlayerSeeder extends Seeder
                     : fake()->dateTimeBetween('-32 years', '-19 years');
 
                 $player = Player::create([
-                    'first_name' => fake()->firstName(),
-                    'last_name' => fake()->lastName(),
+                    'first_name' => fake()->firstNameMale(),
+                    'last_name' => fake()->lastNameMale(),
                     'jersey_number' => $jerseyNumber,
                     'position' => fake()->randomElement(PlayerPosition::cases()),
                     'birth_date' => $birthDate,
@@ -51,7 +67,7 @@ class PlayerSeeder extends Seeder
                     'weight' => fake()->numberBetween(60, 100),
                     'reach' => fake()->numberBetween(220, 250),
                     'spike_reach' => fake()->numberBetween(250, 340),
-                    'bio' => fake()->paragraph(),
+                    'bio' => '<p>'.fake()->randomElement(self::BIOS).'</p>',
                     'team_id' => $team->id,
                     'user_id' => $playerUsers->random()?->id,
                     'is_active' => true,

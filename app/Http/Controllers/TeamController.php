@@ -11,7 +11,10 @@ class TeamController extends Controller
 {
     public function index()
     {
-        $teams = Team::with(['trainer', 'assistantTrainers'])->orderBy('display_order')->get();
+        $teams = Team::with(['trainer', 'assistantTrainers'])
+            ->withCount('activePlayers')
+            ->orderBy('display_order')
+            ->get();
 
         return view('teams.index', compact('teams'));
     }
@@ -23,19 +26,26 @@ class TeamController extends Controller
         $currentSeason = Season::current()->first();
 
         $roster = $currentSeason
-            ? $team->seasonRoster($currentSeason->id)->where('players.is_active', true)->orderBy('players.last_name')->get()
-            : $team->activePlayers()->orderBy('last_name')->get();
+            ? $team->seasonRoster($currentSeason->id)->where('players.is_active', true)->get()
+            : $team->activePlayers()->get();
+
+        // Najpierw rozgrywający, przyjmujący... potem wg nazwiska - czytelniej niż sam alfabet.
+        $positionOrder = ['setter', 'outside_hitter', 'opposite', 'middle_blocker', 'libero'];
+        $rosterByPosition = $roster
+            ->sortBy('last_name')
+            ->groupBy(fn ($player) => $player->position?->value)
+            ->sortBy(fn ($players, $position) => array_search($position, $positionOrder));
+
+        $staff = $team->staff();
 
         $upcoming_games = Game::where('team_id', $team->id)
-            ->with(['competition', 'opponentTeam'])
-            ->withCount('likes')
+            ->with(['team', 'competition', 'opponentTeam'])
             ->upcoming()
             ->limit(5)
             ->get();
 
         $recent_games = Game::where('team_id', $team->id)
-            ->with(['competition', 'opponentTeam'])
-            ->withCount('likes')
+            ->with(['team', 'competition', 'opponentTeam'])
             ->finished()
             ->limit(5)
             ->get();
@@ -50,6 +60,6 @@ class TeamController extends Controller
             ->get()
             ->groupBy(fn (LeagueStanding $standing) => $standing->competition?->name ?? 'Rozgrywki');
 
-        return view('teams.show', compact('team', 'roster', 'upcoming_games', 'recent_games', 'standingsByCompetition', 'currentSeason'));
+        return view('teams.show', compact('team', 'roster', 'rosterByPosition', 'staff', 'upcoming_games', 'recent_games', 'standingsByCompetition', 'currentSeason'));
     }
 }

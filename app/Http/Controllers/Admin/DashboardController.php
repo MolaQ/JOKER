@@ -23,7 +23,7 @@ class DashboardController extends Controller
             'published_articles' => Article::published()->count(),
         ];
 
-        $recent_games = Game::with('team')->latest('game_date')->limit(5)->get();
+        $recent_games = Game::with('team')->upcoming()->limit(5)->get();
         $recent_articles = Article::with('author')->published()->limit(5)->get();
 
         return view('admin.dashboard', compact('stats', 'recent_games', 'recent_articles'));

@@ -12,16 +12,9 @@ class ArticleController extends Controller
     public function index()
     {
         $articles = Article::published()
-            ->with('author')
-            ->withCount(['approvedComments', 'likes'])
-            ->paginate(12);
+            ->paginate(13);
 
-        $featured = Article::published()
-            ->featured()
-            ->withCount(['approvedComments', 'likes'])
-            ->first();
-
-        return view('articles.index', compact('articles', 'featured'));
+        return view('articles.index', compact('articles'));
     }
 
     public function show(Article $article)
@@ -31,11 +24,10 @@ class ArticleController extends Controller
         }
 
         $article->increment('views_count');
-        $article->load(['author', 'approvedComments.user', 'likes']);
+        $article->load(['author', 'approvedComments.user', 'approvedComments.replies.user']);
 
         $related_articles = Article::published()
             ->where('id', '!=', $article->id)
-            ->withCount(['approvedComments', 'likes'])
             ->limit(3)
             ->get();
 

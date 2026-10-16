@@ -48,7 +48,7 @@ class SponsorManager extends Component
             'is_active' => 'boolean',
         ];
 
-        $rules['logo'] = $this->editingId ? 'nullable|image|max:2048' : 'required|image|max:2048';
+        $rules['logo'] = 'nullable|image|max:2048';
 
         return $rules;
     }

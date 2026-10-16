@@ -45,7 +45,7 @@ class UserManager extends Component
                 Rule::unique('users', 'email')->ignore($this->editingId),
             ],
             'password' => $this->editingId ? 'nullable|string|min:8' : 'required|string|min:8',
-            'role' => 'required|in:admin,trainer,parent,player,fan,guest',
+            'role' => 'required|in:admin,trainer,staff,parent,player,fan,guest',
         ];
     }
 
