@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Aktualności - Joker Piła')
+@section('title', 'Aktualności')
 
 @php use App\Support\Media; @endphp
 

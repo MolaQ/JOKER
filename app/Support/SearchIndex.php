@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Article;
 use App\Models\Document;
 use App\Models\Game;
+use App\Models\Page;
 use App\Models\Player;
 use App\Models\Team;
 use App\Models\User;
@@ -18,7 +19,7 @@ use Illuminate\Support\Str;
  */
 class SearchIndex
 {
-    public const CACHE_KEY = 'search-index-v1';
+    public const CACHE_KEY = 'search-index-v2';
 
     /**
      * @return array<int, array{type: string, title: string, subtitle: string, url: string, text: string}>
@@ -106,6 +107,10 @@ class SearchIndex
 
         foreach (self::pages() as [$title, $subtitle, $url, $keywords]) {
             $add('Strona', $title, $subtitle, $url, $keywords);
+        }
+
+        foreach (Page::published()->orderBy('display_order')->get() as $page) {
+            $add('Strona', $page->title, Str::limit((string) $page->lead, 80), route('pages.show', $page, false), $page->lead.' '.$page->content);
         }
 
         foreach (Team::with(['trainer'])->orderBy('display_order')->get() as $team) {

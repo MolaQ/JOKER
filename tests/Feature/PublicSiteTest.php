@@ -12,7 +12,7 @@ beforeEach(function () {
 
 test('public pages load', function (string $url) {
     $this->get($url)->assertOk();
-})->with(['/', '/teams', '/news', '/schedule', '/standings', '/contact', '/zdjecia', '/dokumenty', '/szukaj']);
+})->with(['/', '/teams', '/news', '/schedule', '/standings', '/contact', '/zdjecia', '/dokumenty', '/szukaj', '/strona/faq', '/strona/o-klubie']);
 
 test('team page lists players and staff with roles, each linking to a profile', function () {
     $team = Team::firstWhere('slug', 'seniorzy');

@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', $article->title . ' - Joker Piła')
+@section('title', $article->title)
 @section('description', Str::limit(strip_tags((string) $article->excerpt), 155))
 
 @php use App\Support\Media; @endphp

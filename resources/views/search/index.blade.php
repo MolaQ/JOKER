@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', ($query ? $query.' - ' : '').'Szukaj - Joker Piła')
+@section('title', ($query ? $query.' - ' : '').'Szukaj')
 
 @section('content')
 <section class="container-site max-w-3xl pt-14 pb-6 lg:pt-20">

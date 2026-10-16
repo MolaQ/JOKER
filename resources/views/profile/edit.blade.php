@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Mój profil - Joker Piła')
+@section('title', 'Mój profil')
 
 @section('content')
 <div class="container mx-auto max-w-3xl px-4 py-12">

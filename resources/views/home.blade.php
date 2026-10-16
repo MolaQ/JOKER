@@ -1,6 +1,5 @@
 @extends('layouts.public')
 
-@section('title', 'Joker Piła - Klub Siatkówki')
 
 @php
     use App\Support\Media;
@@ -15,11 +14,11 @@
             'cta_url' => $slide->cta_url,
         ])
         : collect([[
-            'image' => $fallbackHero['url'],
-            'title' => 'Gramy razem. Wygrywamy razem.',
-            'subtitle' => 'Klub siatkarski z Piły. Od pierwszego odbicia młodzika po mecze seniorów.',
-            'cta_label' => 'Poznaj drużyny',
-            'cta_url' => route('teams.index'),
+            'image' => $site->image('hero_image', $fallbackHero['url']),
+            'title' => $site['hero_title'],
+            'subtitle' => $site['hero_subtitle'],
+            'cta_label' => $site['hero_button_label'],
+            'cta_url' => $site->href((string) $site['hero_button_url']),
         ]]);
     $nextGame = $upcoming_games->first();
 @endphp
@@ -41,7 +40,7 @@
             <div class="absolute inset-0 bg-gradient-to-r from-ink/80 via-transparent to-transparent"></div>
 
             <div class="container-site relative flex min-h-[80svh] flex-col justify-end pt-32 pb-12 lg:min-h-[92svh] lg:pb-48">
-                <p class="eyebrow">Joker Piła · Sezon {{ $seasonName ?? date('Y') }}</p>
+                <p class="eyebrow">{{ $site['club_name'] }} · Sezon {{ $seasonName ?? date('Y') }}</p>
                 <h1 class="heading-xl mt-4 max-w-4xl text-balance">{{ $slide['title'] }}</h1>
                 @if($slide['subtitle'])
                     <p class="mt-6 max-w-xl text-lg text-zinc-300">{{ $slide['subtitle'] }}</p>
@@ -50,7 +49,9 @@
                     @if($slide['cta_label'] && $slide['cta_url'])
                         <a href="{{ $slide['cta_url'] }}" class="btn-primary">{{ $slide['cta_label'] }} <span aria-hidden="true">→</span></a>
                     @endif
-                    <a href="{{ route('schedule.index') }}" class="btn-ghost">Terminarz meczów</a>
+                    @if(filled($site['hero_second_button_label']) && filled($site['hero_second_button_url']))
+                        <a href="{{ $site->href((string) $site['hero_second_button_url']) }}" class="btn-ghost">{{ $site['hero_second_button_label'] }}</a>
+                    @endif
                 </div>
             </div>
         </div>
@@ -74,7 +75,7 @@
                     @if($nextGame)
                         <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
                             <p class="text-xs font-semibold tracking-widest text-sky-club uppercase">Najbliższy mecz · {{ $nextGame->game_date?->translatedFormat('D, d M · H:i') }}</p>
-                            <p data-countdown="{{ $nextGame->game_date?->toIso8601String() }}" class="font-display text-sm font-semibold tracking-wide text-white tabular-nums" aria-live="off"></p>
+                            <p @if($site['home_show_countdown']) data-countdown="{{ $nextGame->game_date?->toIso8601String() }}" @endif class="font-display text-sm font-semibold tracking-wide text-white tabular-nums" aria-live="off"></p>
                         </div>
                         <p class="mt-2 font-display text-xl font-semibold uppercase lg:text-2xl">
                             {{ $nextGame->team?->name }} <span class="text-zinc-500">vs</span> {{ $nextGame->opponentShortName() }}
@@ -85,12 +86,14 @@
                         <p class="mt-2 font-display text-xl font-semibold uppercase">Nowe mecze już wkrótce</p>
                     @endif
                 </div>
-                <div class="hidden items-center gap-6 bg-ink/70 p-5 sm:flex lg:p-6">
-                    <p><span class="block font-display text-4xl font-bold">{{ $stats['teams'] }}</span><span class="text-xs text-zinc-400 uppercase">drużyn</span></p>
-                    <p><span class="block font-display text-4xl font-bold">{{ $stats['players'] }}</span><span class="text-xs text-zinc-400 uppercase">zawodników</span></p>
-                </div>
-                <a href="{{ route('contact.index') }}" class="group flex items-center justify-between gap-4 bg-sky-club p-5 transition hover:bg-sky-club-dark lg:p-6">
-                    <span class="font-display text-xl leading-tight font-semibold uppercase">Dołącz<br>do klubu</span>
+                @if($site['home_show_stats'])
+                    <div class="hidden items-center gap-6 bg-ink/70 p-5 sm:flex lg:p-6">
+                        <p><span class="block font-display text-4xl font-bold">{{ $stats['teams'] }}</span><span class="text-xs text-zinc-400 uppercase">drużyn</span></p>
+                        <p><span class="block font-display text-4xl font-bold">{{ $stats['players'] }}</span><span class="text-xs text-zinc-400 uppercase">zawodników</span></p>
+                    </div>
+                @endif
+                <a href="{{ $site->href((string) $site['home_tile_url']) }}" @class(['group flex items-center justify-between gap-4 bg-sky-club p-5 transition hover:bg-sky-club-dark lg:p-6', 'lg:col-span-2' => ! $site['home_show_stats']])>
+                    <span class="max-w-40 font-display text-xl leading-tight font-semibold uppercase">{{ $site['home_tile_label'] }}</span>
                     <span class="flex h-12 w-12 items-center justify-center rounded-full bg-white text-sky-club-dark transition group-hover:translate-x-1" aria-hidden="true">→</span>
                 </a>
             </div>
@@ -99,11 +102,12 @@
 </section>
 
 {{-- DRUŻYNY --}}
+@if($site['home_teams_enabled'])
 <section class="container-site py-20 lg:py-28" data-reveal>
     <div class="flex flex-wrap items-end justify-between gap-6">
         <div>
-            <p class="eyebrow">Nasze drużyny</p>
-            <h2 class="heading-lg mt-3">Od młodzika<br class="hidden sm:block"> do seniora</h2>
+            <p class="eyebrow">{{ $site['home_teams_eyebrow'] }}</p>
+            <h2 class="heading-lg mt-3 max-w-xl text-balance">{{ $site['home_teams_title'] }}</h2>
         </div>
         <a href="{{ route('teams.index') }}" class="link-underline pb-1 text-sm font-semibold">Wszystkie drużyny →</a>
     </div>
@@ -124,16 +128,17 @@
         @endforeach
     </div>
 </section>
+@endif
 
 {{-- TERMINARZ I WYNIKI --}}
-@if($upcoming_games->isNotEmpty() || $recent_results->isNotEmpty())
+@if($site['home_games_enabled'] && ($upcoming_games->isNotEmpty() || $recent_results->isNotEmpty()))
 <section class="relative overflow-hidden bg-ink py-20 text-white lg:py-28">
     <div class="net-pattern absolute inset-0" aria-hidden="true"></div>
     <div class="container-site relative" data-reveal>
         <div class="flex flex-wrap items-end justify-between gap-6">
             <div>
-                <p class="eyebrow">Mecze</p>
-                <h2 class="heading-lg mt-3">Terminarz i wyniki</h2>
+                <p class="eyebrow">{{ $site['home_games_eyebrow'] }}</p>
+                <h2 class="heading-lg mt-3">{{ $site['home_games_title'] }}</h2>
             </div>
             <a href="{{ route('schedule.index') }}" class="btn-ghost">Pełny terminarz</a>
         </div>
@@ -159,12 +164,12 @@
 @endif
 
 {{-- AKTUALNOŚCI --}}
-@if($articles->isNotEmpty())
+@if($site['home_news_enabled'] && $articles->isNotEmpty())
 <section class="container-site py-20 lg:py-28" data-reveal>
     <div class="flex flex-wrap items-end justify-between gap-6">
         <div>
-            <p class="eyebrow">Aktualności</p>
-            <h2 class="heading-lg mt-3">Z życia klubu</h2>
+            <p class="eyebrow">{{ $site['home_news_eyebrow'] }}</p>
+            <h2 class="heading-lg mt-3">{{ $site['home_news_title'] }}</h2>
         </div>
         <a href="{{ route('articles.index') }}" class="link-underline pb-1 text-sm font-semibold">Wszystkie wpisy →</a>
     </div>
@@ -196,10 +201,10 @@
 @endif
 
 {{-- SPONSORZY --}}
-@if($sponsors->isNotEmpty())
+@if($site['home_sponsors_enabled'] && $sponsors->isNotEmpty())
 <section class="border-y border-zinc-200 bg-white py-14">
     <div class="container-site">
-        <p class="eyebrow text-center text-zinc-400">Wspierają nas</p>
+        <p class="eyebrow text-center text-zinc-400">{{ $site['home_sponsors_title'] }}</p>
         <div class="mt-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
             @foreach($sponsors as $sponsor)
                 <a href="{{ $sponsor->website_url ?: '#' }}" @if($sponsor->website_url) target="_blank" rel="noopener" @endif class="opacity-60 grayscale transition hover:opacity-100 hover:grayscale-0" title="{{ $sponsor->name }}">
@@ -216,14 +221,18 @@
 @endif
 
 {{-- DOŁĄCZ --}}
+@if($site['home_join_enabled'])
 <section class="container-site pt-20 lg:pt-28" data-reveal>
     <div class="relative isolate overflow-hidden rounded-[2rem] bg-sky-club px-8 py-14 text-white sm:px-14 lg:py-20">
-        <x-photo :src="Media::photo('ball-court')['url']" alt="" sizes="100vw" class="absolute inset-0 -z-20 h-full w-full opacity-30 mix-blend-multiply" />
+        <x-photo :src="$site->image('home_join_image', Media::photo('ball-court')['url'])" alt="" sizes="100vw" class="absolute inset-0 -z-20 h-full w-full opacity-30 mix-blend-multiply" />
         <div class="absolute inset-0 -z-10 bg-gradient-to-r from-sky-club-dark via-sky-club-dark/80 to-transparent"></div>
-        <p class="font-display text-sm font-semibold tracking-[0.25em] uppercase opacity-80">Nabór trwa cały rok</p>
-        <h2 class="heading-lg mt-3 max-w-2xl">Pierwszy trening jest za darmo</h2>
-        <p class="mt-4 max-w-xl text-lg text-white/85">Zapraszamy dziewczęta i chłopców od 8. roku życia. Sprzęt na start pożyczymy, uśmiech zabierz ze sobą.</p>
-        <a href="{{ route('contact.index') }}" class="btn mt-8 bg-white text-sky-club-dark hover:-translate-y-0.5 hover:bg-zinc-100">Umów pierwszy trening <span aria-hidden="true">→</span></a>
+        <p class="font-display text-sm font-semibold tracking-[0.25em] uppercase opacity-80">{{ $site['home_join_eyebrow'] }}</p>
+        <h2 class="heading-lg mt-3 max-w-2xl">{{ $site['home_join_title'] }}</h2>
+        <p class="mt-4 max-w-xl text-lg text-white/85">{{ $site['home_join_text'] }}</p>
+        @if(filled($site['home_join_button_label']))
+            <a href="{{ $site->href((string) $site['home_join_button_url']) }}" class="btn mt-8 bg-white text-sky-club-dark hover:-translate-y-0.5 hover:bg-zinc-100">{{ $site['home_join_button_label'] }} <span aria-hidden="true">→</span></a>
+        @endif
     </div>
 </section>
+@endif
 @endsection

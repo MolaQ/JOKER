@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
-@section('title', $team->name . ' - Joker Piła')
-@section('description', 'Skład, sztab szkoleniowy, terminarz i tabela drużyny '.$team->name.' - Joker Piła.')
+@section('title', $team->name)
+@section('description', 'Skład, sztab szkoleniowy, terminarz i tabela drużyny '.$team->name.' - '.$site['club_name'].'.')
 
 @php
     use App\PlayerPosition;

@@ -5,13 +5,16 @@ namespace App\Providers;
 use App\Models\Article;
 use App\Models\Document;
 use App\Models\Game;
+use App\Models\Page;
 use App\Models\Player;
 use App\Models\RivalTeam;
 use App\Models\Team;
 use App\Models\User;
 use App\Support\SearchIndex;
+use App\Support\SiteSettings;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -21,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(SiteSettings::class);
     }
 
     /**
@@ -29,6 +32,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Ustawienia z panelu dostępne w każdym widoku jako $site['klucz'].
+        View::share('site', $this->app->make(SiteSettings::class));
+
         // Polskie nazwy dni i miesięcy w datach (np. "sob, 18 paź").
         Carbon::setLocale(config('app.locale'));
 
@@ -41,7 +47,7 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         // Każda zmiana treści odświeża indeks wyszukiwarki.
-        foreach ([Article::class, Document::class, Game::class, Player::class, Team::class, User::class] as $model) {
+        foreach ([Article::class, Document::class, Game::class, Page::class, Player::class, Team::class, User::class] as $model) {
             $model::saved(fn () => SearchIndex::forget());
             $model::deleted(fn () => SearchIndex::forget());
         }

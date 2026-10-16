@@ -6,6 +6,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\GameCalendarController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScheduleController;
@@ -46,6 +47,9 @@ Route::get('/dokumenty', [DocumentController::class, 'index'])->name('documents.
 
 // Zdjęcia (autorzy zdjęć tematycznych)
 Route::view('/zdjecia', 'credits')->name('credits');
+
+// Podstrony edytowane w panelu
+Route::get('/strona/{page}', [PageController::class, 'show'])->name('pages.show');
 
 // Contact
 Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');

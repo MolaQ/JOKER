@@ -7,13 +7,21 @@
     <h1 class="text-3xl font-bold text-gray-900">Cześć, {{ \Illuminate\Support\Str::before(auth()->user()->name, ' ') }}!</h1>
     <p class="mt-1 mb-6 text-gray-600">Co chcesz dziś zrobić?</p>
 
-    <div class="mb-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        @foreach([
+    @php
+        $quickActions = [
             ['📰', 'Dodaj aktualność', 'Napisz wpis na stronę', 'admin.articles.index'],
             ['🏐', 'Wpisz wynik meczu', 'Albo dodaj nowy mecz', 'admin.games.index'],
             ['🎽', 'Dodaj zawodnika', 'Lub popraw dane w kadrze', 'admin.players.index'],
             ['👥', 'Drużyny i sztab', 'Zdjęcie, trenerzy, funkcje', 'admin.teams.index'],
-        ] as [$icon, $title, $hint, $route])
+        ];
+
+        if (auth()->user()->isAdmin()) {
+            $quickActions[] = ['🎨', 'Wygląd i ustawienia', 'Kolory, menu, pasek, teksty', 'admin.settings.index'];
+            $quickActions[] = ['📑', 'Podstrony', 'Dla rodziców, FAQ, O klubie', 'admin.pages.index'];
+        }
+    @endphp
+    <div class="mb-10 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
+        @foreach($quickActions as [$icon, $title, $hint, $route])
             <a href="{{ route($route) }}" class="group rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-200 transition hover:-translate-y-0.5 hover:ring-sky-400 hover:shadow-md">
                 <span class="text-3xl" aria-hidden="true">{{ $icon }}</span>
                 <span class="mt-3 block font-semibold text-gray-900 group-hover:text-sky-600">{{ $title }}</span>

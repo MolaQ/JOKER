@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Logowanie - Joker Piła')
+@section('title', 'Logowanie')
 
 @section('content')
 <section class="container-site pt-14 pb-6 lg:pt-20">

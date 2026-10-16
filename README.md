@@ -16,6 +16,14 @@ Wszystko zmieniasz w panelu: zaloguj się i kliknij **Panel** w prawym górnym r
 | dać komuś dostęp do panelu | Użytkownicy → rola „Administrator” lub „Trener” |
 | dodać osobę do sztabu bez dostępu do panelu | Użytkownicy → rola „Członek sztabu” |
 | wrzucić regulamin lub zgodę do pobrania | Dokumenty (zaznacz „publiczny”) |
+| zmienić kolory, logo, nazwę klubu | Wygląd i ustawienia → Ogólne / Kolory |
+| zmienić linki w żółtym pasku lub w menu | Wygląd i ustawienia → Górny pasek / Menu główne |
+| zmienić teksty na stronie głównej, ukryć sekcję | Wygląd i ustawienia → Strona główna |
+| zmienić telefon, e-mail, adres, media społecznościowe | Wygląd i ustawienia → Kontakt i stopka |
+| dodać stronę typu „Dla rodziców”, „FAQ” | Podstrony (adres: /strona/nazwa, potem dodaj link w pasku lub menu) |
+
+„Wygląd i ustawienia” oraz „Podstrony” widzi tylko administrator. Każda zakładka ma przycisk
+„Przywróć domyślne”. Nowe ustawienie programista dodaje w `config/site.php` i od razu pojawia się w panelu.
 
 Wyszukiwarka (lupa, klawisz `/` lub Ctrl+K) przeszukuje całą stronę: drużyny, zawodników, sztab,
 aktualności, mecze i dokumenty. Nowa treść pojawia się w niej automatycznie.

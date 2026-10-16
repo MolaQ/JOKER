@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
-@section('title', $player->full_name . ' - Joker Piła')
-@section('description', $player->full_name.' - '.($player->position?->label() ?? 'zawodnik').' drużyny '.$player->team?->name.' (Joker Piła).')
+@section('title', $player->full_name)
+@section('description', $player->full_name.' - '.($player->position?->label() ?? 'zawodnik').' drużyny '.$player->team?->name.' ('.$site['club_name'].').')
 
 @section('content')
 <section class="relative isolate -mt-16 overflow-hidden bg-ink pt-16 text-white lg:-mt-20 lg:pt-20">

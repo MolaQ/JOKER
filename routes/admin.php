@@ -63,6 +63,12 @@ Route::middleware(['auth', 'role:admin,trainer'])->prefix('admin')->name('admin.
         return view('admin.users.index');
     })->name('users.index');
 
+    // Site settings & pages
+    Route::middleware('role:admin')->group(function () {
+        Route::view('/settings', 'admin.settings.index')->name('settings.index');
+        Route::view('/pages', 'admin.pages.index')->name('pages.index');
+    });
+
     // Profile change requests
     Route::get('/profile-change-requests', function () {
         return view('admin.profile-change-requests.index');

@@ -19,6 +19,10 @@
                 ['label' => 'Mecze i wyniki', 'route' => 'admin.games.index', 'icon' => '🏐'],
                 ['label' => 'Slajdy na stronie głównej', 'route' => 'admin.hero-slides.index', 'icon' => '🖼️'],
             ],
+            'Wygląd strony' => [
+                ['label' => 'Wygląd i ustawienia', 'route' => 'admin.settings.index', 'icon' => '🎨', 'admin' => true],
+                ['label' => 'Podstrony', 'route' => 'admin.pages.index', 'icon' => '📑', 'admin' => true],
+            ],
             'Klub' => [
                 ['label' => 'Drużyny i sztab', 'route' => 'admin.teams.index', 'icon' => '👥'],
                 ['label' => 'Zawodnicy', 'route' => 'admin.players.index', 'icon' => '🎽'],
