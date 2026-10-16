@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Game;
 use App\Models\Player;
 use App\Models\Team;
 use App\Models\User;
@@ -11,7 +12,7 @@ beforeEach(function () {
 
 test('public pages load', function (string $url) {
     $this->get($url)->assertOk();
-})->with(['/', '/teams', '/news', '/schedule', '/standings', '/contact', '/zdjecia']);
+})->with(['/', '/teams', '/news', '/schedule', '/standings', '/contact', '/zdjecia', '/dokumenty', '/szukaj']);
 
 test('team page lists players and staff with roles, each linking to a profile', function () {
     $team = Team::firstWhere('slug', 'seniorzy');
@@ -47,4 +48,33 @@ test('joker:admin promotes an existing user', function () {
     $this->artisan('joker:admin', ['email' => $fan->email])->assertSuccessful();
 
     expect($fan->fresh()->role)->toBe(UserRole::Admin);
+});
+
+test('search finds people without Polish characters', function () {
+    $this->get(route('search', ['q' => 'wisniewski']))
+        ->assertOk()
+        ->assertSee('Tomasz Wiśniewski');
+});
+
+test('search index covers every kind of content', function () {
+    $types = collect($this->getJson(route('search.data'))->assertOk()->json())->pluck('type')->unique();
+
+    expect($types->all())->toContain('Strona', 'Drużyna', 'Zawodnik', 'Sztab', 'Aktualność', 'Mecz', 'Dokument');
+});
+
+test('search index refreshes after content changes', function () {
+    $this->getJson(route('search.data'));
+
+    Team::first()->update(['name' => 'Drużyna Testowa XYZ']);
+
+    expect(collect($this->getJson(route('search.data'))->json())->pluck('title'))->toContain('Drużyna Testowa XYZ');
+});
+
+test('upcoming match can be added to a phone calendar', function () {
+    $game = Game::upcoming()->first();
+
+    $this->get(route('games.calendar', $game))
+        ->assertOk()
+        ->assertHeader('Content-Type', 'text/calendar; charset=utf-8')
+        ->assertSee('BEGIN:VEVENT', false);
 });

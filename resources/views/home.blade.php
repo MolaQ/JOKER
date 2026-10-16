@@ -32,14 +32,15 @@
 
 @section('content')
 {{-- HERO --}}
-<section data-hero-slider class="relative isolate -mt-16 min-h-[92svh] overflow-hidden bg-ink text-white lg:-mt-20">
+<section data-hero-slider class="relative isolate -mt-16 overflow-hidden bg-ink text-white lg:-mt-20">
+    <div class="relative min-h-[80svh] lg:min-h-[92svh]">
     @foreach($slides as $slide)
         <div data-slide aria-hidden="{{ $loop->first ? 'false' : 'true' }}" class="absolute inset-0 transition-opacity duration-1000 {{ $loop->first ? 'opacity-100' : 'opacity-0' }}">
             <x-photo :src="$slide['image']" :alt="$slide['title']" :eager="$loop->first" width="1800" height="1200" class="absolute inset-0 h-full w-full scale-105" />
             <div class="absolute inset-0 bg-gradient-to-t from-ink via-ink/60 to-ink/20"></div>
             <div class="absolute inset-0 bg-gradient-to-r from-ink/80 via-transparent to-transparent"></div>
 
-            <div class="container-site relative flex min-h-[92svh] flex-col justify-end pt-32 pb-64 sm:pb-72 lg:pb-48">
+            <div class="container-site relative flex min-h-[80svh] flex-col justify-end pt-32 pb-12 lg:min-h-[92svh] lg:pb-48">
                 <p class="eyebrow">Joker Piła · Sezon {{ $seasonName ?? date('Y') }}</p>
                 <h1 class="heading-xl mt-4 max-w-4xl text-balance">{{ $slide['title'] }}</h1>
                 @if($slide['subtitle'])
@@ -63,16 +64,22 @@
         </div>
     @endif
 
-    {{-- Najbliższy mecz + liczby klubu --}}
-    <div class="absolute inset-x-0 bottom-0 z-10">
+    </div>
+
+    {{-- Najbliższy mecz + liczby klubu (na telefonie pod zdjęciem, na komputerze na zdjęciu) --}}
+    <div class="relative z-10 lg:absolute lg:inset-x-0 lg:bottom-0">
         <div class="container-site">
             <div class="grid gap-px overflow-hidden rounded-t-3xl bg-white/10 backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-4">
                 <div class="bg-ink/70 p-5 sm:col-span-2 lg:p-6">
                     @if($nextGame)
-                        <p class="text-xs font-semibold tracking-widest text-sky-club uppercase">Najbliższy mecz · {{ $nextGame->game_date?->translatedFormat('l, d F · H:i') }}</p>
+                        <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                            <p class="text-xs font-semibold tracking-widest text-sky-club uppercase">Najbliższy mecz · {{ $nextGame->game_date?->translatedFormat('D, d M · H:i') }}</p>
+                            <p data-countdown="{{ $nextGame->game_date?->toIso8601String() }}" class="font-display text-sm font-semibold tracking-wide text-white tabular-nums" aria-live="off"></p>
+                        </div>
                         <p class="mt-2 font-display text-xl font-semibold uppercase lg:text-2xl">
                             {{ $nextGame->team?->name }} <span class="text-zinc-500">vs</span> {{ $nextGame->opponentShortName() }}
                         </p>
+                        <a href="{{ route('games.calendar', $nextGame) }}" class="mt-2 inline-flex min-h-11 items-center gap-1.5 text-xs font-semibold text-sky-club-light">+ Dodaj do kalendarza</a>
                     @else
                         <p class="text-xs font-semibold tracking-widest text-sky-club uppercase">Terminarz</p>
                         <p class="mt-2 font-display text-xl font-semibold uppercase">Nowe mecze już wkrótce</p>

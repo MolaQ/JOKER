@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Team;
 use App\Models\User;
+use App\Support\SearchIndex;
 use App\UserRole;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -142,6 +143,7 @@ class TeamList extends Component
                 ->mapWithKeys(fn ($userId) => [$userId => ['role' => filled($staffRoles[$userId] ?? null) ? trim($staffRoles[$userId]) : null]])
                 ->all()
         );
+        SearchIndex::forget();
 
         $this->closeModal();
     }

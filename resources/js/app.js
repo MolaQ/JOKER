@@ -1,3 +1,7 @@
+import { initSearch } from './search';
+
+initSearch();
+
 // Pojawianie się sekcji przy przewijaniu.
 const revealObserver = 'IntersectionObserver' in window
     ? new IntersectionObserver((entries) => {
@@ -72,3 +76,28 @@ if (slider) {
 
     start();
 }
+
+// Odliczanie do najbliższego meczu.
+document.querySelectorAll('[data-countdown]').forEach((el) => {
+    const target = new Date(el.dataset.countdown).getTime();
+
+    const tick = () => {
+        const diff = target - Date.now();
+
+        if (diff <= 0) {
+            el.textContent = 'Gramy dziś!';
+            return;
+        }
+
+        const days = Math.floor(diff / 86400000);
+        const hours = Math.floor((diff % 86400000) / 3600000);
+        const minutes = Math.floor((diff % 3600000) / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        const pad = (n) => String(n).padStart(2, '0');
+
+        el.textContent = `za ${days} d ${pad(hours)} h ${pad(minutes)} min ${pad(seconds)} s`;
+    };
+
+    tick();
+    setInterval(tick, 1000);
+});

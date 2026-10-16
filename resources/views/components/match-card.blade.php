@@ -34,12 +34,24 @@
         <p class="text-right font-display text-lg leading-tight font-semibold uppercase">{{ $away }}</p>
     </div>
 
+    @if($sets && is_array($game->sets_score) && count($game->sets_score))
+        <p class="mt-3 text-center text-xs tabular-nums {{ $dark ? 'text-zinc-400' : 'text-zinc-500' }}">
+            {{ collect($game->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(' · ') }}
+        </p>
+    @endif
+
     <div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs {{ $dark ? 'text-zinc-400' : 'text-zinc-500' }}">
         @if($game->competition)
             <span>{{ $game->competition->name }}</span>
         @endif
         @if($game->venue)
             <span>{{ $game->venue }}</span>
+        @endif
+        @if($game->isUpcoming())
+            <a href="{{ route('games.calendar', $game) }}" class="ml-auto inline-flex min-h-11 items-center gap-1.5 font-semibold {{ $dark ? 'text-sky-club-light' : 'text-sky-club-dark' }}" title="Dodaj mecz do kalendarza w telefonie">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M8 3v4m8-4v4M3 10h18M12 14v4m-2-2h4M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>
+                Do kalendarza
+            </a>
         @endif
     </div>
 </article>

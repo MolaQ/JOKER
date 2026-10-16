@@ -15,6 +15,10 @@ Wszystko zmieniasz w panelu: zaloguj się i kliknij **Panel** w prawym górnym r
 | zmienić slajd na stronie głównej | Slajdy na stronie głównej |
 | dać komuś dostęp do panelu | Użytkownicy → rola „Administrator” lub „Trener” |
 | dodać osobę do sztabu bez dostępu do panelu | Użytkownicy → rola „Członek sztabu” |
+| wrzucić regulamin lub zgodę do pobrania | Dokumenty (zaznacz „publiczny”) |
+
+Wyszukiwarka (lupa, klawisz `/` lub Ctrl+K) przeszukuje całą stronę: drużyny, zawodników, sztab,
+aktualności, mecze i dokumenty. Nowa treść pojawia się w niej automatycznie.
 
 Jeśli drużyna, artykuł albo slajd nie ma własnego zdjęcia, strona pokazuje darmowe zdjęcie tematyczne
 z Unsplash (lista i autorzy: `config/media.php`, strona `/zdjecia`). Wgranie własnego zdjęcia je zastępuje.

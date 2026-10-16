@@ -6,27 +6,42 @@ use App\Models\Document;
 use App\Models\User;
 use App\UserRole;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class DocumentSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Przykładowe dokumenty do pobrania (proste pliki tekstowe zamiast prawdziwych PDF-ów).
      */
     public function run(): void
     {
-        $admins = User::where('role', UserRole::Admin)->get();
+        $adminId = User::where('role', UserRole::Admin)->value('id');
 
-        // Dokumenty publiczne
-        Document::factory()->count(15)->create([
-            'uploaded_by' => $admins->random()->id,
-            'is_public' => true,
-        ]);
+        $documents = [
+            ['Regulamin klubu Joker Piła', 'regulations', 'Zasady uczestnictwa w treningach i rozgrywkach.'],
+            ['Regulamin hali sportowej', 'regulations', 'Zasady korzystania z hali przy ul. Sportowej 1.'],
+            ['Deklaracja członkowska', 'forms', 'Wypełnij przy zapisie zawodnika do klubu.'],
+            ['Zgoda rodzica na udział w zajęciach', 'forms', 'Wymagana dla zawodników niepełnoletnich.'],
+            ['Zgoda na publikację wizerunku (RODO)', 'forms', 'Zdjęcia z meczów i treningów na stronie i w mediach klubu.'],
+            ['Sprawozdanie z działalności za ubiegły sezon', 'reports', 'Podsumowanie wyników sportowych i finansów klubu.'],
+        ];
 
-        // Dokumenty prywatne (tylko dla zalogowanych)
-        Document::factory()->count(5)->create([
-            'uploaded_by' => $admins->random()->id,
-            'is_public' => false,
-            'category' => 'regulations',
-        ]);
+        foreach ($documents as [$title, $category, $description]) {
+            $path = 'documents/'.Str::slug($title).'.txt';
+            Storage::disk('public')->put($path, $title."\n\n".$description."\n\n(Przykładowy dokument - podmień go w panelu admina.)\n");
+
+            Document::create([
+                'title' => $title,
+                'description' => $description,
+                'file_path' => $path,
+                'file_type' => 'txt',
+                'file_size' => Storage::disk('public')->size($path),
+                'category' => $category,
+                'uploaded_by' => $adminId,
+                'download_count' => 0,
+                'is_public' => true,
+            ]);
+        }
     }
 }

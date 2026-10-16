@@ -2,8 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\Article;
+use App\Models\Document;
+use App\Models\Game;
+use App\Models\Player;
 use App\Models\RivalTeam;
 use App\Models\Team;
+use App\Models\User;
+use App\Support\SearchIndex;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\ServiceProvider;
@@ -33,5 +39,11 @@ class AppServiceProvider extends ServiceProvider
             'team' => Team::class,
             'rival_team' => RivalTeam::class,
         ]);
+
+        // Każda zmiana treści odświeża indeks wyszukiwarki.
+        foreach ([Article::class, Document::class, Game::class, Player::class, Team::class, User::class] as $model) {
+            $model::saved(fn () => SearchIndex::forget());
+            $model::deleted(fn () => SearchIndex::forget());
+        }
     }
 }

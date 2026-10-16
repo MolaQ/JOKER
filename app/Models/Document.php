@@ -46,6 +46,16 @@ class Document extends Model
         return $query->where('category', $category);
     }
 
+    public function categoryLabel(): string
+    {
+        return match ($this->category) {
+            'regulations' => 'Regulaminy',
+            'forms' => 'Formularze i zgody',
+            'reports' => 'Sprawozdania',
+            default => 'Inne',
+        };
+    }
+
     public function fileSizeFormatted(): string
     {
         $bytes = $this->file_size;

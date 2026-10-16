@@ -3,10 +3,13 @@
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\GameCalendarController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TrainerController;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +35,14 @@ Route::get('/trenerzy/{trainer}', [TrainerController::class, 'show'])->name('tra
 // Schedule & Standings
 Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
 Route::get('/standings', [ScheduleController::class, 'standings'])->name('standings');
+Route::get('/mecze/{game}/kalendarz.ics', [GameCalendarController::class, 'show'])->name('games.calendar');
+
+// Wyszukiwarka
+Route::get('/szukaj', [SearchController::class, 'index'])->name('search');
+Route::get('/szukaj/indeks.json', [SearchController::class, 'data'])->name('search.data');
+
+// Dokumenty do pobrania
+Route::get('/dokumenty', [DocumentController::class, 'index'])->name('documents.index');
 
 // Zdjęcia (autorzy zdjęć tematycznych)
 Route::view('/zdjecia', 'credits')->name('credits');
