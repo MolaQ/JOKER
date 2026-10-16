@@ -58,8 +58,8 @@ class PlayerSeeder extends Seeder
                     : fake()->dateTimeBetween('-32 years', '-19 years');
 
                 $player = Player::create([
-                    'first_name' => fake()->firstNameMale(),
-                    'last_name' => fake()->lastNameMale(),
+                    'first_name' => fake('pl_PL')->firstNameMale(),
+                    'last_name' => fake('pl_PL')->lastNameMale(),
                     'jersey_number' => $jerseyNumber,
                     'position' => fake()->randomElement(PlayerPosition::cases()),
                     'birth_date' => $birthDate,

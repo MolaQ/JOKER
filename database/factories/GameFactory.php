@@ -36,7 +36,7 @@ class GameFactory extends Factory
             ]),
             'is_home' => $isHome,
             'game_date' => $gameDate,
-            'venue' => $isHome ? 'Hala Sportowa Joker Piła' : 'Hala '.fake()->city(),
+            'venue' => $isHome ? 'Hala Sportowa Joker Piła' : 'Hala '.fake('pl_PL')->city(),
             'league' => 'Tauron 1 Liga',
             'status' => $status,
             'home_score' => $status === 'finished' ? $homeScore : null,
