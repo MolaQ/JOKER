@@ -33,7 +33,7 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],
@@ -43,6 +43,9 @@ return [
             'root' => storage_path('app/public'),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
             'visibility' => 'public',
+            // Zapas, gdy serwer (np. XAMPP na Windows) nie obsłuży linku public/storage:
+            // wtedy zdjęcia wydaje Laravel. Gdy link działa, serwer podaje pliki sam.
+            'serve' => true,
             'throw' => false,
             'report' => false,
         ],

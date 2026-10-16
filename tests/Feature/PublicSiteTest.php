@@ -5,6 +5,7 @@ use App\Models\Player;
 use App\Models\Team;
 use App\Models\User;
 use App\UserRole;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     $this->seed();
@@ -77,4 +78,11 @@ test('upcoming match can be added to a phone calendar', function () {
         ->assertOk()
         ->assertHeader('Content-Type', 'text/calendar; charset=utf-8')
         ->assertSee('BEGIN:VEVENT', false);
+});
+
+test('uploaded images are served even when the public/storage link is missing', function () {
+    Storage::fake('public');
+    Storage::disk('public')->put('sponsors/logo.png', 'obrazek');
+
+    $this->get('/storage/sponsors/logo.png')->assertOk();
 });
