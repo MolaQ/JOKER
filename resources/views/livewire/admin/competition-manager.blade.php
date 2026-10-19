@@ -38,8 +38,19 @@
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $competition->season?->name }}</td>
                     <td class="px-3 py-4 text-sm text-gray-500">
                         {{ $competition->teams->pluck('name')->join(', ') }}
+                        @if($competition->source_url)
+                            <p class="mt-1 text-xs {{ str_contains((string) $competition->sync_message, 'Nie udało się') || str_contains((string) $competition->sync_message, 'Nieprzypisane') ? 'text-amber-700' : 'text-gray-400' }}">
+                                🔄 {{ $competition->synced_at ? 'Pobrano '.$competition->synced_at->diffForHumans().'. '.$competition->sync_message : 'Terminarz jeszcze nie pobrany.' }}
+                            </p>
+                        @endif
                     </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                        @if($competition->source_url)
+                            <button type="button" wire:click="sync({{ $competition->id }})" wire:loading.attr="disabled" wire:target="sync({{ $competition->id }})" class="text-emerald-700 hover:text-emerald-900 mr-4">
+                                <span wire:loading.remove wire:target="sync({{ $competition->id }})">Pobierz terminarz</span>
+                                <span wire:loading wire:target="sync({{ $competition->id }})">Pobieram…</span>
+                            </button>
+                        @endif
                         <button type="button" wire:click="openEditModal({{ $competition->id }})" class="text-blue-600 hover:text-blue-900 mr-4">Edytuj</button>
                         <button type="button" wire:click="delete({{ $competition->id }})" wire:confirm="Czy na pewno chcesz usunąć te rozgrywki?" class="text-red-600 hover:text-red-900">Usuń</button>
                     </td>
@@ -98,6 +109,13 @@
                                     </select>
                                     @error('season_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
+                            </div>
+
+                            <div class="rounded-lg bg-emerald-50 p-4 ring-1 ring-emerald-200">
+                                <label class="block text-sm font-semibold text-gray-900" for="competition-source">Terminarz ze strony związku (automatycznie)</label>
+                                <p class="mt-1 text-xs text-gray-600">Wklej adres strony z meczami, np. <span class="font-mono">https://wzps.poznan.pl/obsady/index.php?mode=12&amp;type=11</span>. Godziny meczów są na stronie drużyny (Kluby → drużyna); możesz wkleić oba adresy, każdy w osobnej linii. Mecze naszych drużyn pojawią się w zakładce Mecze, a wyniki będą się same aktualizować.</p>
+                                <textarea id="competition-source" wire:model="source_url" rows="2" class="mt-2 block w-full rounded-md border-gray-300 font-mono text-xs shadow-sm" placeholder="https://wzps.poznan.pl/obsady/index.php?mode=12&type=11"></textarea>
+                                @error('source_url') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
@@ -164,13 +182,18 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Drużyny biorące udział</label>
-                                <p class="text-xs text-gray-500 mb-2">Drużyna może brać udział w kilku rozgrywkach jednocześnie.</p>
-                                <div class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
+                                <p class="text-xs text-gray-500 mb-2">Zaznacz nasze drużyny. Jeśli w tych rozgrywkach drużyna jest zgłoszona pod inną nazwą (np. „LOMS Joker Piła II”), wpisz ją obok dokładnie tak jak na stronie związku.</p>
+                                <div class="max-h-72 space-y-1 overflow-y-auto rounded-md border border-gray-200 p-2">
                                     @foreach($teams as $team)
-                                        <label class="flex items-center text-sm text-gray-700">
-                                            <input type="checkbox" wire:model="team_ids" value="{{ $team->id }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
-                                            {{ $team->name }}
-                                        </label>
+                                        <div class="flex flex-wrap items-center gap-2 rounded-md px-1 py-1 hover:bg-gray-50" wire:key="competition-team-{{ $team->id }}">
+                                            <label class="flex min-w-40 flex-1 items-center text-sm text-gray-700">
+                                                <input type="checkbox" wire:model.live="team_ids" value="{{ $team->id }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
+                                                {{ $team->name }}
+                                            </label>
+                                            @if(in_array($team->id, array_map('intval', $team_ids), true))
+                                                <input type="text" wire:model="external_names.{{ $team->id }}" placeholder="Nazwa w rozgrywkach (opcjonalnie)" class="w-full flex-1 rounded-md border-gray-300 text-sm sm:w-auto" aria-label="Nazwa drużyny {{ $team->name }} w tych rozgrywkach">
+                                            @endif
+                                        </div>
                                     @endforeach
                                 </div>
                             </div>

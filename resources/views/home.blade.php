@@ -20,7 +20,7 @@
             'cta_label' => $site['hero_button_label'],
             'cta_url' => $site->href((string) $site['hero_button_url']),
         ]]);
-    $nextGame = $upcoming_games->first();
+    $nextGame = $countdownGame;
 @endphp
 
 @push('head')
@@ -73,14 +73,21 @@
             <div class="grid gap-px overflow-hidden rounded-t-3xl bg-white/10 backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-4">
                 <div class="bg-ink/70 p-5 sm:col-span-2 lg:p-6">
                     @if($nextGame)
-                        <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-                            <p class="text-xs font-semibold tracking-widest text-sky-club uppercase">Najbliższy mecz · {{ $nextGame->game_date?->translatedFormat('D, d M · H:i') }}</p>
-                            <p @if($site['home_show_countdown']) data-countdown="{{ $nextGame->game_date?->toIso8601String() }}" @endif class="font-display text-sm font-semibold tracking-wide text-white tabular-nums" aria-live="off"></p>
+                        <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+                            <div class="min-w-0">
+                                <p class="text-xs font-semibold tracking-widest text-sky-club uppercase">Najbliższy mecz · {{ $nextGame->kickoffLabel() }}</p>
+                                <p class="mt-2 font-display text-xl font-semibold uppercase lg:text-2xl">
+                                    {{ $nextGame->team?->name }} <span class="text-zinc-500">vs</span> {{ $nextGame->opponentShortName() }}
+                                </p>
+                                <a href="{{ route('games.calendar', $nextGame) }}" class="mt-1 inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-sky-club-light">+ Dodaj do kalendarza</a>
+                            </div>
+                            @if($site['home_show_countdown'])
+                                <div>
+                                    <div data-countdown="{{ $nextGame->game_date?->toIso8601String() }}" role="timer" aria-hidden="true"></div>
+                                    <p data-countdown-text class="sr-only" aria-live="off"></p>
+                                </div>
+                            @endif
                         </div>
-                        <p class="mt-2 font-display text-xl font-semibold uppercase lg:text-2xl">
-                            {{ $nextGame->team?->name }} <span class="text-zinc-500">vs</span> {{ $nextGame->opponentShortName() }}
-                        </p>
-                        <a href="{{ route('games.calendar', $nextGame) }}" class="mt-2 inline-flex min-h-11 items-center gap-1.5 text-xs font-semibold text-sky-club-light">+ Dodaj do kalendarza</a>
                     @else
                         <p class="text-xs font-semibold tracking-widest text-sky-club uppercase">Terminarz</p>
                         <p class="mt-2 font-display text-xl font-semibold uppercase">Nowe mecze już wkrótce</p>

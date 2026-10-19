@@ -6,6 +6,7 @@ use App\Models\Competition;
 use App\Models\CompetitionLevel;
 use App\Models\Season;
 use App\Models\Team;
+use App\Services\ScheduleImporter;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -47,6 +48,15 @@ class CompetitionManager extends Component
     /** @var array<int, int> */
     public array $team_ids = [];
 
+    /**
+     * Nazwa naszej drużyny w tych rozgrywkach (gdy inna niż na stronie), klucz = id drużyny.
+     *
+     * @var array<int, string>
+     */
+    public array $external_names = [];
+
+    public string $source_url = '';
+
     public string $search = '';
 
     public ?string $flashType = null;
@@ -72,6 +82,19 @@ class CompetitionManager extends Component
             'standings_criteria.*' => 'in:points,sets_ratio,sets_diff,points_ratio,points_diff,wins',
             'team_ids' => 'array',
             'team_ids.*' => 'exists:teams,id',
+            'external_names' => 'array',
+            'external_names.*' => 'nullable|string|max:255',
+            'source_url' => ['nullable', 'string', 'max:2000', 'regex:/^(\s*https?:\/\/\S+\s*)*$/'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function messages(): array
+    {
+        return [
+            'source_url.regex' => 'Wklej pełne adresy stron (zaczynające się od https://), każdy w osobnej linii.',
         ];
     }
 
@@ -115,6 +138,8 @@ class CompetitionManager extends Component
         $this->points_loss_0_3 = $competition->points_loss_0_3;
         $this->standings_criteria = $competition->sortCriteria();
         $this->team_ids = $competition->teams->pluck('id')->all();
+        $this->external_names = $competition->teams->mapWithKeys(fn (Team $team) => [$team->id => (string) $team->pivot->external_name])->all();
+        $this->source_url = (string) $competition->source_url;
         $this->flashType = null;
         $this->flashMessage = null;
 
@@ -125,7 +150,8 @@ class CompetitionManager extends Component
     {
         $validated = $this->validate();
         $teamIds = $validated['team_ids'] ?? [];
-        unset($validated['team_ids']);
+        unset($validated['team_ids'], $validated['external_names']);
+        $validated['source_url'] = trim($validated['source_url'] ?? '') ?: null;
 
         if ($this->editingId) {
             $competition = Competition::findOrFail($this->editingId);
@@ -138,9 +164,31 @@ class CompetitionManager extends Component
             $this->flashMessage = 'Rozgrywki zostały dodane.';
         }
 
-        $competition->teams()->sync($teamIds);
+        $competition->teams()->sync(collect($teamIds)->mapWithKeys(fn ($teamId) => [
+            $teamId => ['external_name' => trim($this->external_names[$teamId] ?? '') ?: null],
+        ])->all());
+
+        if ($competition->source_url) {
+            $this->syncCompetition($competition);
+        }
 
         $this->closeModal();
+    }
+
+    /**
+     * Pobiera terminarz i wyniki ze strony związku (przycisk w tabeli).
+     */
+    public function sync(int $id): void
+    {
+        $this->syncCompetition(Competition::findOrFail($id));
+    }
+
+    private function syncCompetition(Competition $competition): void
+    {
+        app(ScheduleImporter::class)->sync($competition);
+
+        $this->flashType = str_contains((string) $competition->sync_message, 'Nie udało się') ? 'error' : 'success';
+        $this->flashMessage = $competition->name.': '.$competition->sync_message;
     }
 
     public function delete(int $id): void
@@ -173,6 +221,8 @@ class CompetitionManager extends Component
         $this->points_loss_0_3 = 0;
         $this->standings_criteria = ['points', 'sets_ratio', 'points_ratio'];
         $this->team_ids = [];
+        $this->external_names = [];
+        $this->source_url = '';
         $this->resetErrorBag();
     }
 

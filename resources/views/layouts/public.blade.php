@@ -38,6 +38,7 @@
             --color-topbar-text: {{ $site->color('color_topbar_text') }};
             --color-nav-button-bg: {{ $site->color('color_nav_button_bg') }};
             --color-nav-button-text: {{ $site->color('color_nav_button_text') }};
+            --color-countdown: {{ $site->color('color_countdown') }};
         }
         body { background-color: var(--color-page); }
     </style>

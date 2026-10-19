@@ -57,6 +57,17 @@
                                 </label>
                                 @break
 
+                            @case('select')
+                                <div class="space-y-2">
+                                    @foreach($field['options'] as $optionValue => $optionLabel)
+                                        <label class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 ring-1 ring-gray-200 has-[:checked]:bg-sky-50 has-[:checked]:ring-sky-500">
+                                            <input type="radio" wire:model="values.{{ $key }}" value="{{ $optionValue }}" class="text-sky-600">
+                                            <span class="text-sm text-gray-800">{{ $optionLabel }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                                @break
+
                             @case('textarea')
                                 <textarea id="field-{{ $key }}" wire:model="values.{{ $key }}" rows="3" class="block w-full"></textarea>
                                 @break

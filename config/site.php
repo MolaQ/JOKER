@@ -40,6 +40,7 @@ return [
                 'color_topbar_text' => ['type' => 'color', 'label' => 'Górny pasek: tekst', 'default' => '#12141a'],
                 'color_nav_button_bg' => ['type' => 'color', 'label' => 'Wyróżniony przycisk w menu: tło', 'default' => '#ffd600'],
                 'color_nav_button_text' => ['type' => 'color', 'label' => 'Wyróżniony przycisk w menu: tekst', 'default' => '#12141a'],
+                'color_countdown' => ['type' => 'color', 'label' => 'Cyfry zegara odliczającego do meczu', 'default' => '#ffd600'],
             ],
         ],
 
@@ -94,7 +95,11 @@ return [
                 'hero_second_button_url' => ['type' => 'url', 'label' => 'Drugi przycisk: adres', 'default' => '/schedule'],
                 'home_tile_label' => ['type' => 'text', 'label' => 'Kafelek przy najbliższym meczu: tekst', 'default' => 'Dołącz do klubu'],
                 'home_tile_url' => ['type' => 'url', 'label' => 'Kafelek przy najbliższym meczu: adres', 'default' => '/contact'],
-                'home_show_countdown' => ['type' => 'toggle', 'label' => 'Odliczanie do najbliższego meczu', 'default' => true],
+                'home_show_countdown' => ['type' => 'toggle', 'label' => 'Zegar odliczający do meczu', 'default' => true],
+                'countdown_target' => ['type' => 'select', 'label' => 'Zegar odlicza do', 'help' => 'Gdy seniorzy nie mają zaplanowanego meczu, zegar pokaże najbliższy mecz innej drużyny.', 'default' => 'seniors', 'options' => [
+                    'seniors' => 'Najbliższego meczu seniorów',
+                    'any' => 'Najbliższego meczu dowolnej drużyny Jokera',
+                ]],
                 'home_show_stats' => ['type' => 'toggle', 'label' => 'Liczby klubu (drużyny, zawodnicy)', 'default' => true],
                 'home_teams_enabled' => ['type' => 'toggle', 'label' => 'Sekcja: Drużyny', 'default' => true],
                 'home_teams_eyebrow' => ['type' => 'text', 'label' => 'Drużyny: mały napis', 'default' => 'Nasze drużyny'],

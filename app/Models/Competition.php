@@ -28,6 +28,9 @@ class Competition extends Model
         'level_id',
         'season_id',
         'description',
+        'source_url',
+        'synced_at',
+        'sync_message',
         'display_order',
         'points_win_3_0',
         'points_win_3_1',
@@ -42,6 +45,7 @@ class Competition extends Model
     {
         return [
             'standings_criteria' => 'array',
+            'synced_at' => 'datetime',
         ];
     }
 
@@ -57,7 +61,22 @@ class Competition extends Model
 
     public function teams(): BelongsToMany
     {
-        return $this->belongsToMany(Team::class, 'competition_team')->withTimestamps();
+        return $this->belongsToMany(Team::class, 'competition_team')
+            ->withPivot('external_name')
+            ->withTimestamps();
+    }
+
+    /**
+     * Adresy stron z terminarzem (jeden na linię).
+     *
+     * @return array<int, string>
+     */
+    public function sourceUrls(): array
+    {
+        return collect(preg_split('/\s+/', (string) $this->source_url))
+            ->filter(fn (string $url) => str_starts_with($url, 'http'))
+            ->values()
+            ->all();
     }
 
     public function games(): HasMany

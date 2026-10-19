@@ -1,8 +1,11 @@
 <?php
 
+use App\Models\Competition;
 use App\Models\User;
+use App\Services\ScheduleImporter;
 use App\UserRole;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Str;
 
 /*
@@ -32,3 +35,22 @@ Artisan::command('joker:admin {email} {--name=}', function (string $email) {
     $this->info("Utworzono administratora {$email}");
     $this->warn("Hasło: {$password} (zmienisz je w panelu: Użytkownicy)");
 })->purpose('Nadaj uprawnienia administratora wskazanemu adresowi e-mail');
+
+/*
+ * Pobiera terminarze i wyniki ze stron związku dla rozgrywek z wpisanym adresem.
+ * Działa samo co 3 godziny, jeśli na serwerze jest ustawiony cron z `php artisan schedule:run`.
+ */
+Artisan::command('joker:sync-schedules', function (ScheduleImporter $importer) {
+    $competitions = Competition::whereNotNull('source_url')->where('source_url', '!=', '')->get();
+
+    foreach ($competitions as $competition) {
+        $importer->sync($competition);
+        $this->line("{$competition->name}: {$competition->sync_message}");
+    }
+
+    if ($competitions->isEmpty()) {
+        $this->info('Żadne rozgrywki nie mają adresu terminarza.');
+    }
+})->purpose('Pobierz terminarze i wyniki ze stron związku');
+
+Schedule::command('joker:sync-schedules')->everyThreeHours()->withoutOverlapping();

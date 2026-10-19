@@ -6,6 +6,7 @@ use App\Support\SearchIndex;
 use App\Support\SiteSettings;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Arr;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -160,6 +161,7 @@ class SiteSettingsManager extends Component
                 'color' => $rules[$path] = ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
                 'toggle' => $rules[$path] = ['boolean'],
                 'textarea' => $rules[$path] = ['nullable', 'string', 'max:2000'],
+                'select' => $rules[$path] = ['required', Rule::in(array_keys($field['options']))],
                 'url' => $rules[$path] = ['nullable', 'string', 'max:500', 'regex:/^(https?:\/\/|\/|#|mailto:|tel:)/i'],
                 'image' => $rules['uploads.'.$key] = ['nullable', 'image', 'max:4096'],
                 'links' => [

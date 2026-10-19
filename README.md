@@ -20,6 +20,8 @@ Wszystko zmieniasz w panelu: zaloguj się i kliknij **Panel** w prawym górnym r
 | zmienić linki w żółtym pasku lub w menu | Wygląd i ustawienia → Górny pasek / Menu główne |
 | zmienić teksty na stronie głównej, ukryć sekcję | Wygląd i ustawienia → Strona główna |
 | zmienić telefon, e-mail, adres, media społecznościowe | Wygląd i ustawienia → Kontakt i stopka |
+| pobierać terminarz i wyniki ze strony związku (WZPS) | Rozgrywki → Edytuj → wklej adres strony z meczami i zaznacz nasze drużyny (z nazwą, pod którą grają w tych rozgrywkach) |
+| ustawić, do jakiego meczu odlicza zegar | Wygląd i ustawienia → Strona główna |
 | dodać stronę typu „Dla rodziców”, „FAQ” | Podstrony (adres: /strona/nazwa, potem dodaj link w pasku lub menu) |
 
 „Wygląd i ustawienia” oraz „Podstrony” widzi tylko administrator. Każda zakładka ma przycisk
@@ -32,6 +34,10 @@ Jeśli drużyna, artykuł albo slajd nie ma własnego zdjęcia, strona pokazuje 
 z Unsplash (lista i autorzy: `config/media.php`, strona `/zdjecia`). Wgranie własnego zdjęcia je zastępuje.
 
 ## Uruchomienie (dla informatyka)
+
+Terminarze z rozgrywek z wpisanym adresem odświeżają się same co 3 godziny, jeśli na serwerze działa
+cron: `* * * * * cd /sciezka/do/projektu && php artisan schedule:run >> /dev/null 2>&1`.
+Ręcznie: `php artisan joker:sync-schedules` albo przycisk „Pobierz terminarz” w panelu (Rozgrywki).
 
 ```bash
 composer setup                 # instalacja, .env, migracje, build

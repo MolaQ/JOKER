@@ -18,6 +18,7 @@ class Game extends Model
         'team_id',
         'season_id',
         'competition_id',
+        'external_id',
         'opponent',
         'opponent_team_id',
         'is_home',
@@ -119,6 +120,20 @@ class Game extends Model
     {
         return $query->where('status', 'finished')
             ->orderBy('game_date', 'desc');
+    }
+
+    /**
+     * Data i godzina meczu do wyświetlenia. Mecze z importu bez podanej godziny mają 00:00.
+     */
+    public function kickoffLabel(string $dateFormat = 'D, d M'): string
+    {
+        if (! $this->game_date) {
+            return 'Termin do ustalenia';
+        }
+
+        $time = $this->game_date->format('H:i');
+
+        return $this->game_date->translatedFormat($dateFormat).' · '.($time === '00:00' ? 'godz. do ustalenia' : $time);
     }
 
     public function isFinished(): bool

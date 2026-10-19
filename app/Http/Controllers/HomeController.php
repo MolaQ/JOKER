@@ -10,10 +10,11 @@ use App\Models\Season;
 use App\Models\Sponsor;
 use App\Models\Team;
 use App\Models\User;
+use App\Support\SiteSettings;
 
 class HomeController extends Controller
 {
-    public function index()
+    public function index(SiteSettings $site)
     {
         $heroSlides = HeroSlide::activeNow()
             ->ordered()
@@ -47,6 +48,23 @@ class HomeController extends Controller
 
         $seasonName = Season::current()->value('name');
 
-        return view('home', compact('seasonName', 'heroSlides', 'upcoming_games', 'recent_results', 'articles', 'teams', 'sponsors', 'stats'));
+        $countdownGame = $this->countdownGame($site['countdown_target']) ?? $upcoming_games->first();
+
+        return view('home', compact('seasonName', 'heroSlides', 'upcoming_games', 'recent_results', 'articles', 'teams', 'sponsors', 'stats', 'countdownGame'));
+    }
+
+    /**
+     * Mecz, do którego odlicza zegar na stronie głównej (Wygląd i ustawienia → Strona główna).
+     */
+    private function countdownGame(?string $target): ?Game
+    {
+        if ($target !== 'seniors') {
+            return null;
+        }
+
+        return Game::with(['team', 'competition', 'opponentTeam'])
+            ->upcoming()
+            ->whereHas('team', fn ($query) => $query->where('category', 'senior'))
+            ->first();
     }
 }
