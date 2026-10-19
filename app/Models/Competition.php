@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasReadableRouteKey;
 use Database\Factories\CompetitionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,8 @@ class Competition extends Model
 {
     /** @use HasFactory<CompetitionFactory> */
     use HasFactory;
+
+    use HasReadableRouteKey;
 
     /**
      * Domyślna kolejność kryteriów sortowania tabeli, gdy rozgrywki nie mają
@@ -120,5 +123,10 @@ class Competition extends Model
             $setsWon === 1 => $this->points_loss_1_3,
             default => $this->points_loss_0_3,
         };
+    }
+
+    protected function routeSlugSource(): string
+    {
+        return (string) $this->name;
     }
 }

@@ -13,29 +13,30 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TrainerController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Teams
-Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');
-Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');
+Route::get('/druzyny', [TeamController::class, 'index'])->name('teams.index');
+Route::get('/druzyny/{team}', [TeamController::class, 'show'])->name('teams.show');
 
 // Articles
-Route::get('/news', [ArticleController::class, 'index'])->name('articles.index');
-Route::get('/news/{article}', [ArticleController::class, 'show'])->name('articles.show');
-Route::post('/news/{article}/comments', [ArticleController::class, 'storeComment'])->name('articles.comments.store');
+Route::get('/aktualnosci', [ArticleController::class, 'index'])->name('articles.index');
+Route::get('/aktualnosci/{article}', [ArticleController::class, 'show'])->name('articles.show');
+Route::post('/aktualnosci/{article}/komentarze', [ArticleController::class, 'storeComment'])->name('articles.comments.store');
 
 // Players
-Route::get('/players/{player}', [PlayerController::class, 'show'])->name('players.show');
+Route::get('/zawodnicy/{player}', [PlayerController::class, 'show'])->name('players.show');
 
 // Trainers
-Route::get('/trenerzy/{trainer}', [TrainerController::class, 'show'])->name('trainers.show');
+Route::get('/sztab/{trainer}', [TrainerController::class, 'show'])->name('trainers.show');
 
 // Schedule & Standings
-Route::get('/schedule', [ScheduleController::class, 'index'])->name('schedule.index');
-Route::get('/standings', [ScheduleController::class, 'standings'])->name('standings');
+Route::get('/mecze', [ScheduleController::class, 'index'])->name('schedule.index');
+Route::get('/tabele', [ScheduleController::class, 'standings'])->name('standings');
 Route::get('/mecze/{game}/kalendarz.ics', [GameCalendarController::class, 'show'])->name('games.calendar');
 
 // Wyszukiwarka
@@ -52,8 +53,8 @@ Route::view('/zdjecia', 'credits')->name('credits');
 Route::get('/strona/{page}', [PageController::class, 'show'])->name('pages.show');
 
 // Contact
-Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
-Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
+Route::get('/kontakt', [ContactController::class, 'index'])->name('contact.index');
+Route::post('/kontakt', [ContactController::class, 'send'])->name('contact.send');
 
 // Auth routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -61,6 +62,25 @@ Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::post('/profile/request-change', [ProfileController::class, 'requestChange'])->name('profile.request-change');
+    Route::get('/moj-profil', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/moj-profil/prosba-o-zmiane', [ProfileController::class, 'requestChange'])->name('profile.request-change');
 });
+
+/*
+ * Stare adresy (sprzed polskich, przyjaznych SEO) - stałe przekierowania, by nie zgubić linków i pozycji w Google.
+ */
+foreach ([
+    'teams' => 'druzyny',
+    'news' => 'aktualnosci',
+    'players' => 'zawodnicy',
+    'trenerzy' => 'sztab',
+    'schedule' => 'mecze',
+    'standings' => 'tabele',
+    'contact' => 'kontakt',
+    'profile' => 'moj-profil',
+] as $oldPath => $newPath) {
+    Route::get($oldPath.'/{rest?}', fn (Request $request, ?string $rest = null) => redirect(
+        '/'.$newPath.($rest ? '/'.$rest : '').($request->getQueryString() ? '?'.$request->getQueryString() : ''),
+        301
+    ))->where('rest', '.*');
+}

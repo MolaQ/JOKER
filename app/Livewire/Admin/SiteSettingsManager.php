@@ -183,7 +183,7 @@ class SiteSettingsManager extends Component
     {
         return [
             'required' => 'Pole „:attribute” jest wymagane.',
-            'regex' => 'Pole „:attribute” ma zły format. Adres zacznij od https:// albo / (np. /contact), kolor wpisz jako #rrggbb.',
+            'regex' => 'Pole „:attribute” ma zły format. Adres zacznij od https:// albo / (np. /kontakt), kolor wpisz jako #rrggbb.',
             'max' => 'Pole „:attribute” jest za długie.',
             'image' => 'Plik w polu „:attribute” musi być obrazkiem.',
             'uploads.*.max' => 'Obrazek w polu „:attribute” może mieć najwyżej 4 MB.',

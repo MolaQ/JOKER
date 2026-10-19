@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasSlugRouteKey;
 use App\Models\Concerns\Likeable;
 use Database\Factories\ArticleFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,6 +14,8 @@ class Article extends Model
 {
     /** @use HasFactory<ArticleFactory> */
     use HasFactory, Likeable;
+
+    use HasSlugRouteKey;
 
     protected $fillable = [
         'title',

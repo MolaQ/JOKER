@@ -3,8 +3,8 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Article;
+use App\Support\Slug;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -109,7 +109,7 @@ class ArticleManager extends Component
             $this->flashType = 'success';
             $this->flashMessage = 'Artykuł został zaktualizowany.';
         } else {
-            $validated['slug'] = Str::slug($this->title).'-'.Str::random(6);
+            $validated['slug'] = Slug::unique(Article::class, $this->title);
             $validated['author_id'] = Auth::id();
             Article::create($validated);
             $this->flashType = 'success';

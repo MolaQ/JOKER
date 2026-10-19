@@ -86,7 +86,26 @@ class SiteSettings implements ArrayAccess
      */
     public function href(string $url): string
     {
+        $url = self::currentPath($url);
+
         return str_starts_with($url, '/') ? url($url) : $url;
+    }
+
+    /**
+     * Adresy zapisane przed zmianą na polskie (np. /schedule) zamieniamy na aktualne (/mecze).
+     */
+    public static function currentPath(string $url): string
+    {
+        $legacy = [
+            'teams' => 'druzyny', 'news' => 'aktualnosci', 'players' => 'zawodnicy', 'trenerzy' => 'sztab',
+            'schedule' => 'mecze', 'standings' => 'tabele', 'contact' => 'kontakt', 'profile' => 'moj-profil',
+        ];
+
+        return preg_replace_callback(
+            '#^/('.implode('|', array_keys($legacy)).')(?=/|\?|$)#',
+            fn (array $match) => '/'.$legacy[$match[1]],
+            $url
+        );
     }
 
     /**
@@ -108,16 +127,14 @@ class SiteSettings implements ArrayAccess
             return false;
         }
 
-        $path = trim((string) parse_url($url, PHP_URL_PATH), '/');
+        $path = trim((string) parse_url(self::currentPath($url), PHP_URL_PATH), '/');
 
         if ($path === '') {
             return request()->is('/');
         }
 
         $related = [
-            'teams' => ['players/*', 'trenerzy/*'],
-            'schedule' => ['mecze/*'],
-            'news' => [],
+            'druzyny' => ['zawodnicy/*', 'sztab/*'],
         ];
 
         return request()->is($path, $path.'/*', ...$related[$path] ?? []);

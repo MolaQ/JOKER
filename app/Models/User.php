@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasReadableRouteKey;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\UserRole;
 use Database\Factories\UserFactory;
@@ -16,6 +17,8 @@ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    use HasReadableRouteKey;
 
     /**
      * The attributes that are mass assignable.
@@ -131,5 +134,10 @@ class User extends Authenticatable
     public function allCoachedTeams()
     {
         return $this->headCoachTeams->merge($this->assistantTeams)->unique('id')->values();
+    }
+
+    protected function routeSlugSource(): string
+    {
+        return (string) $this->name;
     }
 }

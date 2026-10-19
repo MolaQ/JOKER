@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasReadableRouteKey;
 use App\Models\Concerns\Likeable;
 use App\PlayerPosition;
 use Database\Factories\PlayerFactory;
@@ -15,6 +16,8 @@ class Player extends Model
 {
     /** @use HasFactory<PlayerFactory> */
     use HasFactory, Likeable;
+
+    use HasReadableRouteKey;
 
     protected $fillable = [
         'first_name',
@@ -80,5 +83,10 @@ class Player extends Model
     public function age(): ?int
     {
         return $this->birth_date?->age;
+    }
+
+    protected function routeSlugSource(): string
+    {
+        return (string) $this->full_name;
     }
 }

@@ -5,8 +5,8 @@ namespace App\Livewire\Admin;
 use App\Models\Team;
 use App\Models\User;
 use App\Support\SearchIndex;
+use App\Support\Slug;
 use App\UserRole;
-use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -131,7 +131,7 @@ class TeamList extends Component
             $this->flashType = 'success';
             $this->flashMessage = 'Drużyna została zaktualizowana.';
         } else {
-            $validated['slug'] = Str::slug($this->name).'-'.Str::random(4);
+            $validated['slug'] = Slug::unique(Team::class, $this->name);
             $team = Team::create($validated);
             $this->flashType = 'success';
             $this->flashMessage = 'Drużyna została dodana.';

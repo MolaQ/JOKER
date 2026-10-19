@@ -111,7 +111,7 @@
                                 @break
 
                             @default
-                                <input type="text" id="field-{{ $key }}" wire:model="values.{{ $key }}" class="block w-full" @if($field['type'] === 'url') placeholder="/contact albo https://..." @endif>
+                                <input type="text" id="field-{{ $key }}" wire:model="values.{{ $key }}" class="block w-full" @if($field['type'] === 'url') placeholder="/kontakt albo https://..." @endif>
                         @endswitch
 
                         @error('values.'.$key) <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror

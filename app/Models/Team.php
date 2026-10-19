@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasSlugRouteKey;
 use App\Models\Concerns\Likeable;
 use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +16,8 @@ class Team extends Model
 {
     /** @use HasFactory<TeamFactory> */
     use HasFactory, Likeable;
+
+    use HasSlugRouteKey;
 
     protected $fillable = [
         'name',
