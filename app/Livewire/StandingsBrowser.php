@@ -62,11 +62,12 @@ class StandingsBrowser extends Component
     public function render(): View
     {
         $standings = $this->selected
-            ? LeagueStanding::with('competitor')->where('competition_id', $this->selected->id)->orderBy('position')->get()
+            ? LeagueStanding::with('competitor')->where('competition_id', $this->selected->id)->orderBy('group_name')->orderBy('position')->get()
             : collect();
 
         return view('livewire.standings-browser', [
             'standings' => $standings,
+            'groups' => $standings->groupBy(fn (LeagueStanding $standing) => (string) $standing->group_name),
         ]);
     }
 }

@@ -2,6 +2,7 @@
 
 use App\Models\Game;
 use App\Models\Player;
+use App\Models\Season;
 use App\Models\Team;
 use App\Models\User;
 use App\UserRole;
@@ -58,6 +59,8 @@ test('search finds people without Polish characters', function () {
 });
 
 test('search index covers every kind of content', function () {
+    Game::factory()->create(['team_id' => Team::firstWhere('slug', 'seniorzy')->id, 'season_id' => Season::current()->value('id')]);
+
     $types = collect($this->getJson(route('search.data'))->assertOk()->json())->pluck('type')->unique();
 
     expect($types->all())->toContain('Strona', 'Drużyna', 'Zawodnik', 'Sztab', 'Aktualność', 'Mecz', 'Dokument');
@@ -72,7 +75,12 @@ test('search index refreshes after content changes', function () {
 });
 
 test('upcoming match can be added to a phone calendar', function () {
-    $game = Game::upcoming()->first();
+    $game = Game::factory()->create([
+        'team_id' => Team::firstWhere('slug', 'seniorzy')->id,
+        'season_id' => Season::current()->value('id'),
+        'game_date' => now()->addWeek(),
+        'status' => 'scheduled',
+    ]);
 
     $this->get(route('games.calendar', $game))
         ->assertOk()

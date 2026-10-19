@@ -4,14 +4,17 @@ namespace App\Services;
 
 use App\Models\Competition;
 use App\Models\Game;
+use App\Models\LeagueStanding;
 use App\Models\RivalTeam;
 use App\Models\Team;
 use App\Support\SearchIndex;
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -25,28 +28,49 @@ use Throwable;
  */
 class ScheduleImporter
 {
+    /** Ile stron szczegółów meczu (hala, godzina, wynik) pobrać przy jednej synchronizacji. */
+    public const DETAILS_PER_SYNC = 30;
+
     /**
-     * @return array{created: int, updated: int, rows: int, unmatched: array<int, string>, errors: array<int, string>}
+     * @return array{created: int, updated: int, rows: int, unmatched: array<int, string>, errors: array<int, string>, tables: int}
      */
     public function sync(Competition $competition): array
     {
-        $rows = collect();
+        $resultRows = collect();
+        $listRows = collect();
+        $tables = collect();
         $errors = [];
 
         foreach ($competition->sourceUrls() as $url) {
-            try {
-                $response = Http::timeout(20)
-                    ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; JokerPilaBot/1.0; +'.config('app.url').')'])
-                    ->get($url)
-                    ->throw();
+            $html = $this->fetch($url, $errors);
 
-                $rows = $rows->merge($this->parse($this->toUtf8($response->body(), (string) $response->header('Content-Type'))));
-            } catch (Throwable $exception) {
-                $errors[] = 'Nie udało się pobrać '.$url.' ('.class_basename($exception).')';
+            if ($html === null) {
+                continue;
             }
+
+            $page = $this->parsePage($html, $url);
+            $tables = $tables->merge($page['tables']);
+
+            // Strona z wynikami (tabele rozgrywek) wyznacza, które mecze należą do rozgrywek.
+            // Strony drużyn i listy meczów tylko uzupełniają godziny.
+            $page['matches']->contains('score_known', true)
+                ? $resultRows = $resultRows->merge($page['matches'])
+                : $listRows = $listRows->merge($page['matches']);
         }
 
-        $result = $this->import($competition, $rows) + ['errors' => $errors];
+        $rows = match (true) {
+            $resultRows->isNotEmpty() => $resultRows->merge($listRows->whereIn('external_id', $resultRows->pluck('external_id')->unique()->all())),
+            // Nie wiadomo, które mecze są nasze (np. strona z wynikami się nie pobrała) - tylko uzupełniamy znane.
+            $errors !== [] => $listRows->whereIn('external_id', $competition->games()->whereNotNull('external_id')->pluck('external_id')->all()),
+            default => $this->withoutMatchesOfOtherCompetitions($competition, $listRows),
+        };
+
+        $standingsImported = $this->importStandings($competition, $tables);
+        $result = $this->import($competition, $rows, recalculateStandings: ! $standingsImported) + ['errors' => $errors];
+        $this->importDetails($competition, $rows, $errors);
+
+        $result['errors'] = $errors;
+        $result['tables'] = $standingsImported;
 
         $competition->forceFill([
             'synced_at' => now(),
@@ -57,12 +81,49 @@ class ScheduleImporter
     }
 
     /**
+     * Rozgrywki bez strony z wynikami (np. liga seniorów widoczna tylko na stronie drużyny)
+     * biorą mecze, których nie ma w innych rozgrywkach.
+     *
+     * @param  Collection<int, array<string, mixed>>  $rows
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function withoutMatchesOfOtherCompetitions(Competition $competition, Collection $rows): Collection
+    {
+        $claimed = Game::whereIn('external_id', $rows->pluck('external_id')->unique()->all())
+            ->whereNotNull('competition_id')
+            ->where('competition_id', '!=', $competition->id)
+            ->pluck('external_id')
+            ->all();
+
+        return $rows->reject(fn (array $row) => in_array($row['external_id'], $claimed, true))->values();
+    }
+
+    /**
+     * @param  array<int, string>  $errors
+     */
+    private function fetch(string $url, array &$errors): ?string
+    {
+        try {
+            $response = Http::timeout(20)
+                ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; JokerPilaBot/1.0; +'.config('app.url').')'])
+                ->get($url)
+                ->throw();
+
+            return $this->toUtf8($response->body(), (string) $response->header('Content-Type'));
+        } catch (Throwable $exception) {
+            $errors[] = 'Nie udało się pobrać '.$url.' ('.class_basename($exception).')';
+
+            return null;
+        }
+    }
+
+    /**
      * Zapisuje mecze z już odczytanych wierszy (osobno, by dało się to testować bez sieci).
      *
      * @param  Collection<int, array<string, mixed>>  $rows
      * @return array{created: int, updated: int, rows: int, unmatched: array<int, string>}
      */
-    public function import(Competition $competition, Collection $rows): array
+    public function import(Competition $competition, Collection $rows, bool $recalculateStandings = true): array
     {
         $ourTeams = $this->ourTeamsByName($competition);
         $created = 0;
@@ -129,7 +190,7 @@ class ScheduleImporter
             }
         }
 
-        if ($finishedChanged) {
+        if ($finishedChanged && $recalculateStandings) {
             StandingsCalculator::recalculate($competition);
         }
 
@@ -144,12 +205,26 @@ class ScheduleImporter
     /**
      * Odczytuje mecze z HTML strony związku.
      *
-     * @return Collection<int, array{external_id: string, date: string, time: ?string, home: string, away: string, home_score: ?int, away_score: ?int, sets: array<int, array{0: int, 1: int}>, score_known: bool}>
+     * @return Collection<int, array<string, mixed>>
      */
     public function parse(string $html): Collection
     {
+        return $this->parsePage($html)['matches'];
+    }
+
+    /**
+     * Czyta stronę w kolejności dokumentu: nagłówki „Etap N” i „Grupa N”, wiersze tabel
+     * (Lp. | Zespół | Mecze | Pkt | Zw. | Sety + | Sety - | pkt + | pkt -) oraz mecze.
+     *
+     * @return array{matches: Collection<int, array<string, mixed>>, tables: Collection<int, array{stage: ?string, group: ?string, rows: array<int, array<string, mixed>>}>}
+     */
+    public function parsePage(string $html, string $url = ''): array
+    {
+        $matches = collect();
+        $tables = [];
+
         if (trim($html) === '') {
-            return collect();
+            return ['matches' => $matches, 'tables' => collect()];
         }
 
         $document = new DOMDocument;
@@ -158,29 +233,252 @@ class ScheduleImporter
         libxml_clear_errors();
 
         $xpath = new DOMXPath($document);
-        $rows = collect();
+        $stage = null;
+        $group = null;
 
-        foreach ($xpath->query('//tr[.//a[contains(@href, "match_id=")]]') as $tableRow) {
-            /** @var DOMElement $tableRow */
-            $link = $xpath->query('.//a[contains(@href, "match_id=")]', $tableRow)->item(0);
+        foreach ($xpath->query('//text()[normalize-space()] | //tr') as $node) {
+            if (! $node instanceof DOMElement) {
+                $text = trim(preg_replace('/\s+/u', ' ', str_replace("\u{00A0}", ' ', $node->textContent)));
 
-            if (! preg_match('/match_id=(\d+)/', (string) $link?->getAttribute('href'), $idMatch)) {
+                if (preg_match('/^Etap\s+(\S+)$/iu', $text, $m)) {
+                    [$stage, $group] = [$m[1], null];
+                } elseif (preg_match('/^Grupa\s+(\S+)$/iu', $text, $m)) {
+                    $group = 'Grupa '.$m[1];
+                }
+
                 continue;
             }
 
             $cells = [];
-            foreach ($xpath->query('./td|./th', $tableRow) as $cell) {
+            foreach ($xpath->query('./td|./th', $node) as $cell) {
                 $cells[] = trim(preg_replace('/\s+/u', ' ', str_replace("\u{00A0}", ' ', $cell->textContent)));
             }
 
-            $row = $this->parseCells($cells);
+            $link = $xpath->query('.//a[contains(@href, "match_id=")]', $node)->item(0);
 
-            if ($row) {
-                $rows->push(['external_id' => $idMatch[1]] + $row);
+            if ($link instanceof DOMElement) {
+                $href = $link->getAttribute('href');
+                $row = preg_match('/match_id=(\d+)/', $href, $idMatch) ? $this->parseCells($cells) : null;
+
+                if ($row) {
+                    $matches->push(['external_id' => $idMatch[1]] + $row + ['detail_url' => $this->absoluteUrl($href, $url)]);
+                }
+
+                continue;
+            }
+
+            $standing = $this->parseStandingCells($cells);
+
+            if ($standing) {
+                $tables[($stage ?? '').'|'.($group ?? '')] ??= ['stage' => $stage, 'group' => $group, 'rows' => []];
+                $tables[($stage ?? '').'|'.($group ?? '')]['rows'][] = $standing;
             }
         }
 
-        return $rows;
+        return ['matches' => $matches, 'tables' => collect(array_values($tables))];
+    }
+
+    /**
+     * @param  array<int, string>  $cells
+     * @return array<string, mixed>|null
+     */
+    private function parseStandingCells(array $cells): ?array
+    {
+        if (count($cells) !== 9 || ! ctype_digit($cells[0]) || $cells[1] === '') {
+            return null;
+        }
+
+        foreach (array_slice($cells, 2) as $value) {
+            if (! preg_match('/^-?\d+$/', $value)) {
+                return null;
+            }
+        }
+
+        [$position, $name, $played, $points, $won, $setsWon, $setsLost, $pointsFor, $pointsAgainst] = $cells;
+
+        return [
+            'position' => (int) $position,
+            'name' => $name,
+            'played' => (int) $played,
+            'points' => (int) $points,
+            'won' => (int) $won,
+            'lost' => max(0, (int) $played - (int) $won),
+            'sets_won' => (int) $setsWon,
+            'sets_lost' => (int) $setsLost,
+            'points_for' => (int) $pointsFor,
+            'points_against' => (int) $pointsAgainst,
+        ];
+    }
+
+    private function absoluteUrl(string $href, string $base): ?string
+    {
+        if (preg_match('#^https?://#i', $href)) {
+            return $href;
+        }
+
+        if (! preg_match('#^(https?://[^?\#]*/)#i', $base, $m)) {
+            return null;
+        }
+
+        return $m[1].ltrim($href, '/');
+    }
+
+    /**
+     * Zapisuje tabele z najnowszego etapu, w którym grają nasze drużyny (wszystkie ich grupy).
+     *
+     * @param  Collection<int, array{stage: ?string, group: ?string, rows: array<int, array<string, mixed>>}>  $tables
+     */
+    private function importStandings(Competition $competition, Collection $tables): bool
+    {
+        $ourTeams = $this->ourTeamsByName($competition);
+
+        // Ta sama tabela może być na kilku pobranych stronach.
+        $tables = $tables->unique(fn (array $table) => $table['stage'].'|'.$table['group']);
+
+        $ours = $tables->filter(fn (array $table) => collect($table['rows'])->contains(fn (array $row) => isset($ourTeams[self::key($row['name'])])));
+
+        if ($ours->isEmpty()) {
+            return false;
+        }
+
+        $latestStage = $ours->pluck('stage')->sortByDesc(fn (?string $stage) => (int) $stage)->first();
+        $selected = $ours->where('stage', $latestStage)->values();
+
+        DB::transaction(function () use ($competition, $selected, $ourTeams) {
+            LeagueStanding::where('competition_id', $competition->id)->delete();
+            $saved = [];
+
+            foreach ($selected as $table) {
+                foreach ($table['rows'] as $row) {
+                    if (isset($saved[self::key($row['name'])])) {
+                        continue;
+                    }
+
+                    $saved[self::key($row['name'])] = true;
+                    $team = $ourTeams[self::key($row['name'])] ?? null;
+
+                    LeagueStanding::create(Arr::except($row, ['name']) + [
+                        'competition_id' => $competition->id,
+                        'season_id' => $competition->season_id,
+                        'group_name' => $selected->count() > 1 ? $table['group'] : null,
+                        'competitor_type' => $team ? 'team' : 'rival_team',
+                        'competitor_id' => $team ? $team->id : $this->rivalId($row['name']),
+                        'team_id' => $team?->id,
+                        // Tabela pochodzi ze związku - automatyczne przeliczanie jej nie zmienia.
+                        'is_manual_override' => true,
+                    ]);
+                }
+            }
+        });
+
+        return true;
+    }
+
+    /**
+     * Strona meczu podaje halę i godzinę (oraz wynik, gdy nie ma go na liście).
+     *
+     * @param  Collection<int, array<string, mixed>>  $rows
+     * @param  array<int, string>  $errors
+     */
+    private function importDetails(Competition $competition, Collection $rows, array &$errors): void
+    {
+        $urls = $rows->whereNotNull('detail_url')->pluck('detail_url', 'external_id');
+
+        $games = Game::where('competition_id', $competition->id)
+            ->whereIn('external_id', $urls->keys()->all())
+            ->where(fn ($query) => $query
+                ->whereNull('venue')
+                ->orWhere('venue', '')
+                ->orWhere(fn ($query) => $query->where('status', '!=', 'finished')->where('game_date', '<', now()))
+                ->orWhere(fn ($query) => $query->whereTime('game_date', '00:00:00')->where('game_date', '>=', today())))
+            ->orderBy('game_date')
+            ->limit(self::DETAILS_PER_SYNC)
+            ->get();
+
+        foreach ($games as $game) {
+            $html = $this->fetch($urls[$game->external_id], $errors);
+            $details = $html === null ? null : $this->parseDetails($html);
+
+            if (! $details) {
+                continue;
+            }
+
+            if ($details['venue'] && blank($game->venue)) {
+                $game->venue = $details['venue'];
+            }
+
+            if ($details['time'] && $game->game_date->format('H:i') === '00:00') {
+                $game->game_date = $game->game_date->copy()->setTimeFromTimeString($details['time']);
+            }
+
+            if ($details['home_score'] !== null && $game->status !== 'finished') {
+                $game->fill([
+                    'status' => 'finished',
+                    'home_score' => $details['home_score'],
+                    'away_score' => $details['away_score'],
+                    'sets_score' => $details['sets'] ?: null,
+                    'home_points' => $details['sets'] ? array_sum(array_column($details['sets'], 0)) : null,
+                    'away_points' => $details['sets'] ? array_sum(array_column($details['sets'], 1)) : null,
+                ]);
+            }
+
+            $game->save();
+        }
+    }
+
+    /**
+     * @return array{venue: ?string, time: ?string, home_score: ?int, away_score: ?int, sets: array<int, array{0: int, 1: int}>}|null
+     */
+    public function parseDetails(string $html): ?array
+    {
+        if (trim($html) === '') {
+            return null;
+        }
+
+        $document = new DOMDocument;
+        libxml_use_internal_errors(true);
+        $document->loadHTML('<?xml encoding="UTF-8">'.$html);
+        libxml_clear_errors();
+
+        $lines = [];
+        foreach ((new DOMXPath($document))->query('//body//text()[normalize-space()]') as $node) {
+            $lines[] = trim(preg_replace('/\s+/u', ' ', str_replace("\u{00A0}", ' ', $node->textContent)));
+        }
+
+        $text = implode("\n", $lines);
+
+        if (! str_contains($text, 'Rozgrywany dnia')) {
+            return null;
+        }
+
+        $venue = preg_match('/Mecz rozgrywany w:?\s*\n?([^\n]+)/u', $text, $m) ? trim($m[1]) : null;
+        $time = preg_match('/godzina meczu:?\s*\n?\s*(\d{1,2}:\d{2})/u', $text, $m) ? sprintf('%05s', $m[1]) : null;
+        $score = ['home_score' => null, 'away_score' => null, 'sets' => []];
+
+        if (preg_match('/wynik:?\s*\n?\s*(\d)\s*:\s*(\d)(?:\s*\(([^)]*)\))?/u', $text, $m) && (int) $m[1] + (int) $m[2] > 0) {
+            preg_match_all('/(\d+)\s*:\s*(\d+)/', $m[3] ?? '', $setMatches, PREG_SET_ORDER);
+            $score = [
+                'home_score' => (int) $m[1],
+                'away_score' => (int) $m[2],
+                'sets' => $this->playedSets($setMatches),
+            ];
+        }
+
+        return ['venue' => $venue ?: null, 'time' => $time] + $score;
+    }
+
+    /**
+     * Sety „0:0” to puste miejsca w formularzu związku (np. młodzicy grają do dwóch wygranych).
+     *
+     * @param  array<int, array<int, string>>  $setMatches
+     * @return array<int, array{0: int, 1: int}>
+     */
+    private function playedSets(array $setMatches): array
+    {
+        return array_values(array_filter(
+            array_map(fn (array $set) => [(int) $set[1], (int) $set[2]], $setMatches),
+            fn (array $set) => $set[0] + $set[1] > 0,
+        ));
     }
 
     /**
@@ -249,7 +547,7 @@ class ScheduleImporter
                     $homeScore = (int) $m[1];
                     $awayScore = (int) $m[2];
                     preg_match_all('/(\d+)\s*:\s*(\d+)/', $m[3] ?? '', $setMatches, PREG_SET_ORDER);
-                    $sets = array_map(fn (array $set) => [(int) $set[1], (int) $set[2]], $setMatches);
+                    $sets = $this->playedSets($setMatches);
                 }
                 break;
             }
@@ -328,7 +626,8 @@ class ScheduleImporter
      */
     private function findGame(Competition $competition, array $row, int $teamId): Game
     {
-        return Game::where('competition_id', $competition->id)->where('external_id', $row['external_id'])->first()
+        return Game::where('team_id', $teamId)->where('external_id', $row['external_id'])->first()
+            ?? Game::where('competition_id', $competition->id)->where('external_id', $row['external_id'])->first()
             ?? Game::whereNull('external_id')
                 ->where('team_id', $teamId)
                 ->where(fn ($query) => $query->whereNull('competition_id')->orWhere('competition_id', $competition->id))
@@ -378,6 +677,10 @@ class ScheduleImporter
 
         if ($result['unmatched']) {
             $parts[] = 'Nieprzypisane nazwy: '.implode(', ', $result['unmatched']).'.';
+        }
+
+        if ($result['tables'] ?? false) {
+            $parts[] = 'Tabela pobrana ze związku.';
         }
 
         if ($result['errors']) {

@@ -37,7 +37,7 @@ z Unsplash (lista i autorzy: `config/media.php`, strona `/zdjecia`). Wgranie wł
 
 Terminarze z rozgrywek z wpisanym adresem odświeżają się same co 3 godziny, jeśli na serwerze działa
 cron: `* * * * * cd /sciezka/do/projektu && php artisan schedule:run >> /dev/null 2>&1`.
-Ręcznie: `php artisan joker:sync-schedules` albo przycisk „Pobierz terminarz” w panelu (Rozgrywki).
+Ręcznie: `php artisan joker:sync-schedules` albo przycisk „Pobierz terminarz” w panelu (Rozgrywki). Pobierane są mecze, wyniki, godziny, hale i tabele (z podziałem na grupy). `php artisan migrate:fresh --seed` zakłada prawdziwe drużyny i rozgrywki WZPS i od razu pobiera dane.
 
 ```bash
 composer setup                 # instalacja, .env, migracje, build

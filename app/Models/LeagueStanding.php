@@ -19,6 +19,7 @@ class LeagueStanding extends Model
         'competitor_id',
         'season_id',
         'competition_id',
+        'group_name',
         'position',
         'played',
         'won',

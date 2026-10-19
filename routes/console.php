@@ -41,7 +41,9 @@ Artisan::command('joker:admin {email} {--name=}', function (string $email) {
  * Działa samo co 3 godziny, jeśli na serwerze jest ustawiony cron z `php artisan schedule:run`.
  */
 Artisan::command('joker:sync-schedules', function (ScheduleImporter $importer) {
-    $competitions = Competition::whereNotNull('source_url')->where('source_url', '!=', '')->get();
+    // Najpierw rozgrywki z tabelą wyników - to one „zabierają” swoje mecze ze stron drużyn.
+    $competitions = Competition::whereNotNull('source_url')->where('source_url', '!=', '')->get()
+        ->sortBy(fn (Competition $competition) => str_contains($competition->source_url, 'mode=12') ? 0 : 1);
 
     foreach ($competitions as $competition) {
         $importer->sync($competition);

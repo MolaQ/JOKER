@@ -3,6 +3,7 @@
 use App\Livewire\Admin\CompetitionManager;
 use App\Models\Competition;
 use App\Models\Game;
+use App\Models\LeagueStanding;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\User;
@@ -33,6 +34,9 @@ beforeEach(function () {
     Http::fake([
         '*type=11' => Http::response(file_get_contents(base_path('tests/Fixtures/wzps-liga.html'))),
         '*team_id=701' => Http::response(file_get_contents(base_path('tests/Fixtures/wzps-druzyna.html'))),
+        '*type=3' => Http::response(file_get_contents(base_path('tests/Fixtures/wzps-mlodzicy.html'))),
+        '*match_id=522' => Http::response(file_get_contents(base_path('tests/Fixtures/wzps-mecz.html'))),
+        '*' => Http::response(''),
     ]);
 });
 
@@ -116,4 +120,71 @@ test('admin saves the source address and team names, and the import runs at once
 
     expect(Game::count())->toBe(4)
         ->and($this->competition->teams()->find($this->cadets->id)->pivot->external_name)->toBe('LOMS Joker Piła II');
+});
+
+test('the league table is copied from the federation page, with our teams marked', function () {
+    app(ScheduleImporter::class)->sync($this->competition);
+
+    $standings = LeagueStanding::where('competition_id', $this->competition->id)->orderBy('position')->get();
+
+    expect($standings)->toHaveCount(5)
+        ->and($standings->pluck('position')->all())->toBe([1, 2, 3, 4, 5])
+        ->and($standings[0]->competitorName())->toBe('Volley kost-pol.pl Wieleń')
+        ->and($standings[0]->points)->toBe(5)
+        ->and($standings[2]->competitor_id)->toBe($this->seniors->id)
+        ->and($standings[2]->isOwnTeam())->toBeTrue()
+        ->and([$standings[3]->team_id, $standings[3]->won, $standings[3]->lost, $standings[3]->points_for])->toBe([$this->cadets->id, 1, 1, 202])
+        ->and($standings->pluck('group_name')->filter())->toBeEmpty()
+        ->and($this->competition->fresh()->sync_message)->toContain('Tabela pobrana');
+});
+
+test('a league seen only on the team page gets the matches no other competition has', function () {
+    app(ScheduleImporter::class)->sync($this->competition);
+
+    $seniorsLeague = Competition::create([
+        'name' => 'Seniorzy WZPS',
+        'season_id' => $this->competition->season_id,
+        'source_url' => 'https://wzps.poznan.pl/obsady/index.php?mode=8&club_id=7&team_id=701',
+    ]);
+    $seniorsLeague->teams()->attach($this->seniors->id, ['external_name' => 'LOMS Joker Piła']);
+
+    app(ScheduleImporter::class)->sync($seniorsLeague);
+
+    expect(Game::where('competition_id', $seniorsLeague->id)->pluck('external_id')->sort()->values()->all())->toBe(['518', '522']);
+
+    // Wynik, hala i godzina ze strony meczu.
+    $wolves = Game::firstWhere('external_id', '522');
+    expect($wolves->opponent)->toBe('LUKS Wilki Wilczyn')
+        ->and($wolves->status)->toBe('finished')
+        ->and($wolves->ourSetsResult())->toBe([3, 1])
+        ->and($wolves->venue)->toBe('64-920 Piła, ul. Wincentego Pola 11 Hala Sportowa LOMS w Pile')
+        ->and($wolves->game_date->format('Y-m-d H:i'))->toBe('2026-10-10 17:00');
+});
+
+test('youth tables come from the latest stage, one per group with our team', function () {
+    $youngsters = Team::create(['name' => 'Młodzicy', 'slug' => 'mlodzicy', 'category' => 'mlodzik']);
+    $youngstersTwo = Team::create(['name' => 'Młodzicy II', 'slug' => 'mlodzicy-ii', 'category' => 'mlodzik']);
+    $league = Competition::create([
+        'name' => 'Młodzicy',
+        'season_id' => $this->competition->season_id,
+        'source_url' => 'https://wzps.poznan.pl/obsady/index.php?mode=12&type=3',
+    ]);
+    $league->teams()->attach([
+        $youngsters->id => ['external_name' => 'LOMS Joker Piła'],
+        $youngstersTwo->id => ['external_name' => 'LOMS Joker Piła II'],
+    ]);
+
+    app(ScheduleImporter::class)->sync($league);
+
+    $standings = LeagueStanding::where('competition_id', $league->id)->get();
+    expect($standings)->toHaveCount(7)
+        ->and($standings->pluck('group_name')->unique()->values()->all())->toBe(['Grupa 1', 'Grupa 2'])
+        ->and($standings->firstWhere('competitor_id', $youngsters->id)->points)->toBe(12);
+
+    // Sety „0:0” to puste pola formularza - nie pokazujemy ich.
+    $won = Game::where('team_id', $youngsters->id)->firstWhere('external_id', '681');
+    expect($won->sets_score)->toBe([[10, 25], [24, 26]])
+        ->and($won->ourSetsResult())->toBe([2, 0])
+        ->and(Game::where('team_id', $youngsters->id)->count())->toBe(2)
+        ->and(Game::where('team_id', $youngstersTwo->id)->count())->toBe(1);
 });

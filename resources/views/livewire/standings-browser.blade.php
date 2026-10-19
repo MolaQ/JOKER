@@ -33,6 +33,10 @@
         @endif
 
         @if($standings->isNotEmpty())
+            @foreach($groups as $groupName => $groupStandings)
+            @if($groupName !== '')
+                <h3 class="mt-8 mb-3 font-display text-lg font-semibold tracking-wide text-zinc-500 uppercase first:mt-0">{{ $groupName }}</h3>
+            @endif
             <div class="card overflow-x-auto">
                 <table class="w-full min-w-[40rem] text-sm tabular-nums">
                     <thead class="border-b border-zinc-200 text-xs font-semibold tracking-wider text-zinc-500 uppercase">
@@ -48,7 +52,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-zinc-100">
-                        @foreach($standings as $standing)
+                        @foreach($groupStandings as $standing)
                             @php $isOurs = $standing->isOwnTeam(); @endphp
                             <tr wire:key="standing-{{ $standing->id }}" @class(['bg-sky-club/10 font-semibold' => $isOurs])>
                                 <td @class(['sticky left-0 py-3 pr-2 pl-4', 'bg-[color-mix(in_oklab,var(--color-sky-club)_10%,white)]' => $isOurs, 'bg-white' => ! $isOurs])>
@@ -72,6 +76,7 @@
                     </tbody>
                 </table>
             </div>
+            @endforeach
             <p class="mt-4 text-xs text-zinc-500">M - mecze, W - wygrane, P - przegrane, Pkt - punkty ligowe. Na telefonie tabelę przesuniesz palcem w bok.</p>
         @else
             <div class="card p-12 text-center">

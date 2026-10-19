@@ -9,8 +9,7 @@ use Illuminate\Database\Seeder;
 class TeamSeeder extends Seeder
 {
     /**
-     * Struktura klubu: Seniorzy (otwarci dla każdego zawodnika klubu) oraz po dwie
-     * drużyny w każdej kategorii młodzieżowej, rozdzielone rocznikiem urodzenia.
+     * Drużyny klubu zgłoszone w WZPS (lista: wzps.poznan.pl/obsady/index.php?mode=8&club_id=7).
      * Każda drużyna ma trenera głównego i sztab z opisanymi funkcjami.
      */
     public function run(): void
@@ -20,31 +19,35 @@ class TeamSeeder extends Seeder
 
         $teams = [
             ['name' => 'Seniorzy', 'slug' => 'seniorzy', 'category' => 'senior', 'birth_year' => null,
-                'description' => 'Pierwsza drużyna Joker Piła, występująca w 3 lidze. Grać tu może, poza stałymi zawodnikami, każdy wyróżniający się zawodnik klubu.',
+                'description' => 'Pierwsza drużyna Joker Piła, występująca w III lidze mężczyzn. Grać tu może, poza stałymi zawodnikami, każdy wyróżniający się zawodnik klubu.',
                 'coach' => 'Tomasz Wiśniewski',
                 'staff' => ['Krzysztof Kamiński' => 'Asystent trenera', 'Agnieszka Dąbrowska' => 'Fizjoterapeutka', 'Michał Kozłowski' => 'Statystyk', 'Piotr Mazur' => 'Kierownik drużyny']],
-            ['name' => 'Junior 2008', 'slug' => 'junior-2008', 'category' => 'junior', 'birth_year' => 2008,
-                'description' => 'Juniorzy z rocznika 2008. Ostatni krok przed seniorską siatkówką.',
+            ['name' => 'Juniorzy', 'slug' => 'juniorzy', 'category' => 'junior', 'birth_year' => 2008,
+                'description' => 'Pierwsza drużyna juniorów. Ostatni krok przed seniorską siatkówką.',
                 'coach' => 'Katarzyna Zielińska',
                 'staff' => ['Paweł Lewandowski' => 'Trener przygotowania motorycznego', 'Agnieszka Dąbrowska' => 'Fizjoterapeutka', 'Ewa Jankowska' => 'Kierowniczka drużyny']],
-            ['name' => 'Junior 2009', 'slug' => 'junior-2009', 'category' => 'junior', 'birth_year' => 2009,
-                'description' => 'Juniorzy z rocznika 2009. Ambitna grupa walcząca o awans do ligi międzywojewódzkiej.',
+            ['name' => 'Juniorzy II', 'slug' => 'juniorzy-ii', 'category' => 'junior', 'birth_year' => 2009,
+                'description' => 'Druga drużyna juniorów - więcej gry dla całej grupy.',
                 'coach' => 'Katarzyna Zielińska',
                 'staff' => ['Krzysztof Kamiński' => 'Asystent trenera', 'Ewa Jankowska' => 'Kierowniczka drużyny']],
-            ['name' => 'Junior Młodszy 2010', 'slug' => 'junior-mlodszy-2010', 'category' => 'junior_mlodszy', 'birth_year' => 2010,
-                'description' => 'Kadeci z rocznika 2010. Rozwijamy technikę i grę zespołową.',
+            ['name' => 'Kadeci', 'slug' => 'kadeci', 'category' => 'junior_mlodszy', 'birth_year' => 2010,
+                'description' => 'Pierwsza drużyna kadetów. W III lidze mężczyzn występuje jako „LOMS Joker Piła II”.',
                 'coach' => 'Paweł Lewandowski',
                 'staff' => ['Magdalena Wójcik' => 'Asystentka trenera', 'Ewa Jankowska' => 'Kierowniczka drużyny']],
-            ['name' => 'Junior Młodszy 2011', 'slug' => 'junior-mlodszy-2011', 'category' => 'junior_mlodszy', 'birth_year' => 2011,
-                'description' => 'Kadeci z rocznika 2011. Pierwszy sezon w rozgrywkach wojewódzkich kadetów.',
+            ['name' => 'Kadeci II', 'slug' => 'kadeci-ii', 'category' => 'junior_mlodszy', 'birth_year' => 2011,
+                'description' => 'Druga drużyna kadetów.',
                 'coach' => 'Paweł Lewandowski',
                 'staff' => ['Krzysztof Kamiński' => 'Trener przyjęcia i obrony']],
-            ['name' => 'Młodzik 2012', 'slug' => 'mlodzik-2012', 'category' => 'mlodzik', 'birth_year' => 2012,
-                'description' => 'Młodzicy z rocznika 2012. Siatkówka, która cieszy - dużo gry i dobrej zabawy.',
+            ['name' => 'Kadeci III', 'slug' => 'kadeci-iii', 'category' => 'junior_mlodszy', 'birth_year' => 2011,
+                'description' => 'Trzecia drużyna kadetów.',
+                'coach' => 'Paweł Lewandowski',
+                'staff' => []],
+            ['name' => 'Młodzicy', 'slug' => 'mlodzicy', 'category' => 'mlodzik', 'birth_year' => 2012,
+                'description' => 'Pierwsza drużyna młodzików. Siatkówka, która cieszy - dużo gry i dobrej zabawy.',
                 'coach' => 'Magdalena Wójcik',
                 'staff' => ['Ewa Jankowska' => 'Kierowniczka drużyny']],
-            ['name' => 'Młodzik 2013', 'slug' => 'mlodzik-2013', 'category' => 'mlodzik', 'birth_year' => 2013,
-                'description' => 'Młodzicy z rocznika 2013 i młodsi. Tu zaczyna się przygoda z Jokerem!',
+            ['name' => 'Młodzicy II', 'slug' => 'mlodzicy-ii', 'category' => 'mlodzik', 'birth_year' => 2013,
+                'description' => 'Druga drużyna młodzików. Tu zaczyna się przygoda z Jokerem!',
                 'coach' => 'Magdalena Wójcik',
                 'staff' => ['Paweł Lewandowski' => 'Asystent trenera']],
         ];
