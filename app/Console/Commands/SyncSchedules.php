@@ -1,0 +1,38 @@
+<?php
+
+namespace App\Console\Commands;
+
+use App\Models\Competition;
+use App\Services\ScheduleImporter;
+use Illuminate\Console\Command;
+
+/**
+ * Pobiera terminarze, wyniki i tabele (wielkopolskasiatkowka.com.pl i WZPS) dla rozgrywek z wpisanymi adresami.
+ * Działa samo co 3 godziny, jeśli na serwerze jest ustawiony cron z `php artisan schedule:run`.
+ */
+class SyncSchedules extends Command
+{
+    protected $signature = 'joker:sync-schedules';
+
+    protected $description = 'Pobierz terminarze, wyniki i tabele ze stron związku';
+
+    public function handle(ScheduleImporter $importer): int
+    {
+        // Najpierw rozgrywki z tabelą wyników WZPS - to one „zabierają” swoje mecze ze stron drużyn.
+        $competitions = Competition::whereNotNull('source_url')->where('source_url', '!=', '')->get()
+            ->sortBy(fn (Competition $competition) => str_contains($competition->source_url, 'mode=12') ? 0 : 1);
+
+        if ($competitions->isEmpty()) {
+            $this->info('Żadne rozgrywki nie mają adresu terminarza.');
+
+            return self::SUCCESS;
+        }
+
+        foreach ($competitions as $competition) {
+            $importer->sync($competition);
+            $this->line("{$competition->name}: {$competition->sync_message}");
+        }
+
+        return self::SUCCESS;
+    }
+}

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Console\Commands\SyncSchedules;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Artisan;
@@ -29,9 +30,9 @@ class DatabaseSeeder extends Seeder
             PageSeeder::class,
         ]);
 
-        // Prawdziwe mecze, wyniki i tabele ze strony WZPS (w testach bez sieci).
+        // Prawdziwe mecze, wyniki i tabele z wielkopolskasiatkowka.com.pl i WZPS (w testach bez sieci).
         if (! app()->runningUnitTests()) {
-            Artisan::call('joker:sync-schedules');
+            Artisan::call(SyncSchedules::class);
             $this->command?->line(trim(Artisan::output()));
         }
     }
