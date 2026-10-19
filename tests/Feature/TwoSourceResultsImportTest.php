@@ -63,7 +63,7 @@ test('results come from wielkopolskasiatkowka and are joined with WZPS times, ve
     expect($wolves->external_id)->toBe('522')
         ->and($wolves->ourSetsResult())->toBe([3, 2])
         ->and($wolves->sets_score)->toBe([[25, 27], [22, 25], [25, 22], [25, 20], [16, 14]])
-        ->and($wolves->result_source)->toBe('wielkopolskasiatkowka')
+        ->and($wolves->result_source)->toBe(Game::RESULT_SITE)
         ->and($wolves->game_date->format('Y-m-d H:i'))->toBe('2026-10-10 17:00')
         ->and($wolves->venue)->toContain('Hala Sportowa LOMS')
         ->and($wolves->round_label)->toBe('Grupa 1 · 2. kolejka');
@@ -88,7 +88,7 @@ test('syncing twice keeps one game per match and a result entered in the panel w
     $importer = app(ScheduleImporter::class);
     $importer->sync($league);
 
-    Game::firstWhere('external_id', '522')->update(['home_score' => 3, 'away_score' => 0, 'result_source' => 'manual']);
+    Game::firstWhere('external_id', '522')->update(['home_score' => 3, 'away_score' => 0, 'result_source' => Game::RESULT_MANUAL]);
 
     $result = $importer->sync($league->fresh());
 
@@ -136,7 +136,7 @@ test('a WZPS score fills in until wielkopolskasiatkowka publishes one', function
     expect($game->external_id)->toBe('530')
         ->and($game->game_date->format('H:i'))->toBe('18:00')
         ->and($game->ourSetsResult())->toBe([3, 1])
-        ->and($game->result_source)->toBe('wzps');
+        ->and($game->result_source)->toBe(Game::RESULT_WZPS);
 });
 
 test('names of the same rival from both sites are recognised', function (string $first, string $second, bool $same) {

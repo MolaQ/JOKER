@@ -82,8 +82,8 @@ class ScheduleImporter
             default => $this->withoutMatchesOfOtherCompetitions($competition, $listRows),
         };
 
-        $standingsImported = $this->importStandings($competition, $siteTables, 'wielkopolskasiatkowka')
-            || $this->importStandings($competition, $wzpsTables, 'wzps');
+        $standingsImported = $this->importStandings($competition, $siteTables)
+            || $this->importStandings($competition, $wzpsTables);
 
         $result = $this->import($competition, $rows, $siteRows, $listRows, recalculateStandings: ! $standingsImported);
         $this->importDetails($competition, $rows->merge($listRows), $errors);
@@ -241,13 +241,13 @@ class ScheduleImporter
                 'round_label' => $this->roundLabel($site ?? $row) ?? $game->round_label,
             ]);
 
-            if ($game->result_source !== 'manual') {
+            if ($game->result_source !== Game::RESULT_MANUAL) {
                 if ($site && $site['home_score'] !== null) {
-                    $this->fillScore($game, $site, 'wielkopolskasiatkowka');
+                    $this->fillScore($game, $site, Game::RESULT_SITE);
                     $game->result_note = $site['note'];
-                } elseif ($row['home_score'] !== null && $game->result_source !== 'wielkopolskasiatkowka') {
+                } elseif ($row['home_score'] !== null && $game->result_source !== Game::RESULT_SITE) {
                     // WZPS wpisuje wynik, gdy na wielkopolskasiatkowka jeszcze go nie ma.
-                    $this->fillScore($game, $row, 'wzps');
+                    $this->fillScore($game, $row, Game::RESULT_WZPS);
                 } elseif ($site && $site['note'] && $game->status !== 'finished') {
                     $game->result_note = $site['note'];
                 }
@@ -536,7 +536,7 @@ class ScheduleImporter
      *
      * @param  Collection<int, array{stage: ?string, group: ?string, rows: array<int, array<string, mixed>>}>  $tables
      */
-    private function importStandings(Competition $competition, Collection $tables, string $origin): bool
+    private function importStandings(Competition $competition, Collection $tables): bool
     {
         $ourTeams = $this->ourTeamsByName($competition);
 

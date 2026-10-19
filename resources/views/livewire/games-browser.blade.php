@@ -68,10 +68,109 @@
             @endif
         </div>
 
-        @forelse($gamesByMonth as $month => $monthGames)
-            <h2 class="mt-10 mb-4 font-display text-xl font-semibold tracking-wide text-zinc-400 uppercase first:mt-0">{{ $month }}</h2>
-            <ul class="space-y-3">
-                @foreach($monthGames as $game)
+        @forelse($months as $month)
+            @php
+                $finished = $month['games']->filter(fn ($game) => $game->isFinished());
+                $wins = $finished->filter(fn ($game) => ($result = $game->ourSetsResult()) && $result[0] > $result[1])->count();
+                $count = $month['games']->count();
+            @endphp
+            <article class="mt-14 first:mt-4" wire:key="month-{{ $month['key'] }}" aria-label="{{ $month['month']->translatedFormat('F Y') }}">
+                {{-- Kartka kalendarza ściennego --}}
+                <div class="relative rounded-3xl bg-white shadow-xl shadow-zinc-900/5 ring-1 ring-zinc-200">
+                    <div class="pointer-events-none absolute inset-x-6 -top-3 flex justify-between sm:inset-x-12" aria-hidden="true">
+                        @for($ring = 0; $ring < 12; $ring++)
+                            <span @class(['h-7 w-2.5 rounded-full bg-gradient-to-b from-zinc-200 via-zinc-400 to-zinc-600 ring-2 ring-white', 'hidden sm:block' => $ring % 2 === 1])></span>
+                        @endfor
+                    </div>
+
+                    <header class="flex flex-wrap items-end justify-between gap-3 rounded-t-3xl bg-ink px-5 pt-9 pb-5 text-white sm:px-8">
+                        <h2 class="font-display leading-none font-bold uppercase">
+                            <span class="block text-4xl sm:text-6xl">{{ $month['month']->translatedFormat('F') }}</span>
+                            <span class="mt-1 block text-lg tracking-[0.3em] text-sky-club-light">{{ $month['month']->year }}</span>
+                        </h2>
+                        <p class="text-sm text-white/70">
+                            {{ $count }} {{ $count === 1 ? 'mecz' : ($count % 10 >= 2 && $count % 10 <= 4 && ($count % 100 < 10 || $count % 100 >= 20) ? 'mecze' : 'meczów') }}@if($finished->isNotEmpty()) · <span class="font-semibold text-emerald-300">{{ $wins }} {{ $wins === 1 ? 'wygrana' : 'wygranych' }}</span>@endif
+                        </p>
+                    </header>
+
+                    <div class="grid grid-cols-7 border-b border-zinc-200 text-center text-[11px] font-semibold tracking-wider uppercase sm:text-xs">
+                        @foreach(['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'] as $weekday)
+                            <div @class(['py-2', 'text-red-600' => $loop->index >= 5, 'text-zinc-500' => $loop->index < 5])>{{ $weekday }}</div>
+                        @endforeach
+                    </div>
+
+                    <div class="overflow-hidden rounded-b-3xl">
+                        @foreach($month['weeks'] as $week)
+                            <div class="grid grid-cols-7">
+                                @foreach($week as $day)
+                                    <div @class([
+                                        'min-h-14 border-b border-zinc-100 p-1 sm:min-h-32 sm:p-2',
+                                        'border-r' => ! $loop->last,
+                                        'bg-zinc-50/70' => ! $day['inMonth'],
+                                        'bg-sky-club/5' => $day['inMonth'] && $day['games']->isNotEmpty(),
+                                    ])>
+                                        <p @class([
+                                            'font-display text-base leading-none font-semibold tabular-nums sm:text-2xl',
+                                            'text-zinc-300' => ! $day['inMonth'],
+                                            'text-red-600' => $day['inMonth'] && $day['date']->isWeekend(),
+                                            'text-zinc-800' => $day['inMonth'] && ! $day['date']->isWeekend(),
+                                        ])>
+                                            <span @class(['inline-flex h-7 min-w-7 items-center justify-center rounded-full sm:h-9 sm:min-w-9', 'bg-sky-club text-white' => $day['isToday']])>{{ $day['date']->day }}</span>
+                                        </p>
+
+                                        @if($day['inMonth'] && $day['games']->isNotEmpty())
+                                            {{-- Telefon: kropki (kolor = wynik), dotknięcie przewija do meczu na liście --}}
+                                            <div class="mt-1 flex flex-wrap gap-1 sm:hidden">
+                                                @foreach($day['games'] as $game)
+                                                    @php $result = $game->ourSetsResult(); @endphp
+                                                    <a href="#mecz-{{ $game->id }}" @class([
+                                                        'h-2.5 w-2.5 rounded-full',
+                                                        'bg-emerald-500' => $game->isFinished() && $result && $result[0] > $result[1],
+                                                        'bg-red-500' => $game->isFinished() && $result && $result[0] <= $result[1],
+                                                        'bg-sky-club' => ! $game->isFinished(),
+                                                    ]) aria-label="{{ $game->team?->name }} - {{ $game->opponentShortName() }}"></a>
+                                                @endforeach
+                                            </div>
+
+                                            {{-- Komputer: mecze wpisane w kartkę --}}
+                                            <ul class="mt-1.5 hidden space-y-1 sm:block">
+                                                @foreach($day['games'] as $game)
+                                                    @php
+                                                        $result = $game->ourSetsResult();
+                                                        $won = $game->isFinished() && $result ? $result[0] > $result[1] : null;
+                                                        $hasTime = $game->game_date->format('H:i') !== '00:00';
+                                                    @endphp
+                                                    <li wire:key="cell-{{ $game->id }}" title="{{ $game->competition?->name ?? $game->league }}@if($game->round_label) · {{ $game->round_label }}@endif{{ $game->venue ? ' · '.$game->venue : '' }}{{ is_array($game->sets_score) && count($game->sets_score) ? ' · '.collect($game->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(', ') : '' }}" @class([
+                                                        'rounded-lg border-l-4 px-1.5 py-1 text-[11px] leading-tight',
+                                                        'border-emerald-500 bg-emerald-50' => $won === true,
+                                                        'border-red-500 bg-red-50' => $won === false,
+                                                        'border-sky-club bg-white shadow-sm' => $won === null,
+                                                    ])>
+                                                        <p class="flex items-center justify-between gap-1">
+                                                            <span class="truncate font-semibold text-zinc-900">{{ $game->team?->name ?? $site['club_name'] }}</span>
+                                                            <span class="shrink-0 font-bold tabular-nums {{ $won === null ? 'text-sky-club-dark' : 'text-zinc-900' }}">
+                                                                @if($game->isFinished())
+                                                                    {{ $game->is_home ? $game->home_score.':'.$game->away_score : $game->away_score.':'.$game->home_score }}
+                                                                @else
+                                                                    {{ $hasTime ? $game->game_date->format('H:i') : '' }}
+                                                                @endif
+                                                            </span>
+                                                        </p>
+                                                        <p class="truncate text-zinc-600">{{ $game->is_home ? 'vs' : 'u' }} {{ $game->opponentShortName() }}</p>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Telefon: szczegóły meczów miesiąca pod kartką --}}
+                <ul class="mt-4 space-y-3 sm:hidden">
+                @foreach($month['games'] as $game)
                     @php
                         $result = $game->ourSetsResult();
                         $won = $game->isFinished() && $result ? $result[0] > $result[1] : null;
@@ -81,7 +180,7 @@
                         $away = $game->is_home ? $opponentName : $ourName;
                         $hasTime = $game->game_date && $game->game_date->format('H:i') !== '00:00';
                     @endphp
-                    <li wire:key="game-{{ $game->id }}" class="card grid grid-cols-[3.75rem_1fr] items-center gap-4 p-4 sm:grid-cols-[4.5rem_1fr_auto] sm:gap-6 sm:p-5">
+                    <li id="mecz-{{ $game->id }}" wire:key="game-{{ $game->id }}" class="card scroll-mt-48 grid grid-cols-[3.75rem_1fr] items-center gap-4 p-4 sm:grid-cols-[4.5rem_1fr_auto] sm:gap-6 sm:p-5">
                         <div class="rounded-2xl bg-zinc-100 py-2 text-center leading-none">
                             <p class="text-[11px] font-semibold text-zinc-500 uppercase">{{ $game->game_date?->translatedFormat('D') }}</p>
                             <p class="mt-1 font-display text-2xl font-bold text-zinc-900 tabular-nums">{{ $game->game_date?->format('d') }}</p>
@@ -124,6 +223,7 @@
                     </li>
                 @endforeach
             </ul>
+            </article>
         @empty
             <div class="card p-12 text-center">
                 <p class="font-display text-2xl font-semibold text-zinc-900 uppercase">Brak meczów</p>

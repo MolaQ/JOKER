@@ -11,6 +11,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Game extends Model
 {
+    /** Skąd pochodzi wynik (kolumna result_source, maks. 16 znaków). */
+    public const RESULT_MANUAL = 'manual';
+
+    public const RESULT_SITE = 'ws';
+
+    public const RESULT_WZPS = 'wzps';
+
     /** @use HasFactory<GameFactory> */
     use HasFactory, Likeable;
 

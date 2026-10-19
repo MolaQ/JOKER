@@ -158,13 +158,13 @@ class GameManager extends Component
 
             if ($game->wasChanged(['home_score', 'away_score', 'sets_score', 'status'])) {
                 // Wynik poprawiony ręcznie - import ze związku go nie nadpisze.
-                $game->forceFill(['result_source' => 'manual'])->save();
+                $game->forceFill(['result_source' => Game::RESULT_MANUAL])->save();
             }
 
             $this->flashType = 'success';
             $this->flashMessage = 'Mecz został zaktualizowany.';
         } else {
-            $game = Game::create($validated + ['result_source' => ($validated['home_score'] ?? null) !== null ? 'manual' : null]);
+            $game = Game::create($validated + ['result_source' => ($validated['home_score'] ?? null) !== null ? Game::RESULT_MANUAL : null]);
             $this->flashType = 'success';
             $this->flashMessage = 'Mecz został dodany.';
         }

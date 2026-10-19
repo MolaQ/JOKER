@@ -6,6 +6,7 @@ use App\Models\Game;
 use App\Models\Season;
 use App\Support\SearchIndex;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -120,7 +121,7 @@ class GamesBrowser extends Component
         };
 
         return view('livewire.games-browser', [
-            'gamesByMonth' => $games->groupBy(fn (Game $game) => $game->game_date?->translatedFormat('F Y') ?? 'Bez daty'),
+            'months' => $this->calendarMonths($games),
             'total' => $games->count(),
             'periodCounts' => $periodCounts,
             'teams' => $this->seasonGames->pluck('team')->filter()->unique('id')->sortBy('display_order')->values(),
@@ -128,5 +129,34 @@ class GamesBrowser extends Component
             'seasons' => Season::orderByDesc('start_date')->get(),
             'hasFilters' => $this->search !== '' || $this->team !== '' || $this->competition !== '' || $this->place !== '',
         ]);
+    }
+
+    /**
+     * Miesiące jak kartki kalendarza ściennego: tygodnie od poniedziałku, w każdym dniu jego mecze.
+     *
+     * @param  Collection<int, Game>  $games
+     * @return Collection<int, array{key: string, month: Carbon, games: Collection<int, Game>, weeks: array<int, array<int, array{date: Carbon, inMonth: bool, isToday: bool, games: Collection<int, Game>}>>}>
+     */
+    private function calendarMonths(Collection $games): Collection
+    {
+        return $games->filter(fn (Game $game) => $game->game_date)
+            ->groupBy(fn (Game $game) => $game->game_date->format('Y-m'))
+            ->map(function (Collection $monthGames, string $key) {
+                $month = Carbon::createFromFormat('Y-m-d', $key.'-01')->startOfDay();
+                $byDay = $monthGames->sortBy('game_date')->groupBy(fn (Game $game) => $game->game_date->toDateString());
+                $days = [];
+
+                for ($day = $month->copy()->startOfWeek(Carbon::MONDAY); $day->lte($month->copy()->endOfMonth()->endOfWeek(Carbon::SUNDAY)); $day->addDay()) {
+                    $days[] = [
+                        'date' => $day->copy(),
+                        'inMonth' => $day->month === $month->month,
+                        'isToday' => $day->isToday(),
+                        'games' => $byDay->get($day->toDateString(), collect()),
+                    ];
+                }
+
+                return ['key' => $key, 'month' => $month, 'games' => $monthGames, 'weeks' => array_chunk($days, 7)];
+            })
+            ->values();
     }
 }
