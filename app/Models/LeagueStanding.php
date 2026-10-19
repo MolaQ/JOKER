@@ -19,7 +19,9 @@ class LeagueStanding extends Model
         'competitor_id',
         'season_id',
         'competition_id',
+        'stage_name',
         'group_name',
+        'source_name',
         'position',
         'played',
         'won',
@@ -64,6 +66,10 @@ class LeagueStanding extends Model
 
     public function competitorName(): string
     {
+        if ($this->source_name && ! $this->isOwnTeam()) {
+            return $this->source_name;
+        }
+
         if ($this->competitor instanceof RivalTeam) {
             return $this->competitor->full_name;
         }

@@ -89,8 +89,7 @@ class PlayerSeeder extends Seeder
         // Łańcuch "gry w górę" - kilku zawodników z młodszej drużyny dogrywa też w starszej.
         $promotionChain = [
             'mlodzicy-ii' => 'mlodzicy',
-            'mlodzicy' => 'kadeci-iii',
-            'kadeci-iii' => 'kadeci-ii',
+            'mlodzicy' => 'kadeci-ii',
             'kadeci-ii' => 'kadeci',
             'kadeci' => 'juniorzy-ii',
             'juniorzy-ii' => 'juniorzy',

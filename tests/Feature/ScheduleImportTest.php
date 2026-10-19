@@ -125,16 +125,17 @@ test('admin saves the source address and team names, and the import runs at once
 test('the league table is copied from the federation page, with our teams marked', function () {
     app(ScheduleImporter::class)->sync($this->competition);
 
-    $standings = LeagueStanding::where('competition_id', $this->competition->id)->orderBy('position')->get();
+    $standings = LeagueStanding::where('competition_id', $this->competition->id)->where('group_name', 'Grupa 1')->orderBy('position')->get();
 
-    expect($standings)->toHaveCount(5)
+    expect(LeagueStanding::where('competition_id', $this->competition->id)->count())->toBe(7)
+        ->and($standings)->toHaveCount(5)
         ->and($standings->pluck('position')->all())->toBe([1, 2, 3, 4, 5])
         ->and($standings[0]->competitorName())->toBe('Volley kost-pol.pl Wieleń')
         ->and($standings[0]->points)->toBe(5)
         ->and($standings[2]->competitor_id)->toBe($this->seniors->id)
         ->and($standings[2]->isOwnTeam())->toBeTrue()
         ->and([$standings[3]->team_id, $standings[3]->won, $standings[3]->lost, $standings[3]->points_for])->toBe([$this->cadets->id, 1, 1, 202])
-        ->and($standings->pluck('group_name')->filter())->toBeEmpty()
+        ->and($standings->pluck('stage_name')->unique()->all())->toBe(['Etap 1'])
         ->and($this->competition->fresh()->sync_message)->toContain('Tabela pobrana');
 });
 
@@ -161,7 +162,7 @@ test('a league seen only on the team page gets the matches no other competition 
         ->and($wolves->game_date->format('Y-m-d H:i'))->toBe('2026-10-10 17:00');
 });
 
-test('youth tables come from the latest stage, one per group with our team', function () {
+test('youth tables keep every stage and group', function () {
     $youngsters = Team::create(['name' => 'Młodzicy', 'slug' => 'mlodzicy', 'category' => 'mlodzik']);
     $youngstersTwo = Team::create(['name' => 'Młodzicy II', 'slug' => 'mlodzicy-ii', 'category' => 'mlodzik']);
     $league = Competition::create([
@@ -177,9 +178,10 @@ test('youth tables come from the latest stage, one per group with our team', fun
     app(ScheduleImporter::class)->sync($league);
 
     $standings = LeagueStanding::where('competition_id', $league->id)->get();
-    expect($standings)->toHaveCount(7)
-        ->and($standings->pluck('group_name')->unique()->values()->all())->toBe(['Grupa 1', 'Grupa 2'])
-        ->and($standings->firstWhere('competitor_id', $youngsters->id)->points)->toBe(12);
+    expect($standings)->toHaveCount(10)
+        ->and($standings->map(fn (LeagueStanding $row) => $row->stage_name.' / '.$row->group_name)->unique()->values()->all())
+        ->toBe(['Etap 2 / Grupa 1', 'Etap 2 / Grupa 2', 'Etap 2 / Grupa 3', 'Etap 1 / Grupa 1'])
+        ->and($standings->where('stage_name', 'Etap 2')->firstWhere('competitor_id', $youngsters->id)->points)->toBe(12);
 
     // Sety „0:0” to puste pola formularza - nie pokazujemy ich.
     $won = Game::where('team_id', $youngsters->id)->firstWhere('external_id', '681');

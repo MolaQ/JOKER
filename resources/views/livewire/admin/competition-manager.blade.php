@@ -113,8 +113,8 @@
 
                             <div class="rounded-lg bg-emerald-50 p-4 ring-1 ring-emerald-200">
                                 <label class="block text-sm font-semibold text-gray-900" for="competition-source">Terminarz ze strony związku (automatycznie)</label>
-                                <p class="mt-1 text-xs text-gray-600">Wklej adres strony z meczami, np. <span class="font-mono">https://wzps.poznan.pl/obsady/index.php?mode=12&amp;type=11</span>. Godziny meczów są na stronie drużyny (Kluby → drużyna); możesz wkleić oba adresy, każdy w osobnej linii. Mecze naszych drużyn pojawią się w zakładce Mecze, a wyniki będą się same aktualizować.</p>
-                                <textarea id="competition-source" wire:model="source_url" rows="2" class="mt-2 block w-full rounded-md border-gray-300 font-mono text-xs shadow-sm" placeholder="https://wzps.poznan.pl/obsady/index.php?mode=12&type=11"></textarea>
+                                <p class="mt-1 text-xs text-gray-600">Każdy adres w osobnej linii. Wyniki i tabele: strona ligi na <span class="font-mono">wielkopolskasiatkowka.com.pl</span> (ma pierwszeństwo) i/lub <span class="font-mono">wzps.poznan.pl/obsady/index.php?mode=12&amp;type=…</span>. Godziny i hale: strona drużyny w WZPS (Kluby → drużyna). Wynik wpisany ręcznie w zakładce Mecze nie jest nadpisywany.</p>
+                                <textarea id="competition-source" wire:model="source_url" rows="4" class="mt-2 block w-full rounded-md border-gray-300 font-mono text-xs shadow-sm" placeholder="https://wielkopolskasiatkowka.com.pl/iii-liga-mezczyzn-26-27/&#10;https://wzps.poznan.pl/obsady/index.php?mode=12&type=11"></textarea>
                                 @error('source_url') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
@@ -191,7 +191,7 @@
                                                 {{ $team->name }}
                                             </label>
                                             @if(in_array($team->id, array_map('intval', $team_ids), true))
-                                                <input type="text" wire:model="external_names.{{ $team->id }}" placeholder="Nazwa w rozgrywkach (opcjonalnie)" class="w-full flex-1 rounded-md border-gray-300 text-sm sm:w-auto" aria-label="Nazwa drużyny {{ $team->name }} w tych rozgrywkach">
+                                                <input type="text" wire:model="external_names.{{ $team->id }}" placeholder="Nazwa w rozgrywkach, kilka oddziel średnikiem" class="w-full flex-1 rounded-md border-gray-300 text-sm sm:w-auto" aria-label="Nazwa drużyny {{ $team->name }} w tych rozgrywkach">
                                             @endif
                                         </div>
                                     @endforeach

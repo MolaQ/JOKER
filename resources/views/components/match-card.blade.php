@@ -13,7 +13,7 @@
 <article {{ $attributes->merge(['class' => ($dark ? 'bg-white/5 text-white ring-white/10' : 'bg-white text-zinc-900 ring-zinc-200/70').' relative flex flex-col rounded-3xl p-6 ring-1 transition duration-300 hover:-translate-y-1']) }}>
     <div class="flex items-center justify-between gap-3 text-xs">
         <span class="font-semibold tracking-wider uppercase {{ $dark ? 'text-sky-club-light' : 'text-sky-club-dark' }}">
-            {{ $game->game_date?->translatedFormat('D, d M · H:i') }}
+            {{ $game->isFinished() && $game->game_date?->format('H:i') === '00:00' ? $game->game_date->translatedFormat('D, d M') : $game->kickoffLabel() }}
         </span>
         @if($won !== null)
             <span @class(['rounded-full px-2.5 py-0.5 font-bold', 'bg-emerald-500/15 text-emerald-500' => $won, 'bg-red-500/15 text-red-500' => ! $won])>{{ $won ? 'Wygrana' : 'Porażka' }}</span>

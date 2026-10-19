@@ -15,6 +15,11 @@ class StandingsCalculator
 {
     public static function recalculate(Competition $competition): void
     {
+        // Tabela pobrana ze związku (etapy, grupy) - nie przeliczamy jej z naszych meczów.
+        if (LeagueStanding::where('competition_id', $competition->id)->whereNotNull('source_name')->exists()) {
+            return;
+        }
+
         $games = $competition->games()
             ->where('status', 'finished')
             ->whereNotNull('home_score')

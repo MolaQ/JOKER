@@ -38,8 +38,8 @@
         <a href="#kadra" class="border-b-2 border-transparent py-4 whitespace-nowrap hover:border-sky-club">Kadra</a>
         <a href="#sztab" class="border-b-2 border-transparent py-4 whitespace-nowrap hover:border-sky-club">Sztab</a>
         <a href="#mecze" class="border-b-2 border-transparent py-4 whitespace-nowrap hover:border-sky-club">Mecze</a>
-        @if($standingsByCompetition->isNotEmpty())
-            <a href="#tabela" class="border-b-2 border-transparent py-4 whitespace-nowrap hover:border-sky-club">Tabela</a>
+        @if($seasonCompetitions->isNotEmpty())
+            <a href="#tabela" class="border-b-2 border-transparent py-4 whitespace-nowrap hover:border-sky-club">Rozgrywki</a>
         @endif
     </div>
 </nav>
@@ -126,51 +126,86 @@
     @endif
 </section>
 
-{{-- TABELA --}}
-@if($standingsByCompetition->isNotEmpty())
+{{-- ROZGRYWKI: nazwa w rozgrywkach, droga przez etapy, tabela bieżącej grupy --}}
+@if($seasonCompetitions->isNotEmpty())
 <section id="tabela" class="container-site scroll-mt-32 pb-8" data-reveal>
-    <p class="eyebrow">Rozgrywki</p>
-    <h2 class="heading-lg mt-3">Tabela</h2>
+    <p class="eyebrow">Sezon {{ $currentSeason?->name }}</p>
+    <h2 class="heading-lg mt-3">Rozgrywki</h2>
 
-    @foreach($standingsByCompetition as $competitionName => $competitionStandings)
-        <div class="card mt-8 overflow-hidden">
-            <p class="border-b border-zinc-100 px-6 py-4 font-semibold">{{ $competitionName }}</p>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-zinc-50 text-xs text-zinc-500 uppercase">
-                        <tr>
-                            <th class="px-6 py-3 text-left">Drużyna</th>
-                            <th class="px-3 py-3" title="Mecze">M</th>
-                            <th class="px-3 py-3" title="Wygrane">W</th>
-                            <th class="px-3 py-3" title="Porażki">P</th>
-                            <th class="hidden px-3 py-3 sm:table-cell">Sety</th>
-                            <th class="px-6 py-3 text-right">Pkt</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-zinc-100">
-                        @foreach($competitionStandings as $standing)
-                            @php $ours = $standing->isOwnTeam() && $standing->competitor?->is($team); @endphp
-                            <tr @class(['bg-sky-club/10 font-semibold' => $ours])>
-                                <td class="px-6 py-3">
-                                    <span class="mr-3 inline-flex h-7 w-7 items-center justify-center rounded-full {{ $ours ? 'bg-sky-club text-white' : 'bg-zinc-100' }} text-xs font-bold">{{ $standing->position }}</span>
-                                    @if($standing->isOwnTeam() && $standing->competitor)
-                                        <a href="{{ route('teams.show', $standing->competitor) }}" class="hover:text-sky-club-dark">{{ $standing->competitorName() }}</a>
-                                    @else
-                                        {{ $standing->competitorName() }}
-                                    @endif
-                                </td>
-                                <td class="px-3 py-3 text-center">{{ $standing->played }}</td>
-                                <td class="px-3 py-3 text-center">{{ $standing->won }}</td>
-                                <td class="px-3 py-3 text-center">{{ $standing->lost }}</td>
-                                <td class="hidden px-3 py-3 text-center sm:table-cell">{{ $standing->setsRatio() }}</td>
-                                <td class="px-6 py-3 text-right font-display text-lg font-bold">{{ $standing->points }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+    <div class="mt-8 grid gap-6 lg:grid-cols-2">
+        @foreach($seasonCompetitions as $entry)
+            <div class="card overflow-hidden">
+                <div class="border-b border-zinc-100 px-6 py-4">
+                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                        <p class="font-display text-xl font-semibold uppercase">{{ $entry['competition']->name }}</p>
+                        <a href="{{ route('standings', ['rozgrywki' => $entry['competition']->getRouteKey()]) }}" class="text-sm font-semibold text-sky-club-dark hover:underline">Wszystkie tabele →</a>
+                    </div>
+                    @if($entry['names'])
+                        <p class="mt-1 text-sm text-zinc-500">Gra jako: <span class="font-medium text-zinc-700">{{ implode(' / ', $entry['names']) }}</span></p>
+                    @endif
+
+                    @if($entry['steps']->contains(fn ($step) => $step['stage'] || $step['group']))
+                        <ol class="mt-4 flex flex-wrap items-center gap-2 text-sm" aria-label="Droga w rozgrywkach">
+                            @foreach($entry['steps'] as $step)
+                                <li class="flex items-center gap-2">
+                                    <span @class([
+                                        'rounded-xl px-3 py-1.5 leading-tight',
+                                        'bg-ink text-white' => $loop->last,
+                                        'bg-zinc-100 text-zinc-700' => ! $loop->last,
+                                    ])>
+                                        <span class="block text-[11px] font-semibold tracking-wide uppercase opacity-70">{{ collect([$step['stage'], $step['group']])->filter()->implode(' · ') }}</span>
+                                        <span class="font-semibold">{{ $step['position'] }}. miejsce</span><span class="opacity-70"> z {{ $step['teams'] }}</span>
+                                    </span>
+                                    @unless($loop->last)
+                                        <span class="text-zinc-400" aria-hidden="true">→</span>
+                                    @endunless
+                                </li>
+                            @endforeach
+                        </ol>
+                    @endif
+                </div>
+
+                @if($entry['table']->isNotEmpty())
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-zinc-50 text-xs text-zinc-500 uppercase">
+                                <tr>
+                                    <th class="px-6 py-3 text-left">Drużyna</th>
+                                    <th class="px-3 py-3" title="Mecze">M</th>
+                                    <th class="px-3 py-3" title="Wygrane">W</th>
+                                    <th class="px-3 py-3" title="Porażki">P</th>
+                                    <th class="hidden px-3 py-3 sm:table-cell">Sety</th>
+                                    <th class="px-6 py-3 text-right">Pkt</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-zinc-100">
+                                @foreach($entry['table'] as $standing)
+                                    @php $ours = $standing->isOwnTeam() && $standing->competitor_id === $team->id; @endphp
+                                    <tr @class(['bg-sky-club/10 font-semibold' => $ours])>
+                                        <td class="px-6 py-3">
+                                            <span class="mr-3 inline-flex h-7 w-7 items-center justify-center rounded-full {{ $ours ? 'bg-sky-club text-white' : 'bg-zinc-100' }} text-xs font-bold">{{ $standing->position }}</span>
+                                            @if($standing->isOwnTeam() && $standing->competitor)
+                                                <a href="{{ route('teams.show', $standing->competitor) }}" class="hover:text-sky-club-dark">{{ $standing->competitorName() }}</a>
+                                            @else
+                                                {{ $standing->competitorName() }}
+                                            @endif
+                                        </td>
+                                        <td class="px-3 py-3 text-center">{{ $standing->played }}</td>
+                                        <td class="px-3 py-3 text-center">{{ $standing->won }}</td>
+                                        <td class="px-3 py-3 text-center">{{ $standing->lost }}</td>
+                                        <td class="hidden px-3 py-3 text-center sm:table-cell">{{ $standing->setsRatio() }}</td>
+                                        <td class="px-6 py-3 text-right font-display text-lg font-bold">{{ $standing->points }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <p class="px-6 py-5 text-sm text-zinc-500">Tabela pojawi się po pierwszych meczach.</p>
+                @endif
             </div>
-        </div>
-    @endforeach
+        @endforeach
+    </div>
 </section>
 @endif
 @endsection

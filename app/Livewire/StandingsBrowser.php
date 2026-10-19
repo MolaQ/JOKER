@@ -20,6 +20,10 @@ class StandingsBrowser extends Component
     #[Url(as: 'rozgrywki', except: '')]
     public string $competition = '';
 
+    /** Etap rozgrywek (np. „Etap 2”) - młodzież gra w kilku etapach. */
+    #[Url(as: 'etap', except: '')]
+    public string $stage = '';
+
     /**
      * Stare linki „/standings?competition=6” też otwierają właściwą tabelę.
      */
@@ -33,6 +37,12 @@ class StandingsBrowser extends Component
     public function select(string $routeKey): void
     {
         $this->competition = $routeKey;
+        $this->stage = '';
+    }
+
+    public function selectStage(string $stage): void
+    {
+        $this->stage = $stage;
     }
 
     /**
@@ -62,12 +72,25 @@ class StandingsBrowser extends Component
     public function render(): View
     {
         $standings = $this->selected
-            ? LeagueStanding::with('competitor')->where('competition_id', $this->selected->id)->orderBy('group_name')->orderBy('position')->get()
+            ? LeagueStanding::with('competitor')->where('competition_id', $this->selected->id)->orderBy('position')->get()
             : collect();
+
+        // Najnowszy etap pierwszy („Etap 2” przed „Etap 1”).
+        $stages = $standings->pluck('stage_name')->unique()->sortByDesc(fn (?string $stage) => (int) preg_replace('/\D/', '', (string) $stage))->values();
+        $currentStage = $stages->contains($this->stage) ? $this->stage : $stages->first(fn (?string $stage) => $standings->where('stage_name', $stage)->contains(fn (LeagueStanding $row) => $row->isOwnTeam())) ?? $stages->first();
+
+        // Grupy z naszą drużyną na górze i rozwinięte, pozostałe zwinięte.
+        $groups = $standings->where('stage_name', $currentStage)
+            ->groupBy(fn (LeagueStanding $standing) => (string) $standing->group_name)
+            ->map(fn ($rows, string $name) => ['name' => $name, 'rows' => $rows->values(), 'ours' => $rows->contains(fn (LeagueStanding $row) => $row->isOwnTeam())])
+            ->sortBy(fn (array $group) => ($group['ours'] ? '0' : '1').$group['name'])
+            ->values();
 
         return view('livewire.standings-browser', [
             'standings' => $standings,
-            'groups' => $standings->groupBy(fn (LeagueStanding $standing) => (string) $standing->group_name),
+            'stages' => $stages->filter()->values(),
+            'currentStage' => $currentStage,
+            'groups' => $groups,
         ]);
     }
 }

@@ -13,9 +13,12 @@ class CompetitionSeeder extends Seeder
     /** Strony Wielkopolskiego Związku Piłki Siatkowej, z których pobieramy mecze i tabele. */
     private const WZPS = 'https://wzps.poznan.pl/obsady/index.php?';
 
+    /** Wyniki i tabele (mają pierwszeństwo przed WZPS), bez godzin i hal. */
+    private const SITE = 'https://wielkopolskasiatkowka.com.pl/';
+
     /**
-     * Rozgrywki naszych drużyn w WZPS. Terminarz, wyniki i tabele pobiera `php artisan joker:sync-schedules`.
-     * Przy drużynie zapisana jest nazwa, pod którą występuje w danych rozgrywkach.
+     * Rozgrywki naszych drużyn. Terminarz, wyniki i tabele pobiera `php artisan joker:sync-schedules`.
+     * Przy drużynie zapisane są nazwy (oddzielone średnikiem), pod którymi występuje w danych rozgrywkach.
      */
     public function run(): void
     {
@@ -30,41 +33,34 @@ class CompetitionSeeder extends Seeder
 
         $competitions = [
             [
+                'name' => 'II Liga Mężczyzn',
+                'level' => '2 liga',
+                'teams' => ['seniorzy' => 'LOMS Joker Piła'],
+                'sources' => [self::SITE.'ii-liga-mezczyzn-5/', self::WZPS.'mode=8&club_id=7&team_id=701'],
+            ],
+            [
                 'name' => 'III Liga Mężczyzn',
                 'level' => '3 liga',
-                'teams' => ['seniorzy' => 'LOMS Joker Piła', 'kadeci' => 'LOMS Joker Piła II'],
-                'sources' => ['mode=12&type=11', 'mode=8&club_id=7&team_id=701', 'mode=8&club_id=7&team_id=828'],
+                'teams' => ['juniorzy-ii' => 'LOMS Joker Piła; LOMS Joker Piła 1', 'kadeci' => 'LOMS Joker Piła II; LOMS Joker Piła 2'],
+                'sources' => [self::WZPS.'mode=12&type=11', self::SITE.'iii-liga-mezczyzn-26-27/', self::WZPS.'mode=8&club_id=7&team_id=701', self::WZPS.'mode=8&club_id=7&team_id=828'],
             ],
             [
-                // Mecze tej ligi WZPS pokazuje tylko na stronie drużyny (bez tabeli).
-                'name' => 'Liga Seniorów WZPS',
+                'name' => 'Liga Juniorów',
                 'level' => 'wojewódzka',
-                'teams' => ['seniorzy' => 'LOMS Joker Piła'],
-                'sources' => ['mode=8&club_id=7&team_id=701'],
+                'teams' => ['juniorzy' => 'LOMS Joker Piła; LOMS Joker Piła 1', 'juniorzy-ii' => 'LOMS Joker Piła II; LOMS Joker Piła 2'],
+                'sources' => [self::WZPS.'mode=12&type=7', self::SITE.'liga-juniorow-26-27/', self::WZPS.'mode=8&club_id=7&team_id=673', self::WZPS.'mode=8&club_id=7&team_id=972'],
             ],
             [
-                'name' => 'Juniorzy',
+                'name' => 'Liga Kadetów',
                 'level' => 'wojewódzka',
-                'teams' => ['juniorzy' => 'LOMS Joker Piła', 'juniorzy-ii' => 'LOMS Joker Piła II'],
-                'sources' => ['mode=12&type=7', 'mode=8&club_id=7&team_id=673', 'mode=8&club_id=7&team_id=972'],
+                'teams' => ['kadeci' => 'LOMS Joker Piła', 'kadeci-ii' => 'ASBL; KS ASBL Piła'],
+                'sources' => [self::WZPS.'mode=12&type=5', self::SITE.'liga-kadetow-26-27/', self::WZPS.'mode=8&club_id=7&team_id=638', self::WZPS.'mode=8&club_id=7&team_id=644'],
             ],
             [
-                'name' => 'Kadeci',
+                'name' => 'Liga Młodzików',
                 'level' => 'wojewódzka',
-                'teams' => ['kadeci' => 'LOMS Joker Piła'],
-                'sources' => ['mode=12&type=5', 'mode=8&club_id=7&team_id=638'],
-            ],
-            [
-                'name' => 'Kadeci II i III',
-                'level' => 'wojewódzka',
-                'teams' => ['kadeci-ii' => 'LOMS Joker Piła II', 'kadeci-iii' => 'LOMS Joker Piła III'],
-                'sources' => ['mode=8&club_id=7&team_id=644', 'mode=8&club_id=7&team_id=645'],
-            ],
-            [
-                'name' => 'IKO Liga Młodzików',
-                'level' => 'wojewódzka',
-                'teams' => ['mlodzicy' => 'LOMS Joker Piła', 'mlodzicy-ii' => 'LOMS Joker Piła II'],
-                'sources' => ['mode=12&type=3', 'mode=4&type=3', 'mode=8&club_id=7&team_id=761', 'mode=8&club_id=7&team_id=834'],
+                'teams' => ['mlodzicy' => 'LOMS Joker Piła; LOMS Joker Piła 1', 'mlodzicy-ii' => 'LOMS Joker Piła II; LOMS Joker Piła 2'],
+                'sources' => [self::WZPS.'mode=12&type=3', self::SITE.'liga-mlodzikow-26-27/', self::WZPS.'mode=4&type=3', self::WZPS.'mode=8&club_id=7&team_id=761', self::WZPS.'mode=8&club_id=7&team_id=834'],
             ],
         ];
 
@@ -76,7 +72,7 @@ class CompetitionSeeder extends Seeder
                 'season_id' => $season->id,
                 'description' => "Rozgrywki WZPS w sezonie {$season->name}.",
                 'display_order' => $index + 1,
-                'source_url' => implode("\n", array_map(fn (string $query) => self::WZPS.$query, $data['sources'])),
+                'source_url' => implode("\n", $data['sources']),
             ]);
 
             foreach ($data['teams'] as $slug => $externalName) {

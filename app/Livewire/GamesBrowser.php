@@ -92,6 +92,7 @@ class GamesBrowser extends Component
                     $game->competition?->name,
                     $game->league,
                     $game->venue,
+                    $game->round_label,
                     $game->is_home ? 'dom u siebie' : 'wyjazd',
                     $game->game_date?->format('d.m.Y'),
                     $game->game_date?->translatedFormat('j F l'),

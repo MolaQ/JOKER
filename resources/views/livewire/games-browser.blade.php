@@ -90,7 +90,7 @@
 
                         <div class="min-w-0">
                             <p class="truncate text-xs font-semibold tracking-wide text-zinc-500 uppercase">
-                                {{ $game->competition?->name ?? $game->league }}@if($game->venue) · {{ $game->venue }}@endif
+                                {{ $game->competition?->name ?? $game->league }}@if($game->round_label) · {{ $game->round_label }}@endif
                             </p>
                             <div class="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1 font-display text-lg leading-tight font-semibold uppercase sm:text-xl">
                                 <span @class(['text-zinc-900' => $game->is_home, 'text-zinc-500' => ! $game->is_home])>{{ $home }}</span>
@@ -102,7 +102,12 @@
                                 <span @class(['text-zinc-900' => ! $game->is_home, 'text-zinc-500' => $game->is_home])>{{ $away }}</span>
                             </div>
                             @if($game->isFinished() && is_array($game->sets_score) && count($game->sets_score))
-                                <p class="mt-1 text-xs text-zinc-500 tabular-nums">{{ collect($game->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(' · ') }}</p>
+                                <p class="mt-1 text-xs text-zinc-500 tabular-nums">{{ collect($game->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(' · ') }}@if($game->result_note) · <span class="font-semibold text-amber-700">{{ $game->result_note }}</span>@endif</p>
+                            @elseif($game->result_note)
+                                <p class="mt-1 text-xs font-semibold text-amber-700">{{ $game->result_note }}</p>
+                            @endif
+                            @if($game->venue)
+                                <p class="mt-1 flex items-center gap-1 text-xs text-zinc-500"><svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s-7-6.2-7-11.5a7 7 0 1 1 14 0C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span class="truncate">{{ $game->venue }}</span></p>
                             @endif
                         </div>
 
