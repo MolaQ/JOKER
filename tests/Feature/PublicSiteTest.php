@@ -86,3 +86,11 @@ test('uploaded images are served even when the public/storage link is missing', 
 
     $this->get('/storage/sponsors/logo.png')->assertOk();
 });
+
+test('the admin panel lives under /panel and the old /admin address redirects there', function () {
+    $admin = User::firstWhere('email', 'marcin.molak@gmail.com');
+
+    $this->actingAs($admin)->get('/panel')->assertOk();
+    $this->get('/admin')->assertRedirect('/panel');
+    $this->get('/admin/teams')->assertRedirect('/panel/teams');
+});

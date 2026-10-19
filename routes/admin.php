@@ -3,7 +3,7 @@
 use App\Http\Controllers\Admin\DashboardController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'role:admin,trainer'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:admin,trainer'])->prefix('panel')->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     // Teams & Players
@@ -74,3 +74,7 @@ Route::middleware(['auth', 'role:admin,trainer'])->prefix('admin')->name('admin.
         return view('admin.profile-change-requests.index');
     })->name('profile-change-requests.index');
 });
+
+// Stary adres panelu. Na XAMPP /admin bywa zajęty przez narzędzie bazy danych, dlatego panel jest pod /panel.
+Route::redirect('/admin', '/panel', 301);
+Route::get('/admin/{path}', fn (string $path) => redirect('/panel/'.$path, 301))->where('path', '.*');
