@@ -34,7 +34,6 @@ class RivalTeamFactory extends Factory
         return [
             'full_name' => $fullName,
             'short_name' => Str::of($fullName)->explode(' ')->first(),
-            'category' => fake()->randomElement(['senior', 'junior', 'junior_mlodszy', 'mlodzik']),
             'logo_path' => null,
         ];
     }

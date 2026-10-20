@@ -362,7 +362,7 @@ class TournamentEditor extends Component
         return view('livewire.admin.tournament-editor', [
             'categories' => $this->tournament->categories()->withCount(['participants', 'matches'])->get(),
             'category' => $category,
-            'rivalOptions' => RivalTeam::whereNotIn('id', $usedRivals)->orderBy('full_name')->get(['id', 'full_name']),
+            'rivalOptions' => RivalTeam::with('club')->whereNotIn('id', $usedRivals)->orderBy('full_name')->get(['id', 'full_name', 'rival_club_id']),
             'teamOptions' => Team::whereNotIn('id', $usedTeams)->orderBy('display_order')->get(['id', 'name']),
         ]);
     }

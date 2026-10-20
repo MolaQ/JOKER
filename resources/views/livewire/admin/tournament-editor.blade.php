@@ -114,11 +114,13 @@
                                 @endforeach
                             </optgroup>
                         @endif
-                        <optgroup label="Rywale">
-                            @foreach($rivalOptions as $rival)
-                                <option value="rival:{{ $rival->id }}">{{ $rival->full_name }}</option>
-                            @endforeach
-                        </optgroup>
+                        @foreach($rivalOptions->groupBy(fn ($rival) => $rival->club?->name ?? 'Rywale bez klubu')->sortKeys() as $clubName => $clubRivals)
+                            <optgroup label="{{ $clubName }}">
+                                @foreach($clubRivals as $rival)
+                                    <option value="rival:{{ $rival->id }}">{{ $rival->full_name }}</option>
+                                @endforeach
+                            </optgroup>
+                        @endforeach
                     </select>
                 </div>
                 <div>

@@ -872,10 +872,7 @@ class ScheduleImporter
 
     private function rivalId(string $name): int
     {
-        $existing = RivalTeam::all(['id', 'full_name', 'short_name'])
-            ->first(fn (RivalTeam $rival) => self::key($rival->full_name) === self::key($name));
-
-        return $existing->id ?? RivalTeam::create(['full_name' => $name])->id;
+        return RivalTeam::findByName($name)->id ?? RivalTeam::create(['full_name' => $name, 'needs_review' => true])->id;
     }
 
     private function toUtf8(string $body, string $contentType): string

@@ -4,6 +4,7 @@ use App\Livewire\Admin\CompetitionManager;
 use App\Models\Competition;
 use App\Models\Game;
 use App\Models\LeagueStanding;
+use App\Models\RivalTeam;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\User;
@@ -197,4 +198,15 @@ test('match detail addresses are built next to the source page, whatever the lin
     $row = app(ScheduleImporter::class)->parsePage($html, 'https://wzps.poznan.pl/obsady//index.php?mode=12&type=5')['matches']->sole();
 
     expect($row['detail_url'])->toBe('https://wzps.poznan.pl/obsady/index.php?mode=4&stage=2&match_id=249');
+});
+
+test('a renamed rival is matched by its former name and new names wait for review', function () {
+    $fort = RivalTeam::create(['full_name' => 'Fort Tarnowo Podgórne Sponsor', 'aliases' => ['Fort Tarnowo Podgórne']]);
+
+    app(ScheduleImporter::class)->sync($this->competition);
+
+    expect(Game::firstWhere('external_id', '406')->opponent_team_id)->toBe($fort->id)
+        ->and(RivalTeam::where('full_name', 'Fort Tarnowo Podgórne')->exists())->toBeFalse()
+        ->and($fort->fresh()->needs_review)->toBeFalse()
+        ->and(RivalTeam::where('needs_review', true)->count())->toBeGreaterThan(0);
 });
