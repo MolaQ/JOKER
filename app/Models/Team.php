@@ -71,7 +71,7 @@ class Team extends Model
         $staff = collect();
 
         if ($this->trainer) {
-            $staff->push(['user' => $this->trainer, 'role' => 'Trener główny']);
+            $staff->push(['user' => $this->trainer, 'role' => __('Trener główny')]);
         }
 
         foreach ($this->assistantTrainers as $member) {
@@ -79,7 +79,7 @@ class Team extends Model
                 continue;
             }
 
-            $staff->push(['user' => $member, 'role' => $member->pivot->role ?: 'Asystent trenera']);
+            $staff->push(['user' => $member, 'role' => __($member->pivot->role ?: 'Asystent trenera')]);
         }
 
         return $staff;

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController;
+use App\Models\Tournament;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'role:admin,trainer'])->prefix('panel')->name('admin.')->group(function () {
@@ -21,6 +22,7 @@ Route::middleware(['auth', 'role:admin,trainer'])->prefix('panel')->name('admin.
 
     // Turnieje i sparingi w trakcie sezonu
     Route::view('/tournaments', 'admin.tournaments.index')->name('tournaments.index');
+    Route::get('/tournaments/{tournament}', fn (Tournament $tournament) => view('admin.tournaments.edit', ['tournament' => $tournament]))->name('tournaments.edit');
 
     // Competitions & Standings
     Route::get('/competitions', function () {

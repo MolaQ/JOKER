@@ -16,9 +16,9 @@
             {{ $game->isFinished() && $game->game_date?->format('H:i') === '00:00' ? $game->game_date->translatedFormat('D, d M') : $game->kickoffLabel() }}
         </span>
         @if($won !== null)
-            <span @class(['rounded-full px-2.5 py-0.5 font-bold', 'bg-emerald-500/15 text-emerald-500' => $won, 'bg-red-500/15 text-red-500' => ! $won])>{{ $won ? 'Wygrana' : 'Porażka' }}</span>
+            <span @class(['rounded-full px-2.5 py-0.5 font-bold', 'bg-emerald-500/15 text-emerald-500' => $won, 'bg-red-500/15 text-red-500' => ! $won])>{{ $won ? __('Wygrana') : __('Porażka') }}</span>
         @else
-            <span class="rounded-full px-2.5 py-0.5 font-semibold {{ $dark ? 'bg-white/10' : 'bg-zinc-100' }}">{{ $game->is_home ? 'U siebie' : 'Wyjazd' }}</span>
+            <span class="rounded-full px-2.5 py-0.5 font-semibold {{ $dark ? 'bg-white/10' : 'bg-zinc-100' }}">{{ $game->is_home ? __('U siebie') : __('Wyjazd') }}</span>
         @endif
     </div>
 
@@ -28,7 +28,7 @@
             @if($sets)
                 {{ $sets[0] }}<span class="mx-1 opacity-40">:</span>{{ $sets[1] }}
             @else
-                <span class="text-base opacity-50">vs</span>
+                <span class="text-base opacity-50">{{ __('vs') }}</span>
             @endif
         </p>
         <p class="text-right font-display text-lg leading-tight font-semibold uppercase">{{ $away }}</p>
@@ -48,9 +48,9 @@
             <span>{{ $game->venue }}</span>
         @endif
         @if($game->isUpcoming())
-            <a href="{{ route('games.calendar', $game) }}" class="ml-auto inline-flex min-h-11 items-center gap-1.5 font-semibold {{ $dark ? 'text-sky-club-light' : 'text-sky-club-dark' }}" title="Dodaj mecz do kalendarza w telefonie">
+            <a href="{{ route('games.calendar', $game) }}" class="ml-auto inline-flex min-h-11 items-center gap-1.5 font-semibold {{ $dark ? 'text-sky-club-light' : 'text-sky-club-dark' }}" title="{{ __('Dodaj mecz do kalendarza w telefonie') }}">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M8 3v4m8-4v4M3 10h18M12 14v4m-2-2h4M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>
-                Do kalendarza
+                {{ __('Do kalendarza') }}
             </a>
         @endif
     </div>

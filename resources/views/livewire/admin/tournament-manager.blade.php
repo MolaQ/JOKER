@@ -31,6 +31,7 @@
                         @endforeach
                     </td>
                     <td class="py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-6">
+                        <a href="{{ route('admin.tournaments.edit', $tournament) }}" class="mr-4 text-blue-600 hover:text-blue-900">Strona turnieju</a>
                         <button type="button" wire:click="openEditModal({{ $tournament->id }})" class="text-blue-600 hover:text-blue-900">Edytuj</button>
                         <button type="button" wire:click="delete({{ $tournament->id }})" wire:confirm="Usunąć turniej? Mecze turniejowe zostaną, ale bez przypisania." class="ml-4 text-red-600 hover:text-red-900">Usuń</button>
                     </td>

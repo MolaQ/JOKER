@@ -28,6 +28,13 @@ class PageManager extends Component
 
     public string $content = '';
 
+    /** Opcjonalna wersja angielska (pokazywana, gdy odwiedzający wybierze angielski). */
+    public string $title_en = '';
+
+    public string $lead_en = '';
+
+    public string $content_en = '';
+
     public int $display_order = 0;
 
     public bool $is_published = true;
@@ -53,6 +60,9 @@ class PageManager extends Component
             'slug' => ['nullable', 'string', 'max:120', 'regex:/^[a-z0-9-]*$/', Rule::unique('pages', 'slug')->ignore($this->editingId)],
             'lead' => ['nullable', 'string', 'max:500'],
             'content' => ['nullable', 'string'],
+            'title_en' => ['nullable', 'string', 'max:255'],
+            'lead_en' => ['nullable', 'string', 'max:255'],
+            'content_en' => ['nullable', 'string'],
             'display_order' => ['nullable', 'integer', 'min:0'],
             'is_published' => ['boolean'],
             'image' => ['nullable', 'image', 'max:4096'],
@@ -90,6 +100,9 @@ class PageManager extends Component
         $this->slug = $page->slug;
         $this->lead = (string) $page->lead;
         $this->content = (string) $page->content;
+        $this->title_en = (string) $page->title_en;
+        $this->lead_en = (string) $page->lead_en;
+        $this->content_en = (string) $page->content_en;
         $this->display_order = (int) $page->display_order;
         $this->is_published = $page->is_published;
         $this->existingImage = $page->image_path;
@@ -101,6 +114,10 @@ class PageManager extends Component
         $this->slug = Str::slug($this->slug ?: $this->title);
         $validated = $this->validate();
         unset($validated['image']);
+
+        foreach (['title_en', 'lead_en', 'content_en'] as $englishField) {
+            $validated[$englishField] = filled(strip_tags((string) $validated[$englishField])) ? $validated[$englishField] : null;
+        }
 
         if ($this->image) {
             $validated['image_path'] = $this->image->store('pages', 'public');
@@ -146,6 +163,9 @@ class PageManager extends Component
         $this->slug = '';
         $this->lead = '';
         $this->content = '';
+        $this->title_en = '';
+        $this->lead_en = '';
+        $this->content_en = '';
         $this->display_order = 0;
         $this->is_published = true;
         $this->image = null;

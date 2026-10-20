@@ -28,7 +28,7 @@ class LoginController extends Controller
         }
 
         throw ValidationException::withMessages([
-            'email' => 'Podane dane logowania są nieprawidłowe.',
+            'email' => __('Podane dane logowania są nieprawidłowe.'),
         ]);
     }
 

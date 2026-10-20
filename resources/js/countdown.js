@@ -69,13 +69,13 @@ function setDigit(svg, value) {
     });
 }
 
+// Napisy zegara w języku strony (<html lang>).
+const isEnglish = () => document.documentElement.lang === 'en';
+
 function buildDisplay(el) {
-    const groups = [
-        ['days', 'dni'],
-        ['hours', 'godz'],
-        ['minutes', 'min'],
-        ['seconds', 'sek'],
-    ];
+    const groups = isEnglish()
+        ? [['days', 'days'], ['hours', 'hrs'], ['minutes', 'min'], ['seconds', 'sec']]
+        : [['days', 'dni'], ['hours', 'godz'], ['minutes', 'min'], ['seconds', 'sek']];
     const digits = {};
 
     el.textContent = '';
@@ -135,7 +135,7 @@ export function initCountdowns() {
                 show({ days: 0, hours: 0, minutes: 0, seconds: 0 });
                 el.classList.add('is-live');
                 if (live) {
-                    live.textContent = 'Gramy dziś!';
+                    live.textContent = isEnglish() ? 'Match day!' : 'Gramy dziś!';
                 }
                 return false;
             }
@@ -149,7 +149,9 @@ export function initCountdowns() {
             el.classList.toggle('is-blink', seconds % 2 === 0);
 
             if (live) {
-                live.textContent = `Do meczu: ${days} dni, ${hours} godz., ${minutes} min`;
+                live.textContent = isEnglish()
+                    ? `Match starts in: ${days} days, ${hours} hrs, ${minutes} min`
+                    : `Do meczu: ${days} dni, ${hours} godz., ${minutes} min`;
             }
 
             return true;

@@ -26,6 +26,13 @@ class ArticleManager extends Component
 
     public string $content = '';
 
+    /** Opcjonalna wersja angielska (pokazywana, gdy odwiedzający wybierze angielski). */
+    public string $title_en = '';
+
+    public string $excerpt_en = '';
+
+    public string $content_en = '';
+
     public string $status = 'draft';
 
     public ?string $published_at = null;
@@ -61,6 +68,9 @@ class ArticleManager extends Component
             'title' => 'required|string|max:255',
             'excerpt' => 'nullable|string|max:500',
             'content' => 'required|string',
+            'title_en' => 'nullable|string|max:255',
+            'excerpt_en' => 'nullable|string|max:500',
+            'content_en' => 'nullable|string',
             'status' => 'required|in:draft,published,archived',
             'published_at' => 'nullable|date',
             'is_featured' => 'boolean',
@@ -97,6 +107,9 @@ class ArticleManager extends Component
         $this->title = $article->title;
         $this->excerpt = (string) $article->excerpt;
         $this->content = $article->content;
+        $this->title_en = (string) $article->title_en;
+        $this->excerpt_en = (string) $article->excerpt_en;
+        $this->content_en = (string) $article->content_en;
         $this->status = $article->status;
         $this->published_at = $article->published_at?->format('Y-m-d\TH:i');
         $this->is_featured = $article->is_featured;
@@ -122,6 +135,10 @@ class ArticleManager extends Component
         }
 
         unset($validated['gameIds'], $validated['gameIds.*']);
+
+        foreach (['title_en', 'excerpt_en', 'content_en'] as $englishField) {
+            $validated[$englishField] = filled(strip_tags((string) $validated[$englishField])) ? $validated[$englishField] : null;
+        }
 
         if ($this->editingId) {
             $article = Article::findOrFail($this->editingId);
@@ -205,6 +222,9 @@ class ArticleManager extends Component
         $this->title = '';
         $this->excerpt = '';
         $this->content = '';
+        $this->title_en = '';
+        $this->excerpt_en = '';
+        $this->content_en = '';
         $this->status = 'draft';
         $this->published_at = null;
         $this->is_featured = false;

@@ -1,0 +1,5 @@
+{
+    ":count mecz|:count mecze|:count meczów": ":count mecz|:count mecze|:count meczów",
+    "{1} :count turniej|[2,4] :count turnieje|[0,*] :count turniejów": "{1} :count turniej|[2,4] :count turnieje|[0,*] :count turniejów",
+    "{1} :count wygrana|[0,*] :count wygranych": "{1} :count wygrana|[0,*] :count wygranych"
+}

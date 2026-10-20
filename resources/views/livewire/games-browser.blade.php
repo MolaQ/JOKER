@@ -4,20 +4,20 @@
         <div class="container-site space-y-3 py-3">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
                 <label class="relative flex-1">
-                    <span class="sr-only">Szukaj meczu</span>
+                    <span class="sr-only">{{ __('Szukaj meczu') }}</span>
                     <svg class="pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"/></svg>
-                    <input type="search" wire:model.live.debounce.150ms="search" placeholder="Szukaj: rywal, drużyna, hala, data (np. 28.10)…" autocomplete="off" enterkeyhint="search"
+                    <input type="search" wire:model.live.debounce.150ms="search" placeholder="{{ __('Szukaj: rywal, drużyna, hala, data (np. 28.10)…') }}" autocomplete="off" enterkeyhint="search"
                         class="h-12 w-full rounded-full border-0 bg-zinc-100 pr-4 pl-12 text-base text-zinc-900 ring-1 ring-transparent transition outline-none placeholder:text-zinc-400 focus:bg-white focus:ring-sky-club">
                 </label>
 
-                <div class="grid grid-cols-3 rounded-full bg-zinc-100 p-1 text-sm font-semibold" role="tablist" aria-label="Które mecze pokazać">
+                <div class="grid grid-cols-3 rounded-full bg-zinc-100 p-1 text-sm font-semibold" role="tablist" aria-label="{{ __('Które mecze pokazać') }}">
                     @foreach(\App\Livewire\GamesBrowser::PERIODS as $key => $label)
                         <button type="button" role="tab" aria-selected="{{ $period === $key ? 'true' : 'false' }}" wire:click="setPeriod('{{ $key }}')" @class([
                             'flex items-center justify-center gap-1.5 rounded-full px-4 py-2 transition',
                             'bg-ink text-white shadow' => $period === $key,
                             'text-zinc-600 hover:text-zinc-900' => $period !== $key,
                         ])>
-                            {{ $label }} <span class="text-xs tabular-nums opacity-60">{{ $periodCounts[$key] }}</span>
+                            {{ __($label) }} <span class="text-xs tabular-nums opacity-60">{{ $periodCounts[$key] }}</span>
                         </button>
                     @endforeach
                 </div>
@@ -25,36 +25,36 @@
 
             <div class="flex flex-wrap items-center gap-2">
                 <div class="scrollbar-none -mx-4 flex min-w-0 flex-1 basis-full gap-2 overflow-x-auto px-4 sm:mx-0 sm:basis-auto sm:px-0">
-                    <button type="button" wire:click="$set('team', '')" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $team === '', 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => $team !== ''])>Wszystkie drużyny</button>
+                    <button type="button" wire:click="$set('team', '')" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $team === '', 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => $team !== ''])>{{ __('Wszystkie drużyny') }}</button>
                     @foreach($teams as $teamOption)
-                        <button type="button" data-track="Mecze: {{ $teamOption->name }}" wire:click="toggleTeam('{{ $teamOption->slug }}')" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $team === $teamOption->slug, 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => $team !== $teamOption->slug])>{{ $teamOption->name }}</button>
+                        <button type="button" data-track="{{ __('Mecze') }}: {{ $teamOption->name }}" wire:click="toggleTeam('{{ $teamOption->slug }}')" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $team === $teamOption->slug, 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => $team !== $teamOption->slug])>{{ $teamOption->name }}</button>
                     @endforeach
                 </div>
 
                 <div class="flex w-full flex-wrap gap-2 sm:w-auto">
                     @if($competitions->count() > 1 || $hasTournaments || $hasFriendlies)
-                        <select wire:model.live="competition" class="h-9 min-w-0 flex-1 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700 sm:flex-none" aria-label="Rozgrywki">
-                            <option value="">Wszystkie rozgrywki</option>
+                        <select wire:model.live="competition" class="h-9 min-w-0 flex-1 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700 sm:flex-none" aria-label="{{ __('Rozgrywki') }}">
+                            <option value="">{{ __('Wszystkie rozgrywki') }}</option>
                             @foreach($competitions as $competitionOption)
                                 <option value="{{ $competitionOption->id }}">{{ $competitionOption->name }}</option>
                             @endforeach
                             @if($hasTournaments)
-                                <option value="{{ \App\Livewire\GamesBrowser::FILTER_TOURNAMENTS }}">Turnieje</option>
+                                <option value="{{ \App\Livewire\GamesBrowser::FILTER_TOURNAMENTS }}">{{ __('Turnieje') }}</option>
                             @endif
                             @if($hasFriendlies)
-                                <option value="{{ \App\Livewire\GamesBrowser::FILTER_FRIENDLIES }}">Sparingi</option>
+                                <option value="{{ \App\Livewire\GamesBrowser::FILTER_FRIENDLIES }}">{{ __('Sparingi') }}</option>
                             @endif
                         </select>
                     @endif
-                    <select wire:model.live="place" class="h-9 flex-1 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700 sm:flex-none" aria-label="U siebie czy na wyjeździe">
-                        <option value="">Dom i wyjazd</option>
-                        <option value="dom">U siebie</option>
-                        <option value="wyjazd">Na wyjeździe</option>
+                    <select wire:model.live="place" class="h-9 flex-1 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700 sm:flex-none" aria-label="{{ __('U siebie czy na wyjeździe') }}">
+                        <option value="">{{ __('Dom i wyjazd') }}</option>
+                        <option value="dom">{{ __('U siebie') }}</option>
+                        <option value="wyjazd">{{ __('Na wyjeździe') }}</option>
                     </select>
                     @if($seasons->count() > 1)
-                        <select wire:model.live="season" class="h-9 flex-1 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700 sm:flex-none" aria-label="Sezon">
+                        <select wire:model.live="season" class="h-9 flex-1 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700 sm:flex-none" aria-label="{{ __('Sezon') }}">
                             @foreach($seasons as $seasonOption)
-                                <option value="{{ $seasonOption->is_current ? '' : $seasonOption->id }}">Sezon {{ $seasonOption->name }}</option>
+                                <option value="{{ $seasonOption->is_current ? '' : $seasonOption->id }}">{{ __('Sezon') }} {{ $seasonOption->name }}</option>
                             @endforeach
                         </select>
                     @endif
@@ -66,11 +66,11 @@
     <section class="container-site py-10 transition-opacity" wire:loading.class="opacity-50" wire:target="search,team,competition,place,season,setPeriod,toggleTeam,resetFilters">
         <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
             <p class="text-sm text-zinc-500" aria-live="polite">
-                {{ $total }} {{ $total === 1 ? 'mecz' : ($total % 10 >= 2 && $total % 10 <= 4 && ($total % 100 < 10 || $total % 100 >= 20) ? 'mecze' : 'meczów') }}
-                @if($search !== '') dla „<span class="font-semibold text-zinc-800">{{ $search }}</span>”@endif
+                {{ trans_choice(':count mecz|:count mecze|:count meczów', $total) }}
+                @if($search !== '') {{ __('dla') }} „<span class="font-semibold text-zinc-800">{{ $search }}</span>”@endif
             </p>
             @if($hasFilters)
-                <button type="button" wire:click="resetFilters" class="text-sm font-semibold text-sky-club-dark hover:underline">Wyczyść filtry ✕</button>
+                <button type="button" wire:click="resetFilters" class="text-sm font-semibold text-sky-club-dark hover:underline">{{ __('Wyczyść filtry') }} ✕</button>
             @endif
         </div>
 
@@ -95,12 +95,12 @@
                             <span class="mt-1 block text-lg tracking-[0.3em] text-sky-club-light">{{ $month['month']->year }}</span>
                         </h2>
                         <p class="text-sm text-white/85">
-                            {{ $count }} {{ $count === 1 ? 'mecz' : ($count % 10 >= 2 && $count % 10 <= 4 && ($count % 100 < 10 || $count % 100 >= 20) ? 'mecze' : 'meczów') }}@if($month['tournaments']->isNotEmpty()) · {{ $month['tournaments']->count() }} {{ $month['tournaments']->count() === 1 ? 'turniej' : ($month['tournaments']->count() < 5 ? 'turnieje' : 'turniejów') }}@endif @if($finished->isNotEmpty()) · <span class="font-semibold text-emerald-300">{{ $wins }} {{ $wins === 1 ? 'wygrana' : 'wygranych' }}</span>@endif
+                            {{ trans_choice(':count mecz|:count mecze|:count meczów', $count) }}@if($month['tournaments']->isNotEmpty()) · {{ trans_choice('{1} :count turniej|[2,4] :count turnieje|[0,*] :count turniejów', $month['tournaments']->count()) }}@endif @if($finished->isNotEmpty()) · <span class="font-semibold text-emerald-300">{{ trans_choice('{1} :count wygrana|[0,*] :count wygranych', $wins) }}</span>@endif
                         </p>
                     </header>
 
                     <div class="grid grid-cols-7 border-b border-zinc-200 text-center text-[11px] font-semibold tracking-wider uppercase sm:text-xs">
-                        @foreach(['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'] as $weekday)
+                        @foreach([__('Pn'), __('Wt'), __('Śr'), __('Cz'), __('Pt'), __('So'), __('Nd')] as $weekday)
                             <div @class(['py-2', 'text-red-600' => $loop->index >= 5, 'text-zinc-500' => $loop->index < 5])>{{ $weekday }}</div>
                         @endforeach
                     </div>
@@ -133,7 +133,7 @@
                                                         'inline-flex h-4 w-4 items-center justify-center rounded sm:h-5 sm:w-5',
                                                         'bg-gradient-to-br from-club-navy to-sky-club-dark' => $game->is_home,
                                                         'bg-white ring-1 ring-sky-club' => ! $game->is_home,
-                                                    ]) aria-label="{{ $game->is_home ? 'U siebie' : 'Wyjazd' }}: {{ $game->team?->name }} - {{ $game->opponentShortName() }}">
+                                                    ]) aria-label="{{ $game->is_home ? __('U siebie') : __('Wyjazd') }}: {{ $game->team?->name }} - {{ $game->opponentShortName() }}">
                                                         @if($won === true)
                                                             <svg class="h-3 w-3 text-emerald-400" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7"/></svg>
                                                         @elseif($won === false)
@@ -142,10 +142,10 @@
                                                     </a>
                                                 @endforeach
                                                 @foreach($day['tournaments'] as $tournament)
-                                                    <a href="#turniej-{{ $tournament->id }}" class="text-xs leading-4 sm:text-sm" aria-label="Turniej: {{ $tournament->fullName() }}">🏆</a>
+                                                    <a href="#turniej-{{ $tournament->id }}" class="text-xs leading-4 sm:text-sm" aria-label="{{ __('Turniej') }}: {{ $tournament->fullName() }}">🏆</a>
                                                 @endforeach
                                                 @foreach($day['birthdays'] as $person)
-                                                    <a href="#urodziny-{{ $month['key'] }}" class="text-xs leading-4 sm:text-sm" aria-label="Urodziny: {{ $person['name'] }}">🎂</a>
+                                                    <a href="#urodziny-{{ $month['key'] }}" class="text-xs leading-4 sm:text-sm" aria-label="{{ __('Urodziny') }}: {{ $person['name'] }}">🎂</a>
                                                 @endforeach
                                             </div>
 
@@ -153,8 +153,8 @@
                                             <ul class="mt-1.5 hidden space-y-1 lg:block">
                                                 @foreach($day['tournaments'] as $tournament)
                                                     <li wire:key="cell-tournament-{{ $tournament->id }}-{{ $day['date']->format('d') }}" class="rounded-lg bg-gradient-to-br from-amber-100 to-amber-50 px-1.5 py-1 text-[11px] leading-tight text-amber-950 ring-1 ring-amber-300" title="{{ $tournament->fullName() }} · {{ $tournament->dateRangeLabel() }}{{ $tournament->city ? ' · '.$tournament->city : '' }}">
-                                                        <p class="font-semibold">🏆 {{ $tournament->fullName() }}</p>
-                                                        <p class="text-amber-800">{{ $tournament->is_organizer ? 'organizujemy' : ($tournament->city ?? 'wyjazd') }}</p>
+                                                        <p class="font-semibold">@if($tournament->has_page)<a href="{{ route('tournaments.show', $tournament) }}" class="hover:underline">🏆 {{ $tournament->fullName() }}</a>@else🏆 {{ $tournament->fullName() }}@endif</p>
+                                                        <p class="text-amber-800">{{ $tournament->is_organizer ? __('organizujemy') : ($tournament->city ?? __('wyjazd')) }}</p>
                                                         @foreach($tournament->teams as $tournamentTeam)
                                                             <p class="truncate">{{ $tournamentTeam->name }}@if($tournamentTeam->pivot->placement) · <strong>{{ $tournamentTeam->pivot->placement }}</strong>@endif</p>
                                                         @endforeach
@@ -169,7 +169,7 @@
                                                         $tag = $article ? 'a' : 'div';
                                                     @endphp
                                                     <li wire:key="cell-{{ $game->id }}">
-                                                        <{{ $tag }} @if($article) href="{{ route('articles.show', $article) }}" @endif title="{{ $game->is_home ? 'U siebie' : 'Wyjazd' }} · {{ $game->competitionLabel() }}@if($game->round_label) · {{ $game->round_label }}@endif{{ $game->venue ? ' · '.$game->venue : '' }}{{ is_array($game->sets_score) && count($game->sets_score) ? ' · '.collect($game->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(', ') : '' }}{{ $article ? ' · Artykuł: '.$article->title : '' }}" @class([
+                                                        <{{ $tag }} @if($article) href="{{ route('articles.show', $article) }}" @endif title="{{ $game->is_home ? __('U siebie') : __('Wyjazd') }} · {{ $game->competitionLabel() }}@if($game->round_label) · {{ $game->round_label }}@endif{{ $game->venue ? ' · '.$game->venue : '' }}{{ is_array($game->sets_score) && count($game->sets_score) ? ' · '.collect($game->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(', ') : '' }}{{ $article ? ' · '.__('Artykuł').': '.$article->localizedTitle() : '' }}" @class([
                                                             'block rounded-lg px-1.5 py-1 text-[11px] leading-tight transition',
                                                             'bg-gradient-to-br from-club-navy to-sky-club-dark text-white shadow-sm' => $game->is_home,
                                                             'bg-white text-sky-club-dark shadow-sm ring-1 ring-sky-club/40' => ! $game->is_home,
@@ -179,9 +179,9 @@
                                                                 <x-team-label :label="$game->ourLabel()" class="min-w-0 font-semibold break-words" />
                                                                 <span class="flex shrink-0 items-center gap-0.5 font-bold tabular-nums">
                                                                     @if($won === true)
-                                                                        <svg class="h-3.5 w-3.5 {{ $game->is_home ? 'text-emerald-300' : 'text-emerald-600' }}" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-label="Wygrana"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7"/></svg>
+                                                                        <svg class="h-3.5 w-3.5 {{ $game->is_home ? 'text-emerald-300' : 'text-emerald-600' }}" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-label="{{ __('Wygrana') }}"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7"/></svg>
                                                                     @elseif($won === false)
-                                                                        <svg class="h-3.5 w-3.5 {{ $game->is_home ? 'text-red-300' : 'text-red-600' }}" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-label="Porażka"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
+                                                                        <svg class="h-3.5 w-3.5 {{ $game->is_home ? 'text-red-300' : 'text-red-600' }}" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-label="{{ __('Porażka') }}"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
                                                                     @endif
                                                                     @if($game->isFinished())
                                                                         {{ $result ? $result[0].':'.$result[1] : '' }}
@@ -191,16 +191,16 @@
                                                                 </span>
                                                             </span>
                                                             <span @class(['flex items-center gap-1 truncate', 'text-sky-club-light' => $game->is_home, 'text-zinc-600' => ! $game->is_home])>
-                                                                <span class="truncate">@if($game->isFriendly())<span class="mr-0.5 rounded bg-amber-300 px-1 text-[9px] font-bold text-amber-950 uppercase">sparing</span>@elseif($game->tournament_id)<span class="mr-0.5">🏆</span>@endif{{ $game->is_home ? 'vs' : 'u' }} {{ $game->opponentShortName() }}</span>
+                                                                <span class="truncate">@if($game->isFriendly())<span class="mr-0.5 rounded bg-amber-300 px-1 text-[9px] font-bold text-amber-950 uppercase">{{ __('sparing') }}</span>@elseif($game->tournament_id)<span class="mr-0.5">🏆</span>@endif{{ $game->is_home ? __('vs') : __('u') }} {{ $game->opponentShortName() }}</span>
                                                                 @if($article)
-                                                                    <svg class="ml-auto h-3 w-3 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-label="Artykuł"><path stroke-linecap="round" stroke-linejoin="round" d="M7 4h10a1 1 0 0 1 1 1v15l-3-2-3 2-3-2-3 2V5a1 1 0 0 1 1-1Zm2 5h6m-6 4h4"/></svg>
+                                                                    <svg class="ml-auto h-3 w-3 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-label="{{ __('Artykuł') }}"><path stroke-linecap="round" stroke-linejoin="round" d="M7 4h10a1 1 0 0 1 1 1v15l-3-2-3 2-3-2-3 2V5a1 1 0 0 1 1-1Zm2 5h6m-6 4h4"/></svg>
                                                                 @endif
                                                             </span>
                                                         </{{ $tag }}>
                                                     </li>
                                                 @endforeach
                                                 @foreach($day['birthdays'] as $person)
-                                                    <li class="truncate rounded-lg bg-amber-50 px-1.5 py-1 text-[11px] leading-tight text-amber-900" title="Urodziny: {{ $person['name'] }}{{ $person['showAge'] ? ' kończy '.$person['ageLabel'] : '' }} ({{ $person['role'] }})">
+                                                    <li class="truncate rounded-lg bg-amber-50 px-1.5 py-1 text-[11px] leading-tight text-amber-900" title="{{ __('Urodziny') }}: {{ $person['name'] }}{{ $person['showAge'] ? ' '.__('kończy').' '.$person['ageLabel'] : '' }} ({{ __($person['role']) }})">
                                                         🎂 @if($person['url'])<a href="{{ $person['url'] }}" class="font-semibold hover:underline">{{ $person['name'] }}</a>@else<span class="font-semibold">{{ $person['name'] }}</span>@endif{{ $person['showAge'] ? ' · '.$person['age'] : '' }}
                                                     </li>
                                                 @endforeach
@@ -244,7 +244,7 @@
                                 @if($game->isFinished())
                                     <span class="rounded-lg bg-ink px-2 py-0.5 text-base text-white tabular-nums">{{ $game->home_score }}:{{ $game->away_score }}</span>
                                 @else
-                                    <span class="text-sm text-zinc-400 normal-case">vs</span>
+                                    <span class="text-sm text-zinc-400 normal-case">{{ __('vs') }}</span>
                                 @endif
                                 @if($game->is_home)
                                     <span class="text-zinc-500">{{ $opponentName }}</span>
@@ -270,24 +270,27 @@
                                     @else
                                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
                                     @endif
-                                    {{ $won ? 'Wygrana' : 'Porażka' }} {{ $result[0] }}:{{ $result[1] }}
+                                    {{ $won ? __('Wygrana') : __('Porażka') }} {{ $result[0] }}:{{ $result[1] }}
                                 </span>
                             @else
-                                <span class="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600">{{ $game->is_home ? 'U siebie' : 'Wyjazd' }}</span>
+                                <span class="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600">{{ $game->is_home ? __('U siebie') : __('Wyjazd') }}</span>
                             @endif
                             @if($article)
-                                <a href="{{ route('articles.show', $article) }}" class="inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-sky-club-dark hover:underline">Czytaj artykuł →</a>
+                                <a href="{{ route('articles.show', $article) }}" class="inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-sky-club-dark hover:underline">{{ __('Czytaj artykuł') }} →</a>
                             @endif
                             @if($game->isUpcoming())
-                                <a href="{{ route('games.calendar', $game) }}" class="inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-sky-club-dark hover:underline">+ Do kalendarza</a>
+                                <a href="{{ route('games.calendar', $game) }}" class="inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-sky-club-dark hover:underline">+ {{ __('Do kalendarza') }}</a>
                             @endif
                         </div>
                     </li>
                 @endforeach
                 @foreach($month['tournaments'] as $tournament)
                     <li id="turniej-{{ $tournament->id }}" wire:key="list-tournament-{{ $tournament->id }}" class="card scroll-mt-48 bg-amber-50 p-4 text-sm text-amber-950 ring-amber-200">
-                        <p class="text-xs font-semibold tracking-wide text-amber-700 uppercase">Turniej · {{ $tournament->dateRangeLabel() }}{{ $tournament->is_organizer ? ' · organizujemy' : '' }}</p>
+                        <p class="text-xs font-semibold tracking-wide text-amber-700 uppercase">{{ __('Turniej') }} · {{ $tournament->dateRangeLabel() }}{{ $tournament->is_organizer ? ' · '.__('organizujemy') : '' }}</p>
                         <p class="mt-1 font-display text-lg font-semibold uppercase">🏆 {{ $tournament->fullName() }}</p>
+                        @if($tournament->has_page)
+                            <a href="{{ route('tournaments.show', $tournament) }}" class="mt-1 inline-block text-xs font-semibold text-amber-800 underline" data-track="Kalendarz: strona turnieju">{{ __('Strona turnieju: grupy, wyniki, informator') }} →</a>
+                        @endif
                         @if($tournament->venue || $tournament->city)
                             <p class="text-xs text-amber-800">{{ collect([$tournament->venue, $tournament->city])->filter()->implode(', ') }}</p>
                         @endif
@@ -300,10 +303,10 @@
                 @endforeach
                 @if($month['birthdays']->isNotEmpty())
                     <li id="urodziny-{{ $month['key'] }}" class="card scroll-mt-48 bg-amber-50 p-4 text-sm text-amber-900 ring-amber-200">
-                        <p class="font-semibold">🎂 Urodziny w tym miesiącu</p>
+                        <p class="font-semibold">🎂 {{ __('Urodziny w tym miesiącu') }}</p>
                         <ul class="mt-2 space-y-1">
                             @foreach($month['birthdays'] as $person)
-                                <li><span class="tabular-nums">{{ $person['date']->format('d.m') }}</span> · @if($person['url'])<a href="{{ $person['url'] }}" class="font-semibold hover:underline">{{ $person['name'] }}</a>@else<span class="font-semibold">{{ $person['name'] }}</span>@endif{{ $person['showAge'] ? ' · kończy '.$person['ageLabel'] : '' }}</li>
+                                <li><span class="tabular-nums">{{ $person['date']->format('d.m') }}</span> · @if($person['url'])<a href="{{ $person['url'] }}" class="font-semibold hover:underline">{{ $person['name'] }}</a>@else<span class="font-semibold">{{ $person['name'] }}</span>@endif{{ $person['showAge'] ? ' · '.__('kończy').' '.$person['ageLabel'] : '' }}</li>
                             @endforeach
                         </ul>
                     </li>
@@ -312,12 +315,12 @@
             </article>
         @empty
             <div class="card p-12 text-center">
-                <p class="font-display text-2xl font-semibold text-zinc-900 uppercase">Brak meczów</p>
-                <p class="mt-2 text-zinc-500">{{ $hasFilters ? 'Żaden mecz nie pasuje do wybranych filtrów.' : 'Terminarz pojawi się tu, gdy tylko zostanie ogłoszony.' }}</p>
+                <p class="font-display text-2xl font-semibold text-zinc-900 uppercase">{{ __('Brak meczów') }}</p>
+                <p class="mt-2 text-zinc-500">{{ $hasFilters ? __('Żaden mecz nie pasuje do wybranych filtrów.') : __('Terminarz pojawi się tu, gdy tylko zostanie ogłoszony.') }}</p>
                 @if($hasFilters)
-                    <button type="button" wire:click="resetFilters" class="btn-primary mt-6">Pokaż wszystkie mecze</button>
+                    <button type="button" wire:click="resetFilters" class="btn-primary mt-6">{{ __('Pokaż wszystkie mecze') }}</button>
                 @elseif($period === 'nadchodzace' && $periodCounts['wyniki'] > 0)
-                    <button type="button" wire:click="setPeriod('wyniki')" class="btn-primary mt-6">Zobacz wyniki</button>
+                    <button type="button" wire:click="setPeriod('wyniki')" class="btn-primary mt-6">{{ __('Zobacz wyniki') }}</button>
                 @endif
             </div>
         @endforelse

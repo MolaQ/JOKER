@@ -37,11 +37,11 @@ class ArticleController extends Controller
     public function storeComment(Request $request, Article $article)
     {
         if (! Auth::check()) {
-            return redirect()->back()->with('error', 'Musisz być zalogowany, aby komentować.');
+            return redirect()->back()->with('error', __('Musisz być zalogowany, aby komentować.'));
         }
 
         if (! $article->allow_comments) {
-            return redirect()->back()->with('error', 'Komentarze są wyłączone dla tego artykułu.');
+            return redirect()->back()->with('error', __('Komentarze są wyłączone dla tego artykułu.'));
         }
 
         $validated = $request->validate([
@@ -55,6 +55,6 @@ class ArticleController extends Controller
             'is_approved' => true,
         ]);
 
-        return redirect()->back()->with('success', 'Komentarz został dodany!');
+        return redirect()->back()->with('success', __('Komentarz został dodany!'));
     }
 }

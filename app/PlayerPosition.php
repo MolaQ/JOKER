@@ -13,22 +13,22 @@ enum PlayerPosition: string
     public function label(): string
     {
         return match ($this) {
-            self::Setter => 'Rozgrywający',
-            self::OutsideHitter => 'Przyjmujący',
-            self::Opposite => 'Atakujący',
-            self::MiddleBlocker => 'Środkowy',
-            self::Libero => 'Libero',
+            self::Setter => __('Rozgrywający'),
+            self::OutsideHitter => __('Przyjmujący'),
+            self::Opposite => __('Atakujący'),
+            self::MiddleBlocker => __('Środkowy'),
+            self::Libero => __('Libero'),
         };
     }
 
     public function description(): string
     {
         return match ($this) {
-            self::Setter => 'Mózg zespołu. Rozgrywający ustawia piłkę do ataku i decyduje, kto skończy akcję.',
-            self::OutsideHitter => 'Wszechstronny zawodnik pierwszej linii, kluczowy zarówno w przyjęciu zagrywki, jak i w ataku.',
-            self::Opposite => 'Główny snajper zespołu. Atakujący przede wszystkim zdobywa punkty, także z drugiej linii.',
-            self::MiddleBlocker => 'Specjalista od bloku i szybkich ataków ze środka siatki.',
-            self::Libero => 'Lider obrony i przyjęcia. Gra w koszulce innego koloru i nie atakuje ponad siatką.',
+            self::Setter => __('Mózg zespołu. Rozgrywający ustawia piłkę do ataku i decyduje, kto skończy akcję.'),
+            self::OutsideHitter => __('Wszechstronny zawodnik pierwszej linii, kluczowy zarówno w przyjęciu zagrywki, jak i w ataku.'),
+            self::Opposite => __('Główny snajper zespołu. Atakujący przede wszystkim zdobywa punkty, także z drugiej linii.'),
+            self::MiddleBlocker => __('Specjalista od bloku i szybkich ataków ze środka siatki.'),
+            self::Libero => __('Lider obrony i przyjęcia. Gra w koszulce innego koloru i nie atakuje ponad siatką.'),
         };
     }
 }

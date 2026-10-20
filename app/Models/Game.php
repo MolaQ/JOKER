@@ -163,8 +163,8 @@ class Game extends Model
     public function competitionLabel(): ?string
     {
         return match (true) {
-            $this->kind === self::KIND_FRIENDLY => 'Sparing',
-            $this->tournament_id !== null => $this->tournament?->fullName() ?? 'Turniej',
+            $this->kind === self::KIND_FRIENDLY => __('Sparing'),
+            $this->tournament_id !== null => $this->tournament?->fullName() ?? __('Turniej'),
             default => $this->competition?->name ?? $this->league,
         };
     }
@@ -203,12 +203,12 @@ class Game extends Model
     public function kickoffLabel(string $dateFormat = 'D, d M'): string
     {
         if (! $this->game_date) {
-            return 'Termin do ustalenia';
+            return __('Termin do ustalenia');
         }
 
         $time = $this->game_date->format('H:i');
 
-        return $this->game_date->translatedFormat($dateFormat).' · '.($time === '00:00' ? 'godz. do ustalenia' : $time);
+        return $this->game_date->translatedFormat($dateFormat).' · '.($time === '00:00' ? __('godz. do ustalenia') : $time);
     }
 
     public function isFinished(): bool

@@ -49,10 +49,10 @@ class Document extends Model
     public function categoryLabel(): string
     {
         return match ($this->category) {
-            'regulations' => 'Regulaminy',
-            'forms' => 'Formularze i zgody',
-            'reports' => 'Sprawozdania',
-            default => 'Inne',
+            'regulations' => __('Regulaminy'),
+            'forms' => __('Formularze i zgody'),
+            'reports' => __('Sprawozdania'),
+            default => __('Inne'),
         };
     }
 

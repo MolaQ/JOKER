@@ -1,12 +1,12 @@
 @extends('layouts.public')
 
-@section('title', 'Dokumenty')
+@section('title', __('Dokumenty'))
 
 @section('content')
 <section class="container-site max-w-4xl pt-14 pb-6 lg:pt-20">
-    <p class="eyebrow">Do pobrania</p>
-    <h1 class="heading-xl mt-4">Dokumenty</h1>
-    <p class="mt-6 max-w-2xl text-lg text-zinc-600">Regulaminy, zgody i formularze dla zawodników i rodziców.</p>
+    <p class="eyebrow">{{ __('Do pobrania') }}</p>
+    <h1 class="heading-xl mt-4">{{ __('Dokumenty') }}</h1>
+    <p class="mt-6 max-w-2xl text-lg text-zinc-600">{{ __('Regulaminy, zgody i formularze dla zawodników i rodziców.') }}</p>
 </section>
 
 <section class="container-site max-w-4xl">
@@ -28,7 +28,7 @@
             @endforeach
         </ul>
     @empty
-        <p class="rounded-3xl bg-zinc-100 p-8 text-zinc-600">Brak dokumentów do pobrania.</p>
+        <p class="rounded-3xl bg-zinc-100 p-8 text-zinc-600">{{ __('Brak dokumentów do pobrania.') }}</p>
     @endforelse
 </section>
 @endsection

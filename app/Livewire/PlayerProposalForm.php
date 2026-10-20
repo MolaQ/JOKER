@@ -56,8 +56,8 @@ class PlayerProposalForm extends Component
     protected function validationAttributes(): array
     {
         return collect(PlayerChangeRequest::EDITABLE_FIELDS)
-            ->mapWithKeys(fn (string $label, string $field) => ['data.'.$field => mb_strtolower($label)])
-            ->put('photo', 'zdjęcie')
+            ->mapWithKeys(fn (string $label, string $field) => ['data.'.$field => mb_strtolower(__($label))])
+            ->put('photo', __('zdjęcie'))
             ->all();
     }
 
@@ -80,7 +80,7 @@ class PlayerProposalForm extends Component
             ->all();
 
         if ($changes === [] && ! $this->photo) {
-            $this->addError('data', 'Nic się nie zmieniło - zmień dane lub wybierz zdjęcie.');
+            $this->addError('data', __('Nic się nie zmieniło - zmień dane lub wybierz zdjęcie.'));
 
             return;
         }
@@ -103,7 +103,7 @@ class PlayerProposalForm extends Component
 
         $this->photo = null;
         $this->open = false;
-        $this->flashMessage = 'Dziękujemy! Zmiany pojawią się po zatwierdzeniu przez trenera lub administratora.';
+        $this->flashMessage = __('Dziękujemy! Zmiany pojawią się po zatwierdzeniu przez trenera lub administratora.');
     }
 
     private function fillFromPlayer(): void

@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Http\Middleware\SetLocale;
 use App\Models\Article;
 use App\Models\Document;
 use App\Models\Game;
@@ -16,6 +17,7 @@ use Illuminate\Support\Str;
  * Indeks wyszukiwarki: cała treść strony w jednej, lekkiej liście.
  * Przeglądarka pobiera go raz i szuka lokalnie (wyniki natychmiast, bez czekania na serwer).
  * Indeks odświeża się sam po każdej zmianie treści w panelu (patrz AppServiceProvider).
+ * Każdy język strony ma własny indeks (napisy i angielskie wersje wpisów po angielsku).
  */
 class SearchIndex
 {
@@ -27,12 +29,14 @@ class SearchIndex
     public static function entries(): array
     {
         // Odświeżany po zmianach treści, a dodatkowo co 10 minut (np. zmiany w sztabie drużyny).
-        return Cache::remember(self::CACHE_KEY, now()->addMinutes(10), fn () => self::build());
+        return Cache::remember(self::CACHE_KEY.'-'.app()->getLocale(), now()->addMinutes(10), fn () => self::build());
     }
 
     public static function forget(): void
     {
-        Cache::forget(self::CACHE_KEY);
+        foreach (SetLocale::LOCALES as $locale) {
+            Cache::forget(self::CACHE_KEY.'-'.$locale);
+        }
     }
 
     /**
@@ -106,20 +110,21 @@ class SearchIndex
         };
 
         foreach (self::pages() as [$title, $subtitle, $url, $keywords]) {
-            $add('Strona', $title, $subtitle, $url, $keywords);
+            $add(__('Strona'), $title, $subtitle, $url, $keywords);
         }
 
         foreach (Page::published()->orderBy('display_order')->get() as $page) {
-            $add('Strona', $page->title, Str::limit((string) $page->lead, 80), route('pages.show', $page, false), $page->lead.' '.$page->content);
+            $add(__('Strona'), $page->localizedTitle(), Str::limit((string) $page->localizedLead(), 80), route('pages.show', $page, false),
+                $page->title.' '.$page->lead.' '.$page->content.' '.$page->title_en.' '.$page->lead_en.' '.$page->content_en);
         }
 
         foreach (Team::with(['trainer'])->orderBy('display_order')->get() as $team) {
-            $add('Drużyna', $team->name, $team->birth_year ? 'Rocznik '.$team->birth_year : 'Pierwsza drużyna', route('teams.show', $team, false),
+            $add(__('Drużyna'), $team->name, $team->birth_year ? __('Rocznik :year', ['year' => $team->birth_year]) : __('Pierwsza drużyna'), route('teams.show', $team, false),
                 $team->description.' '.$team->trainer?->name.' '.$team->category);
         }
 
         foreach (Player::with('team')->where('is_active', true)->orderBy('last_name')->get() as $player) {
-            $add('Zawodnik', $player->full_name, collect([$player->positionsLabel(), $player->team?->name, $player->jersey_number ? '#'.$player->jersey_number : null])->filter()->implode(' · '),
+            $add(__('Zawodnik'), $player->full_name, collect([$player->positionsLabel(), $player->team?->name, $player->jersey_number ? '#'.$player->jersey_number : null])->filter()->implode(' · '),
                 route('players.show', $player, false), $player->bio);
         }
 
@@ -129,14 +134,14 @@ class SearchIndex
             ->get();
 
         foreach ($staff as $member) {
-            $roles = $member->headCoachTeams->toBase()->map(fn ($team) => 'Trener główny: '.$team->name)
-                ->merge($member->assistantTeams->map(fn ($team) => ($team->pivot->role ?: 'Asystent trenera').': '.$team->name));
-            $add('Sztab', $member->name, $roles->first(), route('trainers.show', $member, false), $roles->implode(' ').' '.$member->additional_info);
+            $roles = $member->headCoachTeams->toBase()->map(fn ($team) => __('Trener główny').': '.$team->name)
+                ->merge($member->assistantTeams->map(fn ($team) => __($team->pivot->role ?: 'Asystent trenera').': '.$team->name));
+            $add(__('Sztab'), $member->name, $roles->first(), route('trainers.show', $member, false), $roles->implode(' ').' '.$member->additional_info);
         }
 
         foreach (Article::published()->get() as $article) {
-            $add('Aktualność', $article->title, $article->published_at?->translatedFormat('d F Y'), route('articles.show', $article, false),
-                $article->excerpt.' '.$article->content);
+            $add(__('Aktualność'), $article->localizedTitle(), $article->published_at?->translatedFormat('d F Y'), route('articles.show', $article, false),
+                $article->title.' '.$article->excerpt.' '.$article->content.' '.$article->title_en.' '.$article->excerpt_en.' '.$article->content_en);
         }
 
         // Najpierw nadchodzące mecze (od najbliższego), potem rozegrane (od najnowszego).
@@ -149,13 +154,13 @@ class SearchIndex
 
         foreach ($games as $game) {
             $result = $game->isFinished() ? " ({$game->home_score}:{$game->away_score})" : '';
-            $add('Mecz', ($game->team?->name ?? 'Joker').' vs '.$game->opponentShortName().$result,
-                $game->game_date?->translatedFormat('d F Y, H:i').' · '.($game->is_home ? 'u siebie' : 'wyjazd'),
+            $add(__('Mecz'), ($game->team?->name ?? 'Joker').' vs '.$game->opponentShortName().$result,
+                $game->game_date?->translatedFormat('d F Y, H:i').' · '.($game->is_home ? __('u siebie') : __('wyjazd')),
                 route('schedule.index', [], false), $game->opponentDisplayName().' '.$game->competition?->name.' '.$game->venue);
         }
 
         foreach (Document::public()->latest()->get() as $document) {
-            $add('Dokument', $document->title, $document->categoryLabel().' · '.Str::upper((string) $document->file_type), route('documents.index', [], false).'#dokument-'.$document->id,
+            $add(__('Dokument'), $document->title, $document->categoryLabel().' · '.Str::upper((string) $document->file_type), route('documents.index', [], false).'#dokument-'.$document->id,
                 $document->description.' '.$document->category);
         }
 
@@ -170,12 +175,12 @@ class SearchIndex
     private static function pages(): array
     {
         return [
-            ['Terminarz meczów', 'Wszystkie mecze sezonu', route('schedule.index', [], false), 'terminarz kalendarz mecze kiedy gramy godziny'],
-            ['Tabele ligowe', 'Pozycje w rozgrywkach', route('standings', [], false), 'tabela liga punkty miejsce ranking'],
-            ['Drużyny', 'Wszystkie drużyny klubu', route('teams.index', [], false), 'druzyny zespoly roczniki kadra seniorzy juniorzy mlodzicy kadeci'],
-            ['Kontakt i zapisy', 'Napisz do klubu, zapisz dziecko', route('contact.index', [], false), 'kontakt telefon email adres zapisy nabor trening probny dolacz hala'],
-            ['Dokumenty do pobrania', 'Regulaminy, zgody, formularze', route('documents.index', [], false), 'dokumenty regulamin zgoda rodo formularz deklaracja statut pobierz'],
-            ['Aktualności', 'Wszystkie wpisy', route('articles.index', [], false), 'aktualnosci news wiadomosci blog'],
+            [__('Terminarz meczów'), __('Wszystkie mecze sezonu'), route('schedule.index', [], false), 'terminarz kalendarz mecze kiedy gramy godziny schedule fixtures matches calendar'],
+            [__('Tabele ligowe'), __('Pozycje w rozgrywkach'), route('standings', [], false), 'tabela liga punkty miejsce ranking standings table league points'],
+            [__('Drużyny'), __('Wszystkie drużyny klubu'), route('teams.index', [], false), 'druzyny zespoly roczniki kadra seniorzy juniorzy mlodzicy kadeci teams squad seniors juniors'],
+            [__('Kontakt i zapisy'), __('Napisz do klubu, zapisz dziecko'), route('contact.index', [], false), 'kontakt telefon email adres zapisy nabor trening probny dolacz hala contact phone address join training'],
+            [__('Dokumenty do pobrania'), __('Regulaminy, zgody, formularze'), route('documents.index', [], false), 'dokumenty regulamin zgoda rodo formularz deklaracja statut pobierz documents regulations forms download'],
+            [__('Aktualności'), __('Wszystkie wpisy'), route('articles.index', [], false), 'aktualnosci news wiadomosci blog'],
         ];
     }
 }

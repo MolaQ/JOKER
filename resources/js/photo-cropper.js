@@ -20,7 +20,7 @@ export function registerPhotoCropper() {
                 }
 
                 if (! file.type.startsWith('image/')) {
-                    this.error = 'Wybierz plik ze zdjęciem (JPG, PNG, WEBP).';
+                    this.error = document.documentElement.lang === 'en' ? 'Choose an image file (JPG, PNG, WEBP).' : 'Wybierz plik ze zdjęciem (JPG, PNG, WEBP).';
 
                     return;
                 }
@@ -70,7 +70,7 @@ export function registerPhotoCropper() {
                         this.destroy();
                     }, () => {
                         this.uploading = false;
-                        this.error = 'Nie udało się wysłać zdjęcia. Spróbuj ponownie.';
+                        this.error = document.documentElement.lang === 'en' ? 'Could not upload the photo. Please try again.' : 'Nie udało się wysłać zdjęcia. Spróbuj ponownie.';
                     });
                 }, 'image/jpeg', 0.9);
             },

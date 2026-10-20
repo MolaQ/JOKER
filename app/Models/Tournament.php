@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Database\Factories\TournamentFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 /**
  * Turniej w trakcie sezonu (np. organizowany przez klub Turniej im. Włodzimierza Winklera
@@ -29,7 +31,16 @@ class Tournament extends Model
         'city',
         'is_organizer',
         'description',
+        'slug',
+        'series',
+        'image_path',
+        'rules',
+        'guest_info',
+        'has_page',
     ];
+
+    /** Seria edycji Memoriału im. Włodzimierza Winklera (zakładka w menu). */
+    public const SERIES_MEMORIAL = 'memorial';
 
     protected function casts(): array
     {
@@ -37,6 +48,7 @@ class Tournament extends Model
             'start_date' => 'date',
             'end_date' => 'date',
             'is_organizer' => 'boolean',
+            'has_page' => 'boolean',
         ];
     }
 
@@ -53,6 +65,40 @@ class Tournament extends Model
     public function games(): HasMany
     {
         return $this->hasMany(Game::class)->orderBy('game_date');
+    }
+
+    public function categories(): HasMany
+    {
+        return $this->hasMany(TournamentCategory::class)->orderBy('display_order')->orderBy('id');
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function (Tournament $tournament) {
+            if (blank($tournament->slug)) {
+                $tournament->slug = $tournament->id.'-'.Str::slug($tournament->fullName());
+                $tournament->saveQuietly();
+            }
+        });
+    }
+
+    /**
+     * Pozostałe edycje tej samej serii (archiwum), od najnowszej.
+     *
+     * @return Collection<int, Tournament>
+     */
+    public function otherEditions(): Collection
+    {
+        if (blank($this->series)) {
+            return new Collection;
+        }
+
+        return static::where('series', $this->series)->whereKeyNot($this->id)->where('has_page', true)->orderByDesc('start_date')->get();
     }
 
     public function lastDay(): Carbon

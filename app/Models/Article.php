@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasEnglishVersion;
 use App\Models\Concerns\HasSlugRouteKey;
 use App\Models\Concerns\Likeable;
 use Database\Factories\ArticleFactory;
@@ -13,16 +14,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Article extends Model
 {
+    use HasEnglishVersion, HasSlugRouteKey;
+
     /** @use HasFactory<ArticleFactory> */
     use HasFactory, Likeable;
 
-    use HasSlugRouteKey;
-
     protected $fillable = [
         'title',
+        'title_en',
         'slug',
         'excerpt',
+        'excerpt_en',
         'content',
+        'content_en',
         'featured_image',
         'author_id',
         'status',
@@ -75,6 +79,11 @@ class Article extends Model
     public function scopeFeatured($query)
     {
         return $query->where('is_featured', true);
+    }
+
+    public function localizedExcerpt(): ?string
+    {
+        return $this->localized('excerpt');
     }
 
     public function isPublished(): bool

@@ -6,6 +6,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\GameCalendarController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PageViewController;
 use App\Http\Controllers\PlayerController;
@@ -13,12 +14,16 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TeamController;
+use App\Http\Controllers\TournamentController;
 use App\Http\Controllers\TrainerController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Język strony (flagi w nagłówku)
+Route::get('/jezyk/{locale}', LocaleController::class)->whereIn('locale', ['pl', 'en'])->name('locale.switch');
 
 // Teams
 Route::get('/druzyny', [TeamController::class, 'index'])->name('teams.index');
@@ -30,6 +35,8 @@ Route::get('/aktualnosci/{article}', [ArticleController::class, 'show'])->name('
 Route::post('/aktualnosci/{article}/komentarze', [ArticleController::class, 'storeComment'])->name('articles.comments.store');
 
 // Players
+Route::get('/memorial', [TournamentController::class, 'memorial'])->name('memorial');
+Route::get('/turnieje/{tournament}', [TournamentController::class, 'show'])->name('tournaments.show');
 Route::get('/zawodnicy/{player}', [PlayerController::class, 'show'])->name('players.show');
 
 // Trainers

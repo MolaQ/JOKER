@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', $trainer->name . ' - sztab')
+@section('title', $trainer->name.' - '.__('sztab'))
 
 @section('content')
 <section class="relative isolate -mt-16 overflow-hidden bg-ink pt-16 text-white lg:-mt-20 lg:pt-20">
@@ -9,8 +9,8 @@
     <div class="container-site grid items-end gap-10 pt-16 pb-14 lg:grid-cols-[auto_1fr] lg:pt-24">
         <x-avatar :photo="$trainer->avatar_path" :name="$trainer->name" class="aspect-square w-40 rounded-3xl text-6xl ring-4 ring-sky-club/40 lg:w-56" />
         <div>
-            <a href="{{ route('teams.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← Drużyny</a>
-            <p class="eyebrow mt-5">{{ $roles->pluck('role')->unique()->implode(' · ') ?: 'Sztab klubu' }}</p>
+            <a href="{{ route('teams.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ __('Drużyny') }}</a>
+            <p class="eyebrow mt-5">{{ $roles->pluck('role')->unique()->implode(' · ') ?: __('Sztab klubu') }}</p>
             <h1 class="heading-xl mt-3">{{ $trainer->name }}</h1>
             <x-view-count :model="$trainer" class="mt-3 text-white/70" />
         </div>
@@ -19,7 +19,7 @@
 
 <section class="container-site grid gap-8 py-14 lg:grid-cols-3">
     <div class="card p-6 lg:self-start">
-        <h2 class="heading-md">Funkcje w klubie</h2>
+        <h2 class="heading-md">{{ __('Funkcje w klubie') }}</h2>
         <ul class="mt-5 space-y-3">
             @forelse($roles as $entry)
                 <li>
@@ -32,7 +32,7 @@
                     </a>
                 </li>
             @empty
-                <li class="text-sm text-zinc-500">Brak przypisanych drużyn.</li>
+                <li class="text-sm text-zinc-500">{{ __('Brak przypisanych drużyn.') }}</li>
             @endforelse
         </ul>
 
@@ -43,12 +43,12 @@
 
     <div class="lg:col-span-2">
         <div class="card p-8">
-            <h2 class="heading-md">O mnie</h2>
+            <h2 class="heading-md">{{ __('O mnie') }}</h2>
             <div class="prose-club mt-5">
                 @if($trainer->additional_info)
                     {!! strip_tags($trainer->additional_info, '<p><br><strong><em><b><i><ul><ol><li>') !!}
                 @else
-                    <p class="text-zinc-500">Opis zostanie wkrótce uzupełniony.</p>
+                    <p class="text-zinc-500">{{ __('Opis zostanie wkrótce uzupełniony.') }}</p>
                 @endif
             </div>
         </div>

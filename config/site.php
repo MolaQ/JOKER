@@ -73,6 +73,7 @@ return [
                     ['label' => 'Aktualności', 'url' => '/aktualnosci'],
                     ['label' => 'Mecze', 'url' => '/mecze'],
                     ['label' => 'Tabela', 'url' => '/tabele'],
+                    ['label' => 'Memoriał', 'url' => '/memorial'],
                     ['label' => 'Drużyny', 'url' => '/druzyny'],
                     ['label' => 'Młodzież', 'url' => '/strona/nabor'],
                     ['label' => 'Klub', 'url' => '/strona/o-klubie'],

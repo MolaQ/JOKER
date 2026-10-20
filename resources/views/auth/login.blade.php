@@ -1,11 +1,11 @@
 @extends('layouts.public')
 
-@section('title', 'Logowanie')
+@section('title', __('Logowanie'))
 
 @section('content')
 <section class="container-site pt-14 pb-6 lg:pt-20">
-    <p class="eyebrow">Zaloguj się do swojego konta</p>
-    <h1 class="heading-xl mt-4">Logowanie</h1>
+    <p class="eyebrow">{{ __('Zaloguj się do swojego konta') }}</p>
+    <h1 class="heading-xl mt-4">{{ __('Logowanie') }}</h1>
 </section>
 
 <!-- Login Form -->
@@ -28,7 +28,7 @@
                         required
                         autofocus
                         class="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-sky-club focus:border-transparent @error('email') border-red-500 @enderror"
-                        placeholder="twoj@email.pl"
+                        placeholder="{{ __('twoj@email.pl') }}"
                     >
                     @error('email')
                         <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
@@ -38,7 +38,7 @@
                 <!-- Password -->
                 <div class="mb-6">
                     <label for="password" class="block text-zinc-700 font-semibold mb-2">
-                        Hasło
+                        {{ __('Hasło') }}
                     </label>
                     <input
                         type="password"
@@ -61,7 +61,7 @@
                             name="remember"
                             class="w-4 h-4 text-sky-club-dark border-zinc-300 rounded focus:ring-sky-club"
                         >
-                        <span class="ml-2 text-zinc-700">Zapamiętaj mnie</span>
+                        <span class="ml-2 text-zinc-700">{{ __('Zapamiętaj mnie') }}</span>
                     </label>
                 </div>
 
@@ -70,15 +70,15 @@
                     type="submit"
                     class="w-full bg-ink text-white py-3 rounded-lg hover:bg-graphite transition font-semibold mb-4"
                 >
-                    Zaloguj się
+                    {{ __('Zaloguj się') }}
                 </button>
 
                 <!-- Info -->
                 <div class="bg-sky-club/10 border border-blue-200 rounded-lg p-4 mt-6">
                     <p class="text-sm text-sky-club-dark">
-                        <strong>Dane testowe:</strong><br>
+                        <strong>{{ __('Dane testowe') }}:</strong><br>
                         Email: admin@jokerpila.pl<br>
-                        Hasło: password
+                        {{ __('Hasło') }}: password
                     </p>
                 </div>
             </form>

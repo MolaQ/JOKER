@@ -41,6 +41,9 @@
                 <tr wire:key="article-{{ $article->id }}">
                     <td class="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 max-w-xs truncate">
                         {{ $article->title }}
+                        @if($article->hasEnglish())
+                            <x-english-badge class="ml-1" />
+                        @endif
                         @if($article->is_featured)
                             <span class="ml-2 inline-flex items-center rounded-md bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">Wyróżniony</span>
                         @endif
@@ -111,6 +114,32 @@
                                 <label class="block text-sm font-medium text-gray-700">Treść</label>
                                 <x-rich-text-editor model="content" placeholder="Pełna treść artykułu..." height="min-h-[220px]" />
                                 @error('content') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            {{-- Wersja angielska: pokazywana odwiedzającym, którzy wybrali flagę brytyjską --}}
+                            <div x-data="{ open: @js(filled($title_en) || filled($content_en)) }" class="rounded-lg border border-gray-200">
+                                <button type="button" @click="open = ! open" :aria-expanded="open" class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-gray-700">
+                                    <span class="inline-flex items-center gap-2"><x-flag country="gb" class="h-3 w-[1.125rem] rounded-[2px] ring-1 ring-black/15" /> Wersja angielska (opcjonalnie)</span>
+                                    <span class="text-gray-400 transition" :class="open && 'rotate-180'" aria-hidden="true">▾</span>
+                                </button>
+                                <div x-show="open" x-cloak class="space-y-4 border-t border-gray-200 px-4 py-4">
+                                    <p class="text-xs text-gray-500">Gdy uzupełnisz angielski tytuł, wpis dostanie brytyjską flagę, a osoby oglądające stronę po angielsku zobaczą tę wersję. Puste pola zostaną zastąpione polskimi.</p>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Tytuł (EN)</label>
+                                        <input type="text" wire:model="title_en" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        @error('title_en') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Zajawka (EN)</label>
+                                        <x-rich-text-editor model="excerpt_en" placeholder="Short article excerpt..." height="min-h-[110px]" />
+                                        @error('excerpt_en') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Treść (EN)</label>
+                                        <x-rich-text-editor model="content_en" placeholder="Full article content..." height="min-h-[220px]" />
+                                        @error('content_en') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">

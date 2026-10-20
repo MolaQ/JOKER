@@ -2,7 +2,7 @@
     @if($this->competitions->isNotEmpty())
         <div class="sticky top-16 z-30 border-y border-zinc-200 bg-white/90 backdrop-blur-xl lg:top-20">
             <div class="container-site py-3">
-                <div class="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" role="tablist" aria-label="Rozgrywki">
+                <div class="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" role="tablist" aria-label="{{ __('Rozgrywki') }}">
                     @foreach($this->competitions as $competitionOption)
                         <button type="button" role="tab" wire:click="select('{{ $competitionOption->getRouteKey() }}')" aria-selected="{{ $this->selected?->is($competitionOption) ? 'true' : 'false' }}" @class([
                             'chip shrink-0 transition',
@@ -26,7 +26,7 @@
                 </div>
                 <p class="text-sm text-zinc-500">
                     @if($this->selected->synced_at)
-                        Wyniki z wielkopolskasiatkowka.com.pl i WZPS, aktualizacja {{ $this->selected->synced_at->diffForHumans() }}
+                        {{ __('Wyniki z wielkopolskasiatkowka.com.pl i WZPS, aktualizacja') }} {{ $this->selected->synced_at->diffForHumans() }}
                     @endif
                 </p>
             </div>
@@ -34,13 +34,13 @@
 
         @if($standings->isNotEmpty())
             @if($stages->count() > 1)
-                <div class="mb-6 inline-flex rounded-full bg-zinc-100 p-1 text-sm font-semibold" role="tablist" aria-label="Etap rozgrywek">
+                <div class="mb-6 inline-flex rounded-full bg-zinc-100 p-1 text-sm font-semibold" role="tablist" aria-label="{{ __('Etap rozgrywek') }}">
                     @foreach($stages as $stageOption)
                         <button type="button" role="tab" wire:click="selectStage('{{ $stageOption }}')" aria-selected="{{ $stageOption === $currentStage ? 'true' : 'false' }}" @class([
                             'rounded-full px-4 py-2 transition',
                             'bg-ink text-white shadow' => $stageOption === $currentStage,
                             'text-zinc-600 hover:text-zinc-900' => $stageOption !== $currentStage,
-                        ])>{{ $stageOption }}@if($loop->first) <span class="text-xs font-normal opacity-70">(trwa)</span>@endif</button>
+                        ])>{{ $stageOption }}@if($loop->first) <span class="text-xs font-normal opacity-70">({{ __('trwa') }})</span>@endif</button>
                     @endforeach
                 </div>
             @endif
@@ -51,10 +51,10 @@
                         @if($group['name'] !== '' || $groups->count() > 1)
                             <summary class="flex cursor-pointer list-none items-center justify-between gap-3 py-3 [&::-webkit-details-marker]:hidden">
                                 <span class="font-display text-lg font-semibold tracking-wide text-zinc-700 uppercase">
-                                    {{ $group['name'] ?: 'Tabela' }}
+                                    {{ $group['name'] ?: __('Tabela') }}
                                     @if($group['ours'])
                                         <span class="ml-2 rounded-full bg-sky-club/15 px-2 py-0.5 align-middle font-sans text-xs font-semibold tracking-normal text-sky-club-dark normal-case">
-                                            gra {{ $group['rows']->filter(fn ($row) => $row->isOwnTeam())->map(fn ($row) => $row->competitorLabel()['name'].($row->competitorLabel()['suffix'] ? ' '.$row->competitorLabel()['suffix'] : ''))->join(', ', ' i ') }}
+                                            {{ __('gra') }} {{ $group['rows']->filter(fn ($row) => $row->isOwnTeam())->map(fn ($row) => $row->competitorLabel()['name'].($row->competitorLabel()['suffix'] ? ' '.$row->competitorLabel()['suffix'] : ''))->join(', ', ' '.__('i').' ') }}
                                         </span>
                                     @endif
                                 </span>
@@ -67,13 +67,13 @@
                                 <thead class="border-b border-zinc-200 text-xs font-semibold tracking-wider text-zinc-500 uppercase">
                                     <tr>
                                         <th class="sticky left-0 bg-white py-3 pr-2 pl-4 text-left" scope="col">#</th>
-                                        <th class="sticky left-10 bg-white px-2 py-3 text-left" scope="col">Drużyna</th>
-                                        <th class="px-3 py-3 text-center" scope="col" title="Mecze">M</th>
-                                        <th class="px-3 py-3 text-center" scope="col" title="Wygrane">W</th>
-                                        <th class="px-3 py-3 text-center" scope="col" title="Przegrane">P</th>
-                                        <th class="px-3 py-3 text-center" scope="col">Sety</th>
-                                        <th class="px-3 py-3 text-center" scope="col">Małe pkt</th>
-                                        <th class="py-3 pr-4 pl-3 text-center" scope="col">Pkt</th>
+                                        <th class="sticky left-10 bg-white px-2 py-3 text-left" scope="col">{{ __('Drużyna') }}</th>
+                                        <th class="px-3 py-3 text-center" scope="col" title="{{ __('Mecze') }}">{{ __('M') }}</th>
+                                        <th class="px-3 py-3 text-center" scope="col" title="{{ __('Wygrane') }}">{{ __('W') }}</th>
+                                        <th class="px-3 py-3 text-center" scope="col" title="{{ __('Przegrane') }}">{{ __('P') }}</th>
+                                        <th class="px-3 py-3 text-center" scope="col">{{ __('Sety') }}</th>
+                                        <th class="px-3 py-3 text-center" scope="col">{{ __('Małe pkt') }}</th>
+                                        <th class="py-3 pr-4 pl-3 text-center" scope="col">{{ __('Pkt') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-zinc-100">
@@ -87,7 +87,7 @@
                                                 @if($isOurs && $standing->competitor)
                                                     <a href="{{ route('teams.show', $standing->competitor) }}" class="text-zinc-900 hover:text-sky-club-dark"><x-team-label :label="$standing->competitorLabel()" /></a>
                                                     @if($standing->source_name && ! $standing->competition?->teams->firstWhere('id', $standing->competitor_id)?->pivot?->display_name)
-                                                        <span class="ml-1 text-xs font-normal text-zinc-500">jako {{ $standing->source_name }}</span>
+                                                        <span class="ml-1 text-xs font-normal text-zinc-500">{{ __('jako') }} {{ $standing->source_name }}</span>
                                                     @endif
                                                 @else
                                                     <span class="text-zinc-800">{{ $standing->competitorName() }}</span>
@@ -107,11 +107,11 @@
                     </details>
                 @endforeach
             </div>
-            <p class="mt-4 text-xs text-zinc-500">M - mecze, W - wygrane, P - przegrane, Pkt - punkty ligowe. Na telefonie tabelę przesuniesz palcem w bok.</p>
+            <p class="mt-4 text-xs text-zinc-500">{{ __('M - mecze, W - wygrane, P - przegrane, Pkt - punkty ligowe. Na telefonie tabelę przesuniesz palcem w bok.') }}</p>
         @else
             <div class="card p-12 text-center">
-                <p class="font-display text-2xl font-semibold text-zinc-900 uppercase">Brak tabeli</p>
-                <p class="mt-2 text-zinc-500">Tabela pojawi się po pierwszych rozegranych meczach.</p>
+                <p class="font-display text-2xl font-semibold text-zinc-900 uppercase">{{ __('Brak tabeli') }}</p>
+                <p class="mt-2 text-zinc-500">{{ __('Tabela pojawi się po pierwszych rozegranych meczach.') }}</p>
             </div>
         @endif
     </section>

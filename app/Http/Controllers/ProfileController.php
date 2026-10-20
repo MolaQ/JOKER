@@ -45,6 +45,6 @@ class ProfileController extends Controller
             'status' => 'pending',
         ]);
 
-        return back()->with('success', 'Propozycja zmian została wysłana do akceptacji trenera/admina.');
+        return back()->with('success', __('Propozycja zmian została wysłana do akceptacji trenera/admina.'));
     }
 }

@@ -14,10 +14,10 @@ class TrainerController extends Controller
         $trainer->registerView();
 
         $roles = $trainer->headCoachTeams->toBase()
-            ->map(fn ($team) => ['team' => $team, 'role' => 'Trener główny'])
+            ->map(fn ($team) => ['team' => $team, 'role' => __('Trener główny')])
             ->merge($trainer->assistantTeams
                 ->reject(fn ($team) => $team->trainer_id === $trainer->id)
-                ->map(fn ($team) => ['team' => $team, 'role' => $team->pivot->role ?: 'Asystent trenera']))
+                ->map(fn ($team) => ['team' => $team, 'role' => __($team->pivot->role ?: 'Asystent trenera')]))
             ->sortBy(fn ($entry) => $entry['team']->display_order)
             ->values();
 

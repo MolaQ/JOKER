@@ -258,10 +258,14 @@ class GamesBrowser extends Component
     }
 
     /**
-     * „1 rok”, „17 lat”, „22 lata” - poprawna odmiana wieku.
+     * „1 rok”, „17 lat”, „22 lata” - poprawna odmiana wieku (po angielsku „1 year”, „17 years”).
      */
     public static function yearsLabel(int $years): string
     {
+        if (app()->getLocale() === 'en') {
+            return $years.' '.($years === 1 ? 'year' : 'years');
+        }
+
         $word = match (true) {
             $years === 1 => 'rok',
             $years % 10 >= 2 && $years % 10 <= 4 && ($years % 100 < 10 || $years % 100 >= 20) => 'lata',

@@ -1,13 +1,13 @@
 @extends('layouts.public')
 
-@section('title', 'Kontakt')
+@section('title', __('Kontakt'))
 
 @section('content')
 <section class="container-site pt-14 pb-6 lg:pt-20">
-    <p class="eyebrow">Skontaktuj się z nami</p>
-    <h1 class="heading-xl mt-4">Kontakt</h1>
+    <p class="eyebrow">{{ __('Skontaktuj się z nami') }}</p>
+    <h1 class="heading-xl mt-4">{{ __('Kontakt') }}</h1>
     @if(filled($site['contact_intro']))
-        <p class="mt-6 max-w-2xl text-lg text-zinc-600">{{ $site['contact_intro'] }}</p>
+        <p class="mt-6 max-w-2xl text-lg text-zinc-600">{{ __($site['contact_intro']) }}</p>
     @endif
 </section>
 
@@ -16,7 +16,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
         <!-- Contact Form -->
         <div>
-            <h2 class="text-2xl font-bold text-zinc-900 mb-6">Wyślij wiadomość</h2>
+            <h2 class="text-2xl font-bold text-zinc-900 mb-6">{{ __('Wyślij wiadomość') }}</h2>
 
             <form method="POST" action="{{ route('contact.send') }}" class="space-y-6">
                 @csrf
@@ -24,7 +24,7 @@
                 <!-- Name -->
                 <div>
                     <label for="name" class="block text-zinc-700 font-semibold mb-2">
-                        Imię i nazwisko *
+                        {{ __('Imię i nazwisko') }} *
                     </label>
                     <input
                         type="text"
@@ -33,7 +33,7 @@
                         value="{{ old('name') }}"
                         required
                         class="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-sky-club focus:border-transparent @error('name') border-red-500 @enderror"
-                        placeholder="Jan Kowalski"
+                        placeholder="{{ __('Jan Kowalski') }}"
                     >
                     @error('name')
                         <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
@@ -52,7 +52,7 @@
                         value="{{ old('email') }}"
                         required
                         class="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-sky-club focus:border-transparent @error('email') border-red-500 @enderror"
-                        placeholder="twoj@email.pl"
+                        placeholder="{{ __('twoj@email.pl') }}"
                     >
                     @error('email')
                         <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
@@ -62,7 +62,7 @@
                 <!-- Subject -->
                 <div>
                     <label for="subject" class="block text-zinc-700 font-semibold mb-2">
-                        Temat *
+                        {{ __('Temat') }} *
                     </label>
                     <input
                         type="text"
@@ -71,7 +71,7 @@
                         value="{{ old('subject') }}"
                         required
                         class="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-sky-club focus:border-transparent @error('subject') border-red-500 @enderror"
-                        placeholder="W jakiej sprawie się kontaktujesz?"
+                        placeholder="{{ __('W jakiej sprawie się kontaktujesz?') }}"
                     >
                     @error('subject')
                         <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
@@ -81,7 +81,7 @@
                 <!-- Message -->
                 <div>
                     <label for="message" class="block text-zinc-700 font-semibold mb-2">
-                        Wiadomość *
+                        {{ __('Wiadomość') }} *
                     </label>
                     <textarea
                         id="message"
@@ -89,7 +89,7 @@
                         rows="6"
                         required
                         class="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-sky-club focus:border-transparent @error('message') border-red-500 @enderror"
-                        placeholder="Twoja wiadomość..."
+                        placeholder="{{ __('Twoja wiadomość...') }}"
                     >{{ old('message') }}</textarea>
                     @error('message')
                         <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
@@ -101,18 +101,18 @@
                     type="submit"
                     class="w-full bg-ink text-white py-3 rounded-lg hover:bg-graphite transition font-semibold"
                 >
-                    Wyślij wiadomość
+                    {{ __('Wyślij wiadomość') }}
                 </button>
 
                 <p class="text-sm text-zinc-600">
-                    * Pola wymagane
+                    * {{ __('Pola wymagane') }}
                 </p>
             </form>
         </div>
 
         <!-- Contact Information -->
         <div>
-            <h2 class="text-2xl font-bold text-zinc-900 mb-6">Informacje kontaktowe</h2>
+            <h2 class="text-2xl font-bold text-zinc-900 mb-6">{{ __('Informacje kontaktowe') }}</h2>
 
             <div class="bg-white rounded-3xl ring-1 ring-zinc-200/70 p-8 space-y-6">
                 <!-- Address -->
@@ -124,7 +124,7 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-zinc-900 mb-1">Adres</h3>
+                        <h3 class="font-semibold text-zinc-900 mb-1">{{ __('Adres') }}</h3>
                         <p class="text-zinc-600">{{ $site['contact_address'] }}</p>
                     </div>
                 </div>
@@ -137,7 +137,7 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-zinc-900 mb-1">Telefon</h3>
+                        <h3 class="font-semibold text-zinc-900 mb-1">{{ __('Telefon') }}</h3>
                         <p class="text-zinc-600">
                             <a href="tel:{{ preg_replace('/[^0-9+]/', '', (string) $site['contact_phone']) }}" class="hover:text-sky-club-dark transition">{{ $site['contact_phone'] }}</a>
                         </p>
@@ -167,15 +167,15 @@
                         </svg>
                     </div>
                     <div>
-                        <h3 class="font-semibold text-zinc-900 mb-1">Godziny otwarcia</h3>
-                        <p class="whitespace-pre-line text-zinc-600">{{ $site['contact_hours'] }}</p>
+                        <h3 class="font-semibold text-zinc-900 mb-1">{{ __('Godziny otwarcia') }}</h3>
+                        <p class="whitespace-pre-line text-zinc-600">{{ __($site['contact_hours']) }}</p>
                     </div>
                 </div>
             </div>
 
             @if($site->socials())
                 <div class="mt-8">
-                    <h3 class="text-xl font-bold text-zinc-900 mb-4">Media społecznościowe</h3>
+                    <h3 class="text-xl font-bold text-zinc-900 mb-4">{{ __('Media społecznościowe') }}</h3>
                     <div class="flex flex-wrap gap-3">
                         @foreach($site->socials() as $network => $socialUrl)
                             <a href="{{ $socialUrl }}" target="_blank" rel="noopener" class="w-12 h-12 bg-ink text-white rounded-lg flex items-center justify-center hover:bg-sky-club transition" aria-label="{{ ucfirst($network) }}">

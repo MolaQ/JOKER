@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\RedirectToCanonicalUrl;
+use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\TrackPageView;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             RedirectToCanonicalUrl::class,
+            SetLocale::class,
             TrackPageView::class,
         ]);
 

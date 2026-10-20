@@ -14,6 +14,9 @@
             <li class="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-6" wire:key="page-{{ $page->id }}">
                 <div class="min-w-0 flex-1">
                     <p class="font-semibold text-gray-900">{{ $page->title }}
+                        @if($page->hasEnglish())
+                            <x-english-badge class="ml-1" />
+                        @endif
                         @unless($page->is_published)
                             <span class="ml-2 rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">Ukryta</span>
                         @endunless
@@ -65,6 +68,31 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Treść</label>
                                 <x-rich-text-editor model="content" placeholder="Treść podstrony..." height="min-h-[240px]" />
+                            </div>
+
+                            {{-- Wersja angielska: pokazywana odwiedzającym, którzy wybrali flagę brytyjską --}}
+                            <div x-data="{ open: @js(filled($title_en) || filled($content_en)) }" class="rounded-lg border border-gray-200">
+                                <button type="button" @click="open = ! open" :aria-expanded="open" class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-medium text-gray-700">
+                                    <span class="inline-flex items-center gap-2"><x-flag country="gb" class="h-3 w-[1.125rem] rounded-[2px] ring-1 ring-black/15" /> Wersja angielska (opcjonalnie)</span>
+                                    <span class="text-gray-400 transition" :class="open && 'rotate-180'" aria-hidden="true">▾</span>
+                                </button>
+                                <div x-show="open" x-cloak class="space-y-4 border-t border-gray-200 px-4 py-4">
+                                    <p class="text-xs text-gray-500">Gdy uzupełnisz angielski tytuł, podstrona dostanie brytyjską flagę, a osoby oglądające stronę po angielsku zobaczą tę wersję. Puste pola zostaną zastąpione polskimi.</p>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700" for="page-title-en">Tytuł (EN)</label>
+                                        <input type="text" id="page-title-en" wire:model="title_en" class="mt-1 block w-full">
+                                        @error('title_en') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700" for="page-lead-en">Wstęp (EN)</label>
+                                        <textarea id="page-lead-en" wire:model="lead_en" rows="2" class="mt-1 block w-full"></textarea>
+                                        @error('lead_en') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Treść (EN)</label>
+                                        <x-rich-text-editor model="content_en" placeholder="Page content..." height="min-h-[240px]" />
+                                    </div>
+                                </div>
                             </div>
 
                             <div>
