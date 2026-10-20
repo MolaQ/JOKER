@@ -132,6 +132,8 @@
                         @foreach($bracket['rounds'] as $round => $roundMatches)
                             @php
                                 $roundName = match (true) {
+                                    filled($roundMatches->pluck('phase_name')->filter()->first()) => $roundMatches->pluck('phase_name')->filter()->first(),
+                                    $roundMatches->contains(fn ($match) => $match->decides_place !== null) && $loop->last => __('Finały'),
                                     $roundMatches->count() === 1 && $loop->last => $bracket['from'] === 1 ? __('Finał') : __('Mecz o :place. miejsce', ['place' => $bracket['from']]),
                                     $roundMatches->count() === 2 => __('Półfinały'),
                                     $roundMatches->count() === 4 => __('Ćwierćfinały'),
@@ -143,7 +145,7 @@
                                 <p class="mb-3 text-xs font-semibold tracking-widest text-zinc-500 uppercase">{{ $roundName }}</p>
                                 <div class="flex flex-1 flex-col justify-around gap-4">
                                     @foreach($roundMatches as $match)
-                                        <x-tournament-match :match="$match" :show-title="filled($match->label)" @class(['ring-2 ring-amber-300' => $roundMatches->count() === 1 && $loop->parent->last && $bracket['from'] === 1]) wire:key="playoff-{{ $match->id }}" />
+                                        <x-tournament-match :match="$match" :show-title="filled($match->label) || $match->decides_place !== null" @class(['ring-2 ring-amber-300' => $match->decides_place === 1 || ($roundMatches->count() === 1 && $loop->parent->last && $bracket['from'] === 1 && $match->decides_place === null)]) wire:key="playoff-{{ $match->id }}" />
                                     @endforeach
                                 </div>
                             </div>

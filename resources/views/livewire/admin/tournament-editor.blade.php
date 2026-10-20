@@ -240,12 +240,26 @@
                         </div>
                     @elseif($match['stage'] === 'playoff')
                         <div>
-                            <label class="{{ $label }}">Runda (1 = pierwsza)</label>
+                            <label class="{{ $label }}">Faza = kolumna (1 = pierwsza)</label>
                             <input type="number" min="1" wire:model="match.bracket_round" class="{{ $input }}">
                             @error('match.bracket_round') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <div>
-                            <label class="{{ $label }}">Pozycja w rundzie</label>
+                            <label class="{{ $label }}">Nazwa fazy</label>
+                            <input type="text" wire:model="match.phase_name" class="{{ $input }}" placeholder="np. Półfinały, Finały">
+                        </div>
+                        <div>
+                            <label class="{{ $label }}">Decyduje o miejscu</label>
+                            <select wire:model="match.decides_place" class="{{ $input }}">
+                                <option value="">— nie (np. półfinał) —</option>
+                                <option value="1">1. miejsce (finał)</option>
+                                @foreach([3, 5, 7, 9, 11, 13, 15] as $place)
+                                    <option value="{{ $place }}">o {{ $place }}. miejsce</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="{{ $label }}">Pozycja w kolumnie</label>
                             <input type="number" min="1" wire:model="match.bracket_slot" class="{{ $input }}" placeholder="kolejność od góry">
                         </div>
                         <div>
@@ -266,7 +280,7 @@
                     @endif
                     <div>
                         <label class="{{ $label }}">Etykieta</label>
-                        <input type="text" wire:model="match.label" class="{{ $input }}" placeholder="opcjonalnie, np. Półfinał 1">
+                        <input type="text" wire:model="match.label" class="{{ $input }}" placeholder="opcjonalnie, np. Półfinał 1, Mecz o 3. miejsce">
                     </div>
                 </div>
                 <div class="grid gap-3 sm:grid-cols-4">
@@ -337,8 +351,12 @@
                                     <input type="text" wire:model.blur="results.{{ $tournamentMatch->id }}.court" class="{{ $input }}" placeholder="boisko">
                                     <div class="flex items-center gap-3">
                                         <button type="button" wire:click="saveResult({{ $tournamentMatch->id }})" class="{{ $secondary }}">Zapisz</button>
+                                        <button type="button" wire:click="editMatch({{ $tournamentMatch->id }})" class="text-sm text-blue-600 hover:text-blue-800">Edytuj</button>
                                         <button type="button" wire:click="deleteMatch({{ $tournamentMatch->id }})" wire:confirm="Usunąć ten mecz?" class="text-sm text-red-600 hover:text-red-800">Usuń</button>
                                     </div>
+                                    @if($editingMatchId === $tournamentMatch->id)
+                                        @include('livewire.admin.tournament-match-edit', ['tournamentMatch' => $tournamentMatch])
+                                    @endif
                                 </div>
                             @endforeach
                         </div>

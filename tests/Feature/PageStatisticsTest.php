@@ -1,10 +1,12 @@
 <?php
 
 use App\Livewire\Admin\SiteStatistics;
+use App\Livewire\VisitCounter;
 use App\Models\PageView;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -57,4 +59,16 @@ test('admin sees what attracts and what holds attention', function () {
         ->assertSee('Aktualności');
 
     $this->actingAs(User::factory()->trainer()->create())->get(route('admin.statistics.index'))->assertForbidden();
+});
+
+test('footer counter shows people online, visitors today and all page views', function () {
+    $this->withHeader('User-Agent', 'Mozilla/5.0')->get('/druzyny/kadeci');
+    $this->withHeader('User-Agent', 'Mozilla/5.0 (iPhone) Mobile')->get('/druzyny');
+    PageView::forceCreate(['kind' => 'page', 'path' => '/', 'visitor_hash' => str_repeat('a', 64), 'created_at' => now()->subDays(3)]);
+    Cache::forget('visit-counter');
+
+    Livewire::test(VisitCounter::class)
+        ->assertSee('2 osoby teraz')
+        ->assertSee('2 gości dziś')
+        ->assertSee('3 odsłon');
 });

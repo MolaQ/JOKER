@@ -239,7 +239,10 @@
             </div>
 
             <div class="mt-14 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs sm:flex-row sm:items-center sm:justify-between">
-                <p>&copy; {{ date('Y') }} {{ $site['club_name'] }}</p>
+                <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
+                    <p>&copy; {{ date('Y') }} {{ $site['club_name'] }}</p>
+                    <livewire:visit-counter />
+                </div>
                 <p>{{ __('Zdjęcia tematyczne:') }} <a href="{{ route('credits') }}" class="underline hover:text-white">{{ __('Unsplash i ich autorzy') }}</a></p>
             </div>
         </div>

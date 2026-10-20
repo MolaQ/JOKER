@@ -28,7 +28,9 @@ class TournamentMatch extends Model
         'tournament_group_id',
         'stage',
         'label',
+        'phase_name',
         'placement',
+        'decides_place',
         'bracket_round',
         'bracket_slot',
         'home_participant_id',
@@ -110,11 +112,20 @@ class TournamentMatch extends Model
     {
         return match (true) {
             filled($this->label) => $this->label,
+            $this->decides_place !== null => $this->decides_place === 1 ? __('Finał') : __('Mecz o :place. miejsce', ['place' => $this->decides_place]),
             $this->stage === self::STAGE_PLACEMENT && $this->placement !== null => $this->placement === 1 ? __('Finał') : __('Mecz o :place. miejsce', ['place' => $this->placement]),
             $this->stage === self::STAGE_PLAYOFF && $this->bracketFrom() > 1 => __('Play-off o miejsca od :place.', ['place' => $this->bracketFrom()]),
             $this->group !== null => $this->group->name,
             default => __(self::STAGES[$this->stage] ?? ''),
         };
+    }
+
+    /**
+     * Miejsce, o które toczy się mecz: wpisane w panelu albo wynikające z meczu o miejsce.
+     */
+    public function placeAtStake(): ?int
+    {
+        return $this->decides_place ?? ($this->stage === self::STAGE_PLACEMENT ? $this->placement : null);
     }
 
     /**

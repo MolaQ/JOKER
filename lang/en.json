@@ -361,5 +361,10 @@
     "Mecz o miejsce": "Placement match",
     "Memoriał": "Memorial",
     "Play-off o miejsca od :place.": "Play-off for place :place and below",
-    "Drabinka o miejsca :from–:to": "Bracket for places :from–:to"
+    "Drabinka o miejsca :from–:to": "Bracket for places :from–:to",
+    ":count osoba teraz|:count osoby teraz|:count osób teraz": ":count person online|:count people online",
+    ":count gość dziś|:count gości dziś|:count gości dziś": ":count visitor today|:count visitors today",
+    ":count odsłon": ":count page views",
+    "Osoby na stronie w ostatnich 5 minutach": "People on the site in the last 5 minutes",
+    "Finały": "Finals"
 }

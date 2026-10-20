@@ -57,6 +57,11 @@ class TournamentEditor extends Component
     /** @var array<string, mixed> */
     public array $match = [];
 
+    public ?int $editingMatchId = null;
+
+    /** @var array<string, mixed> */
+    public array $editMatch = [];
+
     /** @var array<int, array{sets: string, starts_at: string, court: string}> */
     public array $results = [];
 
@@ -230,6 +235,8 @@ class TournamentEditor extends Component
             'match.stage' => 'required|in:group,playoff,placement',
             'match.group' => 'nullable|required_if:match.stage,group|integer',
             'match.label' => 'nullable|string|max:80',
+            'match.phase_name' => 'nullable|string|max:60',
+            'match.decides_place' => 'nullable|integer|min:1|max:99',
             'match.placement' => 'nullable|required_if:match.stage,placement|integer|min:1|max:99',
             'match.bracket_round' => 'nullable|required_if:match.stage,playoff|integer|min:1|max:9',
             'match.bracket_slot' => 'nullable|integer|min:1|max:64',
@@ -251,6 +258,8 @@ class TournamentEditor extends Component
             'stage' => $data['stage'],
             'tournament_group_id' => $data['stage'] === TournamentMatch::STAGE_GROUP ? (int) $data['group'] : null,
             'label' => trim((string) ($data['label'] ?? '')) ?: null,
+            'phase_name' => $data['stage'] === TournamentMatch::STAGE_PLAYOFF ? (trim((string) ($data['phase_name'] ?? '')) ?: null) : null,
+            'decides_place' => $data['stage'] === TournamentMatch::STAGE_PLAYOFF && filled($data['decides_place'] ?? null) ? (int) $data['decides_place'] : null,
             'placement' => match ($data['stage']) {
                 TournamentMatch::STAGE_PLACEMENT => (int) $data['placement'],
                 TournamentMatch::STAGE_PLAYOFF => filled($data['placement'] ?? null) && (int) $data['placement'] > 1 ? (int) $data['placement'] : null,
@@ -299,6 +308,75 @@ class TournamentEditor extends Component
         $this->saveResult((int) explode('.', $key)[0]);
     }
 
+    /**
+     * Otwiera edycję meczu: faza i pozycja w drabince, etykieta, miejsce, o które gra, drużyny.
+     */
+    public function editMatch(int $matchId): void
+    {
+        $match = $this->category()->matches()->findOrFail($matchId);
+
+        $this->editingMatchId = $match->id;
+        $this->editMatch = [
+            'label' => (string) $match->label,
+            'phase_name' => (string) $match->phase_name,
+            'bracket_round' => (string) $match->bracket_round,
+            'bracket_slot' => (string) $match->bracket_slot,
+            'bracket_from' => $match->stage === TournamentMatch::STAGE_PLAYOFF ? (string) ($match->placement ?? '') : '',
+            'placement' => $match->stage === TournamentMatch::STAGE_PLACEMENT ? (string) $match->placement : '',
+            'decides_place' => (string) $match->decides_place,
+            'group' => (string) $match->tournament_group_id,
+            'home' => (string) $match->home_participant_id,
+            'away' => (string) $match->away_participant_id,
+            'home_placeholder' => (string) $match->home_placeholder,
+            'away_placeholder' => (string) $match->away_placeholder,
+        ];
+        $this->resetErrorBag();
+    }
+
+    public function saveMatchEdit(): void
+    {
+        $match = $this->category()->matches()->findOrFail($this->editingMatchId);
+        $data = $this->validate([
+            'editMatch.label' => 'nullable|string|max:80',
+            'editMatch.phase_name' => 'nullable|string|max:60',
+            'editMatch.bracket_round' => 'nullable|integer|min:1|max:9',
+            'editMatch.bracket_slot' => 'nullable|integer|min:1|max:64',
+            'editMatch.bracket_from' => 'nullable|integer|min:1|max:99',
+            'editMatch.placement' => 'nullable|integer|min:1|max:99',
+            'editMatch.decides_place' => 'nullable|integer|min:1|max:99',
+            'editMatch.group' => 'nullable|integer',
+            'editMatch.home' => 'nullable|integer',
+            'editMatch.away' => 'nullable|integer',
+            'editMatch.home_placeholder' => 'nullable|string|max:60',
+            'editMatch.away_placeholder' => 'nullable|string|max:60',
+        ])['editMatch'];
+
+        $participantIds = $this->category()->participants()->pluck('id');
+        $number = fn (string $key): ?int => filled($data[$key] ?? null) ? (int) $data[$key] : null;
+        $text = fn (string $key): ?string => trim((string) ($data[$key] ?? '')) ?: null;
+
+        $match->update([
+            'label' => $text('label'),
+            'home_participant_id' => $participantIds->contains($number('home')) ? $number('home') : null,
+            'away_participant_id' => $participantIds->contains($number('away')) ? $number('away') : null,
+            'home_placeholder' => $text('home_placeholder'),
+            'away_placeholder' => $text('away_placeholder'),
+        ] + match ($match->stage) {
+            TournamentMatch::STAGE_PLAYOFF => [
+                'phase_name' => $text('phase_name'),
+                'bracket_round' => $number('bracket_round') ?? $match->bracket_round,
+                'bracket_slot' => $number('bracket_slot'),
+                'placement' => ($number('bracket_from') ?? 1) > 1 ? $number('bracket_from') : null,
+                'decides_place' => $number('decides_place'),
+            ],
+            TournamentMatch::STAGE_PLACEMENT => ['placement' => $number('placement') ?? $match->placement],
+            default => ['tournament_group_id' => $number('group') ?? $match->tournament_group_id],
+        });
+
+        $this->editingMatchId = null;
+        $this->flashMessage = 'Zapisano mecz: '.$match->fresh()->title().'.';
+    }
+
     public function setMatchTeams(int $matchId, string $side, string $participantId): void
     {
         $match = $this->category()->matches()->findOrFail($matchId);
@@ -341,7 +419,7 @@ class TournamentEditor extends Component
 
     private function resetMatchForm(string $stage = 'group'): void
     {
-        $this->match = ['stage' => $stage, 'group' => '', 'label' => '', 'placement' => '', 'bracket_round' => '', 'bracket_slot' => '', 'home' => '', 'away' => '', 'home_placeholder' => '', 'away_placeholder' => '', 'starts_at' => $this->match['starts_at'] ?? '', 'court' => $this->match['court'] ?? ''];
+        $this->match = ['stage' => $stage, 'group' => '', 'label' => '', 'phase_name' => $this->match['phase_name'] ?? '', 'decides_place' => '', 'placement' => '', 'bracket_round' => '', 'bracket_slot' => '', 'home' => '', 'away' => '', 'home_placeholder' => '', 'away_placeholder' => '', 'starts_at' => $this->match['starts_at'] ?? '', 'court' => $this->match['court'] ?? ''];
     }
 
     private function loadCategoryState(): void

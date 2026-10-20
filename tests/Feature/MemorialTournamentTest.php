@@ -170,3 +170,37 @@ test('match time typed in the panel is saved without pressing save', function ()
 
     expect($match->fresh()->starts_at->format('Y-m-d H:i'))->toBe('2026-11-15 16:40');
 });
+
+test('organizer names bracket phases and puts the third place match under the final', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz, $poznan] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $fourth = $category->participants()->create(['competitor_type' => 'rival_team', 'competitor_id' => RivalTeam::create(['full_name' => 'Sparta Złotów'])->id]);
+
+    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze');
+    foreach ([[$joker, $fourth], [$kalisz, $poznan]] as $slot => [$home, $away]) {
+        $editor->set('match.stage', 'playoff')->set('match.bracket_round', 1)->set('match.bracket_slot', $slot + 1)
+            ->set('match.phase_name', 'Półfinał')->set('match.home', $home->id)->set('match.away', $away->id)
+            ->call('addMatch')->assertHasNoErrors();
+    }
+    $editor->set('match.stage', 'playoff')->set('match.bracket_round', 2)->set('match.bracket_slot', 1)->set('match.phase_name', 'Finały')
+        ->set('match.decides_place', 1)->set('match.home_placeholder', 'Zwycięzca SF1')->set('match.away_placeholder', 'Zwycięzca SF2')
+        ->call('addMatch')->assertHasNoErrors()
+        ->set('match.stage', 'playoff')->set('match.bracket_round', 2)->set('match.bracket_slot', 2)
+        ->set('match.decides_place', 3)->set('match.label', 'Mecz o trzecie miejsce')
+        ->call('addMatch')->assertHasNoErrors();
+
+    $final = $category->matches()->where('decides_place', 1)->sole();
+    $editor->call('editMatch', $final->id)
+        ->set('editMatch.home', (string) $joker->id)->set('editMatch.away', (string) $kalisz->id)
+        ->call('saveMatchEdit')->assertHasNoErrors();
+    $final->refresh()->update(['home_sets' => 2, 'away_sets' => 0]);
+    $category->matches()->where('decides_place', 3)->sole()->update(['home_participant_id' => $fourth->id, 'away_participant_id' => $poznan->id, 'home_sets' => 0, 'away_sets' => 2]);
+
+    $standings = TournamentTable::finalStandings($category->fresh(['matches', 'participants']))
+        ->mapWithKeys(fn (array $row) => [$row['participant']->id => $row['position']]);
+    expect($standings->all())->toBe([$joker->id => 1, $kalisz->id => 2, $poznan->id => 3, $fourth->id => 4]);
+
+    Livewire::withQueryParams(['zakladka' => 'drabinka'])->test(TournamentPage::class, ['tournament' => $this->tournament])
+        ->assertSeeInOrder(['Półfinał', 'Finały', 'LOMS Joker Piła', 'Mecz o trzecie miejsce']);
+});

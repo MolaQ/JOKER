@@ -68,10 +68,10 @@ class TournamentTable
     {
         $positions = [];
 
-        foreach ($category->matches->where('stage', TournamentMatch::STAGE_PLACEMENT) as $match) {
-            if ($match->placement !== null && $match->isFinished()) {
-                $positions[$match->winner()->id] = $match->placement;
-                $positions[$match->loser()->id] = $match->placement + 1;
+        foreach ($category->matches as $match) {
+            if ($match->placeAtStake() !== null && $match->isFinished()) {
+                $positions[$match->winner()->id] = $match->placeAtStake();
+                $positions[$match->loser()->id] = $match->placeAtStake() + 1;
             }
         }
 
@@ -82,7 +82,7 @@ class TournamentTable
             $lastRound = $bracketMatches->where('bracket_round', $bracketMatches->max('bracket_round'));
             $final = $lastRound->first();
 
-            if ($lastRound->count() === 1 && $final->isFinished() && ! in_array($from, $positions, true)) {
+            if ($lastRound->count() === 1 && $final->decides_place === null && $final->isFinished() && ! in_array($from, $positions, true)) {
                 $positions[$final->winner()->id] = $from;
                 $positions[$final->loser()->id] = $from + 1;
             }
