@@ -22,7 +22,7 @@ class TournamentController extends Controller
             return view('tournaments.memorial-soon');
         }
 
-        return redirect()->route('tournaments.show', $tournament);
+        return redirect()->route('tournaments.show', ['tournament' => $tournament, ...request()->query()]);
     }
 
     public function show(Tournament $tournament): View

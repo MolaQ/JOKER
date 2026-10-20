@@ -139,3 +139,34 @@ test('admin builds a category with teams, a group, round robin matches and resul
 test('coaches cannot open the tournament editor', function () {
     $this->actingAs(User::factory()->create())->get(route('admin.tournaments.edit', $this->tournament))->assertForbidden();
 });
+
+test('a second bracket for places 5-8 gets its own heading and feeds the final standings', function () {
+    [$joker, $kalisz, $poznan] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $fourth = $category->participants()->create(['competitor_type' => 'rival_team', 'competitor_id' => RivalTeam::create(['full_name' => 'Sparta Złotów'])->id]);
+
+    $category->matches()->create(['stage' => 'playoff', 'bracket_round' => 1, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id, 'home_sets' => 2, 'away_sets' => 0, 'starts_at' => '2026-11-15 10:00']);
+    $category->matches()->create(['stage' => 'playoff', 'bracket_round' => 2, 'home_participant_id' => $joker->id, 'away_participant_id' => $poznan->id, 'home_sets' => 2, 'away_sets' => 1, 'starts_at' => '2026-11-15 15:30']);
+    $category->matches()->create(['stage' => 'playoff', 'placement' => 5, 'bracket_round' => 1, 'home_participant_id' => $fourth->id, 'away_participant_id' => $kalisz->id]);
+    $category->matches()->create(['stage' => 'playoff', 'placement' => 5, 'bracket_round' => 1, 'home_placeholder' => '4. gr. A', 'away_placeholder' => '4. gr. B']);
+
+    $standings = TournamentTable::finalStandings($category->fresh(['matches', 'participants']))
+        ->mapWithKeys(fn (array $row) => [$row['participant']->id => $row['position']]);
+    expect($standings->all())->toBe([$joker->id => 1, $poznan->id => 2]);
+
+    Livewire::test(TournamentPage::class, ['tournament' => $this->tournament])
+        ->call('selectTab', 'drabinka')
+        ->assertSee('Drabinka o miejsca 5–8')
+        ->assertSeeText('15.11, 15:30');
+});
+
+test('match time typed in the panel is saved without pressing save', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
+    $match = $joker->category->matches()->create(['stage' => 'placement', 'placement' => 3, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id, 'starts_at' => '2026-11-14 15:40']);
+
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])
+        ->set("results.{$match->id}.starts_at", '2026-11-15T16:40');
+
+    expect($match->fresh()->starts_at->format('Y-m-d H:i'))->toBe('2026-11-15 16:40');
+});

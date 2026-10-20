@@ -359,5 +359,7 @@
     "Faza grupowa": "Group stage",
     "Drabinka (play-off)": "Play-off",
     "Mecz o miejsce": "Placement match",
-    "Memoriał": "Memorial"
+    "Memoriał": "Memorial",
+    "Play-off o miejsca od :place.": "Play-off for place :place and below",
+    "Drabinka o miejsca :from–:to": "Bracket for places :from–:to"
 }

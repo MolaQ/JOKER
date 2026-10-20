@@ -218,7 +218,7 @@
         <div class="space-y-6">
             <form wire:submit="addMatch" class="space-y-3 rounded-lg border border-dashed border-gray-300 p-4">
                 <h3 class="font-semibold text-gray-900">Dodaj mecz</h3>
-                <div class="grid gap-3 sm:grid-cols-4">
+                <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
                     <div>
                         <label class="{{ $label }}">Etap</label>
                         <select wire:model.live="match.stage" class="{{ $input }}">
@@ -247,6 +247,15 @@
                         <div>
                             <label class="{{ $label }}">Pozycja w rundzie</label>
                             <input type="number" min="1" wire:model="match.bracket_slot" class="{{ $input }}" placeholder="kolejność od góry">
+                        </div>
+                        <div>
+                            <label class="{{ $label }}">Drabinka</label>
+                            <select wire:model="match.placement" class="{{ $input }}">
+                                <option value="">główna (o 1. miejsce)</option>
+                                @foreach([3, 5, 7, 9, 11, 13] as $from)
+                                    <option value="{{ $from }}">o miejsca od {{ $from }}. (np. {{ $from }}–{{ $from + 3 }})</option>
+                                @endforeach
+                            </select>
                         </div>
                     @else
                         <div>
@@ -321,11 +330,11 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <input type="text" wire:model="results.{{ $tournamentMatch->id }}.sets" class="{{ $input }}" placeholder="25:20, 23:25, 15:12">
+                                        <input type="text" wire:model.blur="results.{{ $tournamentMatch->id }}.sets" class="{{ $input }}" placeholder="25:20, 23:25, 15:12">
                                         @error("results.{$tournamentMatch->id}.sets") <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                                     </div>
-                                    <input type="datetime-local" wire:model="results.{{ $tournamentMatch->id }}.starts_at" class="{{ $input }}">
-                                    <input type="text" wire:model="results.{{ $tournamentMatch->id }}.court" class="{{ $input }}" placeholder="boisko">
+                                    <input type="datetime-local" wire:model.blur="results.{{ $tournamentMatch->id }}.starts_at" class="{{ $input }}">
+                                    <input type="text" wire:model.blur="results.{{ $tournamentMatch->id }}.court" class="{{ $input }}" placeholder="boisko">
                                     <div class="flex items-center gap-3">
                                         <button type="button" wire:click="saveResult({{ $tournamentMatch->id }})" class="{{ $secondary }}">Zapisz</button>
                                         <button type="button" wire:click="deleteMatch({{ $tournamentMatch->id }})" wire:confirm="Usunąć ten mecz?" class="text-sm text-red-600 hover:text-red-800">Usuń</button>

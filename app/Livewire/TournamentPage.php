@@ -44,7 +44,15 @@ class TournamentPage extends Component
         $current = $categories->firstWhere('id', (int) $this->category) ?? $categories->first();
 
         $matches = $current?->matches ?? collect();
-        $playoff = $matches->where('stage', TournamentMatch::STAGE_PLAYOFF)->sortBy([['bracket_round', 'asc'], ['bracket_slot', 'asc']])->groupBy('bracket_round');
+        $playoff = $matches->where('stage', TournamentMatch::STAGE_PLAYOFF)
+            ->sortBy([['bracket_round', 'asc'], ['bracket_slot', 'asc']])
+            ->groupBy(fn (TournamentMatch $match) => $match->bracketFrom())
+            ->sortKeys()
+            ->map(fn (Collection $bracket, int $from) => [
+                'from' => $from,
+                'to' => $from + 2 * $bracket->where('bracket_round', $bracket->min('bracket_round'))->count() - 1,
+                'rounds' => $bracket->groupBy('bracket_round'),
+            ]);
         $placement = $matches->where('stage', TournamentMatch::STAGE_PLACEMENT)->sortBy('placement')->values();
 
         $tabs = collect([

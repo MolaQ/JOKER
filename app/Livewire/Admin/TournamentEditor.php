@@ -251,7 +251,11 @@ class TournamentEditor extends Component
             'stage' => $data['stage'],
             'tournament_group_id' => $data['stage'] === TournamentMatch::STAGE_GROUP ? (int) $data['group'] : null,
             'label' => trim((string) ($data['label'] ?? '')) ?: null,
-            'placement' => $data['stage'] === TournamentMatch::STAGE_PLACEMENT ? (int) $data['placement'] : null,
+            'placement' => match ($data['stage']) {
+                TournamentMatch::STAGE_PLACEMENT => (int) $data['placement'],
+                TournamentMatch::STAGE_PLAYOFF => filled($data['placement'] ?? null) && (int) $data['placement'] > 1 ? (int) $data['placement'] : null,
+                default => null,
+            },
             'bracket_round' => $data['stage'] === TournamentMatch::STAGE_PLAYOFF ? (int) $data['bracket_round'] : null,
             'bracket_slot' => $data['stage'] === TournamentMatch::STAGE_PLAYOFF && filled($data['bracket_slot'] ?? null) ? (int) $data['bracket_slot'] : null,
             'home_participant_id' => $participantIds->contains((int) ($data['home'] ?? 0)) ? (int) $data['home'] : null,
@@ -285,6 +289,14 @@ class TournamentEditor extends Component
         ]);
 
         $this->flashMessage = 'Zapisano: '.$match->fresh()->homeName().' – '.$match->awayName().'.';
+    }
+
+    /**
+     * Wynik, termin i boisko zapisują się same po wyjściu z pola, żeby zmiana nie przepadła bez kliknięcia „Zapisz”.
+     */
+    public function updatedResults(mixed $value, string $key): void
+    {
+        $this->saveResult((int) explode('.', $key)[0]);
     }
 
     public function setMatchTeams(int $matchId, string $side, string $participantId): void

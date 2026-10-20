@@ -117,7 +117,7 @@
                 <h2 class="heading-md mt-8 first:mt-0">{{ $day ? \Illuminate\Support\Carbon::parse($day)->translatedFormat('l, j F') : __('Termin do ustalenia') }}</h2>
                 <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach($dayMatches as $match)
-                        <x-tournament-match :match="$match" wire:key="match-{{ $match->id }}" />
+                        <x-tournament-match :match="$match" :show-date="false" wire:key="match-{{ $match->id }}" />
                     @endforeach
                 </div>
             @endforeach
@@ -125,32 +125,32 @@
 
         {{-- DRABINKA I MECZE O MIEJSCA --}}
         @if($currentTab === 'drabinka' && $current)
-            @if($playoff->isNotEmpty())
-                <h2 class="heading-md">{{ __('Drabinka') }}</h2>
+            @foreach($playoff as $bracket)
+                <h2 @class(['heading-md', 'mt-10' => ! $loop->first])>{{ $bracket['from'] === 1 ? __('Drabinka') : __('Drabinka o miejsca :from–:to', ['from' => $bracket['from'], 'to' => $bracket['to']]) }}</h2>
                 <div class="mt-5 overflow-x-auto pb-2">
                     <div class="flex min-w-max gap-6">
-                        @foreach($playoff as $round => $roundMatches)
+                        @foreach($bracket['rounds'] as $round => $roundMatches)
                             @php
-                                $roundName = match ($roundMatches->count()) {
-                                    1 => __('Finał'),
-                                    2 => __('Półfinały'),
-                                    4 => __('Ćwierćfinały'),
-                                    8 => __('1/8 finału'),
+                                $roundName = match (true) {
+                                    $roundMatches->count() === 1 && $loop->last => $bracket['from'] === 1 ? __('Finał') : __('Mecz o :place. miejsce', ['place' => $bracket['from']]),
+                                    $roundMatches->count() === 2 => __('Półfinały'),
+                                    $roundMatches->count() === 4 => __('Ćwierćfinały'),
+                                    $roundMatches->count() === 8 => __('1/8 finału'),
                                     default => __('Runda :round', ['round' => $round]),
                                 };
                             @endphp
-                            <div class="flex w-80 flex-col">
+                            <div class="flex w-[22rem] flex-col">
                                 <p class="mb-3 text-xs font-semibold tracking-widest text-zinc-500 uppercase">{{ $roundName }}</p>
                                 <div class="flex flex-1 flex-col justify-around gap-4">
                                     @foreach($roundMatches as $match)
-                                        <x-tournament-match :match="$match" :show-title="filled($match->label)" @class(['ring-2 ring-amber-300' => $roundMatches->count() === 1]) />
+                                        <x-tournament-match :match="$match" :show-title="filled($match->label)" @class(['ring-2 ring-amber-300' => $roundMatches->count() === 1 && $loop->parent->last && $bracket['from'] === 1]) wire:key="playoff-{{ $match->id }}" />
                                     @endforeach
                                 </div>
                             </div>
                         @endforeach
                     </div>
                 </div>
-            @endif
+            @endforeach
 
             @if($placement->isNotEmpty())
                 <h2 class="heading-md {{ $playoff->isNotEmpty() ? 'mt-10' : '' }}">{{ __('Mecze o miejsca') }}</h2>

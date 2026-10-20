@@ -111,9 +111,18 @@ class TournamentMatch extends Model
         return match (true) {
             filled($this->label) => $this->label,
             $this->stage === self::STAGE_PLACEMENT && $this->placement !== null => $this->placement === 1 ? __('Finał') : __('Mecz o :place. miejsce', ['place' => $this->placement]),
+            $this->stage === self::STAGE_PLAYOFF && $this->bracketFrom() > 1 => __('Play-off o miejsca od :place.', ['place' => $this->bracketFrom()]),
             $this->group !== null => $this->group->name,
             default => __(self::STAGES[$this->stage] ?? ''),
         };
+    }
+
+    /**
+     * Drabinka, do której należy mecz play-off: 1 = główna, 5 = o miejsca 5-8 itd.
+     */
+    public function bracketFrom(): int
+    {
+        return $this->stage === self::STAGE_PLAYOFF ? max(1, (int) $this->placement) : 0;
     }
 
     public function setsLabel(): ?string

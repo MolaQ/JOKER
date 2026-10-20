@@ -1,4 +1,4 @@
-@props(['match', 'showTitle' => true])
+@props(['match', 'showTitle' => true, 'showDate' => true])
 {{-- Mecz turnieju: drużyny z logo, wynik w setach i małe punkty; zwycięzca pogrubiony --}}
 @php
     $winnerId = $match->winner()?->id;
@@ -11,7 +11,7 @@
     @if($showTitle || $match->starts_at || $match->court)
         <p class="mb-2 flex flex-wrap items-center gap-x-2 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase">
             @if($showTitle)<span class="text-sky-club-dark">{{ $match->title() }}</span>@endif
-            @if($match->starts_at)<span class="tabular-nums">{{ $match->starts_at->format('H:i') }}</span>@endif
+            @if($match->starts_at)<span class="tabular-nums">@if($showDate){{ $match->starts_at->translatedFormat('D d.m') }}, @endif{{ $match->starts_at->format('H:i') }}</span>@endif
             @if($match->court)<span>· {{ $match->court }}</span>@endif
         </p>
     @endif

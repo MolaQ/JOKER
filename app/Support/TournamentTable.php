@@ -60,7 +60,7 @@ class TournamentTable
 
     /**
      * Klasyfikacja końcowa kategorii: miejsca z meczów o miejsca (zwycięzca meczu o 7. miejsce = 7.,
-     * przegrany = 8.), a ręcznie wpisane miejsce w panelu ma pierwszeństwo.
+     * przegrany = 8.) i z finałów drabinek, a ręcznie wpisane miejsce w panelu ma pierwszeństwo.
      *
      * @return Collection<int, array{position: int, participant: TournamentParticipant}>
      */
@@ -72,6 +72,19 @@ class TournamentTable
             if ($match->placement !== null && $match->isFinished()) {
                 $positions[$match->winner()->id] = $match->placement;
                 $positions[$match->loser()->id] = $match->placement + 1;
+            }
+        }
+
+        // Ostatnia runda drabinki z jednym meczem to finał tej drabinki (o 1. miejsce, o 5. miejsce...).
+        $brackets = $category->matches->where('stage', TournamentMatch::STAGE_PLAYOFF)->groupBy(fn (TournamentMatch $match) => $match->bracketFrom());
+
+        foreach ($brackets as $from => $bracketMatches) {
+            $lastRound = $bracketMatches->where('bracket_round', $bracketMatches->max('bracket_round'));
+            $final = $lastRound->first();
+
+            if ($lastRound->count() === 1 && $final->isFinished() && ! in_array($from, $positions, true)) {
+                $positions[$final->winner()->id] = $from;
+                $positions[$final->loser()->id] = $from + 1;
             }
         }
 
