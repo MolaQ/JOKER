@@ -19,6 +19,9 @@ Route::middleware(['auth', 'role:admin,trainer'])->prefix('panel')->name('admin.
         return view('admin.games.index');
     })->name('games.index');
 
+    // Turnieje i sparingi w trakcie sezonu
+    Route::view('/tournaments', 'admin.tournaments.index')->name('tournaments.index');
+
     // Competitions & Standings
     Route::get('/competitions', function () {
         return view('admin.competitions.index');
@@ -68,6 +71,9 @@ Route::middleware(['auth', 'role:admin,trainer'])->prefix('panel')->name('admin.
         Route::view('/settings', 'admin.settings.index')->name('settings.index');
         Route::view('/pages', 'admin.pages.index')->name('pages.index');
     });
+
+    // Zdjęcia i dane proponowane przez zawodników i rodziców
+    Route::view('/player-change-requests', 'admin.player-change-requests.index')->name('player-change-requests.index');
 
     // Profile change requests
     Route::get('/profile-change-requests', function () {

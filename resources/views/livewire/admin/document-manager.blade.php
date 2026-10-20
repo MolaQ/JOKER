@@ -33,7 +33,7 @@
             @forelse($documents as $document)
                 <tr wire:key="document-{{ $document->id }}">
                     <td class="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                        <a href="{{ Storage::url($document->file_path) }}" target="_blank" class="hover:text-blue-700 hover:underline">
+                        <a href="{{ \App\Support\Media::url($document->file_path) }}" target="_blank" class="hover:text-blue-700 hover:underline">
                             {{ $document->title }}
                         </a>
                     </td>
@@ -110,7 +110,7 @@
                                 <label class="block text-sm font-medium text-gray-700">Plik</label>
                                 @if($existingFile && !$file)
                                     <p class="text-sm text-gray-500 mb-2">
-                                        Aktualny plik: <a href="{{ Storage::url($existingFile) }}" target="_blank" class="text-blue-600 hover:underline">pobierz</a>
+                                        Aktualny plik: <a href="{{ \App\Support\Media::url($existingFile) }}" target="_blank" class="text-blue-600 hover:underline">pobierz</a>
                                     </p>
                                 @endif
                                 <input type="file" wire:model="file" class="mt-1 block w-full text-sm text-gray-700">

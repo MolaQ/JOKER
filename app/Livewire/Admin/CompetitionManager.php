@@ -55,6 +55,20 @@ class CompetitionManager extends Component
      */
     public array $external_names = [];
 
+    /**
+     * Jak podpisać drużynę w tabelach i kalendarzu (np. „LOMS Joker Piła”), klucz = id drużyny.
+     *
+     * @var array<int, string>
+     */
+    public array $display_names = [];
+
+    /**
+     * Dopisek mniejszą kursywą obok nazwy (np. „(kadeci)”), klucz = id drużyny.
+     *
+     * @var array<int, string>
+     */
+    public array $display_suffixes = [];
+
     public string $source_url = '';
 
     public string $search = '';
@@ -84,6 +98,10 @@ class CompetitionManager extends Component
             'team_ids.*' => 'exists:teams,id',
             'external_names' => 'array',
             'external_names.*' => 'nullable|string|max:255',
+            'display_names' => 'array',
+            'display_names.*' => 'nullable|string|max:255',
+            'display_suffixes' => 'array',
+            'display_suffixes.*' => 'nullable|string|max:60',
             'source_url' => ['nullable', 'string', 'max:2000', 'regex:/^(\s*https?:\/\/\S+\s*)*$/'],
         ];
     }
@@ -139,6 +157,8 @@ class CompetitionManager extends Component
         $this->standings_criteria = $competition->sortCriteria();
         $this->team_ids = $competition->teams->pluck('id')->all();
         $this->external_names = $competition->teams->mapWithKeys(fn (Team $team) => [$team->id => (string) $team->pivot->external_name])->all();
+        $this->display_names = $competition->teams->mapWithKeys(fn (Team $team) => [$team->id => (string) $team->pivot->display_name])->all();
+        $this->display_suffixes = $competition->teams->mapWithKeys(fn (Team $team) => [$team->id => (string) $team->pivot->display_suffix])->all();
         $this->source_url = (string) $competition->source_url;
         $this->flashType = null;
         $this->flashMessage = null;
@@ -150,7 +170,7 @@ class CompetitionManager extends Component
     {
         $validated = $this->validate();
         $teamIds = $validated['team_ids'] ?? [];
-        unset($validated['team_ids'], $validated['external_names']);
+        unset($validated['team_ids'], $validated['external_names'], $validated['display_names'], $validated['display_suffixes']);
         $validated['source_url'] = trim($validated['source_url'] ?? '') ?: null;
 
         if ($this->editingId) {
@@ -165,7 +185,11 @@ class CompetitionManager extends Component
         }
 
         $competition->teams()->sync(collect($teamIds)->mapWithKeys(fn ($teamId) => [
-            $teamId => ['external_name' => trim($this->external_names[$teamId] ?? '') ?: null],
+            $teamId => [
+                'external_name' => trim($this->external_names[$teamId] ?? '') ?: null,
+                'display_name' => trim($this->display_names[$teamId] ?? '') ?: null,
+                'display_suffix' => trim($this->display_suffixes[$teamId] ?? '') ?: null,
+            ],
         ])->all());
 
         if ($competition->source_url) {
@@ -222,6 +246,8 @@ class CompetitionManager extends Component
         $this->standings_criteria = ['points', 'sets_ratio', 'points_ratio'];
         $this->team_ids = [];
         $this->external_names = [];
+        $this->display_names = [];
+        $this->display_suffixes = [];
         $this->source_url = '';
         $this->resetErrorBag();
     }

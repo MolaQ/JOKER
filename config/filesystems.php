@@ -41,7 +41,9 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            // Adres względny: zdjęcia działają pod każdą domeną (np. joker.xd), nawet gdy APP_URL
+            // w .env wskazuje inny adres (domyślnie http://localhost).
+            'url' => env('PUBLIC_STORAGE_URL', '/storage'),
             'visibility' => 'public',
             // Zapas, gdy serwer (np. XAMPP na Windows) nie obsłuży linku public/storage:
             // wtedy zdjęcia wydaje Laravel. Gdy link działa, serwer podaje pliki sam.

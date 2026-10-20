@@ -26,6 +26,11 @@ class UserManager extends Component
 
     public string $role = 'fan';
 
+    public ?string $birth_date = null;
+
+    /** Jak pokazać urodziny w kalendarzu meczów: ukryte, sam torcik albo z wiekiem. */
+    public string $birthday_display = 'age';
+
     public string $search = '';
 
     public string $roleFilter = '';
@@ -46,6 +51,8 @@ class UserManager extends Component
             ],
             'password' => $this->editingId ? 'nullable|string|min:8' : 'required|string|min:8',
             'role' => 'required|in:admin,trainer,staff,parent,player,fan,guest',
+            'birth_date' => 'nullable|date|before:today',
+            'birthday_display' => 'required|in:hidden,cake,age',
         ];
     }
 
@@ -76,6 +83,8 @@ class UserManager extends Component
         $this->email = $user->email;
         $this->password = '';
         $this->role = $user->role->value;
+        $this->birth_date = $user->birth_date?->format('Y-m-d');
+        $this->birthday_display = $user->birthday_display?->value ?? 'age';
         $this->flashType = null;
         $this->flashMessage = null;
 
@@ -134,6 +143,8 @@ class UserManager extends Component
         $this->email = '';
         $this->password = '';
         $this->role = 'fan';
+        $this->birth_date = null;
+        $this->birthday_display = 'age';
         $this->resetErrorBag();
     }
 

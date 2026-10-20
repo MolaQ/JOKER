@@ -72,7 +72,7 @@ class StandingsBrowser extends Component
     public function render(): View
     {
         $standings = $this->selected
-            ? LeagueStanding::with('competitor')->where('competition_id', $this->selected->id)->orderBy('position')->get()
+            ? LeagueStanding::with(['competitor', 'competition.teams'])->where('competition_id', $this->selected->id)->orderBy('position')->get()
             : collect();
 
         // Najnowszy etap pierwszy („Etap 2” przed „Etap 1”).

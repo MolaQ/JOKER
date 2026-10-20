@@ -77,6 +77,24 @@ class LeagueStanding extends Model
         return $this->competitor?->name ?? '—';
     }
 
+    /**
+     * Podpis wiersza: dla naszej drużyny nazwa i dopisek z ustawień rozgrywek.
+     *
+     * @return array{name: string, suffix: ?string}
+     */
+    public function competitorLabel(): array
+    {
+        if ($this->isOwnTeam() && $this->competition && $this->competitor instanceof Team) {
+            $label = $this->competition->teamLabel($this->competitor);
+
+            if ($this->competition->teams->firstWhere('id', $this->competitor->id)?->pivot?->display_name) {
+                return $label;
+            }
+        }
+
+        return ['name' => $this->competitorName(), 'suffix' => null];
+    }
+
     public function competitorShortName(): string
     {
         if ($this->competitor instanceof RivalTeam) {

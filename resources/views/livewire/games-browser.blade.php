@@ -32,12 +32,18 @@
                 </div>
 
                 <div class="flex w-full flex-wrap gap-2 sm:w-auto">
-                    @if($competitions->count() > 1)
+                    @if($competitions->count() > 1 || $hasTournaments || $hasFriendlies)
                         <select wire:model.live="competition" class="h-9 min-w-0 flex-1 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700 sm:flex-none" aria-label="Rozgrywki">
                             <option value="">Wszystkie rozgrywki</option>
                             @foreach($competitions as $competitionOption)
                                 <option value="{{ $competitionOption->id }}">{{ $competitionOption->name }}</option>
                             @endforeach
+                            @if($hasTournaments)
+                                <option value="{{ \App\Livewire\GamesBrowser::FILTER_TOURNAMENTS }}">Turnieje</option>
+                            @endif
+                            @if($hasFriendlies)
+                                <option value="{{ \App\Livewire\GamesBrowser::FILTER_FRIENDLIES }}">Sparingi</option>
+                            @endif
                         </select>
                     @endif
                     <select wire:model.live="place" class="h-9 flex-1 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700 sm:flex-none" aria-label="U siebie czy na wyjeździe">
@@ -83,13 +89,13 @@
                         @endfor
                     </div>
 
-                    <header class="flex flex-wrap items-end justify-between gap-3 rounded-t-3xl bg-ink px-5 pt-9 pb-5 text-white sm:px-8">
+                    <header class="flex flex-wrap items-end justify-between gap-3 rounded-t-3xl bg-gradient-to-r from-club-navy via-club-navy to-sky-club px-5 pt-9 pb-5 text-white sm:px-8">
                         <h2 class="font-display leading-none font-bold uppercase">
                             <span class="block text-4xl sm:text-6xl">{{ $month['month']->translatedFormat('F') }}</span>
                             <span class="mt-1 block text-lg tracking-[0.3em] text-sky-club-light">{{ $month['month']->year }}</span>
                         </h2>
-                        <p class="text-sm text-white/70">
-                            {{ $count }} {{ $count === 1 ? 'mecz' : ($count % 10 >= 2 && $count % 10 <= 4 && ($count % 100 < 10 || $count % 100 >= 20) ? 'mecze' : 'meczów') }}@if($finished->isNotEmpty()) · <span class="font-semibold text-emerald-300">{{ $wins }} {{ $wins === 1 ? 'wygrana' : 'wygranych' }}</span>@endif
+                        <p class="text-sm text-white/85">
+                            {{ $count }} {{ $count === 1 ? 'mecz' : ($count % 10 >= 2 && $count % 10 <= 4 && ($count % 100 < 10 || $count % 100 >= 20) ? 'mecze' : 'meczów') }}@if($month['tournaments']->isNotEmpty()) · {{ $month['tournaments']->count() }} {{ $month['tournaments']->count() === 1 ? 'turniej' : ($month['tournaments']->count() < 5 ? 'turnieje' : 'turniejów') }}@endif @if($finished->isNotEmpty()) · <span class="font-semibold text-emerald-300">{{ $wins }} {{ $wins === 1 ? 'wygrana' : 'wygranych' }}</span>@endif
                         </p>
                     </header>
 
@@ -118,45 +124,84 @@
                                             <span @class(['inline-flex h-7 min-w-7 items-center justify-center rounded-full sm:h-9 sm:min-w-9', 'bg-sky-club text-white' => $day['isToday']])>{{ $day['date']->day }}</span>
                                         </p>
 
-                                        @if($day['inMonth'] && $day['games']->isNotEmpty())
-                                            {{-- Telefon i tablet: kropki (kolor = wynik), dotknięcie przewija do meczu na liście --}}
+                                        @if($day['inMonth'] && ($day['games']->isNotEmpty() || $day['tournaments']->isNotEmpty() || $day['birthdays']->isNotEmpty()))
+                                            {{-- Telefon i tablet: znaczniki (granat = u siebie, szary = wyjazd, V/X = wynik), dotknięcie przewija do meczu na liście --}}
                                             <div class="mt-1 flex flex-wrap gap-1 lg:hidden">
                                                 @foreach($day['games'] as $game)
-                                                    @php $result = $game->ourSetsResult(); @endphp
+                                                    @php $result = $game->ourSetsResult(); $won = $game->isFinished() && $result ? $result[0] > $result[1] : null; @endphp
                                                     <a href="#mecz-{{ $game->id }}" @class([
-                                                        'h-2.5 w-2.5 rounded-full sm:h-3 sm:w-3',
-                                                        'bg-emerald-500' => $game->isFinished() && $result && $result[0] > $result[1],
-                                                        'bg-red-500' => $game->isFinished() && $result && $result[0] <= $result[1],
-                                                        'bg-sky-club' => ! $game->isFinished(),
-                                                    ]) aria-label="{{ $game->team?->name }} - {{ $game->opponentShortName() }}"></a>
+                                                        'inline-flex h-4 w-4 items-center justify-center rounded sm:h-5 sm:w-5',
+                                                        'bg-gradient-to-br from-club-navy to-sky-club-dark' => $game->is_home,
+                                                        'bg-white ring-1 ring-sky-club' => ! $game->is_home,
+                                                    ]) aria-label="{{ $game->is_home ? 'U siebie' : 'Wyjazd' }}: {{ $game->team?->name }} - {{ $game->opponentShortName() }}">
+                                                        @if($won === true)
+                                                            <svg class="h-3 w-3 text-emerald-400" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7"/></svg>
+                                                        @elseif($won === false)
+                                                            <svg class="h-3 w-3 text-red-500" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
+                                                        @endif
+                                                    </a>
+                                                @endforeach
+                                                @foreach($day['tournaments'] as $tournament)
+                                                    <a href="#turniej-{{ $tournament->id }}" class="text-xs leading-4 sm:text-sm" aria-label="Turniej: {{ $tournament->fullName() }}">🏆</a>
+                                                @endforeach
+                                                @foreach($day['birthdays'] as $person)
+                                                    <a href="#urodziny-{{ $month['key'] }}" class="text-xs leading-4 sm:text-sm" aria-label="Urodziny: {{ $person['name'] }}">🎂</a>
                                                 @endforeach
                                             </div>
 
-                                            {{-- Komputer: mecze wpisane w kartkę --}}
+                                            {{-- Komputer: mecze wpisane w kartkę; granat = u siebie, szary = wyjazd --}}
                                             <ul class="mt-1.5 hidden space-y-1 lg:block">
+                                                @foreach($day['tournaments'] as $tournament)
+                                                    <li wire:key="cell-tournament-{{ $tournament->id }}-{{ $day['date']->format('d') }}" class="rounded-lg bg-gradient-to-br from-amber-100 to-amber-50 px-1.5 py-1 text-[11px] leading-tight text-amber-950 ring-1 ring-amber-300" title="{{ $tournament->fullName() }} · {{ $tournament->dateRangeLabel() }}{{ $tournament->city ? ' · '.$tournament->city : '' }}">
+                                                        <p class="font-semibold">🏆 {{ $tournament->fullName() }}</p>
+                                                        <p class="text-amber-800">{{ $tournament->is_organizer ? 'organizujemy' : ($tournament->city ?? 'wyjazd') }}</p>
+                                                        @foreach($tournament->teams as $tournamentTeam)
+                                                            <p class="truncate">{{ $tournamentTeam->name }}@if($tournamentTeam->pivot->placement) · <strong>{{ $tournamentTeam->pivot->placement }}</strong>@endif</p>
+                                                        @endforeach
+                                                    </li>
+                                                @endforeach
                                                 @foreach($day['games'] as $game)
                                                     @php
                                                         $result = $game->ourSetsResult();
                                                         $won = $game->isFinished() && $result ? $result[0] > $result[1] : null;
                                                         $hasTime = $game->game_date->format('H:i') !== '00:00';
+                                                        $article = $game->latestArticle();
+                                                        $tag = $article ? 'a' : 'div';
                                                     @endphp
-                                                    <li wire:key="cell-{{ $game->id }}" title="{{ $game->competition?->name ?? $game->league }}@if($game->round_label) · {{ $game->round_label }}@endif{{ $game->venue ? ' · '.$game->venue : '' }}{{ is_array($game->sets_score) && count($game->sets_score) ? ' · '.collect($game->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(', ') : '' }}" @class([
-                                                        'rounded-lg border-l-4 px-1.5 py-1 text-[11px] leading-tight',
-                                                        'border-emerald-500 bg-emerald-50' => $won === true,
-                                                        'border-red-500 bg-red-50' => $won === false,
-                                                        'border-sky-club bg-white shadow-sm' => $won === null,
-                                                    ])>
-                                                        <p class="flex items-center justify-between gap-1">
-                                                            <span class="truncate font-semibold text-zinc-900">{{ $game->team?->name ?? $site['club_name'] }}</span>
-                                                            <span class="shrink-0 font-bold tabular-nums {{ $won === null ? 'text-sky-club-dark' : 'text-zinc-900' }}">
-                                                                @if($game->isFinished())
-                                                                    {{ $game->is_home ? $game->home_score.':'.$game->away_score : $game->away_score.':'.$game->home_score }}
-                                                                @else
-                                                                    {{ $hasTime ? $game->game_date->format('H:i') : '' }}
+                                                    <li wire:key="cell-{{ $game->id }}">
+                                                        <{{ $tag }} @if($article) href="{{ route('articles.show', $article) }}" @endif title="{{ $game->is_home ? 'U siebie' : 'Wyjazd' }} · {{ $game->competitionLabel() }}@if($game->round_label) · {{ $game->round_label }}@endif{{ $game->venue ? ' · '.$game->venue : '' }}{{ is_array($game->sets_score) && count($game->sets_score) ? ' · '.collect($game->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(', ') : '' }}{{ $article ? ' · Artykuł: '.$article->title : '' }}" @class([
+                                                            'block rounded-lg px-1.5 py-1 text-[11px] leading-tight transition',
+                                                            'bg-gradient-to-br from-club-navy to-sky-club-dark text-white shadow-sm' => $game->is_home,
+                                                            'bg-white text-sky-club-dark shadow-sm ring-1 ring-sky-club/40' => ! $game->is_home,
+                                                            'hover:ring-2 hover:ring-sky-club' => $article,
+                                                        ])>
+                                                            <span class="flex items-start justify-between gap-1">
+                                                                <x-team-label :label="$game->ourLabel()" class="min-w-0 font-semibold break-words" />
+                                                                <span class="flex shrink-0 items-center gap-0.5 font-bold tabular-nums">
+                                                                    @if($won === true)
+                                                                        <svg class="h-3.5 w-3.5 {{ $game->is_home ? 'text-emerald-300' : 'text-emerald-600' }}" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-label="Wygrana"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7"/></svg>
+                                                                    @elseif($won === false)
+                                                                        <svg class="h-3.5 w-3.5 {{ $game->is_home ? 'text-red-300' : 'text-red-600' }}" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-label="Porażka"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
+                                                                    @endif
+                                                                    @if($game->isFinished())
+                                                                        {{ $result ? $result[0].':'.$result[1] : '' }}
+                                                                    @else
+                                                                        {{ $hasTime ? $game->game_date->format('H:i') : '' }}
+                                                                    @endif
+                                                                </span>
+                                                            </span>
+                                                            <span @class(['flex items-center gap-1 truncate', 'text-sky-club-light' => $game->is_home, 'text-zinc-600' => ! $game->is_home])>
+                                                                <span class="truncate">@if($game->isFriendly())<span class="mr-0.5 rounded bg-amber-300 px-1 text-[9px] font-bold text-amber-950 uppercase">sparing</span>@elseif($game->tournament_id)<span class="mr-0.5">🏆</span>@endif{{ $game->is_home ? 'vs' : 'u' }} {{ $game->opponentShortName() }}</span>
+                                                                @if($article)
+                                                                    <svg class="ml-auto h-3 w-3 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-label="Artykuł"><path stroke-linecap="round" stroke-linejoin="round" d="M7 4h10a1 1 0 0 1 1 1v15l-3-2-3 2-3-2-3 2V5a1 1 0 0 1 1-1Zm2 5h6m-6 4h4"/></svg>
                                                                 @endif
                                                             </span>
-                                                        </p>
-                                                        <p class="truncate text-zinc-600">{{ $game->is_home ? 'vs' : 'u' }} {{ $game->opponentShortName() }}</p>
+                                                        </{{ $tag }}>
+                                                    </li>
+                                                @endforeach
+                                                @foreach($day['birthdays'] as $person)
+                                                    <li class="truncate rounded-lg bg-amber-50 px-1.5 py-1 text-[11px] leading-tight text-amber-900" title="Urodziny: {{ $person['name'] }}{{ $person['showAge'] ? ' kończy '.$person['ageLabel'] : '' }} ({{ $person['role'] }})">
+                                                        🎂 @if($person['url'])<a href="{{ $person['url'] }}" class="font-semibold hover:underline">{{ $person['name'] }}</a>@else<span class="font-semibold">{{ $person['name'] }}</span>@endif{{ $person['showAge'] ? ' · '.$person['age'] : '' }}
                                                     </li>
                                                 @endforeach
                                             </ul>
@@ -174,31 +219,38 @@
                     @php
                         $result = $game->ourSetsResult();
                         $won = $game->isFinished() && $result ? $result[0] > $result[1] : null;
-                        $ourName = $game->team?->name ?? $site['club_name'];
+                        $ourLabel = $game->ourLabel();
                         $opponentName = $game->opponentShortName();
-                        $home = $game->is_home ? $ourName : $opponentName;
-                        $away = $game->is_home ? $opponentName : $ourName;
+                        $article = $game->latestArticle();
                         $hasTime = $game->game_date && $game->game_date->format('H:i') !== '00:00';
                     @endphp
                     <li id="mecz-{{ $game->id }}" wire:key="game-{{ $game->id }}" class="card scroll-mt-48 grid grid-cols-[3.75rem_1fr] items-center gap-4 p-4 sm:grid-cols-[4.5rem_1fr_auto] sm:gap-6 sm:p-5">
-                        <div class="rounded-2xl bg-zinc-100 py-2 text-center leading-none">
-                            <p class="text-[11px] font-semibold text-zinc-500 uppercase">{{ $game->game_date?->translatedFormat('D') }}</p>
-                            <p class="mt-1 font-display text-2xl font-bold text-zinc-900 tabular-nums">{{ $game->game_date?->format('d') }}</p>
-                            <p class="mt-1 text-[11px] font-semibold text-sky-club-dark tabular-nums">{{ $hasTime ? $game->game_date->format('H:i') : '--:--' }}</p>
+                        <div @class(['rounded-2xl py-2 text-center leading-none', 'bg-gradient-to-br from-club-navy to-sky-club-dark text-white' => $game->is_home, 'bg-white text-sky-club-dark ring-1 ring-sky-club/40' => ! $game->is_home])>
+                            <p class="text-[11px] font-semibold uppercase opacity-70">{{ $game->game_date?->translatedFormat('D') }}</p>
+                            <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ $game->game_date?->format('d') }}</p>
+                            <p class="mt-1 text-[11px] font-semibold tabular-nums opacity-80">{{ $hasTime ? $game->game_date->format('H:i') : '--:--' }}</p>
                         </div>
 
                         <div class="min-w-0">
                             <p class="truncate text-xs font-semibold tracking-wide text-zinc-500 uppercase">
-                                {{ $game->competition?->name ?? $game->league }}@if($game->round_label) · {{ $game->round_label }}@endif
+                                {{ $game->competitionLabel() }}@if($game->round_label) · {{ $game->round_label }}@endif
                             </p>
                             <div class="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1 font-display text-lg leading-tight font-semibold uppercase sm:text-xl">
-                                <span @class(['text-zinc-900' => $game->is_home, 'text-zinc-500' => ! $game->is_home])>{{ $home }}</span>
+                                @if($game->is_home)
+                                    <x-team-label :label="$ourLabel" class="text-zinc-900" />
+                                @else
+                                    <span class="text-zinc-500">{{ $opponentName }}</span>
+                                @endif
                                 @if($game->isFinished())
                                     <span class="rounded-lg bg-ink px-2 py-0.5 text-base text-white tabular-nums">{{ $game->home_score }}:{{ $game->away_score }}</span>
                                 @else
                                     <span class="text-sm text-zinc-400 normal-case">vs</span>
                                 @endif
-                                <span @class(['text-zinc-900' => ! $game->is_home, 'text-zinc-500' => $game->is_home])>{{ $away }}</span>
+                                @if($game->is_home)
+                                    <span class="text-zinc-500">{{ $opponentName }}</span>
+                                @else
+                                    <x-team-label :label="$ourLabel" class="text-zinc-900" />
+                                @endif
                             </div>
                             @if($game->isFinished() && is_array($game->sets_score) && count($game->sets_score))
                                 <p class="mt-1 text-xs text-zinc-500 tabular-nums">{{ collect($game->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(' · ') }}@if($game->result_note) · <span class="font-semibold text-amber-700">{{ $game->result_note }}</span>@endif</p>
@@ -212,9 +264,19 @@
 
                         <div class="col-span-2 flex items-center justify-between gap-3 sm:col-span-1 sm:flex-col sm:items-end">
                             @if($won !== null)
-                                <span @class(['rounded-full px-3 py-1 text-xs font-bold', 'bg-emerald-500/15 text-emerald-700' => $won, 'bg-red-500/10 text-red-600' => ! $won])>{{ $won ? 'Wygrana' : 'Porażka' }}</span>
+                                <span @class(['inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold', 'bg-emerald-500/15 text-emerald-700' => $won, 'bg-red-500/10 text-red-600' => ! $won])>
+                                    @if($won)
+                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7"/></svg>
+                                    @else
+                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
+                                    @endif
+                                    {{ $won ? 'Wygrana' : 'Porażka' }} {{ $result[0] }}:{{ $result[1] }}
+                                </span>
                             @else
                                 <span class="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600">{{ $game->is_home ? 'U siebie' : 'Wyjazd' }}</span>
+                            @endif
+                            @if($article)
+                                <a href="{{ route('articles.show', $article) }}" class="inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-sky-club-dark hover:underline">Czytaj artykuł →</a>
                             @endif
                             @if($game->isUpcoming())
                                 <a href="{{ route('games.calendar', $game) }}" class="inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-sky-club-dark hover:underline">+ Do kalendarza</a>
@@ -222,6 +284,30 @@
                         </div>
                     </li>
                 @endforeach
+                @foreach($month['tournaments'] as $tournament)
+                    <li id="turniej-{{ $tournament->id }}" wire:key="list-tournament-{{ $tournament->id }}" class="card scroll-mt-48 bg-amber-50 p-4 text-sm text-amber-950 ring-amber-200">
+                        <p class="text-xs font-semibold tracking-wide text-amber-700 uppercase">Turniej · {{ $tournament->dateRangeLabel() }}{{ $tournament->is_organizer ? ' · organizujemy' : '' }}</p>
+                        <p class="mt-1 font-display text-lg font-semibold uppercase">🏆 {{ $tournament->fullName() }}</p>
+                        @if($tournament->venue || $tournament->city)
+                            <p class="text-xs text-amber-800">{{ collect([$tournament->venue, $tournament->city])->filter()->implode(', ') }}</p>
+                        @endif
+                        <ul class="mt-2 space-y-0.5">
+                            @foreach($tournament->teams as $tournamentTeam)
+                                <li>{{ $tournamentTeam->name }}@if($tournamentTeam->pivot->placement) · <strong>{{ $tournamentTeam->pivot->placement }}</strong>@endif</li>
+                            @endforeach
+                        </ul>
+                    </li>
+                @endforeach
+                @if($month['birthdays']->isNotEmpty())
+                    <li id="urodziny-{{ $month['key'] }}" class="card scroll-mt-48 bg-amber-50 p-4 text-sm text-amber-900 ring-amber-200">
+                        <p class="font-semibold">🎂 Urodziny w tym miesiącu</p>
+                        <ul class="mt-2 space-y-1">
+                            @foreach($month['birthdays'] as $person)
+                                <li><span class="tabular-nums">{{ $person['date']->format('d.m') }}</span> · @if($person['url'])<a href="{{ $person['url'] }}" class="font-semibold hover:underline">{{ $person['name'] }}</a>@else<span class="font-semibold">{{ $person['name'] }}</span>@endif{{ $person['showAge'] ? ' · kończy '.$person['ageLabel'] : '' }}</li>
+                            @endforeach
+                        </ul>
+                    </li>
+                @endif
             </ul>
             </article>
         @empty

@@ -3,7 +3,10 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Article;
+use App\Models\Game;
+use App\Support\SearchIndex;
 use App\Support\Slug;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -35,6 +38,15 @@ class ArticleManager extends Component
 
     public ?string $existingImage = null;
 
+    /**
+     * Mecze, których dotyczy artykuł (otwierany z kalendarza meczów).
+     *
+     * @var array<int, int>
+     */
+    public array $gameIds = [];
+
+    public string $gameSearch = '';
+
     public string $search = '';
 
     public string $statusFilter = '';
@@ -54,6 +66,8 @@ class ArticleManager extends Component
             'is_featured' => 'boolean',
             'allow_comments' => 'boolean',
             'featured_image' => 'nullable|image|max:4096',
+            'gameIds' => 'array',
+            'gameIds.*' => 'integer|exists:games,id',
         ];
     }
 
@@ -89,6 +103,8 @@ class ArticleManager extends Component
         $this->allow_comments = $article->allow_comments;
         $this->existingImage = $article->featured_image;
         $this->featured_image = null;
+        $this->gameIds = $article->games()->pluck('games.id')->all();
+        $this->gameSearch = '';
         $this->flashType = null;
         $this->flashMessage = null;
 
@@ -101,22 +117,73 @@ class ArticleManager extends Component
 
         if ($this->featured_image) {
             $validated['featured_image'] = $this->featured_image->store('articles', 'public');
+        } else {
+            unset($validated['featured_image']);
         }
+
+        unset($validated['gameIds'], $validated['gameIds.*']);
 
         if ($this->editingId) {
             $article = Article::findOrFail($this->editingId);
             $article->update($validated);
+            $article->games()->sync($this->gameIds);
             $this->flashType = 'success';
             $this->flashMessage = 'Artykuł został zaktualizowany.';
         } else {
             $validated['slug'] = Slug::unique(Article::class, $this->title);
             $validated['author_id'] = Auth::id();
-            Article::create($validated);
+            Article::create($validated)->games()->sync($this->gameIds);
             $this->flashType = 'success';
             $this->flashMessage = 'Artykuł został dodany.';
         }
 
         $this->closeModal();
+    }
+
+    public function addGame(int $gameId): void
+    {
+        if (! in_array($gameId, $this->gameIds, true) && Game::whereKey($gameId)->exists()) {
+            $this->gameIds[] = $gameId;
+        }
+
+        $this->gameSearch = '';
+    }
+
+    public function removeGame(int $gameId): void
+    {
+        $this->gameIds = array_values(array_filter($this->gameIds, fn (int $id) => $id !== $gameId));
+    }
+
+    /**
+     * Czytelny opis meczu do wyboru, np. „12.10 Seniorzy – Wilki Wronki 3:2”.
+     */
+    public static function gameOptionLabel(Game $game): string
+    {
+        $score = $game->isFinished() && ($result = $game->ourSetsResult()) ? ' '.$result[0].':'.$result[1] : '';
+
+        return trim(($game->game_date?->format('d.m.Y') ?? '').' '.($game->team?->name ?? '').' – '.$game->opponentShortName().$score);
+    }
+
+    /**
+     * Podpowiedzi meczów do podpięcia: po wpisaniu rywala, drużyny lub daty; bez wpisu - ostatnie mecze.
+     *
+     * @return Collection<int, Game>
+     */
+    private function gameSuggestions(): Collection
+    {
+        $terms = array_filter(explode(' ', SearchIndex::normalize($this->gameSearch)));
+        $games = Game::with(['team', 'opponentTeam'])
+            ->whereNotIn('id', $this->gameIds)
+            ->where('game_date', '<=', now()->addDays(14))
+            ->orderByDesc('game_date')
+            ->limit(400)
+            ->get();
+
+        return $games->filter(function (Game $game) use ($terms) {
+            $haystack = SearchIndex::normalize(implode(' ', [self::gameOptionLabel($game), $game->opponentDisplayName(), $game->game_date?->format('d.m')]));
+
+            return collect($terms)->every(fn (string $term) => str_contains($haystack, $term));
+        })->take(8)->values();
     }
 
     public function delete(int $id): void
@@ -144,6 +211,8 @@ class ArticleManager extends Component
         $this->allow_comments = true;
         $this->featured_image = null;
         $this->existingImage = null;
+        $this->gameIds = [];
+        $this->gameSearch = '';
         $this->resetErrorBag();
     }
 
@@ -157,6 +226,8 @@ class ArticleManager extends Component
 
         return view('livewire.admin.article-manager', [
             'articles' => $articles,
+            'linkedGames' => $this->showModal ? Game::with(['team', 'opponentTeam'])->whereIn('id', $this->gameIds)->orderBy('game_date')->get() : collect(),
+            'gameSuggestions' => $this->showModal ? $this->gameSuggestions() : collect(),
         ]);
     }
 }

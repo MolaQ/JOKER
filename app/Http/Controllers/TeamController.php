@@ -24,6 +24,7 @@ class TeamController extends Controller
     public function show(Team $team)
     {
         $team->load(['trainer', 'assistantTrainers']);
+        $team->registerView();
 
         $currentSeason = Season::current()->first();
 
@@ -41,13 +42,13 @@ class TeamController extends Controller
         $staff = $team->staff();
 
         $upcoming_games = Game::where('team_id', $team->id)
-            ->with(['team', 'competition', 'opponentTeam'])
+            ->with(['team', 'competition.teams', 'opponentTeam'])
             ->upcoming()
             ->limit(5)
             ->get();
 
         $recent_games = Game::where('team_id', $team->id)
-            ->with(['team', 'competition', 'opponentTeam'])
+            ->with(['team', 'competition.teams', 'opponentTeam'])
             ->finished()
             ->limit(5)
             ->get();
@@ -74,7 +75,7 @@ class TeamController extends Controller
             ->orderBy('display_order')
             ->get()
             ->map(function (Competition $competition) use ($team) {
-                $standings = LeagueStanding::with('competitor')->where('competition_id', $competition->id)->orderBy('position')->get();
+                $standings = LeagueStanding::with(['competitor', 'competition.teams'])->where('competition_id', $competition->id)->orderBy('position')->get();
                 $stageNumber = fn (?string $stage) => (int) preg_replace('/\D/', '', (string) $stage);
 
                 $steps = $standings

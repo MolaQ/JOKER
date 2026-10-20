@@ -65,8 +65,39 @@ class Competition extends Model
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class, 'competition_team')
-            ->withPivot('external_name')
+            ->withPivot(['external_name', 'display_name', 'display_suffix'])
             ->withTimestamps();
+    }
+
+    /**
+     * Jak podpisać naszą drużynę w tabelach i kalendarzu tych rozgrywek: nazwa ustawiona
+     * w panelu (np. „LOMS Joker Piła”) i opcjonalny dopisek kursywą (np. „(kadeci)”).
+     *
+     * @return array{name: string, suffix: ?string}
+     */
+    public function teamLabel(?Team $team): array
+    {
+        $pivot = $team ? $this->teams->firstWhere('id', $team->id)?->pivot : null;
+
+        if (filled($pivot?->display_name)) {
+            return ['name' => $pivot->display_name, 'suffix' => filled($pivot->display_suffix) ? $pivot->display_suffix : null];
+        }
+
+        return ['name' => $team?->name ?? 'Joker Piła', 'suffix' => filled($pivot?->display_suffix) ? $pivot->display_suffix : null];
+    }
+
+    /**
+     * Domyślny podpis drużyny w nowych rozgrywkach: seniorzy jako „LOMS Joker Piła”,
+     * młodzież z dopiskiem rocznika, np. „(kadeci II)”; drużyny ASBL jako „KS ASBL Piła”.
+     *
+     * @return array{display_name: string, display_suffix: ?string}
+     */
+    public static function defaultTeamLabel(string $teamName, string $teamSlug, ?string $externalName): array
+    {
+        return [
+            'display_name' => str_contains(mb_strtoupper((string) $externalName), 'ASBL') ? 'KS ASBL Piła' : 'LOMS Joker Piła',
+            'display_suffix' => $teamSlug === 'seniorzy' ? null : '('.mb_strtolower(mb_substr($teamName, 0, 1)).mb_substr($teamName, 1).')',
+        ];
     }
 
     /**

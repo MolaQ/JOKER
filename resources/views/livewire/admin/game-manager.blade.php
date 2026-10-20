@@ -152,6 +152,29 @@
                             </div>
 
                             <div>
+                                <label class="block text-sm font-medium text-gray-700">Rodzaj meczu</label>
+                                <select wire:model.live="kind" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    @foreach(\App\Models\Game::KINDS as $kindValue => $kindLabel)
+                                        <option value="{{ $kindValue }}">{{ $kindLabel }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            @if($kind === 'tournament')
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Turniej</label>
+                                    <select wire:model="tournament_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <option value="">— wybierz —</option>
+                                        @foreach($tournaments as $tournamentOption)
+                                            <option value="{{ $tournamentOption->id }}">{{ $tournamentOption->fullName() }} ({{ $tournamentOption->dateRangeLabel() }})</option>
+                                        @endforeach
+                                    </select>
+                                    <p class="mt-1 text-xs text-gray-500">Nowy turniej dodasz w zakładce „Turnieje”.</p>
+                                    @error('tournament_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                            @endif
+
+                            <div @class(['hidden' => $kind !== 'league'])>
                                 <label class="block text-sm font-medium text-gray-700">Rozgrywki (liga)</label>
                                 <select wire:model="competition_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     <option value="">Brak / inne</option>

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\BirthdayDisplay;
+use App\Models\Concerns\CountsViews;
 use App\Models\Concerns\HasReadableRouteKey;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\UserRole;
@@ -15,6 +17,8 @@ use Illuminate\Support\Collection;
 
 class User extends Authenticatable
 {
+    use CountsViews;
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
@@ -33,6 +37,8 @@ class User extends Authenticatable
         'avatar_path',
         'instagram',
         'additional_info',
+        'birth_date',
+        'birthday_display',
     ];
 
     /**
@@ -56,6 +62,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'birth_date' => 'date',
+            'birthday_display' => BirthdayDisplay::class,
         ];
     }
 
@@ -87,6 +95,14 @@ class User extends Authenticatable
     public function hasAnyRole(array $roles): bool
     {
         return in_array($this->role, $roles);
+    }
+
+    /**
+     * Zawodnicy, których rodzicem (opiekunem) jest użytkownik.
+     */
+    public function children(): BelongsToMany
+    {
+        return $this->belongsToMany(Player::class, 'player_guardian')->withTimestamps();
     }
 
     public function likes(): HasMany

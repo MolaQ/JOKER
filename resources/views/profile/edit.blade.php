@@ -6,6 +6,21 @@
 <div class="container mx-auto max-w-3xl px-4 py-12">
     <h1 class="mb-6 text-3xl font-bold text-zinc-900">Mój profil</h1>
 
+    @if($players->isNotEmpty())
+        <div class="mb-6 rounded-xl bg-white p-6 shadow">
+            <h2 class="text-lg font-semibold text-zinc-900">Profile zawodników</h2>
+            <p class="mt-1 text-sm text-zinc-500">Na stronie zawodnika kliknij „Zaproponuj zmiany”, aby wysłać nowe zdjęcie lub dane do zatwierdzenia.</p>
+            <ul class="mt-4 divide-y divide-zinc-100">
+                @foreach($players as $player)
+                    <li class="flex items-center justify-between gap-3 py-3">
+                        <span><span class="font-semibold">{{ $player->full_name }}</span> <span class="text-sm text-zinc-500">{{ $player->team?->name }}</span></span>
+                        <a href="{{ route('players.show', $player) }}" class="text-sm font-semibold text-sky-club-dark hover:underline">Otwórz profil →</a>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="rounded-xl bg-white p-6 shadow">
         <form method="POST" action="{{ route('profile.request-change') }}" class="space-y-4">
             @csrf

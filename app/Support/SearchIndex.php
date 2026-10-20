@@ -119,7 +119,7 @@ class SearchIndex
         }
 
         foreach (Player::with('team')->where('is_active', true)->orderBy('last_name')->get() as $player) {
-            $add('Zawodnik', $player->full_name, collect([$player->position?->label(), $player->team?->name, $player->jersey_number ? '#'.$player->jersey_number : null])->filter()->implode(' · '),
+            $add('Zawodnik', $player->full_name, collect([$player->positionsLabel(), $player->team?->name, $player->jersey_number ? '#'.$player->jersey_number : null])->filter()->implode(' · '),
                 route('players.show', $player, false), $player->bio);
         }
 

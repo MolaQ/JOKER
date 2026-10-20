@@ -41,6 +41,7 @@ return [
                 'color_nav_button_bg' => ['type' => 'color', 'label' => 'Wyróżniony przycisk w menu: tło', 'default' => '#ffd600'],
                 'color_nav_button_text' => ['type' => 'color', 'label' => 'Wyróżniony przycisk w menu: tekst', 'default' => '#12141a'],
                 'color_countdown' => ['type' => 'color', 'label' => 'Cyfry zegara odliczającego do meczu', 'default' => '#ffd600'],
+                'color_club_navy' => ['type' => 'color', 'label' => 'Granat klubowy (kalendarz: belka miesiąca i mecze u siebie)', 'default' => '#0f2d6b'],
             ],
         ],
 
@@ -69,9 +70,9 @@ return [
             'icon' => '🧭',
             'fields' => [
                 'nav_items' => ['type' => 'links', 'label' => 'Pozycje menu', 'help' => 'Kolejność ustawiasz strzałkami.', 'default' => [
+                    ['label' => 'Aktualności', 'url' => '/aktualnosci'],
                     ['label' => 'Mecze', 'url' => '/mecze'],
                     ['label' => 'Tabela', 'url' => '/tabele'],
-                    ['label' => 'Aktualności', 'url' => '/aktualnosci'],
                     ['label' => 'Drużyny', 'url' => '/druzyny'],
                     ['label' => 'Młodzież', 'url' => '/strona/nabor'],
                     ['label' => 'Klub', 'url' => '/strona/o-klubie'],

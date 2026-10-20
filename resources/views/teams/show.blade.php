@@ -18,6 +18,7 @@
         <a href="{{ route('teams.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← Wszystkie drużyny</a>
         <p class="eyebrow mt-6">{{ $team->birth_year ? 'Rocznik '.$team->birth_year : 'Pierwsza drużyna' }}@if($currentSeason) · Sezon {{ $currentSeason->name }}@endif</p>
         <h1 class="heading-xl mt-3">{{ $team->name }}</h1>
+        <x-view-count :model="$team" class="mt-3 text-white/70" />
         @if($team->description)
             <div class="mt-5 max-w-2xl text-lg text-zinc-300">{!! strip_tags($team->description, '<p><br><strong><em><b><i>') !!}</div>
         @endif
@@ -62,6 +63,9 @@
                         <x-avatar :photo="$player->photo_path" :name="$player->full_name" :label="$number ?: null" class="aspect-[4/5] w-full text-6xl" />
                         <div class="p-4">
                             <p class="font-semibold leading-tight group-hover:text-sky-club-dark">{{ $player->full_name }}</p>
+                            @if(count($player->positions()) > 1)
+                                <p class="mt-0.5 text-xs text-zinc-500">też: {{ collect($player->positions())->skip(1)->map(fn ($extraPosition) => mb_strtolower($extraPosition->label()))->implode(', ') }}</p>
+                            @endif
                             <p class="mt-1 flex items-center gap-2 text-xs text-zinc-500">
                                 @if($number)<span class="font-bold text-zinc-900">#{{ $number }}</span>@endif
                                 @if($player->pivot?->is_captain)<span class="rounded bg-sky-club px-1.5 py-0.5 font-bold text-white" title="Kapitan">C</span>@endif
@@ -185,7 +189,7 @@
                                         <td class="px-6 py-3">
                                             <span class="mr-3 inline-flex h-7 w-7 items-center justify-center rounded-full {{ $ours ? 'bg-sky-club text-white' : 'bg-zinc-100' }} text-xs font-bold">{{ $standing->position }}</span>
                                             @if($standing->isOwnTeam() && $standing->competitor)
-                                                <a href="{{ route('teams.show', $standing->competitor) }}" class="hover:text-sky-club-dark">{{ $standing->competitorName() }}</a>
+                                                <a href="{{ route('teams.show', $standing->competitor) }}" class="hover:text-sky-club-dark"><x-team-label :label="$standing->competitorLabel()" /></a>
                                             @else
                                                 {{ $standing->competitorName() }}
                                             @endif

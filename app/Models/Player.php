@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\BirthdayDisplay;
+use App\Models\Concerns\CountsViews;
 use App\Models\Concerns\HasReadableRouteKey;
 use App\Models\Concerns\Likeable;
 use App\PlayerPosition;
@@ -11,9 +13,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Player extends Model
 {
+    use CountsViews;
+
     /** @use HasFactory<PlayerFactory> */
     use HasFactory, Likeable;
 
@@ -24,11 +29,14 @@ class Player extends Model
         'last_name',
         'jersey_number',
         'position',
+        'extra_positions',
         'birth_date',
+        'birthday_display',
         'height',
         'weight',
         'reach',
         'spike_reach',
+        'block_reach',
         'bio',
         'photo_path',
         'team_id',
@@ -41,7 +49,9 @@ class Player extends Model
         return [
             'birth_date' => 'date',
             'is_active' => 'boolean',
+            'birthday_display' => BirthdayDisplay::class,
             'position' => PlayerPosition::class,
+            'extra_positions' => 'array',
         ];
     }
 
@@ -53,6 +63,57 @@ class Player extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Rodzice (opiekunowie) powiązani z zawodnikiem przez administratora.
+     */
+    public function guardians(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'player_guardian')->withTimestamps();
+    }
+
+    public function achievements(): HasMany
+    {
+        return $this->hasMany(PlayerAchievement::class)->orderBy('display_order')->orderByDesc('season');
+    }
+
+    public function changeRequests(): HasMany
+    {
+        return $this->hasMany(PlayerChangeRequest::class);
+    }
+
+    /**
+     * Czy użytkownik może proponować zmiany profilu i zdjęcia: sam zawodnik lub jego rodzic.
+     */
+    public function isEditableProposalBy(?User $user): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        if ($this->user_id === $user->id) {
+            return true;
+        }
+
+        return $this->guardians()->whereKey($user->id)->exists();
+    }
+
+    /**
+     * Czy użytkownik może zatwierdzać zmiany tego zawodnika: administrator albo trener jego drużyny.
+     */
+    public function isReviewableBy(?User $user): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $user->isTrainer() && $this->team_id !== null
+            && $user->allCoachedTeams()->contains('id', $this->team_id);
     }
 
     /**
@@ -78,6 +139,31 @@ class Player extends Model
         return Attribute::make(
             get: fn () => "{$this->first_name} {$this->last_name}"
         );
+    }
+
+    /**
+     * Wszystkie pozycje zawodnika: główna i dodatkowe (np. libero i przyjmujący).
+     *
+     * @return array<int, PlayerPosition>
+     */
+    public function positions(): array
+    {
+        $extra = collect($this->extra_positions ?? [])
+            ->map(fn (string $value) => PlayerPosition::tryFrom($value))
+            ->filter()
+            ->reject(fn (PlayerPosition $position) => $position === $this->position);
+
+        return collect([$this->position])->filter()->concat($extra)->unique(fn (PlayerPosition $position) => $position->value)->values()->all();
+    }
+
+    /**
+     * Pozycje do wyświetlenia, np. „Libero · Przyjmujący”.
+     */
+    public function positionsLabel(): ?string
+    {
+        $positions = $this->positions();
+
+        return $positions === [] ? null : collect($positions)->map(fn (PlayerPosition $position) => $position->label())->implode(' · ');
     }
 
     public function age(): ?int

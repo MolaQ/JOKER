@@ -3,9 +3,12 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Player;
+use App\Models\PlayerAchievement;
 use App\Models\Season;
 use App\Models\Team;
+use App\Models\User;
 use App\PlayerPosition;
+use App\UserRole;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -26,6 +29,9 @@ class PlayerManager extends Component
 
     public string $position = 'outside_hitter';
 
+    /** @var array<int, string> Dodatkowe pozycje (np. libero i przyjmujący) */
+    public array $extra_positions = [];
+
     public ?string $birth_date = null;
 
     public ?int $height = null;
@@ -35,6 +41,19 @@ class PlayerManager extends Component
     public ?int $reach = null;
 
     public ?int $spike_reach = null;
+
+    public ?int $block_reach = null;
+
+    public string $birthday_display = 'age';
+
+    /** Konto zawodnika (rola „Zawodnik”) - może proponować zmiany profilu i zdjęcie. */
+    public ?int $user_id = null;
+
+    /** @var array<int, int> Rodzice powiązani z zawodnikiem (mogą proponować zmiany) */
+    public array $guardian_ids = [];
+
+    /** @var array<int, array{season: string, title: string}> Osiągnięcia pokazywane w profilu */
+    public array $achievements = [];
 
     public string $bio = '';
 
@@ -60,17 +79,27 @@ class PlayerManager extends Component
             'last_name' => 'required|string|max:255',
             'jersey_number' => 'required|integer|min:0|max:99',
             'position' => 'required|in:setter,outside_hitter,opposite,middle_blocker,libero',
+            'extra_positions' => 'array',
+            'extra_positions.*' => 'in:setter,outside_hitter,opposite,middle_blocker,libero',
             'birth_date' => 'nullable|date',
             'height' => 'nullable|integer|min:100|max:250',
             'weight' => 'nullable|integer|min:30|max:150',
             'reach' => 'nullable|integer|min:150|max:400',
             'spike_reach' => 'nullable|integer|min:150|max:400',
+            'block_reach' => 'nullable|integer|min:150|max:400',
+            'birthday_display' => 'required|in:hidden,cake,age',
+            'user_id' => 'nullable|exists:users,id',
+            'guardian_ids' => 'array',
+            'guardian_ids.*' => 'exists:users,id',
+            'achievements' => 'array',
+            'achievements.*.season' => 'nullable|string|max:20',
+            'achievements.*.title' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
             'team_id' => 'required|exists:teams,id',
             'extra_team_ids' => 'array',
             'extra_team_ids.*' => 'exists:teams,id',
             'is_active' => 'boolean',
-            'photo' => 'nullable|image|max:2048',
+            'photo' => 'nullable|image|max:4096|dimensions:ratio=4/5',
         ];
     }
 
@@ -105,11 +134,17 @@ class PlayerManager extends Component
         $this->last_name = $player->last_name;
         $this->jersey_number = $player->jersey_number;
         $this->position = $player->position->value;
+        $this->extra_positions = $player->extra_positions ?? [];
         $this->birth_date = $player->birth_date?->format('Y-m-d');
         $this->height = $player->height;
         $this->weight = $player->weight;
         $this->reach = $player->reach;
         $this->spike_reach = $player->spike_reach;
+        $this->block_reach = $player->block_reach;
+        $this->birthday_display = $player->birthday_display?->value ?? 'age';
+        $this->user_id = $player->user_id;
+        $this->guardian_ids = $player->guardians()->pluck('users.id')->all();
+        $this->achievements = $player->achievements->map(fn (PlayerAchievement $achievement) => ['season' => (string) $achievement->season, 'title' => $achievement->title])->all();
         $this->bio = (string) $player->bio;
         $this->team_id = $player->team_id;
         $this->is_active = $player->is_active;
@@ -131,7 +166,9 @@ class PlayerManager extends Component
     {
         $validated = $this->validate();
         $extraTeamIds = $validated['extra_team_ids'] ?? [];
-        unset($validated['extra_team_ids']);
+        $guardianIds = $validated['guardian_ids'] ?? [];
+        unset($validated['extra_team_ids'], $validated['guardian_ids'], $validated['achievements'], $validated['photo']);
+        $validated['extra_positions'] = array_values(array_diff($this->extra_positions, [$this->position])) ?: null;
 
         if ($this->photo) {
             $validated['photo_path'] = $this->photo->store('players', 'public');
@@ -146,6 +183,17 @@ class PlayerManager extends Component
             $player = Player::create($validated);
             $this->flashType = 'success';
             $this->flashMessage = 'Zawodnik został dodany.';
+        }
+
+        $player->guardians()->sync($guardianIds);
+        $player->achievements()->delete();
+
+        foreach (array_values(array_filter($this->achievements, fn (array $row) => trim($row['title'] ?? '') !== '')) as $order => $row) {
+            $player->achievements()->create([
+                'season' => trim($row['season'] ?? '') ?: null,
+                'title' => trim($row['title']),
+                'display_order' => $order,
+            ]);
         }
 
         $currentSeasonId = Season::current()->value('id');
@@ -176,6 +224,17 @@ class PlayerManager extends Component
         $this->closeModal();
     }
 
+    public function addAchievement(): void
+    {
+        $this->achievements[] = ['season' => '', 'title' => ''];
+    }
+
+    public function removeAchievement(int $index): void
+    {
+        unset($this->achievements[$index]);
+        $this->achievements = array_values($this->achievements);
+    }
+
     public function delete(int $id): void
     {
         Player::findOrFail($id)->delete();
@@ -196,11 +255,17 @@ class PlayerManager extends Component
         $this->last_name = '';
         $this->jersey_number = null;
         $this->position = 'outside_hitter';
+        $this->extra_positions = [];
         $this->birth_date = null;
         $this->height = null;
         $this->weight = null;
         $this->reach = null;
         $this->spike_reach = null;
+        $this->block_reach = null;
+        $this->birthday_display = 'age';
+        $this->user_id = null;
+        $this->guardian_ids = [];
+        $this->achievements = [];
         $this->bio = '';
         $this->team_id = null;
         $this->extra_team_ids = [];
@@ -229,6 +294,8 @@ class PlayerManager extends Component
             'players' => $players,
             'teams' => $teams,
             'positions' => $positions,
+            'playerAccounts' => $this->showModal ? User::where('role', UserRole::Player)->orderBy('name')->get(['id', 'name', 'email']) : collect(),
+            'parentAccounts' => $this->showModal ? User::where('role', UserRole::Parent)->orderBy('name')->get(['id', 'name', 'email']) : collect(),
         ]);
     }
 }
