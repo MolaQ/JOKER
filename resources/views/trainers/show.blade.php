@@ -12,6 +12,7 @@
             <a href="{{ route('teams.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← Drużyny</a>
             <p class="eyebrow mt-5">{{ $roles->pluck('role')->unique()->implode(' · ') ?: 'Sztab klubu' }}</p>
             <h1 class="heading-xl mt-3">{{ $trainer->name }}</h1>
+            <x-view-count :model="$trainer" class="mt-3 text-white/70" />
         </div>
     </div>
 </section>

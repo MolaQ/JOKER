@@ -32,7 +32,7 @@
             @forelse($sponsors as $sponsor)
                 <tr wire:key="sponsor-{{ $sponsor->id }}">
                     <td class="py-4 pl-4 pr-3 sm:pl-6">
-                        <img src="{{ Storage::url($sponsor->logo_path) }}" class="h-10 w-10 object-contain" alt="{{ $sponsor->name }}">
+                        <img src="{{ \App\Support\Media::url($sponsor->logo_path) }}" onerror="this.style.visibility=\'hidden\'" class="h-10 w-10 object-contain" alt="{{ $sponsor->name }}">
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
                         {{ $sponsor->name }}
@@ -115,7 +115,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Logo</label>
                                 @if($existingLogo && !$logo)
-                                    <img src="{{ Storage::url($existingLogo) }}" class="h-16 w-16 object-contain rounded mb-2" alt="Logo">
+                                    <img src="{{ \App\Support\Media::url($existingLogo) }}" onerror="this.style.visibility=\'hidden\'" class="h-16 w-16 object-contain rounded mb-2" alt="Logo">
                                 @endif
                                 @if($logo)
                                     <img src="{{ $logo->temporaryUrl() }}" class="h-16 w-16 object-contain rounded mb-2" alt="Podgląd">

@@ -19,6 +19,9 @@ Route::middleware(['auth', 'role:admin,trainer'])->prefix('panel')->name('admin.
         return view('admin.games.index');
     })->name('games.index');
 
+    // Turnieje i sparingi w trakcie sezonu
+    Route::view('/tournaments', 'admin.tournaments.index')->name('tournaments.index');
+
     // Competitions & Standings
     Route::get('/competitions', function () {
         return view('admin.competitions.index');

@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', $player->full_name)
-@section('description', $player->full_name.' - '.($player->position?->label() ?? 'zawodnik').' drużyny '.$player->team?->name.' ('.$site['club_name'].').')
+@section('description', $player->full_name.' - '.($player->positionsLabel() ?? 'zawodnik').' drużyny '.$player->team?->name.' ('.$site['club_name'].').')
 
 @section('content')
 @php
@@ -22,7 +22,7 @@
         <x-avatar :photo="$player->photo_path" :name="$player->full_name" :label="$player->jersey_number" class="aspect-[4/5] w-48 rounded-3xl text-7xl ring-4 ring-sky-club/40 lg:w-64" />
         <div>
             <a href="{{ route('teams.show', $player->team) }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ $player->team?->name }}</a>
-            <p class="eyebrow mt-5">{{ $player->position?->label() }} @if($player->jersey_number) · #{{ $player->jersey_number }} @endif</p>
+            <p class="eyebrow mt-5">{{ $player->positionsLabel() }} @if($player->jersey_number) · #{{ $player->jersey_number }} @endif</p>
             <h1 class="heading-xl mt-3">{{ $player->first_name }}<br>{{ $player->last_name }}</h1>
 
             @if($stats)
@@ -36,7 +36,8 @@
                 </dl>
             @endif
 
-            <div class="mt-6">
+            <div class="mt-6 flex flex-wrap items-center gap-4">
+                <x-view-count :model="$player" class="text-white/70" />
                 @livewire('like-button', ['type' => 'player', 'id' => $player->id], key('player-like-'.$player->id))
             </div>
         </div>
@@ -49,7 +50,7 @@
         <dl class="mt-5 divide-y divide-zinc-100 text-sm">
             @foreach([
                 'Data urodzenia' => $player->birth_date?->format('d.m.Y'),
-                'Pozycja' => $player->position?->label(),
+                (count($player->positions()) > 1 ? 'Pozycje' : 'Pozycja') => $player->positionsLabel(),
                 'Numer' => $player->jersey_number !== null ? '#'.$player->jersey_number : null,
                 'Wzrost' => $player->height ? $player->height.' cm' : null,
                 'Waga' => $player->weight ? $player->weight.' kg' : null,
@@ -167,13 +168,13 @@
             </div>
         @endif
 
-        @if($player->position)
-            <div class="relative overflow-hidden rounded-3xl bg-sky-club p-8 text-white">
-                <p class="font-display text-sm font-semibold tracking-[0.25em] uppercase opacity-80">Pozycja</p>
-                <h2 class="mt-2 font-display text-3xl font-bold uppercase">{{ $player->position->label() }}</h2>
-                <p class="mt-3 max-w-xl text-white/90">{{ $player->position->description() }}</p>
+        @foreach($player->positions() as $playerPosition)
+            <div @class(['relative overflow-hidden rounded-3xl p-8', 'bg-sky-club text-white' => $loop->first, 'bg-white text-zinc-900 ring-1 ring-sky-club/30' => ! $loop->first])>
+                <p class="font-display text-sm font-semibold tracking-[0.25em] uppercase opacity-80">{{ $loop->first ? 'Pozycja' : 'Gra też jako' }}</p>
+                <h2 class="mt-2 font-display text-3xl font-bold uppercase">{{ $playerPosition->label() }}</h2>
+                <p @class(['mt-3 max-w-xl', 'text-white/90' => $loop->first, 'text-zinc-600' => ! $loop->first])>{{ $playerPosition->description() }}</p>
             </div>
-        @endif
+        @endforeach
     </div>
 </section>
 @endsection

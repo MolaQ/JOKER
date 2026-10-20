@@ -34,7 +34,7 @@
                 <tr wire:key="rival-team-{{ $rivalTeam->id }}">
                     <td class="whitespace-nowrap py-4 pl-4 pr-3 sm:pl-6">
                         @if($rivalTeam->logo_path)
-                            <img src="{{ Storage::url($rivalTeam->logo_path) }}" class="h-10 w-10 object-cover rounded" alt="{{ $rivalTeam->full_name }}">
+                            <img src="{{ \App\Support\Media::url($rivalTeam->logo_path) }}" onerror="this.style.visibility=\'hidden\'" class="h-10 w-10 object-cover rounded" alt="{{ $rivalTeam->full_name }}">
                         @else
                             <div class="h-10 w-10 rounded bg-gray-100 flex items-center justify-center text-gray-400 text-xs">brak</div>
                         @endif
@@ -99,7 +99,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Logo</label>
                                 @if($existingLogo && !$logo)
-                                    <img src="{{ Storage::url($existingLogo) }}" class="h-16 w-16 object-cover rounded mb-2" alt="Logo">
+                                    <img src="{{ \App\Support\Media::url($existingLogo) }}" onerror="this.style.visibility=\'hidden\'" class="h-16 w-16 object-cover rounded mb-2" alt="Logo">
                                 @endif
                                 @if($logo)
                                     <img src="{{ $logo->temporaryUrl() }}" class="h-16 w-16 object-cover rounded mb-2" alt="Podgląd">

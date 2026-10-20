@@ -28,7 +28,7 @@
                             <figure class="text-center text-xs text-gray-500">
                                 <div class="aspect-[4/5] w-24 overflow-hidden rounded-lg bg-gray-100">
                                     @if($request->player->photo_path)
-                                        <img src="{{ Storage::url($request->player->photo_path) }}" alt="Obecne" class="h-full w-full object-cover">
+                                        <img src="{{ \App\Support\Media::url($request->player->photo_path) }}" onerror="this.style.visibility=\'hidden\'" alt="Obecne" class="h-full w-full object-cover">
                                     @endif
                                 </div>
                                 <figcaption class="mt-1">obecne</figcaption>
@@ -37,7 +37,7 @@
                             <figure class="text-center text-xs text-gray-500">
                                 <div class="aspect-[4/5] w-32 overflow-hidden rounded-lg bg-gray-100 ring-2 ring-blue-500">
                                     @if($request->photo_path)
-                                        <img src="{{ Storage::url($request->photo_path) }}" alt="Proponowane" class="h-full w-full object-cover">
+                                        <img src="{{ \App\Support\Media::url($request->photo_path) }}" onerror="this.style.visibility=\'hidden\'" alt="Proponowane" class="h-full w-full object-cover">
                                     @endif
                                 </div>
                                 <figcaption class="mt-1">proponowane</figcaption>

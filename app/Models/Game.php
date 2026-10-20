@@ -19,6 +19,16 @@ class Game extends Model
 
     public const RESULT_WZPS = 'wzps';
 
+    /** Rodzaje meczów: ligowy, towarzyski (sparing) i rozegrany w ramach turnieju. */
+    public const KIND_LEAGUE = 'league';
+
+    public const KIND_FRIENDLY = 'friendly';
+
+    public const KIND_TOURNAMENT = 'tournament';
+
+    /** @var array<string, string> */
+    public const KINDS = [self::KIND_LEAGUE => 'Ligowy', self::KIND_FRIENDLY => 'Sparing', self::KIND_TOURNAMENT => 'Turniejowy'];
+
     /** @use HasFactory<GameFactory> */
     use HasFactory, Likeable;
 
@@ -34,6 +44,8 @@ class Game extends Model
         'venue',
         'league',
         'round_label',
+        'kind',
+        'tournament_id',
         'status',
         'home_score',
         'away_score',
@@ -133,6 +145,28 @@ class Game extends Model
             ->filter(fn (Article $article): bool => $article->isPublished())
             ->sortByDesc('published_at')
             ->first();
+    }
+
+    public function tournament(): BelongsTo
+    {
+        return $this->belongsTo(Tournament::class);
+    }
+
+    public function isFriendly(): bool
+    {
+        return $this->kind === self::KIND_FRIENDLY;
+    }
+
+    /**
+     * Nazwa rozgrywek do opisu meczu: liga, „Sparing” albo nazwa turnieju.
+     */
+    public function competitionLabel(): ?string
+    {
+        return match (true) {
+            $this->kind === self::KIND_FRIENDLY => 'Sparing',
+            $this->tournament_id !== null => $this->tournament?->fullName() ?? 'Turniej',
+            default => $this->competition?->name ?? $this->league,
+        };
     }
 
     public function comments(): HasMany

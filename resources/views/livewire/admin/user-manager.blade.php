@@ -117,11 +117,14 @@
                                     <input type="date" wire:model="birth_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     @error('birth_date') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
-                                <div class="flex items-end pb-2">
-                                    <label class="flex items-center text-sm text-gray-700">
-                                        <input type="checkbox" wire:model="show_birthday" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
-                                        Pokazuj urodziny w kalendarzu 🎂
-                                    </label>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Urodziny w kalendarzu 🎂</label>
+                                    <select wire:model="birthday_display" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        @foreach(\App\BirthdayDisplay::cases() as $mode)
+                                            <option value="{{ $mode->value }}">{{ $mode->label() }}</option>
+                                        @endforeach
+                                    </select>
+                                    <p class="mt-1 text-xs text-gray-500">Dotyczy trenerów i sztabu.</p>
                                 </div>
                             </div>
                         </div>

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\BirthdayDisplay;
+use App\Models\Concerns\CountsViews;
 use App\Models\Concerns\HasReadableRouteKey;
 use App\Models\Concerns\Likeable;
 use App\PlayerPosition;
@@ -15,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Player extends Model
 {
+    use CountsViews;
+
     /** @use HasFactory<PlayerFactory> */
     use HasFactory, Likeable;
 
@@ -25,8 +29,9 @@ class Player extends Model
         'last_name',
         'jersey_number',
         'position',
+        'extra_positions',
         'birth_date',
-        'show_birthday',
+        'birthday_display',
         'height',
         'weight',
         'reach',
@@ -44,8 +49,9 @@ class Player extends Model
         return [
             'birth_date' => 'date',
             'is_active' => 'boolean',
-            'show_birthday' => 'boolean',
+            'birthday_display' => BirthdayDisplay::class,
             'position' => PlayerPosition::class,
+            'extra_positions' => 'array',
         ];
     }
 
@@ -133,6 +139,31 @@ class Player extends Model
         return Attribute::make(
             get: fn () => "{$this->first_name} {$this->last_name}"
         );
+    }
+
+    /**
+     * Wszystkie pozycje zawodnika: główna i dodatkowe (np. libero i przyjmujący).
+     *
+     * @return array<int, PlayerPosition>
+     */
+    public function positions(): array
+    {
+        $extra = collect($this->extra_positions ?? [])
+            ->map(fn (string $value) => PlayerPosition::tryFrom($value))
+            ->filter()
+            ->reject(fn (PlayerPosition $position) => $position === $this->position);
+
+        return collect([$this->position])->filter()->concat($extra)->unique(fn (PlayerPosition $position) => $position->value)->values()->all();
+    }
+
+    /**
+     * Pozycje do wyświetlenia, np. „Libero · Przyjmujący”.
+     */
+    public function positionsLabel(): ?string
+    {
+        $positions = $this->positions();
+
+        return $positions === [] ? null : collect($positions)->map(fn (PlayerPosition $position) => $position->label())->implode(' · ');
     }
 
     public function age(): ?int

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\BirthdayDisplay;
+use App\Models\Concerns\CountsViews;
 use App\Models\Concerns\HasReadableRouteKey;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\UserRole;
@@ -15,6 +17,8 @@ use Illuminate\Support\Collection;
 
 class User extends Authenticatable
 {
+    use CountsViews;
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
@@ -34,7 +38,7 @@ class User extends Authenticatable
         'instagram',
         'additional_info',
         'birth_date',
-        'show_birthday',
+        'birthday_display',
     ];
 
     /**
@@ -59,7 +63,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
             'birth_date' => 'date',
-            'show_birthday' => 'boolean',
+            'birthday_display' => BirthdayDisplay::class,
         ];
     }
 

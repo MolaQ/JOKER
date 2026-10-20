@@ -120,13 +120,26 @@
                                     @error('jersey_number') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700">Pozycja</label>
+                                    <label class="block text-sm font-medium text-gray-700">Pozycja główna</label>
                                     <select wire:model="position" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                         @foreach($positions as $pos)
                                             <option value="{{ $pos->value }}">{{ $pos->label() }}</option>
                                         @endforeach
                                     </select>
                                     @error('position') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Gra też na pozycji</label>
+                                <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                                    @foreach($positions as $pos)
+                                        @continue($pos->value === $position)
+                                        <label class="flex items-center text-sm text-gray-700" wire:key="extra-position-{{ $pos->value }}">
+                                            <input type="checkbox" wire:model="extra_positions" value="{{ $pos->value }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
+                                            {{ $pos->label() }}
+                                        </label>
+                                    @endforeach
                                 </div>
                             </div>
 
@@ -175,11 +188,13 @@
                                     <input type="number" wire:model="block_reach" min="150" max="400" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     @error('block_reach') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
-                                <div class="flex items-end pb-2">
-                                    <label class="flex items-center text-sm text-gray-700">
-                                        <input type="checkbox" wire:model="show_birthday" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
-                                        Pokazuj urodziny w kalendarzu 🎂
-                                    </label>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Urodziny w kalendarzu 🎂</label>
+                                    <select wire:model="birthday_display" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        @foreach(\App\BirthdayDisplay::cases() as $mode)
+                                            <option value="{{ $mode->value }}">{{ $mode->label() }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
 
@@ -250,7 +265,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Zdjęcie</label>
-                                <x-photo-cropper model="photo" class="mt-1" :current="$existingPhoto ? Storage::url($existingPhoto) : null" :pending="$photo && ! $errors->has('photo') ? $photo->temporaryUrl() : null" />
+                                <x-photo-cropper model="photo" class="mt-1" :current="$existingPhoto ? \App\Support\Media::url($existingPhoto) : null" :pending="$photo && ! $errors->has('photo') ? $photo->temporaryUrl() : null" />
                                 @error('photo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 

@@ -2,12 +2,15 @@
 
 namespace App\Livewire;
 
+use App\BirthdayDisplay;
 use App\Models\Game;
 use App\Models\Player;
 use App\Models\Season;
 use App\Models\Team;
+use App\Models\Tournament;
 use App\Models\User;
 use App\Support\SearchIndex;
+use App\UserRole;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -21,6 +24,11 @@ use Livewire\Component;
 class GamesBrowser extends Component
 {
     public const PERIODS = ['nadchodzace' => 'Nadchodzące', 'wyniki' => 'Wyniki', 'wszystkie' => 'Wszystkie'];
+
+    /** Wartości filtra rozgrywek obok id lig. */
+    public const FILTER_TOURNAMENTS = 'turnieje';
+
+    public const FILTER_FRIENDLIES = 'sparingi';
 
     #[Url(as: 'szukaj', except: '')]
     public string $search = '';
@@ -70,10 +78,55 @@ class GamesBrowser extends Component
     #[Computed]
     public function seasonGames(): Collection
     {
-        return Game::with(['team', 'competition.teams', 'opponentTeam', 'articles'])
+        return Game::with(['team', 'competition.teams', 'opponentTeam', 'articles', 'tournament'])
             ->when($this->selectedSeason, fn ($query, Season $season) => $query->where('season_id', $season->id))
             ->orderBy('game_date')
             ->get();
+    }
+
+    /**
+     * Turnieje sezonu z naszymi drużynami.
+     *
+     * @return Collection<int, Tournament>
+     */
+    #[Computed]
+    public function seasonTournaments(): Collection
+    {
+        return Tournament::with('teams')
+            ->when($this->selectedSeason, fn ($query, Season $season) => $query->where('season_id', $season->id))
+            ->orderBy('start_date')
+            ->get();
+    }
+
+    /**
+     * Turnieje pasujące do filtrów (rozgrywki „Turnieje”, drużyna, dom/wyjazd, wyszukiwanie).
+     *
+     * @return Collection<int, Tournament>
+     */
+    private function filteredTournaments(): Collection
+    {
+        if ($this->competition !== '' && $this->competition !== self::FILTER_TOURNAMENTS) {
+            return collect();
+        }
+
+        $terms = array_filter(explode(' ', SearchIndex::normalize($this->search)));
+
+        return $this->seasonTournaments
+            ->when($this->team !== '', fn (Collection $tournaments) => $tournaments->filter(fn (Tournament $tournament) => $tournament->teams->contains('slug', $this->team)))
+            ->when($this->place === 'dom', fn (Collection $tournaments) => $tournaments->where('is_organizer', true))
+            ->when($this->place === 'wyjazd', fn (Collection $tournaments) => $tournaments->where('is_organizer', false))
+            ->when($terms, fn (Collection $tournaments) => $tournaments->filter(function (Tournament $tournament) use ($terms) {
+                $haystack = SearchIndex::normalize(implode(' ', [
+                    'turniej',
+                    $tournament->fullName(),
+                    $tournament->city,
+                    $tournament->venue,
+                    $tournament->teams->pluck('name')->implode(' '),
+                    $tournament->start_date->format('d.m.Y'),
+                ]));
+
+                return collect($terms)->every(fn (string $term) => str_contains($haystack, $term));
+            }));
     }
 
     /**
@@ -85,7 +138,11 @@ class GamesBrowser extends Component
 
         return $this->seasonGames
             ->when($this->team !== '', fn (Collection $games) => $games->filter(fn (Game $game) => $game->team?->slug === $this->team))
-            ->when($this->competition !== '', fn (Collection $games) => $games->where('competition_id', (int) $this->competition))
+            ->when($this->competition !== '', fn (Collection $games) => match ($this->competition) {
+                self::FILTER_TOURNAMENTS => $games->whereNotNull('tournament_id'),
+                self::FILTER_FRIENDLIES => $games->where('kind', Game::KIND_FRIENDLY),
+                default => $games->where('competition_id', (int) $this->competition),
+            })
             ->when($this->place === 'dom', fn (Collection $games) => $games->where('is_home', true))
             ->when($this->place === 'wyjazd', fn (Collection $games) => $games->where('is_home', false))
             ->when($terms, fn (Collection $games) => $games->filter(function (Game $game) use ($terms) {
@@ -93,7 +150,7 @@ class GamesBrowser extends Component
                     $game->team?->name,
                     $game->opponentDisplayName(),
                     $game->opponentTeam?->short_name,
-                    $game->competition?->name,
+                    $game->competitionLabel(),
                     $game->league,
                     $game->venue,
                     $game->round_label,
@@ -123,12 +180,21 @@ class GamesBrowser extends Component
             default => $filtered->reject(fn (Game $game) => $game->isFinished()),
         };
 
+        $today = now()->startOfDay();
+        $tournaments = $this->filteredTournaments()->filter(fn (Tournament $tournament) => match ($this->period) {
+            'wyniki' => $tournament->lastDay()->lt($today),
+            'wszystkie' => true,
+            default => $tournament->lastDay()->gte($today),
+        });
+
         return view('livewire.games-browser', [
-            'months' => $this->calendarMonths($games, $this->search === '' && $this->competition === '' && $this->place === ''),
+            'months' => $this->calendarMonths($games, $tournaments, $this->search === '' && $this->competition === '' && $this->place === '', $this->period === 'wyniki'),
             'total' => $games->count(),
             'periodCounts' => $periodCounts,
             'teams' => $this->seasonGames->pluck('team')->filter()->unique('id')->sortBy('display_order')->values(),
             'competitions' => $this->seasonGames->pluck('competition')->filter()->unique('id')->sortBy('name')->values(),
+            'hasTournaments' => $this->seasonTournaments->isNotEmpty() || $this->seasonGames->whereNotNull('tournament_id')->isNotEmpty(),
+            'hasFriendlies' => $this->seasonGames->where('kind', Game::KIND_FRIENDLY)->isNotEmpty(),
             'seasons' => Season::orderByDesc('start_date')->get(),
             'hasFilters' => $this->search !== '' || $this->team !== '' || $this->competition !== '' || $this->place !== '',
         ]);
@@ -140,23 +206,32 @@ class GamesBrowser extends Component
      * Urodziny pokazujemy tylko bez wyszukiwania i filtrów meczowych (filtr drużyny działa).
      *
      * @param  Collection<int, Game>  $games
-     * @return Collection<int, array{key: string, month: Carbon, games: Collection<int, Game>, birthdays: Collection<int, array{name: string, age: int, ageLabel: string, role: string, date: Carbon, url: ?string}>, weeks: array<int, array<int, array{date: Carbon, inMonth: bool, isToday: bool, games: Collection<int, Game>, birthdays: Collection<int, array{name: string, age: int, ageLabel: string, role: string, date: Carbon, url: ?string}>}>>}>
+     * @param  Collection<int, Tournament>  $tournaments
+     * @return Collection<int, array{key: string, month: Carbon, games: Collection<int, Game>, tournaments: Collection<int, Tournament>, birthdays: Collection<int, array{name: string, age: int, ageLabel: string, role: string, date: Carbon, url: ?string, showAge: bool}>, weeks: array<int, array<int, array{date: Carbon, inMonth: bool, isToday: bool, games: Collection<int, Game>, tournaments: Collection<int, Tournament>, birthdays: Collection<int, array{name: string, age: int, ageLabel: string, role: string, date: Carbon, url: ?string, showAge: bool}>}>>}>
      */
-    private function calendarMonths(Collection $games, bool $withBirthdays = true): Collection
+    private function calendarMonths(Collection $games, Collection $tournaments, bool $withBirthdays = true, bool $newestFirst = false): Collection
     {
         $birthdays = $withBirthdays ? $this->birthdays() : collect();
+        $gamesByMonth = $games->filter(fn (Game $game) => $game->game_date)->groupBy(fn (Game $game) => $game->game_date->format('Y-m'));
+        $tournamentMonths = $tournaments->flatMap(fn (Tournament $tournament) => collect(Carbon::parse($tournament->start_date)->toPeriod($tournament->lastDay()))->map(fn (Carbon $day) => $day->format('Y-m')))->unique();
+        $keys = $gamesByMonth->keys()->concat($tournamentMonths)->unique()->sort()->values();
 
-        return $games->filter(fn (Game $game) => $game->game_date)
-            ->groupBy(fn (Game $game) => $game->game_date->format('Y-m'))
-            ->map(function (Collection $monthGames, string $key) use ($birthdays) {
+        return ($newestFirst ? $keys->reverse() : $keys)
+            ->map(function (string $key) use ($birthdays, $gamesByMonth, $tournaments) {
+                $monthGames = $gamesByMonth->get($key, collect());
                 $month = Carbon::createFromFormat('Y-m-d', $key.'-01')->startOfDay();
                 $byDay = $monthGames->sortBy('game_date')->groupBy(fn (Game $game) => $game->game_date->toDateString());
+                $monthTournaments = $tournaments
+                    ->filter(fn (Tournament $tournament) => $tournament->start_date->lte($month->copy()->endOfMonth()) && $tournament->lastDay()->gte($month))
+                    ->sortBy('start_date')
+                    ->values();
                 $monthBirthdays = $birthdays
                     ->filter(fn (array $person) => $person['birth_date']->month === $month->month)
                     ->map(fn (array $person) => [
                         'name' => $person['name'],
                         'role' => $person['role'],
                         'url' => $person['url'],
+                        'showAge' => $person['showAge'],
                         'age' => $age = $month->year - $person['birth_date']->year,
                         'ageLabel' => self::yearsLabel($age),
                         'date' => $month->copy()->day(min($person['birth_date']->day, $month->daysInMonth)),
@@ -172,11 +247,12 @@ class GamesBrowser extends Component
                         'inMonth' => $day->month === $month->month,
                         'isToday' => $day->isToday(),
                         'games' => $byDay->get($day->toDateString(), collect()),
+                        'tournaments' => $day->month === $month->month ? $monthTournaments->filter(fn (Tournament $tournament) => $day->between($tournament->start_date, $tournament->lastDay()->endOfDay()))->values() : collect(),
                         'birthdays' => $day->month === $month->month ? $monthBirthdays->filter(fn (array $person) => $person['date']->isSameDay($day))->values() : collect(),
                     ];
                 }
 
-                return ['key' => $key, 'month' => $month, 'games' => $monthGames, 'birthdays' => $monthBirthdays, 'weeks' => array_chunk($days, 7)];
+                return ['key' => $key, 'month' => $month, 'games' => $monthGames, 'tournaments' => $monthTournaments, 'birthdays' => $monthBirthdays, 'weeks' => array_chunk($days, 7)];
             })
             ->values();
     }
@@ -196,10 +272,10 @@ class GamesBrowser extends Component
     }
 
     /**
-     * Osoby z widocznymi urodzinami: zawodnicy (przełącznik domyślnie włączony) oraz sztab
-     * i działacze, którym administrator włączył pokazywanie urodzin.
+     * Osoby z widocznymi urodzinami: zawodnicy oraz sztab i działacze. Każdy ma w panelu
+     * tryb: ukryte, sam torcik albo torcik z wiekiem (domyślnie z wiekiem).
      *
-     * @return Collection<int, array{name: string, role: string, birth_date: Carbon, url: ?string}>
+     * @return Collection<int, array{name: string, role: string, birth_date: Carbon, url: ?string, showAge: bool}>
      */
     #[Computed]
     public function birthdays(): Collection
@@ -208,7 +284,7 @@ class GamesBrowser extends Component
 
         $players = Player::query()
             ->where('is_active', true)
-            ->where('show_birthday', true)
+            ->where('birthday_display', '!=', BirthdayDisplay::Hidden->value)
             ->whereNotNull('birth_date')
             ->when($team, fn ($query) => $query->where('team_id', $team->id))
             ->get()
@@ -217,20 +293,25 @@ class GamesBrowser extends Component
                 'role' => 'zawodnik',
                 'birth_date' => $player->birth_date,
                 'url' => route('players.show', $player),
+                'showAge' => $player->birthday_display === BirthdayDisplay::Age,
             ]);
 
         $staffIds = $team ? $team->allTrainers()->pluck('id') : null;
 
         $staff = User::query()
-            ->where('show_birthday', true)
+            ->where('birthday_display', '!=', BirthdayDisplay::Hidden->value)
             ->whereNotNull('birth_date')
-            ->when($staffIds, fn ($query) => $query->whereIn('id', $staffIds))
+            ->when($staffIds, fn ($query) => $query->whereIn('id', $staffIds), fn ($query) => $query->where(fn ($staffQuery) => $staffQuery
+                ->whereIn('role', [UserRole::Trainer->value, UserRole::Staff->value])
+                ->orWhereHas('headCoachTeams')
+                ->orWhereHas('assistantTeams')))
             ->get()
             ->map(fn (User $user) => [
                 'name' => $user->name,
                 'role' => $user->isTrainer() ? 'trener' : 'sztab',
                 'birth_date' => $user->birth_date,
-                'url' => null,
+                'url' => route('trainers.show', $user),
+                'showAge' => $user->birthday_display === BirthdayDisplay::Age,
             ]);
 
         return $players->concat($staff)->values();

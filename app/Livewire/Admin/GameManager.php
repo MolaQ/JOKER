@@ -7,6 +7,7 @@ use App\Models\Game;
 use App\Models\RivalTeam;
 use App\Models\Season;
 use App\Models\Team;
+use App\Models\Tournament;
 use App\Services\StandingsCalculator;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -25,6 +26,10 @@ class GameManager extends Component
     public ?int $season_id = null;
 
     public ?int $competition_id = null;
+
+    public string $kind = 'league';
+
+    public ?int $tournament_id = null;
 
     public string $opponent = '';
 
@@ -68,6 +73,8 @@ class GameManager extends Component
             'team_id' => 'required|exists:teams,id',
             'season_id' => 'required|exists:seasons,id',
             'competition_id' => 'nullable|exists:competitions,id',
+            'kind' => 'required|in:league,friendly,tournament',
+            'tournament_id' => 'nullable|required_if:kind,tournament|exists:tournaments,id',
             'opponent' => 'required|string|max:255',
             'opponent_team_id' => 'nullable|exists:rival_teams,id',
             'is_home' => 'boolean',
@@ -118,6 +125,8 @@ class GameManager extends Component
         $this->team_id = $game->team_id;
         $this->season_id = $game->season_id;
         $this->competition_id = $game->competition_id;
+        $this->kind = $game->kind ?? Game::KIND_LEAGUE;
+        $this->tournament_id = $game->tournament_id;
         $this->opponent = $game->opponent;
         $this->opponent_team_id = $game->opponent_team_id;
         $this->is_home = $game->is_home;
@@ -151,6 +160,15 @@ class GameManager extends Component
     {
         $validated = $this->validate();
         $this->applySetResults($validated);
+
+        // Sparing i mecz turniejowy nie liczą się do tabeli ligowej.
+        if ($validated['kind'] !== Game::KIND_LEAGUE) {
+            $validated['competition_id'] = null;
+        }
+
+        if ($validated['kind'] !== Game::KIND_TOURNAMENT) {
+            $validated['tournament_id'] = null;
+        }
 
         if ($this->editingId) {
             $game = Game::findOrFail($this->editingId);
@@ -202,6 +220,8 @@ class GameManager extends Component
         $this->team_id = null;
         $this->season_id = null;
         $this->competition_id = null;
+        $this->kind = Game::KIND_LEAGUE;
+        $this->tournament_id = null;
         $this->opponent = '';
         $this->opponent_team_id = null;
         $this->is_home = true;
@@ -309,6 +329,7 @@ class GameManager extends Component
         $teams = Team::orderBy('display_order')->get();
         $seasons = Season::orderBy('start_date', 'desc')->get();
         $competitions = Competition::orderBy('name')->get();
+        $tournaments = Tournament::orderByDesc('start_date')->get();
         $rivalTeams = RivalTeam::orderBy('full_name')->get();
 
         return view('livewire.admin.game-manager', [
@@ -316,6 +337,7 @@ class GameManager extends Component
             'teams' => $teams,
             'seasons' => $seasons,
             'competitions' => $competitions,
+            'tournaments' => $tournaments,
             'rivalTeams' => $rivalTeams,
         ]);
     }

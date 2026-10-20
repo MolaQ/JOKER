@@ -24,6 +24,7 @@ class TeamController extends Controller
     public function show(Team $team)
     {
         $team->load(['trainer', 'assistantTrainers']);
+        $team->registerView();
 
         $currentSeason = Season::current()->first();
 

@@ -35,7 +35,7 @@
                         <button type="button" wire:sort:handle class="cursor-grab active:cursor-grabbing">⋮⋮</button>
                     </td>
                     <td class="py-4 pl-4 pr-3 sm:pl-6">
-                        <img src="{{ Storage::url($slide->image_path) }}" alt="{{ $slide->title }}" class="h-12 w-20 rounded object-cover">
+                        <img src="{{ \App\Support\Media::url($slide->image_path) }}" onerror="this.style.visibility=\'hidden\'" alt="{{ $slide->title }}" class="h-12 w-20 rounded object-cover">
                     </td>
                     <td class="px-3 py-4 text-sm text-gray-900">
                         <p class="font-medium">{{ $slide->title }}</p>
@@ -148,7 +148,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Zdjęcie tła</label>
                                 @if($existingImage && !$image)
-                                    <img src="{{ Storage::url($existingImage) }}" class="h-28 w-full max-w-sm rounded object-cover mb-2" alt="Aktualne zdjęcie">
+                                    <img src="{{ \App\Support\Media::url($existingImage) }}" onerror="this.style.visibility=\'hidden\'" class="h-28 w-full max-w-sm rounded object-cover mb-2" alt="Aktualne zdjęcie">
                                 @endif
                                 @if($image)
                                     <img src="{{ $image->temporaryUrl() }}" class="h-28 w-full max-w-sm rounded object-cover mb-2" alt="Podgląd zdjęcia">

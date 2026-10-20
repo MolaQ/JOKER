@@ -3,6 +3,7 @@
 use App\Livewire\Admin\ArticleManager;
 use App\Livewire\Admin\CompetitionManager;
 use App\Livewire\Admin\PlayerChangeRequestManager;
+use App\Livewire\Admin\TournamentManager;
 use App\Livewire\GamesBrowser;
 use App\Livewire\PlayerProposalForm;
 use App\Models\Article;
@@ -13,7 +14,9 @@ use App\Models\Player;
 use App\Models\PlayerChangeRequest;
 use App\Models\Season;
 use App\Models\Team;
+use App\Models\Tournament;
 use App\Models\User;
+use App\Support\Media;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -50,8 +53,8 @@ test('calendar marks home and away games, results with V or X and opens the newe
 
     Livewire::test(GamesBrowser::class)
         ->set('period', 'wszystkie')
-        ->assertSeeHtml('bg-ink text-white')
-        ->assertSeeHtml('bg-zinc-200 text-zinc-800')
+        ->assertSeeHtml('from-club-navy to-sky-club-dark text-white')
+        ->assertSeeHtml('bg-white text-sky-club-dark')
         ->assertSeeHtml('aria-label="Wygrana"')
         ->assertSeeHtml('aria-label="Porażka"')
         ->assertSeeHtml('href="'.route('articles.show', $newer).'"')
@@ -65,9 +68,11 @@ test('calendar marks home and away games, results with V or X and opens the newe
 test('calendar shows birthdays of players and of staff who allowed it', function () {
     calendarGame(['game_date' => '2026-10-25 17:00', 'status' => 'scheduled', 'home_score' => null, 'away_score' => null]);
     Player::factory()->create(['first_name' => 'Jan', 'last_name' => 'Nowak', 'team_id' => $this->team->id, 'birth_date' => '2010-10-22', 'is_active' => true]);
-    Player::factory()->create(['first_name' => 'Ukryty', 'last_name' => 'Zawodnik', 'team_id' => $this->team->id, 'birth_date' => '2010-10-23', 'is_active' => true, 'show_birthday' => false]);
-    User::factory()->trainer()->create(['name' => 'Trener Kowalski', 'birth_date' => '1982-10-26', 'show_birthday' => true]);
-    User::factory()->trainer()->create(['name' => 'Trener Cichy', 'birth_date' => '1980-10-27', 'show_birthday' => false]);
+    Player::factory()->create(['first_name' => 'Ukryty', 'last_name' => 'Zawodnik', 'team_id' => $this->team->id, 'birth_date' => '2010-10-23', 'is_active' => true, 'birthday_display' => 'hidden']);
+    Player::factory()->create(['first_name' => 'Tajny', 'last_name' => 'Wiek', 'team_id' => $this->team->id, 'birth_date' => '2011-10-24', 'is_active' => true, 'birthday_display' => 'cake']);
+    User::factory()->fan()->create(['name' => 'Kibic Zwykły', 'birth_date' => '1990-10-28']);
+    User::factory()->trainer()->create(['name' => 'Trener Kowalski', 'birth_date' => '1982-10-26']);
+    User::factory()->trainer()->create(['name' => 'Trener Cichy', 'birth_date' => '1980-10-27', 'birthday_display' => 'hidden']);
 
     Livewire::test(GamesBrowser::class)
         ->assertSee('Jan Nowak')
@@ -75,7 +80,10 @@ test('calendar shows birthdays of players and of staff who allowed it', function
         ->assertSee('Trener Kowalski')
         ->assertSee('44 lata')
         ->assertDontSee('Ukryty Zawodnik')
-        ->assertDontSee('Trener Cichy');
+        ->assertDontSee('Trener Cichy')
+        ->assertDontSee('Kibic Zwykły')
+        ->assertSee('Tajny Wiek')
+        ->assertDontSee('kończy 15 lat');
 
     expect(GamesBrowser::yearsLabel(1))->toBe('1 rok')
         ->and(GamesBrowser::yearsLabel(22))->toBe('22 lata')
@@ -224,4 +232,72 @@ test('player profile shows physical data, career, achievements and recent matche
 
 test('main menu starts with news, matches and standings', function () {
     $this->get('/kontakt')->assertSeeInOrder(['href="'.url('/aktualnosci').'"', 'href="'.url('/mecze').'"', 'href="'.url('/tabele').'"', 'href="'.url('/druzyny').'"'], false);
+});
+
+test('a player can play several positions', function () {
+    $player = Player::factory()->create(['team_id' => $this->team->id, 'position' => 'libero', 'extra_positions' => ['outside_hitter', 'libero']]);
+
+    expect($player->positionsLabel())->toBe('Libero · Przyjmujący');
+    $this->get(route('players.show', $player))->assertOk()->assertSee('Libero · Przyjmujący')->assertSee('Gra też jako');
+});
+
+test('player, staff and team pages count views once per visitor', function () {
+    $player = Player::factory()->create(['team_id' => $this->team->id]);
+
+    $this->get(route('players.show', $player))->assertSee('1 wyświetlenie');
+    $this->get(route('players.show', $player))->assertSee('1 wyświetlenie');
+    expect($player->fresh()->views_count)->toBe(1);
+
+    $this->flushSession();
+    $this->get(route('players.show', $player))->assertSee('2 wyświetlenia');
+    $this->get(route('teams.show', $this->team))->assertSee('1 wyświetlenie');
+
+    $trainer = User::factory()->trainer()->create();
+    $this->get(route('trainers.show', $trainer))->assertOk()->assertSee('1 wyświetlenie');
+});
+
+test('tournaments and friendlies appear in the calendar and can be filtered', function () {
+    $tournament = Tournament::create(['name' => 'Turniej im. Włodzimierza Winklera', 'edition' => 'XII', 'start_date' => '2026-10-24', 'end_date' => '2026-10-25', 'city' => 'Piła', 'is_organizer' => true, 'season_id' => $this->season->id]);
+    $tournament->teams()->attach($this->team->id, ['placement' => '2. miejsce']);
+    calendarGame(['game_date' => '2026-10-24 10:00', 'status' => 'scheduled', 'home_score' => null, 'away_score' => null, 'competition_id' => null, 'kind' => 'tournament', 'tournament_id' => $tournament->id, 'opponent' => 'MKS Sulęcin']);
+    calendarGame(['game_date' => '2026-10-28 18:00', 'status' => 'scheduled', 'home_score' => null, 'away_score' => null, 'competition_id' => null, 'kind' => 'friendly', 'opponent' => 'Sparingowy Rywal']);
+    calendarGame(['game_date' => '2026-10-29 18:00', 'status' => 'scheduled', 'home_score' => null, 'away_score' => null, 'opponent' => 'Ligowy Rywal']);
+
+    Livewire::test(GamesBrowser::class)
+        ->assertSee('XII Turniej im. Włodzimierza Winklera')
+        ->assertSee('2. miejsce')
+        ->assertSee('Sparingowy Rywal')
+        ->assertSeeHtml('>sparing</span>')
+        ->set('competition', GamesBrowser::FILTER_TOURNAMENTS)
+        ->assertSee('Winklera')
+        ->assertSee('MKS Sulęcin')
+        ->assertDontSee('Sparingowy Rywal')
+        ->assertDontSee('Ligowy Rywal')
+        ->set('competition', GamesBrowser::FILTER_FRIENDLIES)
+        ->assertSee('Sparingowy Rywal')
+        ->assertDontSee('Winklera');
+});
+
+test('admin adds a tournament with our teams and placements', function () {
+    $this->actingAs(User::factory()->admin()->create());
+
+    Livewire::test(TournamentManager::class)
+        ->call('openCreateModal')
+        ->set('name', 'Turniej w Sulęcinie')
+        ->set('start_date', '2026-10-17')
+        ->set('city', 'Sulęcin')
+        ->set('team_ids', [$this->team->id])
+        ->set("placements.{$this->team->id}", '3. miejsce')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $tournament = Tournament::sole();
+    expect($tournament->season_id)->toBe($this->season->id)
+        ->and($tournament->teams->first()->pivot->placement)->toBe('3. miejsce');
+
+    $this->get(route('admin.tournaments.index'))->assertOk()->assertSee('Turniej w Sulęcinie');
+});
+
+test('uploaded images use a host independent address', function () {
+    expect(Media::url('sponsors/logo.png'))->toBe('/storage/sponsors/logo.png');
 });

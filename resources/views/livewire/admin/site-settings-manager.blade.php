@@ -77,7 +77,7 @@
                                     @if(isset($uploads[$key]) && $uploads[$key])
                                         <img src="{{ $uploads[$key]->temporaryUrl() }}" alt="Podgląd" class="h-20 w-20 rounded-lg border object-cover">
                                     @elseif($values[$key])
-                                        <img src="{{ \App\Support\Media::url($values[$key]) }}" alt="" class="h-20 w-20 rounded-lg border object-cover">
+                                        <img src="{{ \App\Support\Media::url($values[$key]) }}" onerror="this.style.visibility=\'hidden\'" alt="" class="h-20 w-20 rounded-lg border object-cover">
                                     @else
                                         <span class="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed text-xs text-gray-400">brak</span>
                                     @endif

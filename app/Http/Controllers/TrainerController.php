@@ -11,6 +11,7 @@ class TrainerController extends Controller
         abort_unless($trainer->isStaffMember(), 404);
 
         $trainer->load(['headCoachTeams', 'assistantTeams']);
+        $trainer->registerView();
 
         $roles = $trainer->headCoachTeams->toBase()
             ->map(fn ($team) => ['team' => $team, 'role' => 'Trener główny'])

@@ -21,7 +21,7 @@
                 <form wire:submit="submit" class="mt-6 space-y-5">
                     <div>
                         <p class="mb-2 text-sm font-semibold text-zinc-700">Zdjęcie profilowe</p>
-                        <x-photo-cropper model="photo" :current="$player->photo_path ? Storage::url($player->photo_path) : null" :pending="$photo && ! $errors->has('photo') ? $photo->temporaryUrl() : null" />
+                        <x-photo-cropper model="photo" :current="$player->photo_path ? \App\Support\Media::url($player->photo_path) : null" :pending="$photo && ! $errors->has('photo') ? $photo->temporaryUrl() : null" />
                         @error('photo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
 

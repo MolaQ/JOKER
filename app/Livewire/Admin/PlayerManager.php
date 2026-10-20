@@ -29,6 +29,9 @@ class PlayerManager extends Component
 
     public string $position = 'outside_hitter';
 
+    /** @var array<int, string> Dodatkowe pozycje (np. libero i przyjmujący) */
+    public array $extra_positions = [];
+
     public ?string $birth_date = null;
 
     public ?int $height = null;
@@ -41,7 +44,7 @@ class PlayerManager extends Component
 
     public ?int $block_reach = null;
 
-    public bool $show_birthday = true;
+    public string $birthday_display = 'age';
 
     /** Konto zawodnika (rola „Zawodnik”) - może proponować zmiany profilu i zdjęcie. */
     public ?int $user_id = null;
@@ -76,13 +79,15 @@ class PlayerManager extends Component
             'last_name' => 'required|string|max:255',
             'jersey_number' => 'required|integer|min:0|max:99',
             'position' => 'required|in:setter,outside_hitter,opposite,middle_blocker,libero',
+            'extra_positions' => 'array',
+            'extra_positions.*' => 'in:setter,outside_hitter,opposite,middle_blocker,libero',
             'birth_date' => 'nullable|date',
             'height' => 'nullable|integer|min:100|max:250',
             'weight' => 'nullable|integer|min:30|max:150',
             'reach' => 'nullable|integer|min:150|max:400',
             'spike_reach' => 'nullable|integer|min:150|max:400',
             'block_reach' => 'nullable|integer|min:150|max:400',
-            'show_birthday' => 'boolean',
+            'birthday_display' => 'required|in:hidden,cake,age',
             'user_id' => 'nullable|exists:users,id',
             'guardian_ids' => 'array',
             'guardian_ids.*' => 'exists:users,id',
@@ -129,13 +134,14 @@ class PlayerManager extends Component
         $this->last_name = $player->last_name;
         $this->jersey_number = $player->jersey_number;
         $this->position = $player->position->value;
+        $this->extra_positions = $player->extra_positions ?? [];
         $this->birth_date = $player->birth_date?->format('Y-m-d');
         $this->height = $player->height;
         $this->weight = $player->weight;
         $this->reach = $player->reach;
         $this->spike_reach = $player->spike_reach;
         $this->block_reach = $player->block_reach;
-        $this->show_birthday = $player->show_birthday;
+        $this->birthday_display = $player->birthday_display?->value ?? 'age';
         $this->user_id = $player->user_id;
         $this->guardian_ids = $player->guardians()->pluck('users.id')->all();
         $this->achievements = $player->achievements->map(fn (PlayerAchievement $achievement) => ['season' => (string) $achievement->season, 'title' => $achievement->title])->all();
@@ -162,6 +168,7 @@ class PlayerManager extends Component
         $extraTeamIds = $validated['extra_team_ids'] ?? [];
         $guardianIds = $validated['guardian_ids'] ?? [];
         unset($validated['extra_team_ids'], $validated['guardian_ids'], $validated['achievements'], $validated['photo']);
+        $validated['extra_positions'] = array_values(array_diff($this->extra_positions, [$this->position])) ?: null;
 
         if ($this->photo) {
             $validated['photo_path'] = $this->photo->store('players', 'public');
@@ -248,13 +255,14 @@ class PlayerManager extends Component
         $this->last_name = '';
         $this->jersey_number = null;
         $this->position = 'outside_hitter';
+        $this->extra_positions = [];
         $this->birth_date = null;
         $this->height = null;
         $this->weight = null;
         $this->reach = null;
         $this->spike_reach = null;
         $this->block_reach = null;
-        $this->show_birthday = true;
+        $this->birthday_display = 'age';
         $this->user_id = null;
         $this->guardian_ids = [];
         $this->achievements = [];

@@ -39,6 +39,7 @@
             --color-nav-button-bg: {{ $site->color('color_nav_button_bg') }};
             --color-nav-button-text: {{ $site->color('color_nav_button_text') }};
             --color-countdown: {{ $site->color('color_countdown') }};
+            --color-club-navy: {{ $site->color('color_club_navy') }};
         }
         body { background-color: var(--color-page); }
     </style>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\CountsViews;
 use App\Models\Concerns\HasSlugRouteKey;
 use App\Models\Concerns\Likeable;
 use Database\Factories\TeamFactory;
@@ -14,6 +15,8 @@ use Illuminate\Support\Collection;
 
 class Team extends Model
 {
+    use CountsViews;
+
     /** @use HasFactory<TeamFactory> */
     use HasFactory, Likeable;
 
