@@ -70,6 +70,7 @@ Route::middleware(['auth', 'role:admin,trainer'])->prefix('panel')->name('admin.
     Route::middleware('role:admin')->group(function () {
         Route::view('/settings', 'admin.settings.index')->name('settings.index');
         Route::view('/pages', 'admin.pages.index')->name('pages.index');
+        Route::view('/statistics', 'admin.statistics.index')->name('statistics.index');
     });
 
     // Zdjęcia i dane proponowane przez zawodników i rodziców

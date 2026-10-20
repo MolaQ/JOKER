@@ -1,10 +1,12 @@
 import { initCountdowns } from './countdown';
+import { initPageStats } from './page-stats';
 import { registerPhotoCropper } from './photo-cropper';
 import { initSearch } from './search';
 
 registerPhotoCropper();
 
 initSearch();
+initPageStats();
 
 // Pojawianie się sekcji przy przewijaniu.
 const revealObserver = 'IntersectionObserver' in window

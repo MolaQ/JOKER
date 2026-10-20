@@ -7,6 +7,7 @@ use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\GameCalendarController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\PageViewController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScheduleController;
@@ -54,6 +55,12 @@ Route::get('/strona/{page}', [PageController::class, 'show'])->name('pages.show'
 
 // Contact
 Route::get('/kontakt', [ContactController::class, 'index'])->name('contact.index');
+// Statystyki odwiedzin: czas na stronie, przewinięcie i otwierane zakładki (sendBeacon).
+Route::middleware('throttle:120,1')->group(function () {
+    Route::post('/statystyki/wyswietlenie', [PageViewController::class, 'update'])->name('page-views.update');
+    Route::post('/statystyki/zakladka', [PageViewController::class, 'tab'])->name('page-views.tab');
+});
+
 Route::post('/kontakt', [ContactController::class, 'send'])->name('contact.send');
 
 // Auth routes

@@ -15,6 +15,7 @@
         $adminNavigation = [
             'Na co dzień' => [
                 ['label' => 'Pulpit', 'route' => 'admin.dashboard', 'icon' => '🏠'],
+                ['label' => 'Statystyki odwiedzin', 'route' => 'admin.statistics.index', 'icon' => '📈', 'admin' => true],
                 ['label' => 'Aktualności', 'route' => 'admin.articles.index', 'icon' => '📰'],
                 ['label' => 'Mecze i wyniki', 'route' => 'admin.games.index', 'icon' => '🏐'],
                 ['label' => 'Turnieje', 'route' => 'admin.tournaments.index', 'icon' => '🥇'],
