@@ -466,7 +466,7 @@ class ScheduleImporter
 
                 if ($row) {
                     $matches->push(['external_id' => $idMatch[1]] + $row + [
-                        'detail_url' => $this->absoluteUrl($href, $url),
+                        'detail_url' => $this->detailUrl($idMatch[1], $url),
                         'stage' => $stage ? 'Etap '.$stage : null,
                         'group' => $group,
                     ]);
@@ -518,17 +518,21 @@ class ScheduleImporter
         ];
     }
 
-    private function absoluteUrl(string $href, string $base): ?string
+    /**
+     * Strona szczegółów meczu w tym samym katalogu co strona źródłowa. Linki na stronach WZPS
+     * bywają względne wobec innego katalogu (np. „obsady/index.php…”), więc adres składamy sami.
+     */
+    private function detailUrl(string $matchId, string $source): ?string
     {
-        if (preg_match('#^https?://#i', $href)) {
-            return $href;
-        }
+        $parts = parse_url($source);
 
-        if (! preg_match('#^(https?://[^?\#]*/)#i', $base, $m)) {
+        if (! isset($parts['scheme'], $parts['host'])) {
             return null;
         }
 
-        return $m[1].ltrim($href, '/');
+        $directory = preg_replace('#/+#', '/', preg_replace('#[^/]*$#', '', $parts['path'] ?? '/'));
+
+        return $parts['scheme'].'://'.$parts['host'].$directory.'index.php?mode=4&stage=2&match_id='.$matchId;
     }
 
     /**
@@ -603,8 +607,10 @@ class ScheduleImporter
             ->limit(self::DETAILS_PER_SYNC)
             ->get();
 
+        $failed = [];
+
         foreach ($games as $game) {
-            $html = $this->fetch($urls[$game->external_id], $errors);
+            $html = $this->fetch($urls[$game->external_id], $failed);
             $details = $html === null ? null : $this->parseDetails($html);
 
             if (! $details) {
@@ -631,6 +637,10 @@ class ScheduleImporter
             }
 
             $game->save();
+        }
+
+        if ($failed !== []) {
+            $errors[] = 'Nie udało się pobrać '.count($failed).' stron meczów (hala i godzina uzupełnią się przy następnym pobraniu).';
         }
     }
 

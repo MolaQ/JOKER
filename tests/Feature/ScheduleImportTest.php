@@ -190,3 +190,11 @@ test('youth tables keep every stage and group', function () {
         ->and(Game::where('team_id', $youngsters->id)->count())->toBe(2)
         ->and(Game::where('team_id', $youngstersTwo->id)->count())->toBe(1);
 });
+
+test('match detail addresses are built next to the source page, whatever the link says', function () {
+    $html = '<table><tr><td><a href="obsady/index.php?mode=4&amp;stage=2&amp;match_id=249">1</a></td><td>2026-10-11</td><td>LOMS Joker Piła</td><td>-</td><td>ASBL</td><td>3:0</td></tr></table>';
+
+    $row = app(ScheduleImporter::class)->parsePage($html, 'https://wzps.poznan.pl/obsady//index.php?mode=12&type=5')['matches']->sole();
+
+    expect($row['detail_url'])->toBe('https://wzps.poznan.pl/obsady/index.php?mode=4&stage=2&match_id=249');
+});

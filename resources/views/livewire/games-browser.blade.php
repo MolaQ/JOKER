@@ -104,7 +104,7 @@
                             <div class="grid grid-cols-7">
                                 @foreach($week as $day)
                                     <div @class([
-                                        'min-h-14 border-b border-zinc-100 p-1 sm:min-h-32 sm:p-2',
+                                        'min-h-14 border-b border-zinc-100 p-1 sm:min-h-20 sm:p-2 lg:min-h-32',
                                         'border-r' => ! $loop->last,
                                         'bg-zinc-50/70' => ! $day['inMonth'],
                                         'bg-sky-club/5' => $day['inMonth'] && $day['games']->isNotEmpty(),
@@ -119,12 +119,12 @@
                                         </p>
 
                                         @if($day['inMonth'] && $day['games']->isNotEmpty())
-                                            {{-- Telefon: kropki (kolor = wynik), dotknięcie przewija do meczu na liście --}}
-                                            <div class="mt-1 flex flex-wrap gap-1 sm:hidden">
+                                            {{-- Telefon i tablet: kropki (kolor = wynik), dotknięcie przewija do meczu na liście --}}
+                                            <div class="mt-1 flex flex-wrap gap-1 lg:hidden">
                                                 @foreach($day['games'] as $game)
                                                     @php $result = $game->ourSetsResult(); @endphp
                                                     <a href="#mecz-{{ $game->id }}" @class([
-                                                        'h-2.5 w-2.5 rounded-full',
+                                                        'h-2.5 w-2.5 rounded-full sm:h-3 sm:w-3',
                                                         'bg-emerald-500' => $game->isFinished() && $result && $result[0] > $result[1],
                                                         'bg-red-500' => $game->isFinished() && $result && $result[0] <= $result[1],
                                                         'bg-sky-club' => ! $game->isFinished(),
@@ -133,7 +133,7 @@
                                             </div>
 
                                             {{-- Komputer: mecze wpisane w kartkę --}}
-                                            <ul class="mt-1.5 hidden space-y-1 sm:block">
+                                            <ul class="mt-1.5 hidden space-y-1 lg:block">
                                                 @foreach($day['games'] as $game)
                                                     @php
                                                         $result = $game->ourSetsResult();
@@ -168,8 +168,8 @@
                     </div>
                 </div>
 
-                {{-- Telefon: szczegóły meczów miesiąca pod kartką --}}
-                <ul class="mt-4 space-y-3 sm:hidden">
+                {{-- Telefon i tablet: szczegóły meczów miesiąca pod kartką --}}
+                <ul class="mt-4 space-y-3 lg:hidden">
                 @foreach($month['games'] as $game)
                     @php
                         $result = $game->ourSetsResult();
