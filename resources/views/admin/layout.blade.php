@@ -26,6 +26,7 @@
             'Klub' => [
                 ['label' => 'Drużyny i sztab', 'route' => 'admin.teams.index', 'icon' => '👥'],
                 ['label' => 'Zawodnicy', 'route' => 'admin.players.index', 'icon' => '🎽'],
+                ['label' => 'Zmiany od zawodników', 'route' => 'admin.player-change-requests.index', 'icon' => '📸', 'badge' => \App\Models\PlayerChangeRequest::pending()->reviewableBy(auth()->user())->count()],
                 ['label' => 'Sponsorzy', 'route' => 'admin.sponsors.index', 'icon' => '🤝'],
                 ['label' => 'Dokumenty', 'route' => 'admin.documents.index', 'icon' => '📄'],
                 ['label' => 'Użytkownicy', 'route' => 'admin.users.index', 'icon' => '🔑'],

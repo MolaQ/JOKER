@@ -26,6 +26,11 @@ class UserManager extends Component
 
     public string $role = 'fan';
 
+    public ?string $birth_date = null;
+
+    /** Czy pokazywać urodziny w kalendarzu meczów (dla sztabu i działaczy, domyślnie nie). */
+    public bool $show_birthday = false;
+
     public string $search = '';
 
     public string $roleFilter = '';
@@ -46,6 +51,8 @@ class UserManager extends Component
             ],
             'password' => $this->editingId ? 'nullable|string|min:8' : 'required|string|min:8',
             'role' => 'required|in:admin,trainer,staff,parent,player,fan,guest',
+            'birth_date' => 'nullable|date|before:today',
+            'show_birthday' => 'boolean',
         ];
     }
 
@@ -76,6 +83,8 @@ class UserManager extends Component
         $this->email = $user->email;
         $this->password = '';
         $this->role = $user->role->value;
+        $this->birth_date = $user->birth_date?->format('Y-m-d');
+        $this->show_birthday = $user->show_birthday;
         $this->flashType = null;
         $this->flashMessage = null;
 
@@ -134,6 +143,8 @@ class UserManager extends Component
         $this->email = '';
         $this->password = '';
         $this->role = 'fan';
+        $this->birth_date = null;
+        $this->show_birthday = false;
         $this->resetErrorBag();
     }
 

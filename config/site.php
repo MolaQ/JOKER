@@ -69,9 +69,9 @@ return [
             'icon' => '🧭',
             'fields' => [
                 'nav_items' => ['type' => 'links', 'label' => 'Pozycje menu', 'help' => 'Kolejność ustawiasz strzałkami.', 'default' => [
+                    ['label' => 'Aktualności', 'url' => '/aktualnosci'],
                     ['label' => 'Mecze', 'url' => '/mecze'],
                     ['label' => 'Tabela', 'url' => '/tabele'],
-                    ['label' => 'Aktualności', 'url' => '/aktualnosci'],
                     ['label' => 'Drużyny', 'url' => '/druzyny'],
                     ['label' => 'Młodzież', 'url' => '/strona/nabor'],
                     ['label' => 'Klub', 'url' => '/strona/o-klubie'],

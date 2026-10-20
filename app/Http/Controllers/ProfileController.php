@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Player;
 use App\Models\ProfileChangeRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,7 +18,14 @@ class ProfileController extends Controller
             ->latest('id')
             ->first();
 
-        return view('profile.edit', compact('user', 'latestRequest'));
+        // Profile zawodnicze, którymi użytkownik może się opiekować (własny albo dzieci).
+        $players = Player::with('team')
+            ->where('user_id', $user->id)
+            ->orWhereHas('guardians', fn ($query) => $query->whereKey($user->id))
+            ->orderBy('last_name')
+            ->get();
+
+        return view('profile.edit', compact('user', 'latestRequest', 'players'));
     }
 
     public function requestChange(Request $request): RedirectResponse

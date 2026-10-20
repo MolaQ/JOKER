@@ -69,6 +69,9 @@ Route::middleware(['auth', 'role:admin,trainer'])->prefix('panel')->name('admin.
         Route::view('/pages', 'admin.pages.index')->name('pages.index');
     });
 
+    // Zdjęcia i dane proponowane przez zawodników i rodziców
+    Route::view('/player-change-requests', 'admin.player-change-requests.index')->name('player-change-requests.index');
+
     // Profile change requests
     Route::get('/profile-change-requests', function () {
         return view('admin.profile-change-requests.index');

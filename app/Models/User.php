@@ -33,6 +33,8 @@ class User extends Authenticatable
         'avatar_path',
         'instagram',
         'additional_info',
+        'birth_date',
+        'show_birthday',
     ];
 
     /**
@@ -56,6 +58,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'birth_date' => 'date',
+            'show_birthday' => 'boolean',
         ];
     }
 
@@ -87,6 +91,14 @@ class User extends Authenticatable
     public function hasAnyRole(array $roles): bool
     {
         return in_array($this->role, $roles);
+    }
+
+    /**
+     * Zawodnicy, których rodzicem (opiekunem) jest użytkownik.
+     */
+    public function children(): BelongsToMany
+    {
+        return $this->belongsToMany(Player::class, 'player_guardian')->withTimestamps();
     }
 
     public function likes(): HasMany

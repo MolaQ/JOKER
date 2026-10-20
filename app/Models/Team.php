@@ -94,7 +94,7 @@ class Team extends Model
 
     public function competitions(): BelongsToMany
     {
-        return $this->belongsToMany(Competition::class, 'competition_team')->withPivot('external_name')->withTimestamps();
+        return $this->belongsToMany(Competition::class, 'competition_team')->withPivot(['external_name', 'display_name', 'display_suffix'])->withTimestamps();
     }
 
     /**

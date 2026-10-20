@@ -185,7 +185,7 @@
                                         <td class="px-6 py-3">
                                             <span class="mr-3 inline-flex h-7 w-7 items-center justify-center rounded-full {{ $ours ? 'bg-sky-club text-white' : 'bg-zinc-100' }} text-xs font-bold">{{ $standing->position }}</span>
                                             @if($standing->isOwnTeam() && $standing->competitor)
-                                                <a href="{{ route('teams.show', $standing->competitor) }}" class="hover:text-sky-club-dark">{{ $standing->competitorName() }}</a>
+                                                <a href="{{ route('teams.show', $standing->competitor) }}" class="hover:text-sky-club-dark"><x-team-label :label="$standing->competitorLabel()" /></a>
                                             @else
                                                 {{ $standing->competitorName() }}
                                             @endif

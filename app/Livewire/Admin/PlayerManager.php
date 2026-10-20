@@ -3,9 +3,12 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Player;
+use App\Models\PlayerAchievement;
 use App\Models\Season;
 use App\Models\Team;
+use App\Models\User;
 use App\PlayerPosition;
+use App\UserRole;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -36,6 +39,19 @@ class PlayerManager extends Component
 
     public ?int $spike_reach = null;
 
+    public ?int $block_reach = null;
+
+    public bool $show_birthday = true;
+
+    /** Konto zawodnika (rola „Zawodnik”) - może proponować zmiany profilu i zdjęcie. */
+    public ?int $user_id = null;
+
+    /** @var array<int, int> Rodzice powiązani z zawodnikiem (mogą proponować zmiany) */
+    public array $guardian_ids = [];
+
+    /** @var array<int, array{season: string, title: string}> Osiągnięcia pokazywane w profilu */
+    public array $achievements = [];
+
     public string $bio = '';
 
     public ?int $team_id = null;
@@ -65,12 +81,20 @@ class PlayerManager extends Component
             'weight' => 'nullable|integer|min:30|max:150',
             'reach' => 'nullable|integer|min:150|max:400',
             'spike_reach' => 'nullable|integer|min:150|max:400',
+            'block_reach' => 'nullable|integer|min:150|max:400',
+            'show_birthday' => 'boolean',
+            'user_id' => 'nullable|exists:users,id',
+            'guardian_ids' => 'array',
+            'guardian_ids.*' => 'exists:users,id',
+            'achievements' => 'array',
+            'achievements.*.season' => 'nullable|string|max:20',
+            'achievements.*.title' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
             'team_id' => 'required|exists:teams,id',
             'extra_team_ids' => 'array',
             'extra_team_ids.*' => 'exists:teams,id',
             'is_active' => 'boolean',
-            'photo' => 'nullable|image|max:2048',
+            'photo' => 'nullable|image|max:4096|dimensions:ratio=4/5',
         ];
     }
 
@@ -110,6 +134,11 @@ class PlayerManager extends Component
         $this->weight = $player->weight;
         $this->reach = $player->reach;
         $this->spike_reach = $player->spike_reach;
+        $this->block_reach = $player->block_reach;
+        $this->show_birthday = $player->show_birthday;
+        $this->user_id = $player->user_id;
+        $this->guardian_ids = $player->guardians()->pluck('users.id')->all();
+        $this->achievements = $player->achievements->map(fn (PlayerAchievement $achievement) => ['season' => (string) $achievement->season, 'title' => $achievement->title])->all();
         $this->bio = (string) $player->bio;
         $this->team_id = $player->team_id;
         $this->is_active = $player->is_active;
@@ -131,7 +160,8 @@ class PlayerManager extends Component
     {
         $validated = $this->validate();
         $extraTeamIds = $validated['extra_team_ids'] ?? [];
-        unset($validated['extra_team_ids']);
+        $guardianIds = $validated['guardian_ids'] ?? [];
+        unset($validated['extra_team_ids'], $validated['guardian_ids'], $validated['achievements'], $validated['photo']);
 
         if ($this->photo) {
             $validated['photo_path'] = $this->photo->store('players', 'public');
@@ -146,6 +176,17 @@ class PlayerManager extends Component
             $player = Player::create($validated);
             $this->flashType = 'success';
             $this->flashMessage = 'Zawodnik został dodany.';
+        }
+
+        $player->guardians()->sync($guardianIds);
+        $player->achievements()->delete();
+
+        foreach (array_values(array_filter($this->achievements, fn (array $row) => trim($row['title'] ?? '') !== '')) as $order => $row) {
+            $player->achievements()->create([
+                'season' => trim($row['season'] ?? '') ?: null,
+                'title' => trim($row['title']),
+                'display_order' => $order,
+            ]);
         }
 
         $currentSeasonId = Season::current()->value('id');
@@ -176,6 +217,17 @@ class PlayerManager extends Component
         $this->closeModal();
     }
 
+    public function addAchievement(): void
+    {
+        $this->achievements[] = ['season' => '', 'title' => ''];
+    }
+
+    public function removeAchievement(int $index): void
+    {
+        unset($this->achievements[$index]);
+        $this->achievements = array_values($this->achievements);
+    }
+
     public function delete(int $id): void
     {
         Player::findOrFail($id)->delete();
@@ -201,6 +253,11 @@ class PlayerManager extends Component
         $this->weight = null;
         $this->reach = null;
         $this->spike_reach = null;
+        $this->block_reach = null;
+        $this->show_birthday = true;
+        $this->user_id = null;
+        $this->guardian_ids = [];
+        $this->achievements = [];
         $this->bio = '';
         $this->team_id = null;
         $this->extra_team_ids = [];
@@ -229,6 +286,8 @@ class PlayerManager extends Component
             'players' => $players,
             'teams' => $teams,
             'positions' => $positions,
+            'playerAccounts' => $this->showModal ? User::where('role', UserRole::Player)->orderBy('name')->get(['id', 'name', 'email']) : collect(),
+            'parentAccounts' => $this->showModal ? User::where('role', UserRole::Parent)->orderBy('name')->get(['id', 'name', 'email']) : collect(),
         ]);
     }
 }

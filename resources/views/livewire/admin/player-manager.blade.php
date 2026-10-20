@@ -170,6 +170,61 @@
                                     <input type="number" wire:model="spike_reach" min="150" max="400" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     @error('spike_reach') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Zasięg w bloku (cm)</label>
+                                    <input type="number" wire:model="block_reach" min="150" max="400" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    @error('block_reach') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                                <div class="flex items-end pb-2">
+                                    <label class="flex items-center text-sm text-gray-700">
+                                        <input type="checkbox" wire:model="show_birthday" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
+                                        Pokazuj urodziny w kalendarzu 🎂
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Konto zawodnika</label>
+                                    <select wire:model="user_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <option value="">— brak —</option>
+                                        @foreach($playerAccounts as $account)
+                                            <option value="{{ $account->id }}">{{ $account->name }} ({{ $account->email }})</option>
+                                        @endforeach
+                                    </select>
+                                    <p class="mt-1 text-xs text-gray-500">Konta z rolą „Zawodnik”. Zawodnik może proponować zmiany profilu i zdjęcie.</p>
+                                    @error('user_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Rodzice</label>
+                                    <div class="mt-1 max-h-28 space-y-1 overflow-y-auto rounded-md border border-gray-200 p-2">
+                                        @forelse($parentAccounts as $account)
+                                            <label class="flex items-center text-sm text-gray-700" wire:key="guardian-{{ $account->id }}">
+                                                <input type="checkbox" wire:model="guardian_ids" value="{{ $account->id }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
+                                                {{ $account->name }}
+                                            </label>
+                                        @empty
+                                            <p class="text-xs text-gray-500">Brak kont z rolą „Rodzic”.</p>
+                                        @endforelse
+                                    </div>
+                                    <p class="mt-1 text-xs text-gray-500">Rodzic może proponować zmiany i zdjęcie dziecka.</p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-sm font-medium text-gray-700">Osiągnięcia</label>
+                                    <button type="button" wire:click="addAchievement" class="text-sm font-semibold text-blue-600 hover:underline">+ Dodaj</button>
+                                </div>
+                                <div class="mt-1 space-y-2">
+                                    @foreach($achievements as $index => $achievement)
+                                        <div class="flex gap-2" wire:key="achievement-{{ $index }}">
+                                            <input type="text" wire:model="achievements.{{ $index }}.season" placeholder="Sezon, np. 2025/26" class="w-32 rounded-md border-gray-300 text-sm">
+                                            <input type="text" wire:model="achievements.{{ $index }}.title" placeholder="np. Mistrzostwo Wielkopolski kadetów" class="min-w-0 flex-1 rounded-md border-gray-300 text-sm">
+                                            <button type="button" wire:click="removeAchievement({{ $index }})" class="px-2 text-gray-400 hover:text-red-600" aria-label="Usuń osiągnięcie">✕</button>
+                                        </div>
+                                    @endforeach
+                                </div>
                             </div>
 
                             <div>
@@ -195,13 +250,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Zdjęcie</label>
-                                @if($existingPhoto && !$photo)
-                                    <img src="{{ Storage::url($existingPhoto) }}" class="h-16 w-16 object-cover rounded-full mb-2" alt="Zdjęcie">
-                                @endif
-                                @if($photo)
-                                    <img src="{{ $photo->temporaryUrl() }}" class="h-16 w-16 object-cover rounded-full mb-2" alt="Podgląd">
-                                @endif
-                                <input type="file" wire:model="photo" accept="image/*" class="mt-1 block w-full text-sm text-gray-700">
+                                <x-photo-cropper model="photo" class="mt-1" :current="$existingPhoto ? Storage::url($existingPhoto) : null" :pending="$photo && ! $errors->has('photo') ? $photo->temporaryUrl() : null" />
                                 @error('photo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 

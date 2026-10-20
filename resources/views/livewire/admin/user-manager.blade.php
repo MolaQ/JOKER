@@ -110,6 +110,20 @@
                                 </select>
                                 @error('role') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Data urodzenia</label>
+                                    <input type="date" wire:model="birth_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    @error('birth_date') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                                <div class="flex items-end pb-2">
+                                    <label class="flex items-center text-sm text-gray-700">
+                                        <input type="checkbox" wire:model="show_birthday" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
+                                        Pokazuj urodziny w kalendarzu 🎂
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3 rounded-b-lg">

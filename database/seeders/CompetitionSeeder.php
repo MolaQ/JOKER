@@ -77,7 +77,7 @@ class CompetitionSeeder extends Seeder
 
             foreach ($data['teams'] as $slug => $externalName) {
                 if ($team = $teams->get($slug)) {
-                    $competition->teams()->attach($team->id, ['external_name' => $externalName]);
+                    $competition->teams()->attach($team->id, ['external_name' => $externalName] + Competition::defaultTeamLabel($team->name, $team->slug, $externalName));
                 }
             }
         }

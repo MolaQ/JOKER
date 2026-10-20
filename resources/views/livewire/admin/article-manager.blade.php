@@ -140,6 +140,32 @@
                                 @error('featured_image') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Dotyczy meczów</label>
+                                <p class="text-xs text-gray-500">Kliknięcie meczu w kalendarzu otworzy ten artykuł (gdy jest kilka - najnowszy).</p>
+                                @if($linkedGames->isNotEmpty())
+                                    <div class="mt-2 flex flex-wrap gap-2">
+                                        @foreach($linkedGames as $linkedGame)
+                                            <span wire:key="linked-game-{{ $linkedGame->id }}" class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-800 ring-1 ring-blue-200">
+                                                {{ \App\Livewire\Admin\ArticleManager::gameOptionLabel($linkedGame) }}
+                                                <button type="button" wire:click="removeGame({{ $linkedGame->id }})" class="ml-1 text-blue-500 hover:text-red-600" aria-label="Odepnij mecz">✕</button>
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
+                                <input type="search" wire:model.live.debounce.250ms="gameSearch" placeholder="Szukaj meczu: rywal, drużyna, data (np. 12.10)…" class="mt-2 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                @if($gameSuggestions->isNotEmpty())
+                                    <ul class="mt-1 max-h-56 divide-y divide-gray-100 overflow-y-auto rounded-md border border-gray-200 bg-white text-sm">
+                                        @foreach($gameSuggestions as $suggestion)
+                                            <li wire:key="suggest-game-{{ $suggestion->id }}">
+                                                <button type="button" wire:click="addGame({{ $suggestion->id }})" class="block w-full px-3 py-2 text-left hover:bg-blue-50">+ {{ \App\Livewire\Admin\ArticleManager::gameOptionLabel($suggestion) }}</button>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                                @error('gameIds.*') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
                             <div class="flex items-center space-x-6">
                                 <div class="flex items-center">
                                     <input type="checkbox" wire:model="is_featured" id="is_featured" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">

@@ -1,5 +1,8 @@
 import { initCountdowns } from './countdown';
+import { registerPhotoCropper } from './photo-cropper';
 import { initSearch } from './search';
+
+registerPhotoCropper();
 
 initSearch();
 

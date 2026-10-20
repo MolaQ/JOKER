@@ -7,6 +7,7 @@ use Database\Factories\GameFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Game extends Model
@@ -102,6 +103,36 @@ class Game extends Model
         return $this->is_home
             ? [$this->home_score, $this->away_score]
             : [$this->away_score, $this->home_score];
+    }
+
+    /**
+     * Podpis naszej drużyny ustawiony w rozgrywkach meczu (nazwa + dopisek).
+     *
+     * @return array{name: string, suffix: ?string}
+     */
+    public function ourLabel(): array
+    {
+        if ($this->competition) {
+            return $this->competition->teamLabel($this->team);
+        }
+
+        return ['name' => $this->team?->name ?? 'Joker Piła', 'suffix' => null];
+    }
+
+    public function articles(): BelongsToMany
+    {
+        return $this->belongsToMany(Article::class);
+    }
+
+    /**
+     * Najnowszy opublikowany artykuł o meczu (wymaga załadowanej relacji articles).
+     */
+    public function latestArticle(): ?Article
+    {
+        return $this->articles
+            ->filter(fn (Article $article): bool => $article->isPublished())
+            ->sortByDesc('published_at')
+            ->first();
     }
 
     public function comments(): HasMany

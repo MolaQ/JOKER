@@ -10,6 +10,9 @@
             'text-zinc-300 hover:bg-white/10 hover:text-white' => ! request()->routeIs($activePattern),
         ])>
             <span aria-hidden="true">{{ $item['icon'] }}</span> {{ $item['label'] }}
+            @if(! empty($item['badge']))
+                <span class="ml-auto rounded-full bg-amber-400 px-2 py-0.5 text-xs font-bold text-zinc-900" title="Oczekuje na zatwierdzenie">{{ $item['badge'] }}</span>
+            @endif
         </a>
     @endforeach
 @endforeach

@@ -54,7 +54,7 @@
                                     {{ $group['name'] ?: 'Tabela' }}
                                     @if($group['ours'])
                                         <span class="ml-2 rounded-full bg-sky-club/15 px-2 py-0.5 align-middle font-sans text-xs font-semibold tracking-normal text-sky-club-dark normal-case">
-                                            gra {{ $group['rows']->filter(fn ($row) => $row->isOwnTeam())->map(fn ($row) => $row->competitorName())->join(', ', ' i ') }}
+                                            gra {{ $group['rows']->filter(fn ($row) => $row->isOwnTeam())->map(fn ($row) => $row->competitorLabel()['name'].($row->competitorLabel()['suffix'] ? ' '.$row->competitorLabel()['suffix'] : ''))->join(', ', ' i ') }}
                                         </span>
                                     @endif
                                 </span>
@@ -85,8 +85,8 @@
                                             </td>
                                             <td @class(['sticky left-10 px-2 py-3 whitespace-nowrap', 'bg-[color-mix(in_oklab,var(--color-sky-club)_10%,white)]' => $isOurs, 'bg-white' => ! $isOurs])>
                                                 @if($isOurs && $standing->competitor)
-                                                    <a href="{{ route('teams.show', $standing->competitor) }}" class="text-zinc-900 hover:text-sky-club-dark">{{ $standing->competitorName() }}</a>
-                                                    @if($standing->source_name)
+                                                    <a href="{{ route('teams.show', $standing->competitor) }}" class="text-zinc-900 hover:text-sky-club-dark"><x-team-label :label="$standing->competitorLabel()" /></a>
+                                                    @if($standing->source_name && ! $standing->competition?->teams->firstWhere('id', $standing->competitor_id)?->pivot?->display_name)
                                                         <span class="ml-1 text-xs font-normal text-zinc-500">jako {{ $standing->source_name }}</span>
                                                     @endif
                                                 @else
