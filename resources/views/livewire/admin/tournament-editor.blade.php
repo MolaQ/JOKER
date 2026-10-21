@@ -74,6 +74,10 @@
                     @endforeach
                 </div>
                 @error('scoring.*') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                <div class="mt-4 max-w-md">
+                    @include('livewire.admin.tournament-criteria', ['target' => 'tournament', 'criteria' => $scoring['criteria'] ?? []])
+                </div>
+                <p class="mt-2 text-xs text-gray-500">„Mecze bezpośrednie” liczą małą tabelę tylko z meczów między drużynami równymi na wcześniejszych kryteriach. Ostateczną kolejność możesz też ustawić ręcznie strzałkami przy tabeli w zakładce „Grupy”.</p>
             </div>
 
             <div>
@@ -275,8 +279,35 @@
                                         </label>
                                     @endforeach
                                 </div>
+                                <div class="mt-3">
+                                    @include('livewire.admin.tournament-criteria', ['target' => (string) $group->id, 'criteria' => $groupScoring[$group->id]['criteria'] ?? []])
+                                </div>
                             @endif
                         </div>
+
+                        @php $table = $groupBracket->groupTable($group); @endphp
+                        @if($table->isNotEmpty())
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <p class="text-xs font-semibold text-gray-500 uppercase">Tabela {{ $table->first()['manual'] ? '· kolejność ustawiona ręcznie' : '' }}</p>
+                                    @if($table->first()['manual'])
+                                        <button type="button" wire:click="resetTableOrder({{ $group->id }})" class="ml-auto text-xs font-semibold text-blue-600 hover:text-blue-800">Przywróć kolejność według kryteriów</button>
+                                    @endif
+                                </div>
+                                <ol class="mt-1 divide-y divide-gray-100 rounded-md border border-gray-200 text-sm">
+                                    @foreach($table as $row)
+                                        <li class="flex items-center gap-2 px-2 py-1" wire:key="row-{{ $group->id }}-{{ $row['participant']->id }}">
+                                            <span class="w-5 font-bold text-gray-400">{{ $row['position'] }}.</span>
+                                            <span class="flex-1 truncate">{{ $row['participant']->name() }}</span>
+                                            <span class="text-xs text-gray-500 tabular-nums">{{ $row['points'] }} pkt · {{ $row['sets_won'] }}:{{ $row['sets_lost'] }}</span>
+                                            <button type="button" wire:click="moveTableRow({{ $group->id }}, {{ $row['participant']->id }}, -1)" @disabled($loop->first) class="px-1 text-gray-500 hover:text-gray-900 disabled:opacity-30" title="W górę">↑</button>
+                                            <button type="button" wire:click="moveTableRow({{ $group->id }}, {{ $row['participant']->id }}, 1)" @disabled($loop->last) class="px-1 text-gray-500 hover:text-gray-900 disabled:opacity-30" title="W dół">↓</button>
+                                        </li>
+                                    @endforeach
+                                </ol>
+                                <p class="mt-1 text-xs text-gray-500">Strzałki ustawiają ostateczną kolejność ręcznie, np. po rozpisaniu małej tabeli. Kolejne mecze i klasyfikacja biorą ją pod uwagę.</p>
+                            </div>
+                        @endif
 
                         <div class="flex items-center gap-3">
                             <p class="text-xs text-gray-500">Meczów w grupie: {{ $category->matches->where('tournament_group_id', $group->id)->count() }}</p>

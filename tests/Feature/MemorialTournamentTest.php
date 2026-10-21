@@ -375,3 +375,52 @@ test('group points follow the tournament scoring, and a group can override it', 
     $editor->set("groupScoring.{$group->id}.custom", false);
     expect($group->fresh()->scoring)->toBeNull()->and($points()->all())->toMatchArray([$joker->id => 3, $kalisz->id => 0]);
 });
+
+test('teams level on points are ordered by the chosen criteria, including the head-to-head mini table', function () {
+    [$joker, $kalisz, $poznan] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $group = $joker->group;
+    $pila = $category->participants()->create(['tournament_group_id' => $group->id, 'competitor_type' => 'rival_team', 'competitor_id' => RivalTeam::create(['full_name' => 'MKS Piła'])->id]);
+    $play = fn ($home, $away, int $homeSets, int $awaySets) => $category->matches()->create(['stage' => 'group', 'tournament_group_id' => $group->id, 'home_participant_id' => $home->id, 'away_participant_id' => $away->id, 'home_sets' => $homeSets, 'away_sets' => $awaySets]);
+    // Joker i Kalisz po 4 pkt: Kalisz ma lepszy stosunek setów, ale Joker wygrał mecz bezpośredni.
+    $play($joker, $kalisz, 2, 1);
+    $play($joker, $poznan, 0, 2);
+    $play($joker, $pila, 2, 1);
+    $play($kalisz, $poznan, 2, 0);
+
+    $order = fn (array $criteria, array $manual = []) => TournamentTable::for($group->participants()->get(), $category->matches()->get(), ['criteria' => $criteria], $manual)
+        ->map(fn (array $row) => $row['participant']->id)->all();
+
+    expect($order(['points', 'sets']))->toBe([$kalisz->id, $joker->id, $poznan->id, $pila->id])
+        ->and($order(['points', 'h2h', 'sets']))->toBe([$joker->id, $kalisz->id, $poznan->id, $pila->id])
+        ->and($order(['points', 'sets'], [$pila->id]))->toBe([$pila->id, $kalisz->id, $joker->id, $poznan->id]);
+});
+
+test('organizer sets the criteria order and moves teams by hand, and the matches tab explains it', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz, $poznan] = memorialGroup($this->tournament, $this->team);
+    $group = $joker->group;
+    $category = $joker->category;
+    $category->matches()->create(['stage' => 'group', 'tournament_group_id' => $group->id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id, 'home_sets' => 2, 'away_sets' => 0, 'starts_at' => '2026-11-14 10:00']);
+
+    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])
+        ->call('toggleCriterion', 'tournament', 'h2h')
+        ->call('moveCriterion', 'tournament', 'h2h', -1)
+        ->call('toggleCriterion', 'tournament', 'wins');
+    expect($this->tournament->fresh()->scoring['criteria'])->toBe(['points', 'sets', 'h2h', 'small']);
+
+    $table = fn () => TournamentBracket::for($category->fresh(['groups.participants', 'participants', 'matches', 'tournament']))->groupTable($group->fresh())
+        ->map(fn (array $row) => $row['participant']->id)->all();
+    expect($table()[0])->toBe($joker->id);
+
+    $editor->set('section', 'grupy')->set('categoryId', $category->id)->call('moveTableRow', $group->id, $kalisz->id, -1);
+    expect($table()[0])->toBe($kalisz->id)->and($group->fresh()->manual_order)->toHaveCount(3);
+
+    Livewire::withQueryParams(['zakladka' => 'mecze'])->test(TournamentPage::class, ['tournament' => $this->tournament->fresh()])
+        ->assertSeeText('Zasady tabel grup')
+        ->assertSeeText('Przy równej liczbie punktów: stosunek setów, mecze bezpośrednie (mała tabela), stosunek małych punktów.')
+        ->assertSeeText('Kolejność ustalona przez organizatora');
+
+    $editor->call('resetTableOrder', $group->id);
+    expect($group->fresh()->manual_order)->toBeNull()->and($table()[0])->toBe($joker->id);
+});

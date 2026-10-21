@@ -297,6 +297,7 @@ class TournamentBracket
             $this->members($group)->pluck('participant')->filter()->unique('id')->values(),
             $this->matches->where('tournament_group_id', $group->id),
             TournamentTable::scoring($group, $this->category->tournament),
+            $group->manual_order ?? [],
         );
     }
 

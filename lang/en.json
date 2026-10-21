@@ -421,5 +421,14 @@
     "porażka :points pkt": "loss :points pts",
     "plus :points pkt za każdy wygrany set": "plus :points pts for every set won",
     "Punktacja": "Scoring",
-    "Kolejność: punkty, zwycięstwa, stosunek setów, stosunek małych punktów.": "Order: points, wins, set ratio, point ratio."
+    "Kolejność: punkty, zwycięstwa, stosunek setów, stosunek małych punktów.": "Order: points, wins, set ratio, point ratio.",
+    "Zasady tabel grup": "Group table rules",
+    "Przy równej liczbie punktów": "When level on points",
+    "Kolejność w tabeli": "Table order",
+    "Kolejność ustalona przez organizatora (np. na podstawie małej tabeli)": "Order set by the organiser (e.g. from a head-to-head mini table)",
+    "Punkty": "Points",
+    "Liczba zwycięstw": "Number of wins",
+    "Stosunek setów": "Set ratio",
+    "Stosunek małych punktów": "Point ratio",
+    "Mecze bezpośrednie (mała tabela)": "Head-to-head (mini table)"
 }

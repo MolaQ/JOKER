@@ -114,20 +114,13 @@
                     </div>
                 @endforeach
             </div>
-            @php $scoringTexts = $current->groups->mapWithKeys(fn ($group) => [$group->name => \App\Support\TournamentTable::describe(\App\Support\TournamentTable::scoring($group, $tournament))]); @endphp
-            <p class="mt-4 text-xs text-zinc-500">
-                @if($scoringTexts->unique()->count() === 1)
-                    {{ __('Punktacja') }}: {{ $scoringTexts->first() }}.
-                @else
-                    @foreach($scoringTexts as $groupName => $text){{ __('Punktacja') }} ({{ $groupName }}): {{ $text }}.<br>@endforeach
-                @endif
-                {{ __('Kolejność: punkty, zwycięstwa, stosunek setów, stosunek małych punktów.') }}
-            </p>
+            <x-tournament-scoring-note :groups="$current->groups" :tournament="$tournament" class="mt-6" />
         @endif
 
         {{-- MECZE: terminarz dniami i godzinami, z filtrem drużyny --}}
         @if($currentTab === 'mecze' && $current)
             <x-tournament-schedule :matches="$current->matches" :bracket="$bracket" />
+            <x-tournament-scoring-note :groups="$current->groups" :tournament="$tournament" class="mt-10" />
         @endif
 
         {{-- DRABINKA: grupy z postępem, mecze z numerami w kolumnach (na telefonie jedna pod drugą), podium --}}

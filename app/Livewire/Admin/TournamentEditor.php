@@ -96,7 +96,7 @@ class TournamentEditor extends Component
         $this->series = (string) $tournament->series;
         $this->rules = (string) $tournament->rules;
         $this->guest_info = (string) $tournament->guest_info;
-        $this->scoring = collect(TournamentTable::scoring(tournament: $tournament))->map(fn (int $points) => (string) $points)->all();
+        $this->scoring = self::scoringState(TournamentTable::scoring(tournament: $tournament));
         $this->categoryId ??= $tournament->categories()->value('id');
         $this->resetMatchForm();
         $this->loadCategoryState();
@@ -161,24 +161,127 @@ class TournamentEditor extends Component
 
     public function updatedScoring(): void
     {
-        $this->validate(['scoring.*' => 'required|integer|min:0|max:20']);
-        $this->tournament->update(['scoring' => collect($this->scoring)->only(array_keys(TournamentTable::DEFAULT_SCORING))->map(fn ($points) => (int) $points)->all()]);
-        foreach ($this->tournament->categories as $category) {
-            TournamentBracket::sync($category);
-        }
-        $this->loadCategoryState();
-        $this->toast('Zapisano punktację turnieju.');
+        $this->validate(collect(TournamentTable::DEFAULT_SCORING)->mapWithKeys(fn ($default, string $field) => ["scoring.{$field}" => 'required|integer|min:0|max:20'])->all());
+        $this->tournament->update(['scoring' => self::scoringFromState($this->scoring)]);
+        $this->afterScoringChange('Zapisano punktację turnieju.');
     }
 
     public function updatedGroupScoring(mixed $value, string $key): void
     {
-        $groupId = (int) explode('.', $key)[0];
-        $row = $this->groupScoring[$groupId] ?? [];
-        $points = collect(TournamentTable::DEFAULT_SCORING)->map(fn (int $default, string $field) => is_numeric($row[$field] ?? null) ? max(0, min(20, (int) $row[$field])) : $default)->all();
+        $this->saveGroupScoring((int) explode('.', $key)[0]);
+    }
 
-        $this->category()->groups()->whereKey($groupId)->first()?->update(['scoring' => ! empty($row['custom']) ? $points : null]);
+    /**
+     * Kryteria kolejności: „tournament” albo id grupy z własną punktacją; włącz/wyłącz albo przesuń w górę/dół.
+     */
+    public function toggleCriterion(string $target, string $criterion): void
+    {
+        $criteria = $this->criteriaFor($target);
+        $criteria = in_array($criterion, $criteria, true) ? array_values(array_diff($criteria, [$criterion])) : [...$criteria, $criterion];
+        $this->storeCriteria($target, $criteria ?: TournamentTable::DEFAULT_CRITERIA);
+    }
+
+    public function moveCriterion(string $target, string $criterion, int $direction): void
+    {
+        $criteria = $this->criteriaFor($target);
+        $index = array_search($criterion, $criteria, true);
+        $swap = $index === false ? null : $index + $direction;
+
+        if ($swap !== null && isset($criteria[$swap])) {
+            [$criteria[$index], $criteria[$swap]] = [$criteria[$swap], $criteria[$index]];
+            $this->storeCriteria($target, $criteria);
+        }
+    }
+
+    /**
+     * Ręczna kolejność w tabeli grupy (np. po rozpisaniu małej tabeli): przesuwa drużynę o jedno miejsce.
+     */
+    public function moveTableRow(int $groupId, int $participantId, int $direction): void
+    {
+        $category = $this->category()->load(['groups.participants', 'participants', 'matches.group', 'tournament']);
+        $group = $category->groups->firstWhere('id', $groupId) ?? abort(404);
+        $order = TournamentBracket::for($category)->groupTable($group)->map(fn (array $row) => $row['participant']->id)->values()->all();
+        $index = array_search($participantId, $order, true);
+        $swap = $index === false ? null : $index + $direction;
+
+        if ($swap === null || ! isset($order[$swap])) {
+            return;
+        }
+
+        [$order[$index], $order[$swap]] = [$order[$swap], $order[$index]];
+        $group->update(['manual_order' => $order]);
         $this->syncBracket();
-        $this->toast('Zapisano punktację grupy.');
+        $this->toast('Ustawiono ręczną kolejność w '.$group->name.'.');
+    }
+
+    public function resetTableOrder(int $groupId): void
+    {
+        $this->category()->groups()->whereKey($groupId)->update(['manual_order' => null]);
+        $this->syncBracket();
+        $this->toast('Przywrócono kolejność według kryteriów.');
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function criteriaFor(string $target): array
+    {
+        return array_values($target === 'tournament' ? ($this->scoring['criteria'] ?? []) : ($this->groupScoring[(int) $target]['criteria'] ?? []));
+    }
+
+    /**
+     * @param  list<string>  $criteria
+     */
+    private function storeCriteria(string $target, array $criteria): void
+    {
+        $criteria = array_values(array_intersect($criteria, array_keys(TournamentTable::CRITERIA)));
+
+        if ($target === 'tournament') {
+            $this->scoring['criteria'] = $criteria;
+            $this->updatedScoring();
+
+            return;
+        }
+
+        $this->groupScoring[(int) $target]['criteria'] = $criteria;
+        $this->saveGroupScoring((int) $target);
+    }
+
+    private function saveGroupScoring(int $groupId): void
+    {
+        $row = $this->groupScoring[$groupId] ?? [];
+        $this->category()->groups()->whereKey($groupId)->first()?->update(['scoring' => ! empty($row['custom']) ? self::scoringFromState($row) : null]);
+        $this->afterScoringChange('Zapisano punktację grupy.');
+    }
+
+    private function afterScoringChange(string $message): void
+    {
+        foreach ($this->tournament->categories as $category) {
+            TournamentBracket::sync($category);
+        }
+
+        $this->loadCategoryState();
+        $this->toast($message);
+    }
+
+    /**
+     * @param  array<string, mixed>  $scoring
+     * @return array<string, mixed>
+     */
+    private static function scoringState(array $scoring): array
+    {
+        return collect($scoring)->except('criteria')->map(fn ($points) => (string) $points)->all() + ['criteria' => $scoring['criteria'] ?? TournamentTable::DEFAULT_CRITERIA];
+    }
+
+    /**
+     * @param  array<string, mixed>  $state
+     * @return array<string, mixed>
+     */
+    private static function scoringFromState(array $state): array
+    {
+        return collect(TournamentTable::DEFAULT_SCORING)
+            ->map(fn (int $default, string $field) => is_numeric($state[$field] ?? null) ? max(0, min(20, (int) $state[$field])) : $default)
+            ->all() + ['criteria' => array_values(array_intersect((array) ($state['criteria'] ?? TournamentTable::DEFAULT_CRITERIA), array_keys(TournamentTable::CRITERIA)))];
     }
 
     public function updatedCategoryNames(string $value, string $id): void
@@ -635,8 +738,8 @@ class TournamentEditor extends Component
         $groups = $category?->groups()->get() ?? collect();
         $this->groupNames = $groups->pluck('name', 'id')->all();
         $this->groupSlots = $groups->mapWithKeys(fn ($group) => [$group->id => $group->slots ?? []])->all();
-        $tournamentScoring = TournamentTable::scoring(tournament: $this->tournament);
-        $this->groupScoring = $groups->mapWithKeys(fn ($group) => [$group->id => ['custom' => $group->scoring !== null] + collect($group->scoring ?: $tournamentScoring)->map(fn ($points) => (string) $points)->all()])->all();
+        $this->scoring = self::scoringState(TournamentTable::scoring(tournament: $this->tournament->fresh()));
+        $this->groupScoring = $groups->mapWithKeys(fn ($group) => [$group->id => ['custom' => $group->scoring !== null] + self::scoringState(TournamentTable::scoring($group, $this->tournament))])->all();
         $this->groupPlaces = $groups->mapWithKeys(fn ($group) => [$group->id => collect($group->final_places ?? [])->map(fn ($place) => (string) $place)->all()])->all();
 
         $this->results = $category?->matches->mapWithKeys(fn (TournamentMatch $match) => [$match->id => [

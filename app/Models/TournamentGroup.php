@@ -16,6 +16,7 @@ class TournamentGroup extends Model
         'slots',
         'final_places',
         'scoring',
+        'manual_order',
         'display_order',
     ];
 
@@ -23,6 +24,7 @@ class TournamentGroup extends Model
     {
         return [
             'scoring' => 'array',
+            'manual_order' => 'array',
             'slots' => 'array',
             'final_places' => 'array',
         ];
@@ -50,6 +52,6 @@ class TournamentGroup extends Model
      */
     public function table(): Collection
     {
-        return TournamentTable::for($this->participants, $this->matches, TournamentTable::scoring($this));
+        return TournamentTable::for($this->participants, $this->matches, TournamentTable::scoring($this), $this->manual_order ?? []);
     }
 }
