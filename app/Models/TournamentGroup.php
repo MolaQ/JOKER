@@ -15,12 +15,14 @@ class TournamentGroup extends Model
         'name',
         'slots',
         'final_places',
+        'scoring',
         'display_order',
     ];
 
     protected function casts(): array
     {
         return [
+            'scoring' => 'array',
             'slots' => 'array',
             'final_places' => 'array',
         ];
@@ -48,6 +50,6 @@ class TournamentGroup extends Model
      */
     public function table(): Collection
     {
-        return TournamentTable::for($this->participants, $this->matches);
+        return TournamentTable::for($this->participants, $this->matches, TournamentTable::scoring($this));
     }
 }

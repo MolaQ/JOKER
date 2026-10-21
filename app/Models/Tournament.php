@@ -35,6 +35,7 @@ class Tournament extends Model
         'slug',
         'series',
         'image_path',
+        'scoring',
         'rules',
         'guest_info',
         'has_page',
@@ -46,6 +47,7 @@ class Tournament extends Model
     protected function casts(): array
     {
         return [
+            'scoring' => 'array',
             'start_date' => 'date',
             'end_date' => 'date',
             'is_organizer' => 'boolean',

@@ -10,6 +10,7 @@ use App\Models\TournamentCategory;
 use App\Models\TournamentMatch;
 use App\Models\TournamentParticipant;
 use App\Support\TournamentBracket;
+use App\Support\TournamentTable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Url;
@@ -82,6 +83,12 @@ class TournamentEditor extends Component
     /** @var array<int, array<int, string>> Reguły grup: miejsce w tabeli → miejsce w klasyfikacji. */
     public array $groupPlaces = [];
 
+    /** @var array<string, string> Domyślna punktacja meczów grupowych w turnieju. */
+    public array $scoring = [];
+
+    /** @var array<int, array<string, mixed>> Własna punktacja grupy („custom” włącza ją, inaczej obowiązuje turniejowa). */
+    public array $groupScoring = [];
+
     public function mount(Tournament $tournament): void
     {
         $this->tournament = $tournament;
@@ -89,6 +96,7 @@ class TournamentEditor extends Component
         $this->series = (string) $tournament->series;
         $this->rules = (string) $tournament->rules;
         $this->guest_info = (string) $tournament->guest_info;
+        $this->scoring = collect(TournamentTable::scoring(tournament: $tournament))->map(fn (int $points) => (string) $points)->all();
         $this->categoryId ??= $tournament->categories()->value('id');
         $this->resetMatchForm();
         $this->loadCategoryState();
@@ -149,6 +157,28 @@ class TournamentEditor extends Component
         $this->tournament->categories()->whereKey($id)->delete();
         $this->categoryId = $this->tournament->categories()->value('id');
         $this->loadCategoryState();
+    }
+
+    public function updatedScoring(): void
+    {
+        $this->validate(['scoring.*' => 'required|integer|min:0|max:20']);
+        $this->tournament->update(['scoring' => collect($this->scoring)->only(array_keys(TournamentTable::DEFAULT_SCORING))->map(fn ($points) => (int) $points)->all()]);
+        foreach ($this->tournament->categories as $category) {
+            TournamentBracket::sync($category);
+        }
+        $this->loadCategoryState();
+        $this->toast('Zapisano punktację turnieju.');
+    }
+
+    public function updatedGroupScoring(mixed $value, string $key): void
+    {
+        $groupId = (int) explode('.', $key)[0];
+        $row = $this->groupScoring[$groupId] ?? [];
+        $points = collect(TournamentTable::DEFAULT_SCORING)->map(fn (int $default, string $field) => is_numeric($row[$field] ?? null) ? max(0, min(20, (int) $row[$field])) : $default)->all();
+
+        $this->category()->groups()->whereKey($groupId)->first()?->update(['scoring' => ! empty($row['custom']) ? $points : null]);
+        $this->syncBracket();
+        $this->toast('Zapisano punktację grupy.');
     }
 
     public function updatedCategoryNames(string $value, string $id): void
@@ -605,6 +635,8 @@ class TournamentEditor extends Component
         $groups = $category?->groups()->get() ?? collect();
         $this->groupNames = $groups->pluck('name', 'id')->all();
         $this->groupSlots = $groups->mapWithKeys(fn ($group) => [$group->id => $group->slots ?? []])->all();
+        $tournamentScoring = TournamentTable::scoring(tournament: $this->tournament);
+        $this->groupScoring = $groups->mapWithKeys(fn ($group) => [$group->id => ['custom' => $group->scoring !== null] + collect($group->scoring ?: $tournamentScoring)->map(fn ($points) => (string) $points)->all()])->all();
         $this->groupPlaces = $groups->mapWithKeys(fn ($group) => [$group->id => collect($group->final_places ?? [])->map(fn ($place) => (string) $place)->all()])->all();
 
         $this->results = $category?->matches->mapWithKeys(fn (TournamentMatch $match) => [$match->id => [

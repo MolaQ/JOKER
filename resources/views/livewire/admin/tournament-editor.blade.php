@@ -62,6 +62,20 @@
                 @error('image') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
 
+            <div class="rounded-lg border border-gray-200 p-4">
+                @php $scoringFields = ['win' => 'Wygrana', 'win_tiebreak' => 'Wygrana w tie-breaku', 'loss_tiebreak' => 'Porażka w tie-breaku', 'loss' => 'Porażka', 'per_set' => 'Za każdy wygrany set']; @endphp
+                <p class="text-sm font-semibold text-gray-900">Punktacja meczów grupowych (domyślna dla wszystkich grup)</p>
+                <p class="text-xs text-gray-500">Tie-break to mecz rozstrzygnięty w ostatnim secie (2:1, 3:2). Grupa może mieć własną punktację w zakładce „Grupy”.</p>
+                <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
+                    @foreach($scoringFields as $field => $fieldName)
+                        <label class="text-sm text-gray-700">{{ $fieldName }}
+                            <input type="number" min="0" max="20" wire:model.blur="scoring.{{ $field }}" class="{{ $input }} mt-1">
+                        </label>
+                    @endforeach
+                </div>
+                @error('scoring.*') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+            </div>
+
             <div>
                 <label class="{{ $label }}">Zasady i regulamin</label>
                 <x-rich-text-editor model="rules" save-on-blur placeholder="System rozgrywek, punktacja, czas rozgrzewki, piłki..." height="min-h-[180px]" />
@@ -246,6 +260,23 @@
                                 <p class="mt-1 text-xs text-gray-500">Np. w grupie finałowej 1 → 1, 2 → 2… Puste pole = to miejsce nie trafia do klasyfikacji (rozstrzygają dalsze mecze).</p>
                             </div>
                         @endif
+
+                        <div>
+                            @php $scoringFields = ['win' => 'Wygrana', 'win_tiebreak' => 'Wygrana w tie-breaku', 'loss_tiebreak' => 'Porażka w tie-breaku', 'loss' => 'Porażka', 'per_set' => 'Za każdy wygrany set']; @endphp
+                            <label class="flex items-center gap-2 text-sm text-gray-700">
+                                <input type="checkbox" wire:model.live="groupScoring.{{ $group->id }}.custom" class="rounded border-gray-300 text-blue-600">
+                                Własna punktacja grupy <span class="text-xs text-gray-500">(inaczej obowiązuje punktacja turnieju)</span>
+                            </label>
+                            @if(! empty($groupScoring[$group->id]['custom']))
+                                <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                                    @foreach($scoringFields as $field => $fieldName)
+                                        <label class="text-xs text-gray-600">{{ $fieldName }}
+                                            <input type="number" min="0" max="20" wire:model.blur="groupScoring.{{ $group->id }}.{{ $field }}" class="{{ $input }} mt-1">
+                                        </label>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
 
                         <div class="flex items-center gap-3">
                             <p class="text-xs text-gray-500">Meczów w grupie: {{ $category->matches->where('tournament_group_id', $group->id)->count() }}</p>

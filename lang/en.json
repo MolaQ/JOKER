@@ -414,5 +414,12 @@
     "Godzina do ustalenia": "Time to be confirmed",
     "Mecz #:number": "Match #:number",
     "Na żywo": "Live",
-    "Terminarz meczów pojawi się wkrótce.": "The match schedule will be available soon."
+    "Terminarz meczów pojawi się wkrótce.": "The match schedule will be available soon.",
+    "wygrana :points pkt": "win :points pts",
+    "wygrana w tie-breaku :points pkt": "tie-break win :points pts",
+    "porażka w tie-breaku :points pkt": "tie-break loss :points pts",
+    "porażka :points pkt": "loss :points pts",
+    "plus :points pkt za każdy wygrany set": "plus :points pts for every set won",
+    "Punktacja": "Scoring",
+    "Kolejność: punkty, zwycięstwa, stosunek setów, stosunek małych punktów.": "Order: points, wins, set ratio, point ratio."
 }

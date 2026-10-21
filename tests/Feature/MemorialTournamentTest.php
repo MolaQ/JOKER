@@ -9,6 +9,7 @@ use App\Models\Tournament;
 use App\Models\TournamentMatch;
 use App\Models\TournamentParticipant;
 use App\Models\User;
+use App\Support\TournamentBracket;
 use App\Support\TournamentTable;
 use Livewire\Livewire;
 
@@ -346,4 +347,31 @@ test('a final group is built from group places, autosaves and its table decides 
 
     Livewire::withQueryParams(['zakladka' => 'klasyfikacja'])->test(TournamentPage::class, ['tournament' => $this->tournament])
         ->assertSeeInOrder(['Sparta Złotów', '🏆', 'LOMS Joker Piła']);
+});
+
+test('group points follow the tournament scoring, and a group can override it', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz, $poznan] = memorialGroup($this->tournament, $this->team);
+    $group = $joker->group;
+    $category = $joker->category;
+    $category->matches()->create(['stage' => 'group', 'tournament_group_id' => $group->id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id, 'home_sets' => 2, 'away_sets' => 1, 'sets_score' => [[25, 20], [20, 25], [15, 10]]]);
+
+    $points = fn () => TournamentBracket::for($category->fresh(['groups.participants', 'participants', 'matches', 'tournament']))->groupTable($group->fresh())->mapWithKeys(fn (array $row) => [$row['participant']->id => $row['points']]);
+    expect($points()->all())->toMatchArray([$joker->id => 2, $kalisz->id => 1]);
+
+    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])
+        ->set('scoring.win_tiebreak', '3')->set('scoring.loss_tiebreak', '0')->assertHasNoErrors();
+    expect($this->tournament->fresh()->scoring)->toMatchArray(['win' => 3, 'win_tiebreak' => 3, 'loss_tiebreak' => 0])
+        ->and($points()->all())->toMatchArray([$joker->id => 3, $kalisz->id => 0]);
+
+    $editor->set('section', 'grupy')
+        ->set("groupScoring.{$group->id}.custom", true)
+        ->set("groupScoring.{$group->id}.per_set", '1');
+    expect($points()->all())->toMatchArray([$joker->id => 5, $kalisz->id => 1]);
+
+    Livewire::withQueryParams(['zakladka' => 'grupy'])->test(TournamentPage::class, ['tournament' => $this->tournament])
+        ->assertSeeText('plus 1 pkt za każdy wygrany set');
+
+    $editor->set("groupScoring.{$group->id}.custom", false);
+    expect($group->fresh()->scoring)->toBeNull()->and($points()->all())->toMatchArray([$joker->id => 3, $kalisz->id => 0]);
 });

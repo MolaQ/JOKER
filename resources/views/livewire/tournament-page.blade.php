@@ -114,7 +114,15 @@
                     </div>
                 @endforeach
             </div>
-            <p class="mt-4 text-xs text-zinc-500">{{ __('Punktacja: wygrana 3 pkt, wygrana w tie-breaku 2 pkt, porażka w tie-breaku 1 pkt. Kolejność: punkty, zwycięstwa, stosunek setów, stosunek małych punktów.') }}</p>
+            @php $scoringTexts = $current->groups->mapWithKeys(fn ($group) => [$group->name => \App\Support\TournamentTable::describe(\App\Support\TournamentTable::scoring($group, $tournament))]); @endphp
+            <p class="mt-4 text-xs text-zinc-500">
+                @if($scoringTexts->unique()->count() === 1)
+                    {{ __('Punktacja') }}: {{ $scoringTexts->first() }}.
+                @else
+                    @foreach($scoringTexts as $groupName => $text){{ __('Punktacja') }} ({{ $groupName }}): {{ $text }}.<br>@endforeach
+                @endif
+                {{ __('Kolejność: punkty, zwycięstwa, stosunek setów, stosunek małych punktów.') }}
+            </p>
         @endif
 
         {{-- MECZE: terminarz dniami i godzinami, z filtrem drużyny --}}

@@ -2,7 +2,9 @@
 
 namespace App\Support;
 
+use App\Models\Tournament;
 use App\Models\TournamentCategory;
+use App\Models\TournamentGroup;
 use App\Models\TournamentMatch;
 use App\Models\TournamentParticipant;
 use Illuminate\Support\Collection;
@@ -16,12 +18,50 @@ use Illuminate\Support\Collection;
 class TournamentTable
 {
     /**
+     * Domyślna punktacja: wygrana 3, wygrana w tie-breaku 2, porażka w tie-breaku 1, porażka 0, bez punktów za sety.
+     *
+     * @var array{win: int, win_tiebreak: int, loss_tiebreak: int, loss: int, per_set: int}
+     */
+    public const DEFAULT_SCORING = ['win' => 3, 'win_tiebreak' => 2, 'loss_tiebreak' => 1, 'loss' => 0, 'per_set' => 0];
+
+    /**
+     * Punktacja grupy: własna grupy, inaczej turnieju, inaczej domyślna.
+     *
+     * @return array{win: int, win_tiebreak: int, loss_tiebreak: int, loss: int, per_set: int}
+     */
+    public static function scoring(?TournamentGroup $group = null, ?Tournament $tournament = null): array
+    {
+        $tournament ??= $group?->category?->tournament;
+        $custom = $group?->scoring ?: ($tournament?->scoring ?: []);
+
+        return collect(self::DEFAULT_SCORING)->map(fn (int $default, string $key) => (int) ($custom[$key] ?? $default))->all();
+    }
+
+    /**
+     * Opis punktacji pod tabelą grupy.
+     *
+     * @param  array{win: int, win_tiebreak: int, loss_tiebreak: int, loss: int, per_set: int}  $scoring
+     */
+    public static function describe(array $scoring): string
+    {
+        return collect([
+            __('wygrana :points pkt', ['points' => $scoring['win']]),
+            $scoring['win_tiebreak'] !== $scoring['win'] ? __('wygrana w tie-breaku :points pkt', ['points' => $scoring['win_tiebreak']]) : null,
+            $scoring['loss_tiebreak'] !== $scoring['loss'] ? __('porażka w tie-breaku :points pkt', ['points' => $scoring['loss_tiebreak']]) : null,
+            $scoring['loss'] ? __('porażka :points pkt', ['points' => $scoring['loss']]) : null,
+            $scoring['per_set'] ? __('plus :points pkt za każdy wygrany set', ['points' => $scoring['per_set']]) : null,
+        ])->filter()->implode(', ');
+    }
+
+    /**
      * @param  Collection<int, TournamentParticipant>  $participants
      * @param  Collection<int, TournamentMatch>  $matches
      * @return Collection<int, array{participant: TournamentParticipant, played: int, won: int, lost: int, points: int, sets_won: int, sets_lost: int, small_won: int, small_lost: int, position: int}>
      */
-    public static function for(Collection $participants, Collection $matches): Collection
+    public static function for(Collection $participants, Collection $matches, ?array $scoring = null): Collection
     {
+        $scoring ??= self::DEFAULT_SCORING;
+
         $rows = $participants->mapWithKeys(fn (TournamentParticipant $participant) => [$participant->id => [
             'participant' => $participant,
             'played' => 0, 'won' => 0, 'lost' => 0, 'points' => 0,
@@ -37,7 +77,7 @@ class TournamentTable
                 $tieBreak = min($won, $lost) === max($won, $lost) - 1 && min($won, $lost) > 0;
                 $rows[$id]['played']++;
                 $rows[$id][$won > $lost ? 'won' : 'lost']++;
-                $rows[$id]['points'] += $won > $lost ? ($tieBreak ? 2 : 3) : ($tieBreak ? 1 : 0);
+                $rows[$id]['points'] += ($won > $lost ? ($tieBreak ? $scoring['win_tiebreak'] : $scoring['win']) : ($tieBreak ? $scoring['loss_tiebreak'] : $scoring['loss'])) + $won * $scoring['per_set'];
                 $rows[$id]['sets_won'] += $won;
                 $rows[$id]['sets_lost'] += $lost;
 
