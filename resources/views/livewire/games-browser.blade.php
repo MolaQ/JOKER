@@ -1,5 +1,5 @@
 @php $birthdayIcon = trim((string) $site['cal_birthday_icon']) ?: '🎂'; @endphp
-<div style="--cal-home-from: {{ $site->color('cal_home_from') }}; --cal-home-to: {{ $site->color('cal_home_to') }}; --cal-home-text: {{ $site->color('cal_home_text') }}; --cal-away-bg: {{ $site->color('cal_away_bg') }}; --cal-away-text: {{ $site->color('cal_away_text') }}; --cal-away-border: {{ $site->color('cal_away_border') }}; --cal-bday-bg: {{ $site->color('cal_birthday_bg') }}; --cal-bday-text: {{ $site->color('cal_birthday_text') }};">
+<div style="--cal-home-bg: {{ $site->color('cal_home_bg') }}; --cal-home-border: {{ $site->color('cal_home_border') }}; --cal-home-text: {{ $site->color('cal_home_text') }}; --cal-away-bg: {{ $site->color('cal_away_bg') }}; --cal-away-text: {{ $site->color('cal_away_text') }}; --cal-away-border: {{ $site->color('cal_away_border') }}; --cal-bday-bg: {{ $site->color('cal_birthday_bg') }}; --cal-bday-text: {{ $site->color('cal_birthday_text') }};">
     {{-- Filtry: przyklejone pod menu, działają od razu, bez przeładowania strony --}}
     <div class="sticky top-16 z-30 border-y border-zinc-200 bg-white/90 backdrop-blur-xl lg:top-20">
         <div class="container-site space-y-3 py-3">
@@ -132,7 +132,7 @@
                                                     @php $result = $game->ourSetsResult(); $won = $game->isFinished() && $result ? $result[0] > $result[1] : null; @endphp
                                                     <a href="#mecz-{{ $game->id }}" @class([
                                                         'inline-flex h-4 w-4 items-center justify-center rounded sm:h-5 sm:w-5',
-                                                        'bg-linear-to-br from-(--cal-home-from) to-(--cal-home-to)' => $game->is_home,
+                                                        'bg-(--cal-home-bg) ring-1 ring-(--cal-home-border)' => $game->is_home,
                                                         'bg-(--cal-away-bg) ring-1 ring-(--cal-away-border)' => ! $game->is_home,
                                                     ]) aria-label="{{ $game->is_home ? __('U siebie') : __('Wyjazd') }}: {{ $game->team?->name }} - {{ $game->opponentShortName() }}">
                                                         @if($won === true)
@@ -172,7 +172,7 @@
                                                     <li wire:key="cell-{{ $game->id }}">
                                                         <{{ $tag }} href="{{ route('games.show', $game) }}" title="{{ $game->is_home ? __('U siebie') : __('Wyjazd') }} · {{ $game->competitionLabel() }}@if($game->round_label) · {{ $game->round_label }}@endif{{ $game->venue ? ' · '.$game->venue : '' }}{{ is_array($game->sets_score) && count($game->sets_score) ? ' · '.collect($game->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(', ') : '' }}{{ $article ? ' · '.__('Artykuł').': '.$article->localizedTitle() : '' }}" @class([
                                                             'block rounded-lg px-1.5 py-1 text-[11px] leading-tight transition',
-                                                            'bg-linear-to-br from-(--cal-home-from) to-(--cal-home-to) text-(--cal-home-text) shadow-sm' => $game->is_home,
+                                                            'bg-(--cal-home-bg) text-(--cal-home-text) ring-1 ring-(--cal-home-border) shadow-sm' => $game->is_home,
                                                             'bg-(--cal-away-bg) text-(--cal-away-text) shadow-sm ring-1 ring-(--cal-away-border)' => ! $game->is_home,
                                                             'hover:ring-2 hover:ring-sky-club' => true,
                                                         ])>
@@ -226,7 +226,7 @@
                         $hasTime = $game->game_date && $game->game_date->format('H:i') !== '00:00';
                     @endphp
                     <li id="mecz-{{ $game->id }}" wire:key="game-{{ $game->id }}" class="card scroll-mt-48 grid grid-cols-[3.75rem_1fr] items-center gap-4 p-4 sm:grid-cols-[4.5rem_1fr_auto] sm:gap-6 sm:p-5">
-                        <div @class(['rounded-2xl py-2 text-center leading-none', 'bg-linear-to-br from-(--cal-home-from) to-(--cal-home-to) text-(--cal-home-text)' => $game->is_home, 'bg-(--cal-away-bg) text-(--cal-away-text) ring-1 ring-(--cal-away-border)' => ! $game->is_home])>
+                        <div @class(['rounded-2xl py-2 text-center leading-none', 'bg-(--cal-home-bg) text-(--cal-home-text) ring-1 ring-(--cal-home-border)' => $game->is_home, 'bg-(--cal-away-bg) text-(--cal-away-text) ring-1 ring-(--cal-away-border)' => ! $game->is_home])>
                             <p class="text-[11px] font-semibold uppercase opacity-70">{{ $game->game_date?->translatedFormat('D') }}</p>
                             <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ $game->game_date?->format('d') }}</p>
                             <p class="mt-1 text-[11px] font-semibold tabular-nums opacity-80">{{ $hasTime ? $game->game_date->format('H:i') : '--:--' }}</p>

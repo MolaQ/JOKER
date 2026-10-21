@@ -49,9 +49,9 @@ return [
             'label' => 'Kalendarz meczów',
             'icon' => '📅',
             'fields' => [
-                'cal_home_from' => ['type' => 'color', 'label' => 'Mecz u siebie: kolor gradientu (początek)', 'default' => '#0f2d6b'],
-                'cal_home_to' => ['type' => 'color', 'label' => 'Mecz u siebie: kolor gradientu (koniec)', 'default' => '#2f7fbf'],
-                'cal_home_text' => ['type' => 'color', 'label' => 'Mecz u siebie: tekst', 'default' => '#ffffff'],
+                'cal_home_bg' => ['type' => 'color', 'label' => 'Mecz domowy: tło', 'default' => '#0f2d6b'],
+                'cal_home_text' => ['type' => 'color', 'label' => 'Mecz domowy: tekst', 'default' => '#2f7fbf'],
+                'cal_home_border' => ['type' => 'color', 'label' => 'Mecz domowy: ramka', 'default' => '#2f7fbf'],
                 'cal_away_bg' => ['type' => 'color', 'label' => 'Mecz wyjazdowy: tło', 'default' => '#ffffff'],
                 'cal_away_text' => ['type' => 'color', 'label' => 'Mecz wyjazdowy: tekst', 'default' => '#2f7fbf'],
                 'cal_away_border' => ['type' => 'color', 'label' => 'Mecz wyjazdowy: ramka', 'default' => '#a9cfee'],
