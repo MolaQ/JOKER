@@ -1,4 +1,4 @@
-<div>
+<div style="--tm-bar-bg: {{ $site->color('tm_bar_bg') }}; --tm-bar-text: {{ $site->color('tm_bar_text') }}; --tm-number-bg: {{ $site->color('tm_number_bg') }}; --tm-number-text: {{ $site->color('tm_number_text') }};">
     {{-- Kategorie wiekowe i zakładki --}}
     <div class="sticky top-16 z-30 border-b border-zinc-200 bg-white/90 backdrop-blur-xl lg:top-20">
         <div class="container-site space-y-3 py-3">
@@ -59,7 +59,7 @@
             <div class="grid gap-8 lg:grid-cols-2">
                 @foreach($current->groups as $group)
                     <div wire:key="group-{{ $group->id }}" class="card overflow-hidden">
-                        <h2 class="bg-gradient-to-r from-club-navy to-sky-club-dark px-5 py-3 font-display text-xl font-semibold text-white uppercase">{{ $group->name }}</h2>
+                        <h2 class="flex items-center justify-between gap-2 bg-gradient-to-r from-club-navy to-sky-club-dark px-5 py-3 font-display text-xl font-semibold text-white uppercase">{{ $group->name }} <x-tournament-group-status :progress="$bracket->groupProgress($group)" dark /></h2>
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm">
                                 <thead class="bg-zinc-50 text-xs font-semibold text-zinc-500 uppercase">
@@ -123,81 +123,55 @@
             @endforeach
         @endif
 
-        {{-- DRABINKA I MECZE O MIEJSCA --}}
+        {{-- DRABINKA: grupy z postępem, mecze z numerami w kolumnach (na telefonie jedna pod drugą), podium --}}
         @if($currentTab === 'drabinka' && $current)
-            @foreach($playoff as $bracket)
-                <h2 @class(['heading-md', 'mt-10' => ! $loop->first])>{{ $bracket['from'] === 1 ? __('Drabinka') : __('Drabinka o miejsca :from–:to', ['from' => $bracket['from'], 'to' => $bracket['to']]) }}</h2>
-                @php
-                    // Gdy organizator ustawił pozycje w kolumnach, mecz stoi dokładnie w swoim wierszu; inaczej drabinka się centruje.
-                    $explicitSlots = $bracket['rounds']->flatten()->contains(fn ($match) => $match->bracket_slot !== null);
-                    $columnNames = $bracket['rounds']->map(function ($roundMatches, $round) use ($bracket) {
-                        $isLast = $round === $bracket['rounds']->keys()->last();
+            <p class="max-w-3xl text-sm text-zinc-500">{{ __('Każdy mecz ma numer. Plakietka przy drużynie mówi, skąd przychodzi (1A = 1. miejsce grupy A, #7 = mecz nr 7), a napis w rogu meczu, dokąd idą zwycięzca i przegrany. Szare nazwy to prognoza, dopóki grupa trwa.') }}</p>
 
-                        return match (true) {
-                            filled($roundMatches->pluck('phase_name')->filter()->first()) => $roundMatches->pluck('phase_name')->filter()->first(),
-                            $roundMatches->contains(fn ($match) => $match->decides_place !== null) && $isLast => __('Finały'),
-                            $roundMatches->count() === 1 && $isLast => $bracket['from'] === 1 ? __('Finał') : __('Mecz o :place. miejsce', ['place' => $bracket['from']]),
-                            $roundMatches->count() === 2 => __('Półfinały'),
-                            $roundMatches->count() === 4 => __('Ćwierćfinały'),
-                            $roundMatches->count() === 8 => __('1/8 finału'),
-                            default => __('Runda :round', ['round' => $round]),
-                        };
-                    });
-                    $highlight = fn ($match, $roundMatches, $isLast) => $match->decides_place === 1 || ($roundMatches->count() === 1 && $isLast && $bracket['from'] === 1 && $match->decides_place === null);
-                @endphp
-                <div class="mt-5 overflow-x-auto pb-2">
-                    @if($explicitSlots)
-                        <div class="grid min-w-max gap-x-6 gap-y-4" style="grid-template-columns: repeat({{ $bracket['rounds']->count() }}, 22rem)">
-                            @foreach($bracket['rounds'] as $round => $roundMatches)
-                                @php $column = $loop->iteration; $isLast = $loop->last; $nextSlot = 1; @endphp
-                                <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase" style="grid-column: {{ $column }}; grid-row: 1">{{ $columnNames[$round] }}</p>
-                                @foreach($roundMatches as $match)
-                                    @php $slot = $match->bracket_slot ?? $nextSlot; $nextSlot = $slot + 1; @endphp
-                                    <x-tournament-match :match="$match" :show-title="filled($match->label) || $match->decides_place !== null" @class(['ring-2 ring-amber-300' => $highlight($match, $roundMatches, $isLast)]) style="grid-column: {{ $column }}; grid-row: {{ $slot + 1 }}" wire:key="playoff-{{ $match->id }}" />
+            @if($current->groups->isNotEmpty())
+                <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    @foreach($current->groups as $group)
+                        @php $progress = $bracket->groupProgress($group); @endphp
+                        <div class="rounded-2xl bg-white p-4 ring-1 ring-zinc-200" wire:key="board-group-{{ $group->id }}">
+                            <p class="flex items-center justify-between gap-2 font-semibold text-zinc-900">
+                                {{ $group->name }}
+                                <x-tournament-group-status :progress="$progress" />
+                            </p>
+                            <ol class="mt-2 space-y-0.5 text-sm">
+                                @foreach($group->table() as $row)
+                                    <li @class(['flex gap-2', 'italic text-zinc-400' => ! $progress['finished'], 'text-zinc-800' => $progress['finished']])>
+                                        <span class="w-6 font-bold not-italic text-zinc-400">{{ $row['position'] }}{{ \App\Support\TournamentBracket::groupLetter($group) }}</span>
+                                        <span class="truncate">{{ $row['participant']->name() }}</span>
+                                    </li>
                                 @endforeach
-                            @endforeach
+                            </ol>
                         </div>
-                    @else
-                        <div class="flex min-w-max gap-6">
-                            @foreach($bracket['rounds'] as $round => $roundMatches)
-                                @php $isLast = $loop->last; @endphp
-                                <div class="flex w-[22rem] flex-col">
-                                    <p class="mb-3 text-xs font-semibold tracking-widest text-zinc-500 uppercase">{{ $columnNames[$round] }}</p>
-                                    <div class="flex flex-1 flex-col justify-around gap-4">
-                                        @foreach($roundMatches as $match)
-                                            <x-tournament-match :match="$match" :show-title="filled($match->label) || $match->decides_place !== null" @class(['ring-2 ring-amber-300' => $highlight($match, $roundMatches, $isLast)]) wire:key="playoff-{{ $match->id }}" />
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    @endif
-                </div>
-            @endforeach
-
-            @if($placement->isNotEmpty())
-                <h2 class="heading-md {{ $playoff->isNotEmpty() ? 'mt-10' : '' }}">{{ __('Mecze o miejsca') }}</h2>
-                <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    @foreach($placement as $match)
-                        <x-tournament-match :match="$match" wire:key="placement-{{ $match->id }}" />
                     @endforeach
                 </div>
+            @endif
+
+            <div class="mt-8 grid gap-8 lg:auto-cols-[minmax(19rem,1fr)] lg:grid-flow-col lg:overflow-x-auto lg:pb-2">
+                @foreach($board as $column)
+                    <section wire:key="board-column-{{ $loop->index }}">
+                        <h2 class="mb-3 text-xs font-semibold tracking-widest text-zinc-500 uppercase">{{ $column['name'] }}</h2>
+                        <div class="space-y-3">
+                            @foreach($column['matches'] as $match)
+                                <x-tournament-bracket-match :match="$match" :bracket="$bracket" wire:key="board-{{ $match->id }}" />
+                            @endforeach
+                        </div>
+                    </section>
+                @endforeach
+            </div>
+
+            @if($standings->isNotEmpty())
+                <h2 class="heading-md mt-12">{{ __('Klasyfikacja końcowa') }}</h2>
+                <x-tournament-podium :standings="$standings" class="mt-6" />
             @endif
         @endif
 
         {{-- KLASYFIKACJA KOŃCOWA --}}
         @if($currentTab === 'klasyfikacja' && $current)
             <h2 class="heading-md">{{ __('Klasyfikacja końcowa') }} <span class="text-zinc-400">· {{ $current->name }}</span></h2>
-            <ol class="mt-6 max-w-2xl space-y-2">
-                @foreach($finalStandings as $row)
-                    <li @class(['flex items-center gap-4 rounded-2xl px-4 py-3', 'bg-gradient-to-r from-amber-200 to-amber-50' => $row['position'] === 1, 'bg-gradient-to-r from-zinc-200 to-zinc-50' => $row['position'] === 2, 'bg-gradient-to-r from-orange-200 to-orange-50' => $row['position'] === 3, 'bg-white ring-1 ring-zinc-200' => $row['position'] > 3, 'ring-2 ring-sky-club' => $row['participant']->isOwnTeam()])>
-                        <span class="w-10 font-display text-3xl font-bold tabular-nums">{{ $row['position'] }}.</span>
-                        <x-avatar :photo="$row['participant']->logoPath()" :name="$row['participant']->name()" class="h-10 w-10 shrink-0 rounded-full text-xs" />
-                        <span class="font-semibold text-zinc-900">{{ $row['participant']->name() }}</span>
-                        @if($row['position'] <= 3)<span class="ml-auto text-2xl" aria-hidden="true">{{ ['🥇', '🥈', '🥉'][$row['position'] - 1] }}</span>@endif
-                    </li>
-                @endforeach
-            </ol>
+            <x-tournament-podium :standings="$standings" class="mt-8" />
         @endif
 
         {{-- ZASADY I INFORMATOR --}}

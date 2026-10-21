@@ -30,6 +30,7 @@ class TournamentMatch extends Model
     protected $fillable = [
         'tournament_category_id',
         'tournament_group_id',
+        'number',
         'stage',
         'label',
         'phase_name',
@@ -41,12 +42,24 @@ class TournamentMatch extends Model
         'away_participant_id',
         'home_placeholder',
         'away_placeholder',
+        'home_source',
+        'away_source',
         'starts_at',
         'court',
         'home_sets',
         'away_sets',
         'sets_score',
     ];
+
+    /**
+     * Nowy mecz dostaje kolejny numer w swojej kategorii.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (TournamentMatch $match) {
+            $match->number ??= (int) static::query()->where('tournament_category_id', $match->tournament_category_id)->max('number') + 1;
+        });
+    }
 
     protected function casts(): array
     {

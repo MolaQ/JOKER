@@ -81,6 +81,17 @@ return [
             ],
         ],
 
+        'turnieje' => [
+            'label' => 'Turnieje: drabinka',
+            'icon' => '🏆',
+            'fields' => [
+                'tm_bar_bg' => ['type' => 'color', 'label' => 'Belka meczu: tło', 'default' => '#0f2d6b'],
+                'tm_bar_text' => ['type' => 'color', 'label' => 'Belka meczu: tekst', 'default' => '#ffffff'],
+                'tm_number_bg' => ['type' => 'color', 'label' => 'Numer meczu: tło', 'default' => '#facc15'],
+                'tm_number_text' => ['type' => 'color', 'label' => 'Numer meczu: tekst', 'default' => '#0f172a'],
+            ],
+        ],
+
         'pasek' => [
             'label' => 'Górny pasek',
             'icon' => '🟨',

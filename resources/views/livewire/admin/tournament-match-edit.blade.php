@@ -1,5 +1,10 @@
-{{-- Edycja meczu turnieju w panelu: faza i pozycja w drabince, etykieta, miejsce, drużyny --}}
+{{-- Edycja meczu turnieju w panelu: numer, faza i pozycja w drabince, etykieta, miejsce, skąd drużyny --}}
 <form wire:submit="saveMatchEdit" class="grid gap-3 rounded-md bg-blue-50 p-3 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-4">
+    <div>
+        <label class="{{ $label }}">Numer meczu</label>
+        <input type="number" min="1" wire:model="editMatch.number" class="{{ $input }}">
+        @error('editMatch.number') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+    </div>
     <div>
         <label class="{{ $label }}">Etap</label>
         <select wire:model.live="editMatch.stage" class="{{ $input }}">
@@ -68,21 +73,7 @@
             </select>
         </div>
     @endif
-    @foreach(['home' => 'Gospodarz', 'away' => 'Gość'] as $side => $sideName)
-        <div>
-            <label class="{{ $label }}">{{ $sideName }}</label>
-            <select wire:model="editMatch.{{ $side }}" class="{{ $input }}">
-                <option value="">— jeszcze nieznany —</option>
-                @foreach($category->participants as $participant)
-                    <option value="{{ $participant->id }}">{{ $participant->name() }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div>
-            <label class="{{ $label }}">…albo opis</label>
-            <input type="text" wire:model="editMatch.{{ $side }}_placeholder" class="{{ $input }}" placeholder="np. Zwycięzca półfinału 1">
-        </div>
-    @endforeach
+    @include('livewire.admin.tournament-match-sides', ['prefix' => 'editMatch', 'data' => $editMatch, 'sourceOptions' => \App\Support\TournamentBracket::sourceOptions($category, $editingMatchId)])
     <div class="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
         <button type="submit" class="{{ $primary }}">Zapisz mecz</button>
         <button type="button" wire:click="$set('editingMatchId', null)" class="{{ $secondary }}">Anuluj</button>

@@ -5,7 +5,7 @@ namespace App\Livewire;
 use App\Models\Tournament;
 use App\Models\TournamentCategory;
 use App\Models\TournamentMatch;
-use App\Support\TournamentTable;
+use App\Support\TournamentBracket;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Url;
@@ -44,23 +44,16 @@ class TournamentPage extends Component
         $current = $categories->firstWhere('id', (int) $this->category) ?? $categories->first();
 
         $matches = $current?->matches ?? collect();
-        $playoff = $matches->where('stage', TournamentMatch::STAGE_PLAYOFF)
-            ->sortBy([['bracket_round', 'asc'], ['bracket_slot', 'asc']])
-            ->groupBy(fn (TournamentMatch $match) => $match->bracketFrom())
-            ->sortKeys()
-            ->map(fn (Collection $bracket, int $from) => [
-                'from' => $from,
-                'to' => $from + 2 * $bracket->where('bracket_round', $bracket->min('bracket_round'))->count() - 1,
-                'rounds' => $bracket->groupBy('bracket_round'),
-            ]);
-        $placement = $matches->where('stage', TournamentMatch::STAGE_PLACEMENT)->sortBy('placement')->values();
+        $bracket = $current ? TournamentBracket::for($current) : null;
+        $board = self::boardColumns($matches->where('stage', '!=', TournamentMatch::STAGE_GROUP));
+        $standings = $bracket?->standings() ?? collect();
 
         $tabs = collect([
             'druzyny' => [__('Drużyny'), $current?->participants->isNotEmpty()],
             'grupy' => [__('Grupy'), $current?->groups->isNotEmpty()],
             'mecze' => [__('Mecze'), $matches->isNotEmpty()],
-            'drabinka' => [__('Drabinka i miejsca'), $playoff->isNotEmpty() || $placement->isNotEmpty()],
-            'klasyfikacja' => [__('Klasyfikacja'), $current && TournamentTable::finalStandings($current)->isNotEmpty()],
+            'drabinka' => [__('Drabinka i miejsca'), $board->isNotEmpty()],
+            'klasyfikacja' => [__('Klasyfikacja'), $standings->isNotEmpty()],
             'zasady' => [__('Zasady'), filled($this->tournament->rules)],
             'informator' => [__('Informator'), filled($this->tournament->guest_info)],
         ])->filter(fn (array $entry) => $entry[1])->map(fn (array $entry) => $entry[0]);
@@ -73,10 +66,39 @@ class TournamentPage extends Component
             'tabs' => $tabs,
             'currentTab' => $currentTab,
             'matchesByDay' => $matches->groupBy(fn (TournamentMatch $match) => $match->starts_at?->toDateString() ?? ''),
-            'playoff' => $playoff,
-            'placement' => $placement,
-            'finalStandings' => $current ? TournamentTable::finalStandings($current) : collect(),
+            'bracket' => $bracket,
+            'board' => $board,
+            'standings' => $standings,
         ]);
+    }
+
+    /**
+     * Kolumny drabinki (faza = kolumna): mecze bez kolumny lądują w ostatniej, „Mecze o miejsca”.
+     * Na telefonie kolumny idą jedna pod drugą, na komputerze obok siebie.
+     *
+     * @param  Collection<int, TournamentMatch>  $matches
+     * @return Collection<int, array{name: string, matches: Collection<int, TournamentMatch>}>
+     */
+    public static function boardColumns(Collection $matches): Collection
+    {
+        $columns = $matches->groupBy(fn (TournamentMatch $match) => $match->bracket_round ?? 99)->sortKeys();
+        $lastKey = $columns->keys()->last();
+
+        return $columns->map(function (Collection $column, int $round) use ($lastKey) {
+            $named = $column->pluck('phase_name')->filter()->first();
+
+            return [
+                'name' => match (true) {
+                    filled($named) => $named,
+                    $round === 99 => __('Mecze o miejsca'),
+                    $column->contains(fn (TournamentMatch $match) => $match->placeAtStake() !== null) && $round === $lastKey => __('Finały'),
+                    $column->count() === 2 => __('Półfinały'),
+                    $column->count() === 4 => __('Ćwierćfinały'),
+                    default => __('Runda :round', ['round' => $round]),
+                },
+                'matches' => $column->sortBy(fn (TournamentMatch $match) => [$match->bracket_slot ?? 999, $match->bracketFrom(), $match->number])->values(),
+            ];
+        })->values();
     }
 
     /**

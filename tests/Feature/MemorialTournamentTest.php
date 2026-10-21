@@ -156,7 +156,7 @@ test('a second bracket for places 5-8 gets its own heading and feeds the final s
 
     Livewire::test(TournamentPage::class, ['tournament' => $this->tournament])
         ->call('selectTab', 'drabinka')
-        ->assertSee('Drabinka o miejsca 5–8')
+        ->assertSee('Play-off o miejsca od 5.')
         ->assertSeeText('15.11, 15:30');
 });
 
@@ -205,7 +205,7 @@ test('organizer names bracket phases and puts the third place match under the fi
         ->assertSeeInOrder(['Półfinał', 'Finały', 'LOMS Joker Piła', 'Mecz o trzecie miejsce']);
 });
 
-test('bracket matches stand in the chosen column and row, and any match can be edited', function () {
+test('bracket matches stand in their column, and any match can be edited', function () {
     $this->actingAs(User::factory()->admin()->create());
     [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
     $category = $joker->category;
@@ -214,8 +214,7 @@ test('bracket matches stand in the chosen column and row, and any match can be e
     $group = $category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id]);
 
     Livewire::withQueryParams(['zakladka' => 'drabinka'])->test(TournamentPage::class, ['tournament' => $this->tournament])
-        ->assertSee('grid-column: 2; grid-row: 4', false)
-        ->assertSee('Mecz o 5. miejsce');
+        ->assertSeeInOrder(['Runda 1', '1. gr. A', 'Finały', 'Mecz o 5. miejsce']);
 
     Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])
         ->call('startMatchEdit', $group->id)
@@ -228,4 +227,61 @@ test('bracket matches stand in the chosen column and row, and any match can be e
     expect($group->fresh())->court->toBe('Boisko 3')
         ->and($group->fresh()->starts_at->format('H:i'))->toBe('09:30')
         ->and($fifth->fresh()->title())->toBe('Mecz o 5. miejsce');
+});
+
+test('bracket slots follow group places and earlier results: forecast while the group plays, then confirmed', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz, $poznan] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $groupA = $joker->group;
+    $groupB = $category->groups()->create(['name' => 'Grupa B', 'display_order' => 1]);
+    [$sparta, $orzel, $gwardia] = collect(['Sparta Złotów', 'Orzeł Trzcianka', 'Gwardia Wrocław'])
+        ->map(fn (string $name) => $category->participants()->create(['tournament_group_id' => $groupB->id, 'competitor_type' => 'rival_team', 'competitor_id' => RivalTeam::create(['full_name' => $name])->id]))
+        ->all();
+
+    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
+        ->call('generateGroupMatches', $groupA->id)
+        ->call('generateGroupMatches', $groupB->id);
+
+    $editor->set('match.stage', 'playoff')->set('match.bracket_round', 1)->set('match.label', 'Półfinał 1')
+        ->set('match.home_source', "group:{$groupA->id}:1")->set('match.away_source', "group:{$groupB->id}:2")
+        ->call('addMatch')->assertHasNoErrors();
+    $semi = $category->matches()->where('label', 'Półfinał 1')->sole();
+    expect($semi->number)->toBe(7);
+
+    $editor->set('match.stage', 'playoff')->set('match.bracket_round', 2)->set('match.decides_place', 1)
+        ->set('match.home_source', "winner:{$semi->id}")->set('match.away_source', "loser:{$semi->id}")
+        ->call('addMatch')->assertHasNoErrors();
+    $final = $category->matches()->where('decides_place', 1)->sole();
+
+    $play = function (TournamentParticipant $home, TournamentParticipant $away, string $sets) use ($editor, $category) {
+        $match = $category->matches()->where('home_participant_id', $home->id)->where('away_participant_id', $away->id)->sole();
+        $editor->set("results.{$match->id}.sets", $sets)->call('saveResult', $match->id)->assertHasNoErrors();
+    };
+
+    // Grupa A rozegrana w całości, w grupie B jeden mecz: Orzeł chwilowo drugi.
+    $play($joker, $kalisz, '25:10, 25:10');
+    $play($joker, $poznan, '25:10, 25:10');
+    $play($kalisz, $poznan, '25:10, 25:10');
+    $play($sparta, $orzel, '10:25, 10:25');
+
+    expect($semi->fresh())->home_participant_id->toBe($joker->id)->away_participant_id->toBeNull();
+
+    Livewire::withQueryParams(['zakladka' => 'drabinka'])->test(TournamentPage::class, ['tournament' => $this->tournament])
+        ->assertSeeInOrder(['#7', '1A', 'LOMS', '2B', 'Sparta Złotów', 'prognoza', 'zwycięzca', '→ #8'])
+        ->assertSee('1 z 3 meczów')
+        ->assertSeeInOrder(['Zwycięzca meczu #7', 'Przegrany meczu #7']);
+
+    $play($sparta, $gwardia, '25:10, 25:10');
+    $play($orzel, $gwardia, '25:10, 25:10');
+    expect($semi->fresh()->away_participant_id)->toBe($sparta->id);
+
+    $editor->set("results.{$semi->id}.sets", '25:20, 25:20')->call('saveResult', $semi->id);
+    expect($final->fresh())->home_participant_id->toBe($joker->id)->away_participant_id->toBe($sparta->id);
+
+    Livewire::withQueryParams(['zakladka' => 'klasyfikacja'])->test(TournamentPage::class, ['tournament' => $this->tournament])
+        ->assertSeeInOrder(['Przegrany meczu #8', '🏆', 'Zwycięzca meczu #8']);
+
+    $editor->set('match.stage', 'playoff')->set('match.bracket_round', 2)->set('match.home_source', 'winner:999999')
+        ->call('addMatch')->assertHasErrors('match.home_source');
 });

@@ -281,21 +281,7 @@
                     </div>
                 </div>
                 <div class="grid gap-3 sm:grid-cols-4">
-                    @foreach(['home' => 'Gospodarz', 'away' => 'Gość'] as $side => $sideName)
-                        <div>
-                            <label class="{{ $label }}">{{ $sideName }}</label>
-                            <select wire:model="match.{{ $side }}" class="{{ $input }}">
-                                <option value="">— jeszcze nieznany —</option>
-                                @foreach($category->participants as $participant)
-                                    <option value="{{ $participant->id }}">{{ $participant->name() }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="{{ $label }}">…albo opis</label>
-                            <input type="text" wire:model="match.{{ $side }}_placeholder" class="{{ $input }}" placeholder="np. 1. miejsce gr. A">
-                        </div>
-                    @endforeach
+                    @include('livewire.admin.tournament-match-sides', ['prefix' => 'match', 'data' => $match, 'sourceOptions' => \App\Support\TournamentBracket::sourceOptions($category)])
                 </div>
                 <div class="grid gap-3 sm:grid-cols-4">
                     <div>
@@ -323,7 +309,7 @@
                             @foreach($stageMatches as $tournamentMatch)
                                 <div class="grid gap-2 rounded-lg border border-gray-200 p-3 lg:grid-cols-[minmax(0,2fr)_10rem_11rem_9rem_auto] lg:items-center" wire:key="match-{{ $tournamentMatch->id }}">
                                     <div class="text-sm">
-                                        <span class="text-xs font-semibold uppercase text-gray-500">{{ $tournamentMatch->group?->name ?? $tournamentMatch->title() }}</span>
+                                        <span class="text-xs font-semibold uppercase text-gray-500"><span class="mr-1 rounded bg-gray-900 px-1.5 py-0.5 text-white">#{{ $tournamentMatch->number }}</span>{{ $tournamentMatch->group?->name ?? $tournamentMatch->title() }}</span>
                                         <div class="flex flex-wrap items-center gap-1">
                                             @foreach(['home', 'away'] as $side)
                                                 @if($tournamentMatch->{$side})

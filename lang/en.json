@@ -392,5 +392,17 @@
     "Polubienia": "Likes",
     "Zaloguj się, aby polubić": "Log in to like",
     "Transmisje i zdjęcia z meczu": "Match streams and photos",
-    "Strona meczu": "Match page"
+    "Strona meczu": "Match page",
+    "Do ustalenia": "To be decided",
+    ":place. miejsce": "place :place",
+    "Zwycięzca meczu #:number": "Winner of match #:number",
+    "Przegrany meczu #:number": "Loser of match #:number",
+    ":place. miejsce – :group": "Place :place – :group",
+    "Grupa jeszcze trwa, kolejność może się zmienić": "The group is still being played, the order may change",
+    "prognoza": "forecast",
+    "zwycięzca": "winner",
+    "przegrany": "loser",
+    "zakończona": "finished",
+    ":played z :total meczów": ":played of :total matches",
+    "Każdy mecz ma numer. Plakietka przy drużynie mówi, skąd przychodzi (1A = 1. miejsce grupy A, #7 = mecz nr 7), a napis w rogu meczu, dokąd idą zwycięzca i przegrany. Szare nazwy to prognoza, dopóki grupa trwa.": "Every match has a number. The badge next to a team shows where it comes from (1A = 1st place in group A, #7 = match no. 7), and the note in the corner shows where the winner and loser go next. Grey names are a forecast while the group is still being played."
 }

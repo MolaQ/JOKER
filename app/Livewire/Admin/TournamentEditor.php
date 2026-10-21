@@ -9,6 +9,7 @@ use App\Models\Tournament;
 use App\Models\TournamentCategory;
 use App\Models\TournamentMatch;
 use App\Models\TournamentParticipant;
+use App\Support\TournamentBracket;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Url;
@@ -165,7 +166,7 @@ class TournamentEditor extends Component
             }
         }
 
-        $this->loadCategoryState();
+        $this->syncBracket();
         $this->toast($created ? "Dodano {$created} meczów w grupie {$group->name}." : 'Wszystkie mecze tej grupy już są.');
     }
 
@@ -243,6 +244,8 @@ class TournamentEditor extends Component
             'match.away' => 'nullable|integer',
             'match.home_placeholder' => 'nullable|string|max:60',
             'match.away_placeholder' => 'nullable|string|max:60',
+            'match.home_source' => ['nullable', 'string', $this->sourceRule()],
+            'match.away_source' => ['nullable', 'string', $this->sourceRule()],
             'match.starts_at' => 'nullable|date',
             'match.court' => 'nullable|string|max:60',
         ], [
@@ -270,12 +273,14 @@ class TournamentEditor extends Component
             'away_participant_id' => $participantIds->contains((int) ($data['away'] ?? 0)) ? (int) $data['away'] : null,
             'home_placeholder' => trim((string) ($data['home_placeholder'] ?? '')) ?: null,
             'away_placeholder' => trim((string) ($data['away_placeholder'] ?? '')) ?: null,
+            'home_source' => ($data['home_source'] ?? '') ?: null,
+            'away_source' => ($data['away_source'] ?? '') ?: null,
             'starts_at' => $data['starts_at'] ?: null,
             'court' => trim((string) ($data['court'] ?? '')) ?: null,
         ]);
 
         $this->resetMatchForm($data['stage']);
-        $this->loadCategoryState();
+        $this->syncBracket();
         $this->toast('Dodano mecz.');
     }
 
@@ -295,6 +300,7 @@ class TournamentEditor extends Component
             'starts_at' => ($row['starts_at'] ?? '') ?: null,
             'court' => trim($row['court'] ?? '') ?: null,
         ]);
+        $this->syncBracket();
 
         $this->toast('Zapisano: '.$match->fresh()->homeName().' – '.$match->awayName().'.');
     }
@@ -316,6 +322,7 @@ class TournamentEditor extends Component
 
         $this->editingMatchId = $match->id;
         $this->editMatch = [
+            'number' => (string) $match->number,
             'label' => (string) $match->label,
             'stage' => $match->stage,
             'starts_at' => (string) $match->starts_at?->format('Y-m-d\TH:i'),
@@ -331,6 +338,8 @@ class TournamentEditor extends Component
             'away' => (string) $match->away_participant_id,
             'home_placeholder' => (string) $match->home_placeholder,
             'away_placeholder' => (string) $match->away_placeholder,
+            'home_source' => (string) $match->home_source,
+            'away_source' => (string) $match->away_source,
         ];
         $this->resetErrorBag();
     }
@@ -339,6 +348,11 @@ class TournamentEditor extends Component
     {
         $match = $this->category()->matches()->findOrFail($this->editingMatchId);
         $data = $this->validate([
+            'editMatch.number' => ['required', 'integer', 'min:1', 'max:999', function (string $attribute, mixed $value, \Closure $fail) use ($match) {
+                if ($this->category()->matches()->whereKeyNot($match->id)->where('number', (int) $value)->exists()) {
+                    $fail('Ten numer ma już inny mecz w tej kategorii.');
+                }
+            }],
             'editMatch.label' => 'nullable|string|max:80',
             'editMatch.stage' => 'required|in:group,playoff,placement',
             'editMatch.starts_at' => 'nullable|date',
@@ -354,6 +368,8 @@ class TournamentEditor extends Component
             'editMatch.away' => 'nullable|integer',
             'editMatch.home_placeholder' => 'nullable|string|max:60',
             'editMatch.away_placeholder' => 'nullable|string|max:60',
+            'editMatch.home_source' => ['nullable', 'string', $this->sourceRule($match->id)],
+            'editMatch.away_source' => ['nullable', 'string', $this->sourceRule($match->id)],
         ])['editMatch'];
 
         $participantIds = $this->category()->participants()->pluck('id');
@@ -362,6 +378,9 @@ class TournamentEditor extends Component
 
         $stage = $data['stage'];
         $match->update([
+            'number' => (int) $data['number'],
+            'home_source' => ($data['home_source'] ?? '') ?: null,
+            'away_source' => ($data['away_source'] ?? '') ?: null,
             'stage' => $stage,
             'label' => $text('label'),
             'starts_at' => $text('starts_at'),
@@ -381,7 +400,7 @@ class TournamentEditor extends Component
                 default => null,
             },
         ]);
-        $this->loadCategoryState();
+        $this->syncBracket();
 
         $this->editingMatchId = null;
         $this->toast('Zapisano mecz: '.$match->fresh()->title().'.');
@@ -396,8 +415,14 @@ class TournamentEditor extends Component
 
     public function deleteMatch(int $id): void
     {
-        $this->category()->matches()->whereKey($id)->delete();
-        $this->loadCategoryState();
+        $category = $this->category();
+        $category->matches()->whereKey($id)->delete();
+
+        foreach (['home_source', 'away_source'] as $column) {
+            $category->matches()->whereIn($column, ["winner:{$id}", "loser:{$id}"])->update([$column => null]);
+        }
+
+        $this->syncBracket();
     }
 
     /**
@@ -422,6 +447,27 @@ class TournamentEditor extends Component
         return $sets;
     }
 
+    /**
+     * Reguła „skąd drużyna” musi być jedną z opcji tej kategorii (i nie wskazywać na ten sam mecz).
+     */
+    private function sourceRule(?int $matchId = null): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail) use ($matchId) {
+            if (filled($value) && ! array_key_exists($value, TournamentBracket::sourceOptions($this->category()->load(['groups.participants', 'matches.group']), $matchId))) {
+                $fail('Wybierz regułę z listy.');
+            }
+        };
+    }
+
+    /**
+     * Po każdej zmianie meczów wpisuje drużyny wynikające z reguł i odświeża formularz wyników.
+     */
+    private function syncBracket(): void
+    {
+        TournamentBracket::sync($this->category());
+        $this->loadCategoryState();
+    }
+
     private function category(): TournamentCategory
     {
         return $this->tournament->categories()->findOrFail($this->categoryId);
@@ -429,7 +475,7 @@ class TournamentEditor extends Component
 
     private function resetMatchForm(string $stage = 'group'): void
     {
-        $this->match = ['stage' => $stage, 'group' => '', 'label' => '', 'phase_name' => $this->match['phase_name'] ?? '', 'decides_place' => '', 'placement' => '', 'bracket_round' => '', 'bracket_slot' => '', 'home' => '', 'away' => '', 'home_placeholder' => '', 'away_placeholder' => '', 'starts_at' => $this->match['starts_at'] ?? '', 'court' => $this->match['court'] ?? ''];
+        $this->match = ['stage' => $stage, 'group' => '', 'label' => '', 'phase_name' => $this->match['phase_name'] ?? '', 'decides_place' => '', 'placement' => '', 'bracket_round' => '', 'bracket_slot' => '', 'home' => '', 'away' => '', 'home_placeholder' => '', 'away_placeholder' => '', 'home_source' => '', 'away_source' => '', 'starts_at' => $this->match['starts_at'] ?? '', 'court' => $this->match['court'] ?? ''];
     }
 
     private function loadCategoryState(): void
