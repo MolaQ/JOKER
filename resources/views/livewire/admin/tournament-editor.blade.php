@@ -69,7 +69,7 @@
                 <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
                     @foreach($scoringFields as $field => $fieldName)
                         <label class="text-sm text-gray-700">{{ $fieldName }}
-                            <input type="number" min="0" max="20" wire:model.blur="scoring.{{ $field }}" class="{{ $input }} mt-1">
+                            <input type="number" min="0" max="20" wire:model.blur.live="scoring.{{ $field }}" class="{{ $input }} mt-1">
                         </label>
                     @endforeach
                 </div>
@@ -100,7 +100,7 @@
                 @forelse($categories as $cat)
                     <li class="flex flex-wrap items-center gap-3 px-4 py-3" wire:key="cat-{{ $cat->id }}">
                         @if($renaming === 'category:'.$cat->id)
-                            <input type="text" wire:model.blur="categoryNames.{{ $cat->id }}" x-init="$el.focus()" x-on:keydown.enter="$el.blur()" x-on:blur="$wire.set('renaming', '')" class="{{ $input }} max-w-xs">
+                            <input type="text" wire:model.blur.live="categoryNames.{{ $cat->id }}" x-init="$el.focus()" x-on:keydown.enter="$el.blur()" x-on:blur="$wire.set('renaming', '')" class="{{ $input }} max-w-xs">
                         @else
                             <span class="text-sm"><strong>{{ $cat->name }}</strong> <span class="text-gray-500">· drużyn: {{ $cat->participants_count }} · meczów: {{ $cat->matches_count }}</span></span>
                         @endif
@@ -173,7 +173,7 @@
                             </div>
                             <div>
                                 <label class="text-xs text-gray-500">Nazwa na tym turnieju</label>
-                                <input type="text" wire:model.blur="participants.{{ $participant->id }}.display_name" class="{{ $input }}" placeholder="opcjonalnie">
+                                <input type="text" wire:model.blur.live="participants.{{ $participant->id }}.display_name" class="{{ $input }}" placeholder="opcjonalnie">
                             </div>
                             <div>
                                 <label class="text-xs text-gray-500">Grupa</label>
@@ -186,11 +186,11 @@
                             </div>
                             <div>
                                 <label class="text-xs text-gray-500">Miejsce</label>
-                                <input type="number" min="1" wire:model.blur="participants.{{ $participant->id }}.final_position" class="{{ $input }}" placeholder="auto">
+                                <input type="number" min="1" wire:model.blur.live="participants.{{ $participant->id }}.final_position" class="{{ $input }}" placeholder="auto">
                             </div>
                             <div>
                                 <label class="text-xs text-gray-500">Skład (jedna osoba w linii)</label>
-                                <textarea rows="2" wire:model.blur="participants.{{ $participant->id }}.roster" class="{{ $input }}" placeholder="opcjonalnie"></textarea>
+                                <textarea rows="2" wire:model.blur.live="participants.{{ $participant->id }}.roster" class="{{ $input }}" placeholder="opcjonalnie"></textarea>
                             </div>
                             <button type="button" wire:click="deleteParticipant({{ $participant->id }})" wire:confirm="Usunąć {{ $participant->name() }} z turnieju?" class="text-sm text-red-600 hover:text-red-800 lg:mt-6">Usuń</button>
                         </div>
@@ -212,7 +212,7 @@
                     <div class="space-y-3 rounded-lg border border-gray-200 p-4" wire:key="group-{{ $group->id }}">
                         <div class="flex items-center gap-3">
                             @if($renaming === 'group:'.$group->id)
-                                <input type="text" wire:model.blur="groupNames.{{ $group->id }}" x-init="$el.focus()" x-on:keydown.enter="$el.blur()" x-on:blur="$wire.set('renaming', '')" class="{{ $input }} max-w-xs">
+                                <input type="text" wire:model.blur.live="groupNames.{{ $group->id }}" x-init="$el.focus()" x-on:keydown.enter="$el.blur()" x-on:blur="$wire.set('renaming', '')" class="{{ $input }} max-w-xs">
                             @else
                                 <h3 class="font-semibold text-gray-900">{{ $group->name }}</h3>
                             @endif
@@ -257,7 +257,7 @@
                                     @foreach(range(1, $members->count()) as $position)
                                         <label class="flex items-center gap-2 text-sm whitespace-nowrap text-gray-700">
                                             <span class="shrink-0">{{ $position }}. miejsce →</span>
-                                            <input type="number" min="1" wire:model.blur="groupPlaces.{{ $group->id }}.{{ $position }}" class="{{ $input }} !w-16" placeholder="—">
+                                            <input type="number" min="1" wire:model.blur.live="groupPlaces.{{ $group->id }}.{{ $position }}" class="{{ $input }} !w-16" placeholder="—">
                                         </label>
                                     @endforeach
                                 </div>
@@ -275,7 +275,7 @@
                                 <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
                                     @foreach($scoringFields as $field => $fieldName)
                                         <label class="text-xs text-gray-600">{{ $fieldName }}
-                                            <input type="number" min="0" max="20" wire:model.blur="groupScoring.{{ $group->id }}.{{ $field }}" class="{{ $input }} mt-1">
+                                            <input type="number" min="0" max="20" wire:model.blur.live="groupScoring.{{ $group->id }}.{{ $field }}" class="{{ $input }} mt-1">
                                         </label>
                                     @endforeach
                                 </div>
@@ -445,11 +445,11 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <input type="text" wire:model.blur="results.{{ $tournamentMatch->id }}.sets" class="{{ $input }}" placeholder="25:20, 23:25, 15:12">
+                                        <input type="text" wire:model.blur.live="results.{{ $tournamentMatch->id }}.sets" class="{{ $input }}" placeholder="25:20, 23:25, 15:12">
                                         @error("results.{$tournamentMatch->id}.sets") <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                                     </div>
-                                    <input type="datetime-local" wire:model.blur="results.{{ $tournamentMatch->id }}.starts_at" class="{{ $input }}">
-                                    <input type="text" wire:model.blur="results.{{ $tournamentMatch->id }}.court" class="{{ $input }}" placeholder="boisko">
+                                    <input type="datetime-local" wire:model.blur.live="results.{{ $tournamentMatch->id }}.starts_at" class="{{ $input }}">
+                                    <input type="text" wire:model.blur.live="results.{{ $tournamentMatch->id }}.court" class="{{ $input }}" placeholder="boisko">
                                     <div class="flex items-center gap-3">
                                         <button type="button" wire:click="startMatchEdit({{ $tournamentMatch->id }})" class="text-sm text-blue-600 hover:text-blue-800">Edytuj</button>
                                         <button type="button" wire:click="deleteMatch({{ $tournamentMatch->id }})" wire:confirm="Usunąć ten mecz?" class="text-sm text-red-600 hover:text-red-800">Usuń</button>

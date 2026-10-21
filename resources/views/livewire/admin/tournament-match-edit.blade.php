@@ -2,7 +2,7 @@
 <div class="grid gap-3 rounded-md bg-blue-50 p-3 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-4">
     <div>
         <label class="{{ $label }}">Numer meczu</label>
-        <input type="number" min="1" wire:model.blur="editMatch.number" class="{{ $input }}">
+        <input type="number" min="1" wire:model.blur.live="editMatch.number" class="{{ $input }}">
         @error('editMatch.number') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
     </div>
     <div>
@@ -15,28 +15,28 @@
     </div>
     <div>
         <label class="{{ $label }}">Etykieta</label>
-        <input type="text" wire:model.blur="editMatch.label" class="{{ $input }}" placeholder="np. Półfinał 1">
+        <input type="text" wire:model.blur.live="editMatch.label" class="{{ $input }}" placeholder="np. Półfinał 1">
     </div>
     <div>
         <label class="{{ $label }}">Termin</label>
-        <input type="datetime-local" wire:model.blur="editMatch.starts_at" class="{{ $input }}">
+        <input type="datetime-local" wire:model.blur.live="editMatch.starts_at" class="{{ $input }}">
     </div>
     <div>
         <label class="{{ $label }}">Boisko / hala</label>
-        <input type="text" wire:model.blur="editMatch.court" class="{{ $input }}">
+        <input type="text" wire:model.blur.live="editMatch.court" class="{{ $input }}">
     </div>
     @if($editMatch['stage'] === 'playoff')
         <div>
             <label class="{{ $label }}">Faza = kolumna</label>
-            <input type="number" min="1" wire:model.blur="editMatch.bracket_round" class="{{ $input }}">
+            <input type="number" min="1" wire:model.blur.live="editMatch.bracket_round" class="{{ $input }}">
         </div>
         <div>
             <label class="{{ $label }}">Nazwa fazy</label>
-            <input type="text" wire:model.blur="editMatch.phase_name" class="{{ $input }}" placeholder="np. Finały">
+            <input type="text" wire:model.blur.live="editMatch.phase_name" class="{{ $input }}" placeholder="np. Finały">
         </div>
         <div>
             <label class="{{ $label }}">Pozycja w kolumnie</label>
-            <input type="number" min="1" wire:model.blur="editMatch.bracket_slot" class="{{ $input }}">
+            <input type="number" min="1" wire:model.blur.live="editMatch.bracket_slot" class="{{ $input }}">
         </div>
         <div>
             <label class="{{ $label }}">Drabinka</label>
@@ -60,7 +60,7 @@
     @elseif($editMatch['stage'] === 'placement')
         <div>
             <label class="{{ $label }}">Mecz o miejsce</label>
-            <input type="number" min="1" wire:model.blur="editMatch.placement" class="{{ $input }}">
+            <input type="number" min="1" wire:model.blur.live="editMatch.placement" class="{{ $input }}">
         </div>
     @else
         <div>

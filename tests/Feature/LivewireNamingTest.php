@@ -21,3 +21,13 @@ test('no livewire component has an action named like one of its public propertie
 
     expect($clashes->values()->all())->toBe([]);
 });
+
+// W Livewire 4 samo wire:model.blur / .change zmienia tylko stan w przeglądarce; autozapis wymaga dopisania .live.
+test('autosaving tournament editor fields send a request when the field is left', function () {
+    $views = glob(resource_path('views/livewire/admin/tournament-*.blade.php'));
+    $offending = collect($views)->flatMap(fn (string $path) => collect(file($path))
+        ->filter(fn (string $line) => preg_match('/wire:model\.(blur|change)(\.(?!live)[a-z]+)*="/', $line))
+        ->keys()->map(fn (int $line) => basename($path).':'.($line + 1)));
+
+    expect($views)->not->toBeEmpty()->and($offending->values()->all())->toBe([]);
+});
