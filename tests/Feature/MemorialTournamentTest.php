@@ -462,3 +462,22 @@ test('closing the match editor while a field is still being saved does not lose 
 
     expect($first->fresh()->court)->toBe('Boisko 2');
 });
+
+test('organizer numbers matches by the schedule once, and later time changes keep the numbers', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz, $poznan] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $make = fn ($home, $away, ?string $time, ?string $court) => $category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->group->id, 'home_participant_id' => $home->id, 'away_participant_id' => $away->id, 'starts_at' => $time, 'court' => $court]);
+    $late = $make($joker, $kalisz, '2026-11-14 11:00', 'Boisko 1');
+    $noTime = $make($kalisz, $poznan, null, null);
+    $courtTwo = $make($joker, $poznan, '2026-11-14 09:00', 'Boisko 2');
+    $courtOne = $make($poznan, $kalisz, '2026-11-14 09:00', 'Boisko 1');
+
+    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')->set('categoryId', $category->id)
+        ->call('renumberMatchesBySchedule');
+
+    expect([$courtOne->fresh()->number, $courtTwo->fresh()->number, $late->fresh()->number, $noTime->fresh()->number])->toBe([1, 2, 3, 4]);
+
+    $editor->set("results.{$courtOne->id}.starts_at", '2026-11-14T12:30');
+    expect($courtOne->fresh()->number)->toBe(1);
+});

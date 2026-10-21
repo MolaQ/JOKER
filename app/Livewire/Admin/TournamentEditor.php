@@ -12,6 +12,7 @@ use App\Models\TournamentParticipant;
 use App\Support\TournamentBracket;
 use App\Support\TournamentTable;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -669,6 +670,21 @@ class TournamentEditor extends Component
         $match = $this->category()->matches()->findOrFail($matchId);
         $column = $side === 'home' ? 'home_participant_id' : 'away_participant_id';
         $match->update([$column => $participantId !== '' && $this->category()->participants()->whereKey((int) $participantId)->exists() ? (int) $participantId : null]);
+    }
+
+    /**
+     * Numery meczów 1..N według harmonogramu: termin, potem boisko; mecze bez terminu na końcu w dotychczasowej kolejności.
+     * Reguły drabinki wskazują mecze po id, więc zmiana numerów ich nie psuje.
+     */
+    public function renumberMatchesBySchedule(): void
+    {
+        $matches = $this->category()->matches()->get()
+            ->sortBy(fn (TournamentMatch $match) => [$match->starts_at === null ? 1 : 0, $match->starts_at?->timestamp ?? 0, (string) $match->court, $match->number ?? PHP_INT_MAX, $match->id])
+            ->values();
+
+        DB::transaction(fn () => $matches->each(fn (TournamentMatch $match, int $index) => $match->update(['number' => $index + 1])));
+
+        $this->toast('Ponumerowano mecze według harmonogramu.');
     }
 
     public function deleteMatch(int $id): void

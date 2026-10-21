@@ -416,6 +416,13 @@
                 </div>
             </form>
 
+            @if($category->matches->count() > 1)
+                <div class="flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
+                    <button type="button" wire:click="renumberMatchesBySchedule" wire:confirm="Nadać meczom numery 1, 2, 3… według terminu (a przy tej samej godzinie według boiska)?" class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-800 hover:bg-gray-100">Numeruj według harmonogramu</button>
+                    <span class="text-xs text-gray-500">Numery nadajesz raz, przed turniejem. Późniejsza zmiana godziny albo boiska nie zmienia numeru meczu.</span>
+                </div>
+            @endif
+
             @foreach(\App\Models\TournamentMatch::STAGES as $stage => $stageName)
                 @php
                     $stageMatches = $category->matches->where('stage', $stage)->sortBy(fn ($m) => [$m->tournament_group_id ?? 0, $m->bracket_round ?? 0, $m->bracket_slot ?? 0, $m->placement ?? 0, $m->starts_at?->timestamp ?? 0, $m->id]);
