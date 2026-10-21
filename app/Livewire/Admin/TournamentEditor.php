@@ -310,7 +310,7 @@ class TournamentEditor extends Component
     /**
      * Otwiera edycję meczu: faza i pozycja w drabince, etykieta, miejsce, o które gra, drużyny.
      */
-    public function editMatch(int $matchId): void
+    public function startMatchEdit(int $matchId): void
     {
         $match = $this->category()->matches()->findOrFail($matchId);
 

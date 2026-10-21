@@ -348,7 +348,7 @@
                                     <input type="text" wire:model.blur="results.{{ $tournamentMatch->id }}.court" class="{{ $input }}" placeholder="boisko">
                                     <div class="flex items-center gap-3">
                                         <button type="button" wire:click="saveResult({{ $tournamentMatch->id }})" class="{{ $secondary }}">Zapisz</button>
-                                        <button type="button" wire:click="editMatch({{ $tournamentMatch->id }})" class="text-sm text-blue-600 hover:text-blue-800">Edytuj</button>
+                                        <button type="button" wire:click="startMatchEdit({{ $tournamentMatch->id }})" class="text-sm text-blue-600 hover:text-blue-800">Edytuj</button>
                                         <button type="button" wire:click="deleteMatch({{ $tournamentMatch->id }})" wire:confirm="Usunąć ten mecz?" class="text-sm text-red-600 hover:text-red-800">Usuń</button>
                                     </div>
                                     @if($editingMatchId === $tournamentMatch->id)

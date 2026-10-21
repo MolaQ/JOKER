@@ -191,7 +191,7 @@ test('organizer names bracket phases and puts the third place match under the fi
         ->call('addMatch')->assertHasNoErrors();
 
     $final = $category->matches()->where('decides_place', 1)->sole();
-    $editor->call('editMatch', $final->id)
+    $editor->call('startMatchEdit', $final->id)
         ->set('editMatch.home', (string) $joker->id)->set('editMatch.away', (string) $kalisz->id)
         ->call('saveMatchEdit')->assertHasNoErrors();
     $final->refresh()->update(['home_sets' => 2, 'away_sets' => 0]);
@@ -218,7 +218,7 @@ test('bracket matches stand in the chosen column and row, and any match can be e
         ->assertSee('Mecz o 5. miejsce');
 
     Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])
-        ->call('editMatch', $group->id)
+        ->call('startMatchEdit', $group->id)
         ->set('editMatch.starts_at', '2026-11-14T09:30')
         ->set('editMatch.court', 'Boisko 3')
         ->call('saveMatchEdit')
