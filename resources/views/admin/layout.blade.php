@@ -33,6 +33,7 @@
                 ['label' => 'Sponsorzy', 'route' => 'admin.sponsors.index', 'icon' => '🤝'],
                 ['label' => 'Dokumenty', 'route' => 'admin.documents.index', 'icon' => '📄'],
                 ['label' => 'Użytkownicy', 'route' => 'admin.users.index', 'icon' => '🔑'],
+                ['label' => 'Import z plików', 'route' => 'admin.import.index', 'icon' => '📥', 'admin' => true],
                 ['label' => 'Prośby o zmianę profilu', 'route' => 'admin.profile-change-requests.index', 'icon' => '✉️'],
             ],
             'Ustawienia rozgrywek (rzadko)' => [

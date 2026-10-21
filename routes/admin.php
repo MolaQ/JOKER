@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController;
 use App\Models\Tournament;
+use App\Support\DataImport;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'role:admin,trainer'])->prefix('panel')->name('admin.')->group(function () {
@@ -76,6 +77,11 @@ Route::middleware(['auth', 'role:admin,trainer'])->prefix('panel')->name('admin.
         Route::view('/settings', 'admin.settings.index')->name('settings.index');
         Route::view('/pages', 'admin.pages.index')->name('pages.index');
         Route::view('/statistics', 'admin.statistics.index')->name('statistics.index');
+        Route::view('/import', 'admin.import.index')->name('import.index');
+        Route::get('/import/wzor/{type}', fn (string $type) => response(DataImport::template($type), 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="wzor-'.$type.'.csv"',
+        ]))->whereIn('type', array_keys(DataImport::TYPES))->name('import.template');
     });
 
     // Zdjęcia i dane proponowane przez zawodników i rodziców

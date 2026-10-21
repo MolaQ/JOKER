@@ -113,7 +113,7 @@ class ClubSeeder extends Seeder
     /**
      * Dwa sezony archiwalne i aktualny (sezon startuje 1 września).
      */
-    private function seedSeasons(): void
+    public function seedSeasons(): void
     {
         $currentStartYear = now()->month >= 8 ? now()->year : now()->year - 1;
 
@@ -130,9 +130,9 @@ class ClubSeeder extends Seeder
     }
 
     /**
-     * Run the database seeds.
+     * Poziomy rozgrywek od PlusLigi do ligi okręgowej.
      */
-    private function seedCompetitionLevels(): void
+    public function seedCompetitionLevels(): void
     {
         $levels = [
             ['name' => 'PlusLiga', 'display_order' => 1],

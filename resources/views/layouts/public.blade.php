@@ -195,9 +195,9 @@
                 </div>
 
                 <div>
-                    <p class="eyebrow mb-4">{{ __('Na skróty') }}</p>
+                    <p class="eyebrow mb-4">{{ __(filled($site['footer_links_title']) ? $site['footer_links_title'] : 'Na skróty') }}</p>
                     <ul class="space-y-2 text-sm">
-                        @foreach([...$navItems, ...$topbarLeft] as $link)
+                        @foreach($site->links('footer_links') ?: [...$navItems, ...$topbarLeft] as $link)
                             <li><a href="{{ $site->href($link['url']) }}" class="transition hover:text-white">{{ __($link['label']) }}</a></li>
                         @endforeach
                     </ul>
@@ -230,7 +230,7 @@
 
             <div class="mt-14 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs sm:flex-row sm:items-center sm:justify-between">
                 <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
-                    <p>&copy; {{ date('Y') }} {{ $site['club_name'] }}</p>
+                    <p>&copy; {{ date('Y') }} {{ $site['club_name'] }}@if(filled($site['footer_note']) && $site['footer_note'] !== $site['club_name']) · {{ $site['footer_note'] }}@endif</p>
                     <livewire:visit-counter />
                 </div>
                 <p>{{ __('Zdjęcia tematyczne:') }} <a href="{{ route('credits') }}" class="underline hover:text-white">{{ __('Unsplash i ich autorzy') }}</a></p>
