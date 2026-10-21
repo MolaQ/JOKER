@@ -4,6 +4,8 @@
     'value' => '',
     'placeholder' => 'Wpisz treść...',
     'height' => 'min-h-[180px]',
+    // Autozapis: treść trafia do Livewire dopiero po wyjściu z edytora, a nie przy każdym znaku.
+    'saveOnBlur' => false,
 ])
 
 @php
@@ -13,7 +15,8 @@
 @if($model)
     <div
         wire:ignore
-        x-data="{ content: $wire.entangle('{{ $model }}').live }"
+        x-data="{ content: $wire.entangle('{{ $model }}'){{ $saveOnBlur ? '' : '.live' }} }"
+        @if($saveOnBlur) x-on:focusout="if (! $el.contains($event.relatedTarget)) $nextTick(() => $wire.$commit())" @endif
         x-init="$refs.editor.innerHTML = content || ''"
         x-effect="if (($refs.editor.innerHTML || '') !== (content || '')) { $refs.editor.innerHTML = content || '' }"
         class="space-y-2"

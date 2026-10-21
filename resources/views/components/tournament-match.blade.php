@@ -1,10 +1,11 @@
-@props(['match', 'showTitle' => true, 'showDate' => true])
+@props(['match', 'showTitle' => true, 'showDate' => true, 'bracket' => null])
 {{-- Mecz turnieju: drużyny z logo, wynik w setach i małe punkty; zwycięzca pogrubiony --}}
 @php
     $winnerId = $match->winner()?->id;
     $sides = [
-        [$match->home, $match->homeName(), $match->home_sets, $match->home_participant_id],
-        [$match->away, $match->awayName(), $match->away_sets, $match->away_participant_id],
+        // Z drabinką nazwy uwzględniają reguły („1. miejsce – Grupa A”, „Zwycięzca meczu #7”).
+        [$match->home, $bracket ? $bracket->side($match, 'home')['text'] : $match->homeName(), $match->home_sets, $match->home_participant_id],
+        [$match->away, $bracket ? $bracket->side($match, 'away')['text'] : $match->awayName(), $match->away_sets, $match->away_participant_id],
     ];
 @endphp
 <div {{ $attributes->merge(['class' => 'rounded-2xl bg-white p-3 ring-1 ring-zinc-200']) }}>

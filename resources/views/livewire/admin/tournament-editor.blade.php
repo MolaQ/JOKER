@@ -36,15 +36,16 @@
 
     {{-- Strona i informator --}}
     @if($section === 'strona')
-        <form wire:submit="saveInfo" class="space-y-5">
+        <div class="space-y-5">
+            <p class="text-xs text-gray-500">Zmiany zapisują się same po wyjściu z pola.</p>
             <div class="grid gap-4 sm:grid-cols-2">
                 <label class="flex items-center gap-3 rounded-lg border border-gray-200 p-3">
-                    <input type="checkbox" wire:model="has_page" class="rounded border-gray-300 text-blue-600">
+                    <input type="checkbox" wire:model.live="has_page" class="rounded border-gray-300 text-blue-600">
                     <span class="text-sm"><strong>Publiczna strona turnieju</strong><br><span class="text-gray-500">Zakładki: drużyny, grupy, mecze, drabinka, klasyfikacja, zasady, informator.</span></span>
                 </label>
                 <div>
                     <label class="{{ $label }}">Cykl</label>
-                    <select wire:model="series" class="{{ $input }}">
+                    <select wire:model.live="series" class="{{ $input }}">
                         <option value="">— pojedynczy turniej —</option>
                         <option value="{{ \App\Models\Tournament::SERIES_MEMORIAL }}">Memoriał im. Włodzimierza Winklera (zakładka „Memoriał” w menu)</option>
                     </select>
@@ -63,16 +64,15 @@
 
             <div>
                 <label class="{{ $label }}">Zasady i regulamin</label>
-                <x-rich-text-editor model="rules" placeholder="System rozgrywek, punktacja, czas rozgrzewki, piłki..." height="min-h-[180px]" />
+                <x-rich-text-editor model="rules" save-on-blur placeholder="System rozgrywek, punktacja, czas rozgrzewki, piłki..." height="min-h-[180px]" />
             </div>
 
             <div>
                 <label class="{{ $label }}">Informator dla drużyn przyjezdnych i kibiców</label>
-                <x-rich-text-editor model="guest_info" placeholder="Hale i adresy, dojazd i parking, noclegi, wyżywienie, kontakt do organizatora, plan dnia..." height="min-h-[220px]" />
+                <x-rich-text-editor model="guest_info" save-on-blur placeholder="Hale i adresy, dojazd i parking, noclegi, wyżywienie, kontakt do organizatora, plan dnia..." height="min-h-[220px]" />
             </div>
 
-            <button type="submit" class="{{ $primary }}">Zapisz</button>
-        </form>
+        </div>
     @endif
 
     {{-- Kategorie --}}
@@ -80,9 +80,17 @@
         <div class="space-y-4">
             <ul class="divide-y divide-gray-200 rounded-lg border border-gray-200">
                 @forelse($categories as $cat)
-                    <li class="flex items-center justify-between px-4 py-3" wire:key="cat-{{ $cat->id }}">
-                        <span class="text-sm"><strong>{{ $cat->name }}</strong> <span class="text-gray-500">· drużyn: {{ $cat->participants_count }} · meczów: {{ $cat->matches_count }}</span></span>
+                    <li class="flex flex-wrap items-center gap-3 px-4 py-3" wire:key="cat-{{ $cat->id }}">
+                        @if($renaming === 'category:'.$cat->id)
+                            <input type="text" wire:model.blur="categoryNames.{{ $cat->id }}" x-init="$el.focus()" x-on:keydown.enter="$el.blur()" x-on:blur="$wire.set('renaming', '')" class="{{ $input }} max-w-xs">
+                        @else
+                            <span class="text-sm"><strong>{{ $cat->name }}</strong> <span class="text-gray-500">· drużyn: {{ $cat->participants_count }} · meczów: {{ $cat->matches_count }}</span></span>
+                        @endif
+                        @error('categoryNames.'.$cat->id) <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                        <span class="ml-auto flex gap-3">
+                        <button type="button" wire:click="$set('renaming', 'category:{{ $cat->id }}')" class="text-sm text-blue-600 hover:text-blue-800">Edytuj</button>
                         <button type="button" wire:click="deleteCategory({{ $cat->id }})" wire:confirm="Usunąć kategorię {{ $cat->name }} razem z drużynami, grupami i meczami?" class="text-sm text-red-600 hover:text-red-800">Usuń</button>
+                        </span>
                     </li>
                 @empty
                     <li class="px-4 py-3 text-sm text-gray-500">Brak kategorii. Dodaj np. „Kadetki”, „Juniorki młodsze”, „Młodziczki”.</li>
@@ -134,7 +142,7 @@
             </form>
 
             @if($category->participants->isNotEmpty())
-                <form wire:submit="saveParticipants" class="space-y-3">
+                <div class="space-y-3">
                     @foreach($category->participants as $participant)
                         <div class="grid gap-3 rounded-lg border border-gray-200 p-3 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_8rem_6rem_minmax(0,1.5fr)_auto] lg:items-start" wire:key="participant-{{ $participant->id }}">
                             <div class="flex items-center gap-3">
@@ -147,11 +155,11 @@
                             </div>
                             <div>
                                 <label class="text-xs text-gray-500">Nazwa na tym turnieju</label>
-                                <input type="text" wire:model="participants.{{ $participant->id }}.display_name" class="{{ $input }}" placeholder="opcjonalnie">
+                                <input type="text" wire:model.blur="participants.{{ $participant->id }}.display_name" class="{{ $input }}" placeholder="opcjonalnie">
                             </div>
                             <div>
                                 <label class="text-xs text-gray-500">Grupa</label>
-                                <select wire:model="participants.{{ $participant->id }}.group" class="{{ $input }}">
+                                <select wire:model.live="participants.{{ $participant->id }}.group" class="{{ $input }}">
                                     <option value="">—</option>
                                     @foreach($category->groups as $group)
                                         <option value="{{ $group->id }}">{{ $group->name }}</option>
@@ -160,50 +168,98 @@
                             </div>
                             <div>
                                 <label class="text-xs text-gray-500">Miejsce</label>
-                                <input type="number" min="1" wire:model="participants.{{ $participant->id }}.final_position" class="{{ $input }}" placeholder="auto">
+                                <input type="number" min="1" wire:model.blur="participants.{{ $participant->id }}.final_position" class="{{ $input }}" placeholder="auto">
                             </div>
                             <div>
                                 <label class="text-xs text-gray-500">Skład (jedna osoba w linii)</label>
-                                <textarea rows="2" wire:model="participants.{{ $participant->id }}.roster" class="{{ $input }}" placeholder="opcjonalnie"></textarea>
+                                <textarea rows="2" wire:model.blur="participants.{{ $participant->id }}.roster" class="{{ $input }}" placeholder="opcjonalnie"></textarea>
                             </div>
                             <button type="button" wire:click="deleteParticipant({{ $participant->id }})" wire:confirm="Usunąć {{ $participant->name() }} z turnieju?" class="text-sm text-red-600 hover:text-red-800 lg:mt-6">Usuń</button>
                         </div>
                     @endforeach
-                    <p class="text-xs text-gray-500">„Miejsce” zostaw puste, a końcowa klasyfikacja wyliczy się z meczów o miejsca i finału.</p>
-                    <button type="submit" class="{{ $primary }}">Zapisz drużyny</button>
-                </form>
+                    <p class="text-xs text-gray-500">Zmiany zapisują się same. „Miejsce” zostaw puste, a końcowa klasyfikacja wyliczy się z meczów o miejsca, finału i reguł grup.</p>
+                </div>
             @endif
         </div>
     @endif
 
-    {{-- Grupy --}}
+    {{-- Grupy: skład z drużyn albo reguł, reguły miejsc w klasyfikacji; wszystko zapisuje się samo --}}
     @if($section === 'grupy' && $category)
+        @php $groupBracket = \App\Support\TournamentBracket::for($category); @endphp
         <div class="space-y-4">
-            <div class="grid gap-4 md:grid-cols-2">
+            <p class="text-xs text-gray-500">Skład grupy to drużyny przypisane w zakładce „Drużyny” oraz miejsca dodane tutaj: konkretna drużyna albo reguła, np. „1. miejsce – Grupa A” (grupa finałowa). Zmiany zapisują się same.</p>
+            <div class="grid gap-4 lg:grid-cols-2">
                 @forelse($category->groups as $group)
-                    <div class="rounded-lg border border-gray-200 p-4" wire:key="group-{{ $group->id }}">
-                        <div class="flex items-center justify-between">
-                            <h3 class="font-semibold text-gray-900">{{ $group->name }}</h3>
-                            <button type="button" wire:click="deleteGroup({{ $group->id }})" wire:confirm="Usunąć {{ $group->name }}? Drużyny zostaną bez grupy." class="text-sm text-red-600 hover:text-red-800">Usuń</button>
+                    @php $members = $groupBracket->members($group); $slotOptions = \App\Support\TournamentBracket::slotOptions($category, $group); @endphp
+                    <div class="space-y-3 rounded-lg border border-gray-200 p-4" wire:key="group-{{ $group->id }}">
+                        <div class="flex items-center gap-3">
+                            @if($renaming === 'group:'.$group->id)
+                                <input type="text" wire:model.blur="groupNames.{{ $group->id }}" x-init="$el.focus()" x-on:keydown.enter="$el.blur()" x-on:blur="$wire.set('renaming', '')" class="{{ $input }} max-w-xs">
+                            @else
+                                <h3 class="font-semibold text-gray-900">{{ $group->name }}</h3>
+                            @endif
+                            @error('groupNames.'.$group->id) <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                            <span class="ml-auto flex gap-3">
+                                <button type="button" wire:click="$set('renaming', 'group:{{ $group->id }}')" class="text-sm text-blue-600 hover:text-blue-800">Edytuj</button>
+                                <button type="button" wire:click="deleteGroup({{ $group->id }})" wire:confirm="Usunąć {{ $group->name }}? Drużyny zostaną bez grupy, a mecze grupy zostaną usunięte." class="text-sm text-red-600 hover:text-red-800">Usuń</button>
+                            </span>
                         </div>
-                        <ul class="mt-2 space-y-1 text-sm text-gray-700">
-                            @forelse($group->participants as $participant)
-                                <li>{{ $participant->name() }}</li>
-                            @empty
-                                <li class="text-gray-500">Przypisz drużyny w zakładce „Drużyny”.</li>
-                            @endforelse
-                        </ul>
-                        <p class="mt-2 text-xs text-gray-500">Meczów w grupie: {{ $category->matches->where('tournament_group_id', $group->id)->count() }}</p>
-                        @if($group->participants->count() > 1)
-                            <button type="button" wire:click="generateGroupMatches({{ $group->id }})" class="{{ $secondary }} mt-3">Utwórz mecze „każdy z każdym”</button>
+
+                        <div>
+                            <p class="text-xs font-semibold text-gray-500 uppercase">Skład ({{ $members->count() }})</p>
+                            <ul class="mt-1 space-y-1 text-sm text-gray-700">
+                                @foreach($group->participants as $participant)
+                                    <li>{{ $participant->name() }} <span class="text-xs text-gray-400">· z zakładki „Drużyny”</span></li>
+                                @endforeach
+                            </ul>
+                            <div class="mt-2 space-y-2">
+                                @foreach($groupSlots[$group->id] ?? [] as $index => $slot)
+                                    <div class="flex items-center gap-2" wire:key="slot-{{ $group->id }}-{{ $index }}">
+                                        <select wire:model.live="groupSlots.{{ $group->id }}.{{ $index }}" class="{{ $input }}">
+                                            <option value="">— wybierz drużynę albo regułę —</option>
+                                            @foreach(collect($slotOptions)->groupBy(fn ($name, $key) => match (true) { str_starts_with($key, 'participant:') => 'Drużyny', str_starts_with($key, 'group:') => 'Miejsce w innej grupie', default => 'Wynik meczu' }, true) as $optgroup => $options)
+                                                <optgroup label="{{ $optgroup }}">
+                                                    @foreach($options as $value => $name)
+                                                        <option value="{{ $value }}">{{ $name }}</option>
+                                                    @endforeach
+                                                </optgroup>
+                                            @endforeach
+                                        </select>
+                                        <button type="button" wire:click="removeGroupSlot({{ $group->id }}, {{ $index }})" class="text-sm text-red-600 hover:text-red-800" title="Usuń miejsce">✕</button>
+                                    </div>
+                                @endforeach
+                            </div>
+                            <button type="button" wire:click="addGroupSlot({{ $group->id }})" class="mt-2 text-sm font-semibold text-blue-600 hover:text-blue-800">+ Dodaj miejsce w składzie</button>
+                        </div>
+
+                        @if($members->isNotEmpty())
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 uppercase">Reguły grupy: miejsce w tabeli → klasyfikacja końcowa</p>
+                                <div class="mt-1 grid grid-cols-2 gap-x-4 gap-y-2 xl:grid-cols-3">
+                                    @foreach(range(1, $members->count()) as $position)
+                                        <label class="flex items-center gap-2 text-sm whitespace-nowrap text-gray-700">
+                                            <span class="shrink-0">{{ $position }}. miejsce →</span>
+                                            <input type="number" min="1" wire:model.blur="groupPlaces.{{ $group->id }}.{{ $position }}" class="{{ $input }} !w-16" placeholder="—">
+                                        </label>
+                                    @endforeach
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Np. w grupie finałowej 1 → 1, 2 → 2… Puste pole = to miejsce nie trafia do klasyfikacji (rozstrzygają dalsze mecze).</p>
+                            </div>
                         @endif
+
+                        <div class="flex items-center gap-3">
+                            <p class="text-xs text-gray-500">Meczów w grupie: {{ $category->matches->where('tournament_group_id', $group->id)->count() }}</p>
+                            @if($members->count() > 1)
+                                <button type="button" wire:click="generateGroupMatches({{ $group->id }})" class="{{ $secondary }} ml-auto">Utwórz mecze „każdy z każdym”</button>
+                            @endif
+                        </div>
                     </div>
                 @empty
                     <p class="text-sm text-gray-500">Brak grup w tej kategorii.</p>
                 @endforelse
             </div>
             <form wire:submit="addGroup" class="flex gap-2">
-                <input type="text" wire:model="newGroup" placeholder="np. Grupa A" class="{{ $input }} max-w-xs">
+                <input type="text" wire:model="newGroup" placeholder="np. Grupa A, Grupa finałowa" class="{{ $input }} max-w-xs">
                 <button type="submit" class="{{ $primary }}">Dodaj grupę</button>
             </form>
             @error('newGroup') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
@@ -333,7 +389,6 @@
                                     <input type="datetime-local" wire:model.blur="results.{{ $tournamentMatch->id }}.starts_at" class="{{ $input }}">
                                     <input type="text" wire:model.blur="results.{{ $tournamentMatch->id }}.court" class="{{ $input }}" placeholder="boisko">
                                     <div class="flex items-center gap-3">
-                                        <button type="button" wire:click="saveResult({{ $tournamentMatch->id }})" class="{{ $secondary }}">Zapisz</button>
                                         <button type="button" wire:click="startMatchEdit({{ $tournamentMatch->id }})" class="text-sm text-blue-600 hover:text-blue-800">Edytuj</button>
                                         <button type="button" wire:click="deleteMatch({{ $tournamentMatch->id }})" wire:confirm="Usunąć ten mecz?" class="text-sm text-red-600 hover:text-red-800">Usuń</button>
                                     </div>

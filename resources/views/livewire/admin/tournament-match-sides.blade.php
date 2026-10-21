@@ -17,13 +17,13 @@
     @if(($data[$side.'_source'] ?? '') === '')
         <div>
             <label class="{{ $label }}">{{ $sideName }}</label>
-            <select wire:model="{{ $prefix }}.{{ $side }}" class="{{ $input }}">
+            <select wire:model{{ $prefix === 'editMatch' ? '.live' : '' }}="{{ $prefix }}.{{ $side }}" class="{{ $input }}">
                 <option value="">— jeszcze nieznany —</option>
                 @foreach($category->participants as $participant)
                     <option value="{{ $participant->id }}">{{ $participant->name() }}</option>
                 @endforeach
             </select>
-            <input type="text" wire:model="{{ $prefix }}.{{ $side }}_placeholder" class="{{ $input }} mt-1" placeholder="…albo opis, np. Gospodarz turnieju">
+            <input type="text" wire:model{{ $prefix === 'editMatch' ? '.blur' : '' }}="{{ $prefix }}.{{ $side }}_placeholder" class="{{ $input }} mt-1" placeholder="…albo opis, np. Gospodarz turnieju">
         </div>
     @else
         <p class="self-end pb-2 text-xs text-gray-500">Drużyna wpisze się sama, gdy {{ str_starts_with($data[$side.'_source'], 'group:') ? 'grupa zostanie rozegrana; wcześniej strona pokaże prognozę' : 'mecz źródłowy będzie miał wynik' }}.</p>

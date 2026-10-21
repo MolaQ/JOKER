@@ -31,6 +31,12 @@ class TournamentBracket
     /** @var array<int, Collection<int, array<string, mixed>>> */
     private array $tables = [];
 
+    /** @var array<int, Collection<int, array<string, mixed>>> */
+    private array $members = [];
+
+    /** Zabezpieczenie przed regułami w kółko (grupa A z miejsc grupy B, która bierze z A). */
+    private int $depth = 0;
+
     public function __construct(private TournamentCategory $category)
     {
         $this->matches = $category->matches->keyBy('id');
@@ -162,6 +168,18 @@ class TournamentBracket
             }
         }
 
+        // Reguły grup: miejsce w tabeli grupy → miejsce w klasyfikacji (pewne dopiero po rozegraniu grupy).
+        foreach ($this->groups as $group) {
+            $finished = $this->groupProgress($group)['finished'];
+
+            foreach ($group->final_places ?? [] as $position => $place) {
+                if (filled($place)) {
+                    $row = $finished ? $this->groupTable($group)->firstWhere('position', (int) $position) : null;
+                    $places[(int) $place] = $row['participant'] ?? __(':place. miejsce – :group', ['place' => $position, 'group' => $group->name]);
+                }
+            }
+        }
+
         foreach ($known as $position => $row) {
             $places[$position] = $row['participant'];
         }
@@ -183,9 +201,10 @@ class TournamentBracket
     public static function sourceOptions(TournamentCategory $category, ?int $exceptMatchId = null): array
     {
         $options = [];
+        $bracket = new self($category);
 
         foreach ($category->groups as $group) {
-            $size = max($group->participants->count(), 1);
+            $size = max($bracket->members($group)->count(), 1);
 
             for ($place = 1; $place <= $size; $place++) {
                 $options["group:{$group->id}:{$place}"] = "{$place}. miejsce – {$group->name}";
@@ -217,12 +236,14 @@ class TournamentBracket
             $letter = $group ? self::groupLetter($group) : '?';
             $description = __(':place. miejsce – :group', ['place' => $place, 'group' => $group?->name ?? '?']);
 
-            if ($group === null) {
+            if ($group === null || $this->depth > 5) {
                 return ['participant' => null, 'state' => self::PENDING, 'chip' => "{$place}{$letter}", 'description' => $description];
             }
 
+            $this->depth++;
             $progress = $this->groupProgress($group);
             $row = $progress['played'] > 0 ? $this->table($group)->firstWhere('position', $place) : null;
+            $this->depth--;
 
             return [
                 'participant' => $row['participant'] ?? null,
@@ -252,10 +273,71 @@ class TournamentBracket
     }
 
     /**
+     * Skład grupy: drużyny przypisane w zakładce „Drużyny” i miejsca z reguł (drużyna albo „1. miejsce – Grupa A”).
+     *
+     * @return Collection<int, array{key: string, participant: ?TournamentParticipant, state: string, chip: ?string, text: string}>
+     */
+    public function members(TournamentGroup $group): Collection
+    {
+        return $this->members[$group->id] ??= $this->category->participants
+            ->where('tournament_group_id', $group->id)
+            ->map(fn (TournamentParticipant $participant) => ['key' => "participant:{$participant->id}", 'participant' => $participant, 'state' => self::CONFIRMED, 'chip' => null, 'text' => $participant->name()])
+            ->concat(collect($group->slots ?? [])->filter()->map(fn (string $slot) => $this->slot($slot)))
+            ->values();
+    }
+
+    /**
+     * Tabela grupy z jej meczów (drużyny z reguł liczą się, gdy już wiadomo, kto to jest).
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function groupTable(TournamentGroup $group): Collection
+    {
+        return $this->tables[$group->id] ??= TournamentTable::for(
+            $this->members($group)->pluck('participant')->filter()->unique('id')->values(),
+            $this->matches->where('tournament_group_id', $group->id),
+        );
+    }
+
+    /**
+     * Opcje składu grupy w panelu: konkretne drużyny i miejsca z innych grup / wyniki meczów.
+     *
+     * @return array<string, string>
+     */
+    public static function slotOptions(TournamentCategory $category, TournamentGroup $group): array
+    {
+        $options = $category->participants->mapWithKeys(fn (TournamentParticipant $participant) => ["participant:{$participant->id}" => $participant->name()])->all();
+
+        foreach (self::sourceOptions($category) as $key => $name) {
+            if (! str_starts_with($key, "group:{$group->id}:")) {
+                $options[$key] = $name;
+            }
+        }
+
+        return $options;
+    }
+
+    /**
+     * @return array{key: string, participant: ?TournamentParticipant, state: string, chip: ?string, text: string}
+     */
+    private function slot(string $slot): array
+    {
+        if (str_starts_with($slot, 'participant:')) {
+            $participant = $this->category->participants->firstWhere('id', (int) substr($slot, 12));
+
+            return ['key' => $slot, 'participant' => $participant, 'state' => $participant ? self::CONFIRMED : self::PENDING, 'chip' => null, 'text' => $participant?->name() ?? '?'];
+        }
+
+        $resolved = $this->resolveSource($slot);
+
+        return ['key' => $slot, 'participant' => $resolved['participant'], 'state' => $resolved['state'], 'chip' => $resolved['chip'], 'text' => $resolved['participant']?->name() ?? $resolved['description']];
+    }
+
+    /**
      * @return Collection<int, array<string, mixed>>
      */
     private function table(TournamentGroup $group): Collection
     {
-        return $this->tables[$group->id] ??= TournamentTable::for($group->participants, $this->matches->where('tournament_group_id', $group->id));
+        return $this->groupTable($group);
     }
 }

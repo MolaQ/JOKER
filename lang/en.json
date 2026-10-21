@@ -404,5 +404,15 @@
     "przegrany": "loser",
     "zakończona": "finished",
     ":played z :total meczów": ":played of :total matches",
-    "Każdy mecz ma numer. Plakietka przy drużynie mówi, skąd przychodzi (1A = 1. miejsce grupy A, #7 = mecz nr 7), a napis w rogu meczu, dokąd idą zwycięzca i przegrany. Szare nazwy to prognoza, dopóki grupa trwa.": "Every match has a number. The badge next to a team shows where it comes from (1A = 1st place in group A, #7 = match no. 7), and the note in the corner shows where the winner and loser go next. Grey names are a forecast while the group is still being played."
+    "Każdy mecz ma numer. Plakietka przy drużynie mówi, skąd przychodzi (1A = 1. miejsce grupy A, #7 = mecz nr 7), a napis w rogu meczu, dokąd idą zwycięzca i przegrany. Szare nazwy to prognoza, dopóki grupa trwa.": "Every match has a number. The badge next to a team shows where it comes from (1A = 1st place in group A, #7 = match no. 7), and the note in the corner shows where the winner and loser go next. Grey names are a forecast while the group is still being played.",
+    "Pokaż mecze drużyny": "Show matches of team",
+    "Filtr drużyny": "Team filter",
+    "Wybierz drużynę": "Choose a team",
+    "Wybierz drużynę…": "Choose a team…",
+    "Najbliższy: :when · #:number": "Next: :when · #:number",
+    "Dziś": "Today",
+    "Godzina do ustalenia": "Time to be confirmed",
+    "Mecz #:number": "Match #:number",
+    "Na żywo": "Live",
+    "Terminarz meczów pojawi się wkrótce.": "The match schedule will be available soon."
 }

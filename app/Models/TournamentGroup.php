@@ -13,8 +13,18 @@ class TournamentGroup extends Model
     protected $fillable = [
         'tournament_category_id',
         'name',
+        'slots',
+        'final_places',
         'display_order',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'slots' => 'array',
+            'final_places' => 'array',
+        ];
+    }
 
     public function category(): BelongsTo
     {

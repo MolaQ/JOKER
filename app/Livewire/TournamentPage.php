@@ -37,7 +37,7 @@ class TournamentPage extends Component
     public function render(): View
     {
         $categories = $this->tournament->categories()
-            ->with(['groups.participants.competitor', 'groups.matches.home.competitor', 'groups.matches.away.competitor', 'participants.competitor', 'participants.group', 'matches.home.competitor', 'matches.away.competitor', 'matches.group'])
+            ->with(['groups.participants.competitor', 'groups.matches.home.competitor', 'groups.matches.away.competitor', 'participants.competitor', 'participants.group', 'matches.home.competitor', 'matches.away.competitor', 'matches.group', 'matches.category.tournament'])
             ->get();
 
         /** @var TournamentCategory|null $current */
@@ -65,7 +65,6 @@ class TournamentPage extends Component
             'current' => $current,
             'tabs' => $tabs,
             'currentTab' => $currentTab,
-            'matchesByDay' => $matches->groupBy(fn (TournamentMatch $match) => $match->starts_at?->toDateString() ?? ''),
             'bracket' => $bracket,
             'board' => $board,
             'standings' => $standings,

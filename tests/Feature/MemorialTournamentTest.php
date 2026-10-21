@@ -285,3 +285,65 @@ test('bracket slots follow group places and earlier results: forecast while the 
     $editor->set('match.stage', 'playoff')->set('match.bracket_round', 2)->set('match.home_source', 'winner:999999')
         ->call('addMatch')->assertHasErrors('match.home_source');
 });
+
+test('a final group is built from group places, autosaves and its table decides the final standings', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz, $poznan] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $groupA = $joker->group;
+    $groupB = $category->groups()->create(['name' => 'Grupa B', 'display_order' => 1]);
+    [$sparta, $orzel, $gwardia] = collect(['Sparta Złotów', 'Orzeł Trzcianka', 'Gwardia Wrocław'])
+        ->map(fn (string $name) => $category->participants()->create(['tournament_group_id' => $groupB->id, 'competitor_type' => 'rival_team', 'competitor_id' => RivalTeam::create(['full_name' => $name])->id]))
+        ->all();
+
+    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'grupy')
+        ->call('generateGroupMatches', $groupA->id)
+        ->call('generateGroupMatches', $groupB->id)
+        ->set('newGroup', 'Grupa finałowa')->call('addGroup');
+    $final = $category->groups()->where('name', 'Grupa finałowa')->sole();
+
+    foreach (["group:{$groupA->id}:1", "group:{$groupA->id}:2", "group:{$groupB->id}:1", "group:{$groupB->id}:2"] as $index => $slot) {
+        $editor->call('addGroupSlot', $final->id)->set("groupSlots.{$final->id}.{$index}", $slot);
+    }
+    $editor->set("groupPlaces.{$final->id}.1", '1')->set("groupPlaces.{$final->id}.2", '2')
+        ->set("groupNames.{$final->id}", 'Finał czwórki')
+        ->set("participants.{$poznan->id}.roster", 'Ola Nowak')
+        ->call('generateGroupMatches', $final->id)
+        ->assertHasNoErrors();
+
+    $final->refresh();
+    expect($final->name)->toBe('Finał czwórki')
+        ->and($final->slots)->toHaveCount(4)
+        ->and($final->final_places)->toBe(['1' => 1, '2' => 2])
+        ->and($final->matches()->count())->toBe(6)
+        ->and($final->matches()->whereNotNull('home_source')->count())->toBe(6)
+        ->and($poznan->fresh()->roster)->toBe('Ola Nowak');
+
+    Livewire::withQueryParams(['zakladka' => 'klasyfikacja'])->test(TournamentPage::class, ['tournament' => $this->tournament])
+        ->assertSeeInOrder(['2. miejsce – Finał czwórki', '1. miejsce – Finał czwórki']);
+
+    $play = function (TournamentParticipant $home, TournamentParticipant $away, string $sets, ?int $groupId = null) use ($editor, $category) {
+        $match = $category->matches()->where('tournament_group_id', $groupId ?? $home->tournament_group_id)
+            ->whereIn('home_participant_id', [$home->id, $away->id])->whereIn('away_participant_id', [$home->id, $away->id])->sole();
+        $flip = $match->home_participant_id !== $home->id;
+        $editor->set("results.{$match->id}.sets", $flip ? collect(explode(', ', $sets))->map(fn ($set) => implode(':', array_reverse(explode(':', $set))))->implode(', ') : $sets);
+    };
+    $play($joker, $kalisz, '25:10, 25:10');
+    $play($joker, $poznan, '25:10, 25:10');
+    $play($kalisz, $poznan, '25:10, 25:10');
+    $play($sparta, $orzel, '25:10, 25:10');
+    $play($sparta, $gwardia, '25:10, 25:10');
+    $play($orzel, $gwardia, '25:10, 25:10');
+
+    // Grupa finałowa: drużyny wpisały się same, Joker wygrywa wszystko, Sparta drugie miejsce.
+    expect($final->matches()->whereNull('home_participant_id')->count())->toBe(0);
+    $play($joker, $kalisz, '25:10, 25:10', $final->id);
+    $play($joker, $sparta, '25:10, 25:10', $final->id);
+    $play($joker, $orzel, '25:10, 25:10', $final->id);
+    $play($kalisz, $sparta, '10:25, 10:25', $final->id);
+    $play($kalisz, $orzel, '25:10, 25:10', $final->id);
+    $play($sparta, $orzel, '25:10, 25:10', $final->id);
+
+    Livewire::withQueryParams(['zakladka' => 'klasyfikacja'])->test(TournamentPage::class, ['tournament' => $this->tournament])
+        ->assertSeeInOrder(['Sparta Złotów', '🏆', 'LOMS Joker Piła']);
+});

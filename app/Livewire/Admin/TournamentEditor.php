@@ -67,6 +67,21 @@ class TournamentEditor extends Component
     /** @var array<int, array{sets: string, starts_at: string, court: string}> */
     public array $results = [];
 
+    /** Kategoria albo grupa, której nazwa jest właśnie edytowana („category:3”, „group:5”). */
+    public string $renaming = '';
+
+    /** @var array<int, string> */
+    public array $categoryNames = [];
+
+    /** @var array<int, string> */
+    public array $groupNames = [];
+
+    /** @var array<int, list<string>> Skład grup z reguł: „participant:4”, „group:2:1”, „winner:9”. */
+    public array $groupSlots = [];
+
+    /** @var array<int, array<int, string>> Reguły grup: miejsce w tabeli → miejsce w klasyfikacji. */
+    public array $groupPlaces = [];
+
     public function mount(Tournament $tournament): void
     {
         $this->tournament = $tournament;
@@ -77,6 +92,16 @@ class TournamentEditor extends Component
         $this->categoryId ??= $tournament->categories()->value('id');
         $this->resetMatchForm();
         $this->loadCategoryState();
+    }
+
+    /**
+     * Ustawienia strony turnieju zapisują się same po zmianie pola.
+     */
+    public function updated(string $property): void
+    {
+        if (in_array($property, ['has_page', 'series', 'rules', 'guest_info', 'image'], true)) {
+            $this->saveInfo();
+        }
     }
 
     public function updatedCategoryId(): void
@@ -126,6 +151,62 @@ class TournamentEditor extends Component
         $this->loadCategoryState();
     }
 
+    public function updatedCategoryNames(string $value, string $id): void
+    {
+        $this->validate(["categoryNames.{$id}" => 'required|string|max:60']);
+        $this->tournament->categories()->whereKey((int) $id)->update(['name' => trim($value)]);
+        $this->toast('Zmieniono nazwę kategorii.');
+    }
+
+    public function updatedGroupNames(string $value, string $id): void
+    {
+        $this->validate(["groupNames.{$id}" => 'required|string|max:60']);
+        $this->category()->groups()->whereKey((int) $id)->update(['name' => trim($value)]);
+        $this->toast('Zmieniono nazwę grupy.');
+    }
+
+    /**
+     * Skład grupy z reguł zapisuje się od razu; drużyny pojawią się w tabeli, gdy reguła się rozstrzygnie.
+     */
+    public function updatedGroupSlots(mixed $value, string $key): void
+    {
+        $this->saveGroupRules((int) explode('.', $key)[0]);
+    }
+
+    public function updatedGroupPlaces(mixed $value, string $key): void
+    {
+        $this->saveGroupRules((int) explode('.', $key)[0]);
+    }
+
+    public function addGroupSlot(int $groupId): void
+    {
+        $this->groupSlots[$groupId][] = '';
+    }
+
+    public function removeGroupSlot(int $groupId, int $index): void
+    {
+        unset($this->groupSlots[$groupId][$index]);
+        $this->groupSlots[$groupId] = array_values($this->groupSlots[$groupId] ?? []);
+        $this->saveGroupRules($groupId);
+    }
+
+    private function saveGroupRules(int $groupId): void
+    {
+        $category = $this->category()->load(['groups.participants', 'participants', 'matches.group']);
+        $group = $category->groups->firstWhere('id', $groupId) ?? abort(404);
+        $allowed = TournamentBracket::slotOptions($category, $group);
+
+        $slots = collect($this->groupSlots[$groupId] ?? [])->filter(fn ($slot) => is_string($slot) && array_key_exists($slot, $allowed))->values()->all();
+        $places = collect($this->groupPlaces[$groupId] ?? [])
+            ->filter(fn ($place) => is_numeric($place) && (int) $place >= 1 && (int) $place <= 99)
+            ->map(fn ($place) => (int) $place)
+            ->all();
+
+        $group->update(['slots' => $slots ?: null, 'final_places' => $places ?: null]);
+        TournamentBracket::sync($category);
+        $this->toast('Zapisano grupę '.$group->name.'.');
+    }
+
     public function addGroup(): void
     {
         $category = $this->category();
@@ -133,12 +214,21 @@ class TournamentEditor extends Component
 
         $category->groups()->create(['name' => trim($this->newGroup), 'display_order' => $category->groups()->count()]);
         $this->newGroup = '';
+        $this->loadCategoryState();
     }
 
     public function deleteGroup(int $id): void
     {
-        $this->category()->groups()->whereKey($id)->delete();
-        $this->loadCategoryState();
+        $category = $this->category();
+        $category->matches()->where('tournament_group_id', $id)->delete();
+
+        // Reguły „N. miejsce – usunięta grupa” w meczach tracą sens.
+        foreach (['home_source', 'away_source'] as $column) {
+            $category->matches()->where($column, 'like', "group:{$id}:%")->update([$column => null]);
+        }
+
+        $category->groups()->whereKey($id)->delete();
+        $this->syncBracket();
     }
 
     /**
@@ -146,23 +236,30 @@ class TournamentEditor extends Component
      */
     public function generateGroupMatches(int $groupId): void
     {
-        $group = $this->category()->groups()->with(['participants', 'matches'])->findOrFail($groupId);
-        $ids = $group->participants->pluck('id')->values();
+        $category = $this->category()->load(['groups.participants', 'participants', 'matches.group']);
+        $group = $category->groups->firstWhere('id', $groupId) ?? abort(404);
+        $members = TournamentBracket::for($category)->members($group)->pluck('key')->unique()->values();
+        $sideKey = fn (TournamentMatch $match, string $side) => $match->{$side.'_source'} ?? ($match->{$side.'_participant_id'} ? 'participant:'.$match->{$side.'_participant_id'} : null);
+        $existing = $category->matches->where('tournament_group_id', $group->id)
+            ->map(fn (TournamentMatch $match) => collect([$sideKey($match, 'home'), $sideKey($match, 'away')])->sort()->implode('|'));
+        $side = fn (string $key) => str_starts_with($key, 'participant:') ? ['participant_id' => (int) substr($key, 12), 'source' => null] : ['participant_id' => null, 'source' => $key];
         $created = 0;
 
-        foreach ($ids as $i => $homeId) {
-            foreach ($ids->slice($i + 1) as $awayId) {
-                $exists = $group->matches->contains(fn (TournamentMatch $match) => collect([$match->home_participant_id, $match->away_participant_id])->sort()->values()->all() === collect([$homeId, $awayId])->sort()->values()->all());
-
-                if (! $exists) {
-                    $group->matches()->create([
-                        'tournament_category_id' => $group->tournament_category_id,
-                        'stage' => TournamentMatch::STAGE_GROUP,
-                        'home_participant_id' => $homeId,
-                        'away_participant_id' => $awayId,
-                    ]);
-                    $created++;
+        foreach ($members as $i => $home) {
+            foreach ($members->slice($i + 1) as $away) {
+                if ($existing->contains(collect([$home, $away])->sort()->implode('|'))) {
+                    continue;
                 }
+
+                $group->matches()->create([
+                    'tournament_category_id' => $group->tournament_category_id,
+                    'stage' => TournamentMatch::STAGE_GROUP,
+                    'home_participant_id' => $side($home)['participant_id'],
+                    'away_participant_id' => $side($away)['participant_id'],
+                    'home_source' => $side($home)['source'],
+                    'away_source' => $side($away)['source'],
+                ]);
+                $created++;
             }
         }
 
@@ -196,6 +293,11 @@ class TournamentEditor extends Component
 
         $this->reset('newParticipant', 'newParticipantName', 'newParticipantLogo');
         $this->loadCategoryState();
+    }
+
+    public function updatedParticipants(): void
+    {
+        $this->saveParticipants();
     }
 
     public function saveParticipants(): void
@@ -344,7 +446,15 @@ class TournamentEditor extends Component
         $this->resetErrorBag();
     }
 
-    public function saveMatchEdit(): void
+    /**
+     * Edycja meczu zapisuje się po każdej zmianie pola; panel zamyka przycisk „Gotowe”.
+     */
+    public function updatedEditMatch(): void
+    {
+        $this->saveMatchEdit(close: false);
+    }
+
+    public function saveMatchEdit(bool $close = true): void
     {
         $match = $this->category()->matches()->findOrFail($this->editingMatchId);
         $data = $this->validate([
@@ -402,7 +512,9 @@ class TournamentEditor extends Component
         ]);
         $this->syncBracket();
 
-        $this->editingMatchId = null;
+        if ($close) {
+            $this->editingMatchId = null;
+        }
         $this->toast('Zapisano mecz: '.$match->fresh()->title().'.');
     }
 
@@ -488,6 +600,12 @@ class TournamentEditor extends Component
             'roster' => (string) $participant->roster,
             'final_position' => (string) $participant->final_position,
         ]])->all() ?? [];
+
+        $this->categoryNames = $this->tournament->categories()->pluck('name', 'id')->all();
+        $groups = $category?->groups()->get() ?? collect();
+        $this->groupNames = $groups->pluck('name', 'id')->all();
+        $this->groupSlots = $groups->mapWithKeys(fn ($group) => [$group->id => $group->slots ?? []])->all();
+        $this->groupPlaces = $groups->mapWithKeys(fn ($group) => [$group->id => collect($group->final_places ?? [])->map(fn ($place) => (string) $place)->all()])->all();
 
         $this->results = $category?->matches->mapWithKeys(fn (TournamentMatch $match) => [$match->id => [
             'sets' => collect($match->sets_score ?? [])->map(fn ($set) => implode(':', (array) $set))->implode(', '),

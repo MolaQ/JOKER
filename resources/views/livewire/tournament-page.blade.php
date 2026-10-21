@@ -75,7 +75,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-zinc-100">
-                                    @foreach($group->table() as $row)
+                                    @foreach($bracket->groupTable($group) as $row)
                                         <tr @class(['bg-sky-club/10 font-semibold' => $row['participant']->isOwnTeam()])>
                                             <td class="px-4 py-2.5 font-bold">{{ $row['position'] }}</td>
                                             <td class="px-2 py-2.5">
@@ -92,6 +92,12 @@
                                             <td class="px-4 py-2.5 text-center font-display text-lg font-bold tabular-nums">{{ $row['points'] }}</td>
                                         </tr>
                                     @endforeach
+                                    @foreach($bracket->members($group)->whereNull('participant') as $member)
+                                        <tr class="text-zinc-400 italic">
+                                            <td class="px-4 py-2.5 font-bold not-italic">–</td>
+                                            <td class="px-2 py-2.5" colspan="7">{{ $member['text'] }}</td>
+                                        </tr>
+                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
@@ -100,7 +106,7 @@
                                 <summary class="cursor-pointer text-sm font-semibold text-sky-club-dark" data-track="{{ __('Mecze grupy') }}: {{ $group->name }}">{{ __('Mecze grupy') }} ({{ $group->matches->count() }})</summary>
                                 <div class="mt-3 grid gap-2 sm:grid-cols-2">
                                     @foreach($group->matches as $match)
-                                        <x-tournament-match :match="$match" :show-title="false" />
+                                        <x-tournament-match :match="$match" :bracket="$bracket" :show-title="false" />
                                     @endforeach
                                 </div>
                             </details>
@@ -111,16 +117,9 @@
             <p class="mt-4 text-xs text-zinc-500">{{ __('Punktacja: wygrana 3 pkt, wygrana w tie-breaku 2 pkt, porażka w tie-breaku 1 pkt. Kolejność: punkty, zwycięstwa, stosunek setów, stosunek małych punktów.') }}</p>
         @endif
 
-        {{-- MECZE --}}
+        {{-- MECZE: terminarz dniami i godzinami, z filtrem drużyny --}}
         @if($currentTab === 'mecze' && $current)
-            @foreach($matchesByDay as $day => $dayMatches)
-                <h2 class="heading-md mt-8 first:mt-0">{{ $day ? \Illuminate\Support\Carbon::parse($day)->translatedFormat('l, j F') : __('Termin do ustalenia') }}</h2>
-                <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    @foreach($dayMatches as $match)
-                        <x-tournament-match :match="$match" :show-date="false" wire:key="match-{{ $match->id }}" />
-                    @endforeach
-                </div>
-            @endforeach
+            <x-tournament-schedule :matches="$current->matches" :bracket="$bracket" />
         @endif
 
         {{-- DRABINKA: grupy z postępem, mecze z numerami w kolumnach (na telefonie jedna pod drugą), podium --}}
@@ -137,11 +136,14 @@
                                 <x-tournament-group-status :progress="$progress" />
                             </p>
                             <ol class="mt-2 space-y-0.5 text-sm">
-                                @foreach($group->table() as $row)
+                                @foreach($bracket->groupTable($group) as $row)
                                     <li @class(['flex gap-2', 'italic text-zinc-400' => ! $progress['finished'], 'text-zinc-800' => $progress['finished']])>
                                         <span class="w-6 font-bold not-italic text-zinc-400">{{ $row['position'] }}{{ \App\Support\TournamentBracket::groupLetter($group) }}</span>
                                         <span class="truncate">{{ $row['participant']->name() }}</span>
                                     </li>
+                                @endforeach
+                                @foreach($bracket->members($group)->whereNull('participant') as $member)
+                                    <li class="flex gap-2 text-zinc-400 italic"><span class="w-6 font-bold not-italic">–</span><span class="truncate">{{ $member['text'] }}</span></li>
                                 @endforeach
                             </ol>
                         </div>

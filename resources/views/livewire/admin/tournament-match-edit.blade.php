@@ -1,8 +1,8 @@
 {{-- Edycja meczu turnieju w panelu: numer, faza i pozycja w drabince, etykieta, miejsce, skąd drużyny --}}
-<form wire:submit="saveMatchEdit" class="grid gap-3 rounded-md bg-blue-50 p-3 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-4">
+<div class="grid gap-3 rounded-md bg-blue-50 p-3 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-4">
     <div>
         <label class="{{ $label }}">Numer meczu</label>
-        <input type="number" min="1" wire:model="editMatch.number" class="{{ $input }}">
+        <input type="number" min="1" wire:model.blur="editMatch.number" class="{{ $input }}">
         @error('editMatch.number') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
     </div>
     <div>
@@ -15,32 +15,32 @@
     </div>
     <div>
         <label class="{{ $label }}">Etykieta</label>
-        <input type="text" wire:model="editMatch.label" class="{{ $input }}" placeholder="np. Półfinał 1">
+        <input type="text" wire:model.blur="editMatch.label" class="{{ $input }}" placeholder="np. Półfinał 1">
     </div>
     <div>
         <label class="{{ $label }}">Termin</label>
-        <input type="datetime-local" wire:model="editMatch.starts_at" class="{{ $input }}">
+        <input type="datetime-local" wire:model.blur="editMatch.starts_at" class="{{ $input }}">
     </div>
     <div>
         <label class="{{ $label }}">Boisko / hala</label>
-        <input type="text" wire:model="editMatch.court" class="{{ $input }}">
+        <input type="text" wire:model.blur="editMatch.court" class="{{ $input }}">
     </div>
     @if($editMatch['stage'] === 'playoff')
         <div>
             <label class="{{ $label }}">Faza = kolumna</label>
-            <input type="number" min="1" wire:model="editMatch.bracket_round" class="{{ $input }}">
+            <input type="number" min="1" wire:model.blur="editMatch.bracket_round" class="{{ $input }}">
         </div>
         <div>
             <label class="{{ $label }}">Nazwa fazy</label>
-            <input type="text" wire:model="editMatch.phase_name" class="{{ $input }}" placeholder="np. Finały">
+            <input type="text" wire:model.blur="editMatch.phase_name" class="{{ $input }}" placeholder="np. Finały">
         </div>
         <div>
             <label class="{{ $label }}">Pozycja w kolumnie</label>
-            <input type="number" min="1" wire:model="editMatch.bracket_slot" class="{{ $input }}">
+            <input type="number" min="1" wire:model.blur="editMatch.bracket_slot" class="{{ $input }}">
         </div>
         <div>
             <label class="{{ $label }}">Drabinka</label>
-            <select wire:model="editMatch.bracket_from" class="{{ $input }}">
+            <select wire:model.live="editMatch.bracket_from" class="{{ $input }}">
                 <option value="">główna (o 1. miejsce)</option>
                 @foreach([3, 5, 7, 9, 11, 13] as $from)
                     <option value="{{ $from }}">o miejsca od {{ $from }}.</option>
@@ -49,7 +49,7 @@
         </div>
         <div>
             <label class="{{ $label }}">Decyduje o miejscu</label>
-            <select wire:model="editMatch.decides_place" class="{{ $input }}">
+            <select wire:model.live="editMatch.decides_place" class="{{ $input }}">
                 <option value="">— nie —</option>
                 <option value="1">1. miejsce (finał)</option>
                 @foreach([3, 5, 7, 9, 11, 13, 15] as $place)
@@ -60,12 +60,12 @@
     @elseif($editMatch['stage'] === 'placement')
         <div>
             <label class="{{ $label }}">Mecz o miejsce</label>
-            <input type="number" min="1" wire:model="editMatch.placement" class="{{ $input }}">
+            <input type="number" min="1" wire:model.blur="editMatch.placement" class="{{ $input }}">
         </div>
     @else
         <div>
             <label class="{{ $label }}">Grupa</label>
-            <select wire:model="editMatch.group" class="{{ $input }}">
+            <select wire:model.live="editMatch.group" class="{{ $input }}">
                 <option value="">—</option>
                 @foreach($category->groups as $group)
                     <option value="{{ $group->id }}">{{ $group->name }}</option>
@@ -75,7 +75,7 @@
     @endif
     @include('livewire.admin.tournament-match-sides', ['prefix' => 'editMatch', 'data' => $editMatch, 'sourceOptions' => \App\Support\TournamentBracket::sourceOptions($category, $editingMatchId)])
     <div class="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
-        <button type="submit" class="{{ $primary }}">Zapisz mecz</button>
-        <button type="button" wire:click="$set('editingMatchId', null)" class="{{ $secondary }}">Anuluj</button>
+        <button type="button" wire:click="$set('editingMatchId', null)" class="{{ $primary }}">Gotowe</button>
+        <span class="text-xs text-gray-500">Zmiany zapisują się same.</span>
     </div>
-</form>
+</div>
