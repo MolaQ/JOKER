@@ -1,10 +1,4 @@
 <div>
-    @if($flashMessage)
-        <div class="p-4 {{ $flashType === 'error' ? 'bg-red-50 text-red-800' : 'bg-green-50 text-green-800' }} text-sm font-medium">
-            {{ $flashMessage }}
-        </div>
-    @endif
-
     <!-- Toolbar -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border-b border-gray-200">
         <input

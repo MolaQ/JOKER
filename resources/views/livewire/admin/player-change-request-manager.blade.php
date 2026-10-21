@@ -9,10 +9,6 @@
         </select>
     </div>
 
-    @if($flashMessage)
-        <p class="border-b bg-green-50 px-4 py-3 text-sm font-medium text-green-800">{{ $flashMessage }}</p>
-    @endif
-
     <ul class="divide-y divide-gray-200 bg-white">
         @forelse($requests as $request)
             <li class="grid gap-4 p-4 lg:grid-cols-[14rem_1fr_16rem]" wire:key="player-request-{{ $request->id }}">

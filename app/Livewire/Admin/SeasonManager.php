@@ -2,11 +2,14 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Season;
 use Livewire\Component;
 
 class SeasonManager extends Component
 {
+    use ShowsToasts;
+
     public bool $showModal = false;
 
     public ?int $editingId = null;
@@ -18,10 +21,6 @@ class SeasonManager extends Component
     public string $end_date = '';
 
     public bool $is_current = false;
-
-    public ?string $flashType = null;
-
-    public ?string $flashMessage = null;
 
     protected function rules(): array
     {
@@ -36,8 +35,6 @@ class SeasonManager extends Component
     public function openCreateModal(): void
     {
         $this->resetForm();
-        $this->flashType = null;
-        $this->flashMessage = null;
         $this->showModal = true;
     }
 
@@ -50,8 +47,6 @@ class SeasonManager extends Component
         $this->start_date = $season->start_date?->format('Y-m-d');
         $this->end_date = $season->end_date?->format('Y-m-d');
         $this->is_current = $season->is_current;
-        $this->flashType = null;
-        $this->flashMessage = null;
 
         $this->showModal = true;
     }
@@ -66,12 +61,10 @@ class SeasonManager extends Component
 
         if ($this->editingId) {
             Season::findOrFail($this->editingId)->update($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Sezon został zaktualizowany.';
+            $this->toast('Sezon został zaktualizowany.');
         } else {
             Season::create($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Sezon został dodany.';
+            $this->toast('Sezon został dodany.');
         }
 
         $this->closeModal();
@@ -80,8 +73,7 @@ class SeasonManager extends Component
     public function delete(int $id): void
     {
         Season::findOrFail($id)->delete();
-        $this->flashType = 'success';
-        $this->flashMessage = 'Sezon został usunięty.';
+        $this->toast('Sezon został usunięty.');
     }
 
     public function closeModal(): void

@@ -1,8 +1,4 @@
 <div class="bg-white">
-    @if($flashMessage)
-        <div class="bg-green-50 p-4 text-sm font-medium text-green-800" role="status">✓ {{ $flashMessage }}</div>
-    @endif
-
     <div class="flex items-center justify-end border-b border-gray-200 p-4">
         <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
             + Dodaj podstronę

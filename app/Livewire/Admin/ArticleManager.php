@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Article;
 use App\Models\Game;
 use App\Support\SearchIndex;
@@ -14,7 +15,7 @@ use Livewire\WithPagination;
 
 class ArticleManager extends Component
 {
-    use WithFileUploads, WithPagination;
+    use ShowsToasts, WithFileUploads, WithPagination;
 
     public bool $showModal = false;
 
@@ -58,10 +59,6 @@ class ArticleManager extends Component
 
     public string $statusFilter = '';
 
-    public ?string $flashType = null;
-
-    public ?string $flashMessage = null;
-
     protected function rules(): array
     {
         return [
@@ -94,8 +91,6 @@ class ArticleManager extends Component
     public function openCreateModal(): void
     {
         $this->resetForm();
-        $this->flashType = null;
-        $this->flashMessage = null;
         $this->showModal = true;
     }
 
@@ -118,8 +113,6 @@ class ArticleManager extends Component
         $this->featured_image = null;
         $this->gameIds = $article->games()->pluck('games.id')->all();
         $this->gameSearch = '';
-        $this->flashType = null;
-        $this->flashMessage = null;
 
         $this->showModal = true;
     }
@@ -144,14 +137,12 @@ class ArticleManager extends Component
             $article = Article::findOrFail($this->editingId);
             $article->update($validated);
             $article->games()->sync($this->gameIds);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Artykuł został zaktualizowany.';
+            $this->toast('Artykuł został zaktualizowany.');
         } else {
             $validated['slug'] = Slug::unique(Article::class, $this->title);
             $validated['author_id'] = Auth::id();
             Article::create($validated)->games()->sync($this->gameIds);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Artykuł został dodany.';
+            $this->toast('Artykuł został dodany.');
         }
 
         $this->closeModal();
@@ -206,8 +197,7 @@ class ArticleManager extends Component
     public function delete(int $id): void
     {
         Article::findOrFail($id)->delete();
-        $this->flashType = 'success';
-        $this->flashMessage = 'Artykuł został usunięty.';
+        $this->toast('Artykuł został usunięty.');
     }
 
     public function closeModal(): void

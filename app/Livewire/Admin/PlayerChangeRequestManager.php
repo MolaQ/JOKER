@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\PlayerChangeRequest;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -15,14 +16,12 @@ use Livewire\WithPagination;
  */
 class PlayerChangeRequestManager extends Component
 {
-    use WithPagination;
+    use ShowsToasts, WithPagination;
 
     public string $statusFilter = PlayerChangeRequest::STATUS_PENDING;
 
     /** @var array<int, string> Notatki do decyzji, klucz = id zgłoszenia */
     public array $notes = [];
-
-    public ?string $flashMessage = null;
 
     public function updatingStatusFilter(): void
     {
@@ -46,7 +45,7 @@ class PlayerChangeRequestManager extends Component
         }
 
         $this->decide($request, PlayerChangeRequest::STATUS_APPROVED);
-        $this->flashMessage = 'Zatwierdzono - profil zawodnika '.$request->player->full_name.' jest zaktualizowany.';
+        $this->toast('Zatwierdzono - profil zawodnika '.$request->player->full_name.' jest zaktualizowany.');
     }
 
     public function reject(int $id): void
@@ -58,7 +57,7 @@ class PlayerChangeRequestManager extends Component
         }
 
         $this->decide($request, PlayerChangeRequest::STATUS_REJECTED);
-        $this->flashMessage = 'Odrzucono propozycję dla '.$request->player->full_name.'.';
+        $this->toast('Odrzucono propozycję dla '.$request->player->full_name.'.');
     }
 
     private function reviewable(int $id): PlayerChangeRequest

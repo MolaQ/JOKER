@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Competition;
 use App\Models\CompetitionLevel;
 use App\Models\Season;
@@ -12,7 +13,7 @@ use Livewire\WithPagination;
 
 class CompetitionManager extends Component
 {
-    use WithPagination;
+    use ShowsToasts, WithPagination;
 
     public bool $showModal = false;
 
@@ -73,10 +74,6 @@ class CompetitionManager extends Component
 
     public string $search = '';
 
-    public ?string $flashType = null;
-
-    public ?string $flashMessage = null;
-
     protected function rules(): array
     {
         return [
@@ -132,8 +129,6 @@ class CompetitionManager extends Component
     {
         $this->resetForm();
         $this->season_id = Season::current()->value('id');
-        $this->flashType = null;
-        $this->flashMessage = null;
         $this->showModal = true;
     }
 
@@ -160,8 +155,6 @@ class CompetitionManager extends Component
         $this->display_names = $competition->teams->mapWithKeys(fn (Team $team) => [$team->id => (string) $team->pivot->display_name])->all();
         $this->display_suffixes = $competition->teams->mapWithKeys(fn (Team $team) => [$team->id => (string) $team->pivot->display_suffix])->all();
         $this->source_url = (string) $competition->source_url;
-        $this->flashType = null;
-        $this->flashMessage = null;
 
         $this->showModal = true;
     }
@@ -176,12 +169,10 @@ class CompetitionManager extends Component
         if ($this->editingId) {
             $competition = Competition::findOrFail($this->editingId);
             $competition->update($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Rozgrywki zostały zaktualizowane.';
+            $this->toast('Rozgrywki zostały zaktualizowane.');
         } else {
             $competition = Competition::create($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Rozgrywki zostały dodane.';
+            $this->toast('Rozgrywki zostały dodane.');
         }
 
         $competition->teams()->sync(collect($teamIds)->mapWithKeys(fn ($teamId) => [
@@ -211,15 +202,13 @@ class CompetitionManager extends Component
     {
         app(ScheduleImporter::class)->sync($competition);
 
-        $this->flashType = str_contains((string) $competition->sync_message, 'Nie udało się') ? 'error' : 'success';
-        $this->flashMessage = $competition->name.': '.$competition->sync_message;
+        $this->toast($competition->name.': '.$competition->sync_message, str_contains((string) $competition->sync_message, 'Nie udało się') ? 'error' : 'success');
     }
 
     public function delete(int $id): void
     {
         Competition::findOrFail($id)->delete();
-        $this->flashType = 'success';
-        $this->flashMessage = 'Rozgrywki zostały usunięte.';
+        $this->toast('Rozgrywki zostały usunięte.');
     }
 
     public function closeModal(): void

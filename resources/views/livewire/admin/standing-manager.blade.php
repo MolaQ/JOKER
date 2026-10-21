@@ -1,10 +1,4 @@
 <div>
-    @if($flashMessage)
-        <div class="p-4 {{ $flashType === 'error' ? 'bg-red-50 text-red-800' : 'bg-green-50 text-green-800' }} text-sm font-medium">
-            {{ $flashMessage }}
-        </div>
-    @endif
-
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border-b border-gray-200">
         <div class="w-full sm:w-80">
             <select wire:model.live="competitionFilter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">

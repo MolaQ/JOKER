@@ -1,8 +1,4 @@
 <div>
-    @if($flashMessage)
-        <div class="bg-green-50 p-4 text-sm font-medium text-green-800">{{ $flashMessage }}</div>
-    @endif
-
     <div class="flex items-center justify-between gap-4 border-b border-gray-200 bg-white p-4">
         <p class="text-sm text-gray-600">Turnieje pokazują się w kalendarzu meczów. Mecze rozegrane na turnieju dodasz w „Mecze i wyniki” (rodzaj: turniejowy).</p>
         <button type="button" wire:click="openCreateModal" class="inline-flex shrink-0 items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">+ Dodaj turniej</button>

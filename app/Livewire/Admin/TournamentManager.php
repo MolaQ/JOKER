@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\Tournament;
@@ -15,7 +16,7 @@ use Livewire\WithPagination;
  */
 class TournamentManager extends Component
 {
-    use WithPagination;
+    use ShowsToasts, WithPagination;
 
     public bool $showModal = false;
 
@@ -42,8 +43,6 @@ class TournamentManager extends Component
 
     /** @var array<int, string> Zajęte miejsce, klucz = id drużyny (np. „2. miejsce”) */
     public array $placements = [];
-
-    public ?string $flashMessage = null;
 
     /**
      * @return array<string, mixed>
@@ -122,14 +121,14 @@ class TournamentManager extends Component
             $teamId => ['placement' => trim($this->placements[$teamId] ?? '') ?: null],
         ])->all());
 
-        $this->flashMessage = $this->editingId ? 'Turniej został zaktualizowany.' : 'Turniej został dodany.';
+        $this->toast($this->editingId ? 'Turniej został zaktualizowany.' : 'Turniej został dodany.');
         $this->closeModal();
     }
 
     public function delete(int $id): void
     {
         Tournament::findOrFail($id)->delete();
-        $this->flashMessage = 'Turniej został usunięty.';
+        $this->toast('Turniej został usunięty.');
     }
 
     public function closeModal(): void

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Team;
 use App\Models\User;
 use App\Support\SearchIndex;
@@ -13,7 +14,7 @@ use Livewire\WithPagination;
 
 class TeamList extends Component
 {
-    use WithFileUploads, WithPagination;
+    use ShowsToasts, WithFileUploads, WithPagination;
 
     public bool $showModal = false;
 
@@ -51,10 +52,6 @@ class TeamList extends Component
 
     public string $search = '';
 
-    public ?string $flashType = null;
-
-    public ?string $flashMessage = null;
-
     protected function rules(): array
     {
         return [
@@ -81,8 +78,6 @@ class TeamList extends Component
     public function openCreateModal(): void
     {
         $this->resetForm();
-        $this->flashType = null;
-        $this->flashMessage = null;
         $this->showModal = true;
     }
 
@@ -104,8 +99,6 @@ class TeamList extends Component
         $this->logo = null;
         $this->existingPhoto = $team->photo_path;
         $this->photo = null;
-        $this->flashType = null;
-        $this->flashMessage = null;
 
         $this->showModal = true;
     }
@@ -128,13 +121,11 @@ class TeamList extends Component
         if ($this->editingId) {
             $team = Team::findOrFail($this->editingId);
             $team->update($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Drużyna została zaktualizowana.';
+            $this->toast('Drużyna została zaktualizowana.');
         } else {
             $validated['slug'] = Slug::unique(Team::class, $this->name);
             $team = Team::create($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Drużyna została dodana.';
+            $this->toast('Drużyna została dodana.');
         }
 
         $team->assistantTrainers()->sync(
@@ -153,15 +144,13 @@ class TeamList extends Component
         $team = Team::findOrFail($id);
 
         if ($team->players()->count() > 0) {
-            $this->flashType = 'error';
-            $this->flashMessage = 'Nie można usunąć drużyny, która ma przypisanych zawodników.';
+            $this->toast('Nie można usunąć drużyny, która ma przypisanych zawodników.', 'error');
 
             return;
         }
 
         $team->delete();
-        $this->flashType = 'success';
-        $this->flashMessage = 'Drużyna została usunięta.';
+        $this->toast('Drużyna została usunięta.');
     }
 
     public function closeModal(): void

@@ -9,10 +9,6 @@
                 <button type="button" wire:click="toggle" class="btn-primary">{{ $open ? __('Zamknij') : __('Zaproponuj zmiany') }}</button>
             </div>
 
-            @if($flashMessage)
-                <p class="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{{ $flashMessage }}</p>
-            @endif
-
             @if($pending->isNotEmpty())
                 <p class="mt-4 text-sm text-amber-700">{{ __('Czeka na zatwierdzenie') }}: {{ $pending->map(fn ($request) => $request->isPhoto() ? __('nowe zdjęcie') : __('zmiana danych'))->unique()->join(', ', ' '.__('i').' ') }}.</p>
             @endif

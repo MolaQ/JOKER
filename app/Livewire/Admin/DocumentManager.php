@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Document;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -10,7 +11,7 @@ use Livewire\WithPagination;
 
 class DocumentManager extends Component
 {
-    use WithFileUploads, WithPagination;
+    use ShowsToasts, WithFileUploads, WithPagination;
 
     public bool $showModal = false;
 
@@ -29,10 +30,6 @@ class DocumentManager extends Component
     public ?string $existingFile = null;
 
     public string $search = '';
-
-    public ?string $flashType = null;
-
-    public ?string $flashMessage = null;
 
     protected function rules(): array
     {
@@ -56,8 +53,6 @@ class DocumentManager extends Component
     public function openCreateModal(): void
     {
         $this->resetForm();
-        $this->flashType = null;
-        $this->flashMessage = null;
         $this->showModal = true;
     }
 
@@ -72,8 +67,6 @@ class DocumentManager extends Component
         $this->is_public = $document->is_public;
         $this->existingFile = $document->file_path;
         $this->file = null;
-        $this->flashType = null;
-        $this->flashMessage = null;
 
         $this->showModal = true;
     }
@@ -91,13 +84,11 @@ class DocumentManager extends Component
         if ($this->editingId) {
             $document = Document::findOrFail($this->editingId);
             $document->update($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Dokument został zaktualizowany.';
+            $this->toast('Dokument został zaktualizowany.');
         } else {
             $validated['uploaded_by'] = Auth::id();
             Document::create($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Dokument został dodany.';
+            $this->toast('Dokument został dodany.');
         }
 
         $this->closeModal();
@@ -106,8 +97,7 @@ class DocumentManager extends Component
     public function delete(int $id): void
     {
         Document::findOrFail($id)->delete();
-        $this->flashType = 'success';
-        $this->flashMessage = 'Dokument został usunięty.';
+        $this->toast('Dokument został usunięty.');
     }
 
     public function closeModal(): void

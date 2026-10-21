@@ -19,10 +19,6 @@
     </div>
 
     <form wire:submit="save" class="p-4 sm:p-6">
-        @if($flashMessage)
-            <div class="mb-6 rounded-lg bg-green-50 p-4 text-sm font-medium text-green-800" role="status">✓ {{ $flashMessage }}</div>
-        @endif
-
         @if($errors->any())
             <div class="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-800">
                 Popraw zaznaczone pola i zapisz ponownie.
@@ -119,6 +115,16 @@
                 </div>
             @endforeach
         </div>
+
+        @if($tab === 'powiadomienia')
+            <div class="mt-6 flex flex-col gap-3 rounded-xl border border-sky-100 bg-sky-50/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-sm text-gray-700">Podgląd z ustawieniami wpisanymi powyżej (także przed zapisaniem).</p>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" x-data x-on:click="window.toastPreview($wire.values, 'success')" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-800 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50">🔔 Pokaż przykładowy toast</button>
+                    <button type="button" x-data x-on:click="window.toastPreview($wire.values, 'error')" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-800 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50">Pokaż przykładowy błąd</button>
+                </div>
+            </div>
+        @endif
 
         <div class="sticky bottom-0 -mx-4 mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 bg-white/95 px-4 py-4 backdrop-blur sm:-mx-6 sm:px-6">
             <button type="button" wire:click="restoreDefaults" wire:confirm="Przywrócić ustawienia domyślne w tej zakładce?" class="text-sm font-semibold text-gray-500 hover:text-gray-800">Przywróć domyślne</button>

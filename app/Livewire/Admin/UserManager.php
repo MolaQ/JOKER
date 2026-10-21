@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\User;
 use App\UserRole;
 use Illuminate\Support\Facades\Auth;
@@ -12,7 +13,7 @@ use Livewire\WithPagination;
 
 class UserManager extends Component
 {
-    use WithPagination;
+    use ShowsToasts, WithPagination;
 
     public bool $showModal = false;
 
@@ -34,10 +35,6 @@ class UserManager extends Component
     public string $search = '';
 
     public string $roleFilter = '';
-
-    public ?string $flashType = null;
-
-    public ?string $flashMessage = null;
 
     protected function rules(): array
     {
@@ -69,8 +66,6 @@ class UserManager extends Component
     public function openCreateModal(): void
     {
         $this->resetForm();
-        $this->flashType = null;
-        $this->flashMessage = null;
         $this->showModal = true;
     }
 
@@ -85,8 +80,6 @@ class UserManager extends Component
         $this->role = $user->role->value;
         $this->birth_date = $user->birth_date?->format('Y-m-d');
         $this->birthday_display = $user->birthday_display?->value ?? 'age';
-        $this->flashType = null;
-        $this->flashMessage = null;
 
         $this->showModal = true;
     }
@@ -104,13 +97,11 @@ class UserManager extends Component
         if ($this->editingId) {
             $user = User::findOrFail($this->editingId);
             $user->update($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Użytkownik został zaktualizowany.';
+            $this->toast('Użytkownik został zaktualizowany.');
         } else {
             $validated['email_verified_at'] = now();
             User::create($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Użytkownik został dodany.';
+            $this->toast('Użytkownik został dodany.');
         }
 
         $this->closeModal();
@@ -119,15 +110,13 @@ class UserManager extends Component
     public function delete(int $id): void
     {
         if ($id === Auth::id()) {
-            $this->flashType = 'error';
-            $this->flashMessage = 'Nie możesz usunąć własnego konta.';
+            $this->toast('Nie możesz usunąć własnego konta.', 'error');
 
             return;
         }
 
         User::findOrFail($id)->delete();
-        $this->flashType = 'success';
-        $this->flashMessage = 'Użytkownik został usunięty.';
+        $this->toast('Użytkownik został usunięty.');
     }
 
     public function closeModal(): void

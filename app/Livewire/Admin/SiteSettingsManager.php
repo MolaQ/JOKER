@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Support\SearchIndex;
 use App\Support\SiteSettings;
+use App\View\Components\Toasts;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
@@ -15,7 +17,7 @@ use Livewire\WithFileUploads;
  */
 class SiteSettingsManager extends Component
 {
-    use WithFileUploads;
+    use ShowsToasts, WithFileUploads;
 
     public string $tab = 'ogolne';
 
@@ -24,8 +26,6 @@ class SiteSettingsManager extends Component
 
     /** @var array<string, mixed> */
     public array $uploads = [];
-
-    public ?string $flashMessage = null;
 
     /**
      * Ustawienia zmienia tylko administrator (sprawdzane przy każdym żądaniu).
@@ -64,7 +64,6 @@ class SiteSettingsManager extends Component
     {
         if (array_key_exists($tab, $this->groups())) {
             $this->tab = $tab;
-            $this->flashMessage = null;
         }
     }
 
@@ -108,11 +107,20 @@ class SiteSettingsManager extends Component
             unset($this->uploads[$key]);
         }
 
-        $this->save();
-        $this->flashMessage = 'Przywrócono ustawienia domyślne w zakładce „'.$this->groups()[$this->tab]['label'].'”.';
+        $this->persist();
+        $this->toast('Przywrócono ustawienia domyślne w zakładce „'.$this->groups()[$this->tab]['label'].'”.');
     }
 
     public function save(): void
+    {
+        $this->persist();
+        $this->toast('Zapisano. Zmiany są już widoczne na stronie.');
+    }
+
+    /**
+     * Sprawdza i zapisuje wszystkie pola; nowy wygląd toastów od razu trafia do przeglądarki.
+     */
+    protected function persist(): void
     {
         $this->validate($this->rules(), $this->messages(), $this->attributeNames());
 
@@ -144,7 +152,7 @@ class SiteSettingsManager extends Component
 
         $this->uploads = [];
         $this->values = array_merge($this->values, Arr::only($toStore, array_keys($fields)));
-        $this->flashMessage = 'Zapisano. Zmiany są już widoczne na stronie.';
+        $this->dispatch('toast-config', ...Toasts::appearance(app(SiteSettings::class)));
     }
 
     /**

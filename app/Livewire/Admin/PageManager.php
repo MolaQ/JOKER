@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Page;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
@@ -14,7 +15,7 @@ use Livewire\WithFileUploads;
  */
 class PageManager extends Component
 {
-    use WithFileUploads;
+    use ShowsToasts, WithFileUploads;
 
     public bool $showModal = false;
 
@@ -42,8 +43,6 @@ class PageManager extends Component
     public $image = null;
 
     public ?string $existingImage = null;
-
-    public ?string $flashMessage = null;
 
     public function boot(): void
     {
@@ -125,10 +124,10 @@ class PageManager extends Component
 
         if ($this->editingId) {
             Page::findOrFail($this->editingId)->update($validated);
-            $this->flashMessage = 'Podstrona została zapisana.';
+            $this->toast('Podstrona została zapisana.');
         } else {
             Page::create($validated);
-            $this->flashMessage = 'Podstrona została dodana. Adres: /strona/'.$validated['slug'];
+            $this->toast('Podstrona została dodana. Adres: /strona/'.$validated['slug']);
         }
 
         $this->closeModal();
@@ -147,7 +146,7 @@ class PageManager extends Component
     public function delete(int $id): void
     {
         Page::findOrFail($id)->delete();
-        $this->flashMessage = 'Podstrona została usunięta.';
+        $this->toast('Podstrona została usunięta.');
     }
 
     public function closeModal(): void

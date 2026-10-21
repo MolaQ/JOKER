@@ -1,9 +1,13 @@
+import { registerConfirmModal } from './confirm-modal';
 import { initCountdowns } from './countdown';
 import { initPageStats } from './page-stats';
 import { registerPhotoCropper } from './photo-cropper';
 import { initSearch } from './search';
+import { registerToasts } from './toasts';
 
 registerPhotoCropper();
+registerToasts();
+registerConfirmModal();
 
 initSearch();
 initPageStats();

@@ -2,11 +2,14 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\CompetitionLevel;
 use Livewire\Component;
 
 class CompetitionLevelManager extends Component
 {
+    use ShowsToasts;
+
     public bool $showModal = false;
 
     public ?int $editingId = null;
@@ -14,10 +17,6 @@ class CompetitionLevelManager extends Component
     public string $name = '';
 
     public int $display_order = 0;
-
-    public ?string $flashType = null;
-
-    public ?string $flashMessage = null;
 
     protected function rules(): array
     {
@@ -30,8 +29,6 @@ class CompetitionLevelManager extends Component
     public function openCreateModal(): void
     {
         $this->resetForm();
-        $this->flashType = null;
-        $this->flashMessage = null;
         $this->showModal = true;
     }
 
@@ -42,8 +39,6 @@ class CompetitionLevelManager extends Component
         $this->editingId = $level->id;
         $this->name = $level->name;
         $this->display_order = $level->display_order;
-        $this->flashType = null;
-        $this->flashMessage = null;
 
         $this->showModal = true;
     }
@@ -54,12 +49,10 @@ class CompetitionLevelManager extends Component
 
         if ($this->editingId) {
             CompetitionLevel::findOrFail($this->editingId)->update($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Poziom rozgrywek został zaktualizowany.';
+            $this->toast('Poziom rozgrywek został zaktualizowany.');
         } else {
             CompetitionLevel::create($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Poziom rozgrywek został dodany.';
+            $this->toast('Poziom rozgrywek został dodany.');
         }
 
         $this->closeModal();
@@ -70,15 +63,13 @@ class CompetitionLevelManager extends Component
         $level = CompetitionLevel::findOrFail($id);
 
         if ($level->competitions()->count() > 0) {
-            $this->flashType = 'error';
-            $this->flashMessage = 'Nie można usunąć poziomu, który jest przypisany do rozgrywek.';
+            $this->toast('Nie można usunąć poziomu, który jest przypisany do rozgrywek.', 'error');
 
             return;
         }
 
         $level->delete();
-        $this->flashType = 'success';
-        $this->flashMessage = 'Poziom rozgrywek został usunięty.';
+        $this->toast('Poziom rozgrywek został usunięty.');
     }
 
     public function closeModal(): void

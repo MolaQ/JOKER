@@ -53,8 +53,8 @@ test('calendar marks home and away games, results with V or X and opens the newe
 
     Livewire::test(GamesBrowser::class)
         ->set('period', 'wszystkie')
-        ->assertSeeHtml('from-club-navy to-sky-club-dark text-white')
-        ->assertSeeHtml('bg-white text-sky-club-dark')
+        ->assertSeeHtml('from-(--cal-home-from) to-(--cal-home-to) text-(--cal-home-text)')
+        ->assertSeeHtml('bg-(--cal-away-bg) text-(--cal-away-text)')
         ->assertSeeHtml('aria-label="Wygrana"')
         ->assertSeeHtml('aria-label="Porażka"')
         ->assertSeeHtml('href="'.route('articles.show', $newer).'"')

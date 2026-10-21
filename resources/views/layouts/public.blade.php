@@ -173,16 +173,6 @@
         </div>
     </header>
 
-    @if(session('success') || session('error'))
-        <div class="container-site mt-4">
-            <div role="status" @class([
-                'rounded-2xl px-5 py-4 text-sm font-medium',
-                'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200' => session('success'),
-                'bg-red-50 text-red-800 ring-1 ring-red-200' => session('error'),
-            ])>{{ session('success') ?? session('error') }}</div>
-        </div>
-    @endif
-
     <main id="tresc">
         @yield('content')
     </main>
@@ -287,6 +277,9 @@
             </a>
         </div>
     </nav>
+
+    <x-toasts />
+    <x-confirm-modal />
 
     @livewireScripts
 </body>

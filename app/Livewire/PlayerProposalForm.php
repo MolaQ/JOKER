@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Player;
 use App\Models\PlayerChangeRequest;
 use Illuminate\Contracts\View\View;
@@ -15,7 +16,7 @@ use Livewire\WithFileUploads;
  */
 class PlayerProposalForm extends Component
 {
-    use WithFileUploads;
+    use ShowsToasts, WithFileUploads;
 
     public Player $player;
 
@@ -25,8 +26,6 @@ class PlayerProposalForm extends Component
     public array $data = [];
 
     public $photo = null;
-
-    public ?string $flashMessage = null;
 
     public function mount(Player $player): void
     {
@@ -64,7 +63,6 @@ class PlayerProposalForm extends Component
     public function toggle(): void
     {
         $this->open = ! $this->open;
-        $this->flashMessage = null;
     }
 
     public function submit(): void
@@ -103,7 +101,7 @@ class PlayerProposalForm extends Component
 
         $this->photo = null;
         $this->open = false;
-        $this->flashMessage = __('Dziękujemy! Zmiany pojawią się po zatwierdzeniu przez trenera lub administratora.');
+        $this->toast(__('Dziękujemy! Zmiany pojawią się po zatwierdzeniu przez trenera lub administratora.'));
     }
 
     private function fillFromPlayer(): void

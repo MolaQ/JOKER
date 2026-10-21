@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Competition;
 use App\Models\Game;
 use App\Models\RivalTeam;
@@ -15,7 +16,7 @@ use Livewire\WithPagination;
 
 class GameManager extends Component
 {
-    use WithPagination;
+    use ShowsToasts, WithPagination;
 
     public bool $showModal = false;
 
@@ -63,10 +64,6 @@ class GameManager extends Component
 
     public string $statusFilter = '';
 
-    public ?string $flashType = null;
-
-    public ?string $flashMessage = null;
-
     protected function rules(): array
     {
         return [
@@ -112,8 +109,6 @@ class GameManager extends Component
     public function openCreateModal(): void
     {
         $this->resetForm();
-        $this->flashType = null;
-        $this->flashMessage = null;
         $this->showModal = true;
     }
 
@@ -150,8 +145,6 @@ class GameManager extends Component
             ->implode(', ');
         $this->match_report = (string) $game->match_report;
         $this->video_url = (string) $game->video_url;
-        $this->flashType = null;
-        $this->flashMessage = null;
 
         $this->showModal = true;
     }
@@ -179,12 +172,10 @@ class GameManager extends Component
                 $game->forceFill(['result_source' => Game::RESULT_MANUAL])->save();
             }
 
-            $this->flashType = 'success';
-            $this->flashMessage = 'Mecz został zaktualizowany.';
+            $this->toast('Mecz został zaktualizowany.');
         } else {
             $game = Game::create($validated + ['result_source' => ($validated['home_score'] ?? null) !== null ? Game::RESULT_MANUAL : null]);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Mecz został dodany.';
+            $this->toast('Mecz został dodany.');
         }
 
         if ($game->competition_id && $competition = Competition::find($game->competition_id)) {
@@ -204,8 +195,7 @@ class GameManager extends Component
             StandingsCalculator::recalculate($competition);
         }
 
-        $this->flashType = 'success';
-        $this->flashMessage = 'Mecz został usunięty.';
+        $this->toast('Mecz został usunięty.');
     }
 
     public function closeModal(): void
