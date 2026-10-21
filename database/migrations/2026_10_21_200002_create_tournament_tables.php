@@ -2,27 +2,46 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
 
 return new class extends Migration
 {
     /**
-     * Pełne strony turniejów (np. Memoriał im. Włodzimierza Winklera): kategorie wiekowe,
-     * drużyny z opcjonalnym składem, grupy z tabelami, mecze grupowe, drabinka i mecze o miejsca,
-     * zasady i informator dla drużyn przyjezdnych i kibiców. Edycje łączy wspólna „seria”.
+     * Turnieje (z miejscami naszych drużyn i własną stroną, np. memoriału)
+     * oraz ich kategorie, grupy, uczestnicy i mecze.
      */
     public function up(): void
     {
-        Schema::table('tournaments', function (Blueprint $table) {
-            $table->string('slug')->nullable()->unique()->after('name');
-            $table->string('series', 60)->nullable()->after('slug');
-            $table->string('image_path')->nullable()->after('description');
-            $table->longText('rules')->nullable()->after('image_path');
-            $table->longText('guest_info')->nullable()->after('rules');
-            $table->boolean('has_page')->default(false)->after('guest_info');
+        Schema::create('tournaments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('season_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('name');
+            $table->string('slug')->nullable()->unique();
+            $table->string('series', 60)->nullable();
+            $table->string('edition', 60)->nullable();
+            $table->date('start_date');
+            $table->date('end_date')->nullable();
+            $table->string('venue')->nullable();
+            $table->string('city', 100)->nullable();
+            $table->boolean('is_organizer')->default(false);
+            $table->text('description')->nullable();
+            $table->string('image_path')->nullable();
+            $table->longText('rules')->nullable();
+            $table->longText('guest_info')->nullable();
+            $table->boolean('has_page')->default(false);
+            $table->timestamps();
+
+            $table->index('start_date');
             $table->index('series');
+        });
+
+        Schema::create('team_tournament', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('tournament_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('team_id')->constrained()->cascadeOnDelete();
+            $table->string('placement', 60)->nullable();
+
+            $table->unique(['tournament_id', 'team_id']);
         });
 
         Schema::create('tournament_categories', function (Blueprint $table) {
@@ -51,6 +70,7 @@ return new class extends Migration
             $table->text('roster')->nullable();
             $table->unsignedSmallInteger('final_position')->nullable();
             $table->timestamps();
+
             $table->index(['competitor_type', 'competitor_id']);
         });
 
@@ -58,29 +78,29 @@ return new class extends Migration
             $table->id();
             $table->foreignId('tournament_category_id')->constrained()->cascadeOnDelete();
             $table->foreignId('tournament_group_id')->nullable()->constrained()->nullOnDelete();
+            $table->unsignedSmallInteger('number')->nullable(); // numer meczu w kategorii
             $table->string('stage', 12)->default('group');
             $table->string('label', 80)->nullable();
+            $table->string('phase_name', 60)->nullable();
             $table->unsignedSmallInteger('placement')->nullable();
+            $table->unsignedSmallInteger('decides_place')->nullable();
             $table->unsignedTinyInteger('bracket_round')->nullable();
             $table->unsignedTinyInteger('bracket_slot')->nullable();
             $table->foreignId('home_participant_id')->nullable()->constrained('tournament_participants')->nullOnDelete();
             $table->foreignId('away_participant_id')->nullable()->constrained('tournament_participants')->nullOnDelete();
             $table->string('home_placeholder', 60)->nullable();
             $table->string('away_placeholder', 60)->nullable();
+            $table->string('home_source', 40)->nullable();
+            $table->string('away_source', 40)->nullable();
             $table->dateTime('starts_at')->nullable();
             $table->string('court', 60)->nullable();
             $table->unsignedTinyInteger('home_sets')->nullable();
             $table->unsignedTinyInteger('away_sets')->nullable();
             $table->json('sets_score')->nullable();
+            $table->json('streams')->nullable();
             $table->timestamps();
-            $table->index(['tournament_category_id', 'stage']);
-        });
 
-        // Istniejące turnieje dostają adres strony.
-        DB::table('tournaments')->orderBy('id')->get(['id', 'name', 'edition'])->each(function (object $tournament) {
-            DB::table('tournaments')->where('id', $tournament->id)->update([
-                'slug' => $tournament->id.'-'.Str::slug(trim(($tournament->edition ?? '').' '.$tournament->name)),
-            ]);
+            $table->index(['tournament_category_id', 'stage']);
         });
     }
 
@@ -90,11 +110,7 @@ return new class extends Migration
         Schema::dropIfExists('tournament_participants');
         Schema::dropIfExists('tournament_groups');
         Schema::dropIfExists('tournament_categories');
-
-        Schema::table('tournaments', function (Blueprint $table) {
-            $table->dropIndex(['series']);
-            $table->dropUnique(['slug']);
-            $table->dropColumn(['slug', 'series', 'image_path', 'rules', 'guest_info', 'has_page']);
-        });
+        Schema::dropIfExists('team_tournament');
+        Schema::dropIfExists('tournaments');
     }
 };

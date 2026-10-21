@@ -17,17 +17,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            UserSeeder::class,
-            SeasonSeeder::class,
-            CompetitionLevelSeeder::class,
-            TeamSeeder::class,
-            PlayerSeeder::class,
-            CompetitionSeeder::class,
-            ArticleSeeder::class,
-            DocumentSeeder::class,
-            SponsorSeeder::class,
-            HeroSlideSeeder::class,
-            PageSeeder::class,
+            ClubSeeder::class,
+            ContentSeeder::class,
         ]);
 
         // Prawdziwe mecze, wyniki i tabele z wielkopolskasiatkowka.com.pl i WZPS (w testach bez sieci).
