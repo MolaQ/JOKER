@@ -534,6 +534,7 @@ class TournamentEditor extends Component
             'away_sets' => $sets ? collect($sets)->filter(fn (array $set) => $set[1] > $set[0])->count() : null,
             'starts_at' => ($row['starts_at'] ?? '') ?: null,
             'court' => trim($row['court'] ?? '') ?: null,
+            'is_live' => (bool) ($row['live'] ?? false),
         ]);
         $this->syncBracket();
 
@@ -584,7 +585,19 @@ class TournamentEditor extends Component
      */
     public function updatedEditMatch(): void
     {
-        $this->saveMatchEdit(close: false);
+        if ($this->editingMatchId !== null) {
+            $this->saveMatchEdit(close: false);
+        }
+    }
+
+    /**
+     * „Gotowe”: zapisuje ewentualną ostatnią zmianę i zamyka edycję (przez metodę, bo zmiana pola
+     * i zamknięcie przychodzą w jednym żądaniu, a zapis potrzebuje jeszcze numeru meczu).
+     */
+    public function finishMatchEdit(): void
+    {
+        $this->editingMatchId = null;
+        $this->resetValidation();
     }
 
     public function saveMatchEdit(bool $close = true): void
@@ -746,6 +759,7 @@ class TournamentEditor extends Component
             'sets' => collect($match->sets_score ?? [])->map(fn ($set) => implode(':', (array) $set))->implode(', '),
             'starts_at' => (string) $match->starts_at?->format('Y-m-d\TH:i'),
             'court' => (string) $match->court,
+            'live' => $match->is_live,
         ]])->all() ?? [];
     }
 

@@ -75,7 +75,8 @@
     @endif
     @include('livewire.admin.tournament-match-sides', ['prefix' => 'editMatch', 'data' => $editMatch, 'sourceOptions' => \App\Support\TournamentBracket::sourceOptions($category, $editingMatchId)])
     <div class="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
-        <button type="button" wire:click="$set('editingMatchId', null)" class="{{ $primary }}">Gotowe</button>
+        <button type="button" wire:click="finishMatchEdit" class="{{ $primary }}">Gotowe</button>
         <span class="text-xs text-gray-500">Zmiany zapisują się same.</span>
+        <a href="{{ route('admin.media.index', ['mecz' => 'tournament_match:'.$editingMatchId]) }}" class="ml-auto text-sm text-blue-600 hover:text-blue-800">Transmisja i zdjęcia →</a>
     </div>
 </div>

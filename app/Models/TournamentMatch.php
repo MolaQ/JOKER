@@ -46,6 +46,7 @@ class TournamentMatch extends Model
         'away_source',
         'starts_at',
         'court',
+        'is_live',
         'home_sets',
         'away_sets',
         'sets_score',
@@ -65,6 +66,7 @@ class TournamentMatch extends Model
     {
         return [
             'starts_at' => 'datetime',
+            'is_live' => 'boolean',
             'sets_score' => 'array',
         ];
     }
@@ -89,9 +91,12 @@ class TournamentMatch extends Model
         return $this->belongsTo(TournamentParticipant::class, 'away_participant_id');
     }
 
+    /**
+     * Wynik trwającego meczu (organizator może wpisywać go na bieżąco) nie liczy się jeszcze do tabel i drabinki.
+     */
     public function isFinished(): bool
     {
-        return $this->home_sets !== null && $this->away_sets !== null && $this->home_sets !== $this->away_sets;
+        return ! $this->is_live && $this->home_sets !== null && $this->away_sets !== null && $this->home_sets !== $this->away_sets;
     }
 
     public function winner(): ?TournamentParticipant

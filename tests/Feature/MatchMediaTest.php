@@ -266,7 +266,8 @@ test('tournament match card shows stream and gallery icons and the match page sh
 
     Livewire::test(TournamentPage::class, ['tournament' => $tournament])
         ->call('selectTab', 'mecze')
-        ->assertSee('▶ YT')
+        ->assertSeeText('Transmisja')
+        ->assertSee('https://youtu.be/dQw4w9WgXcQ', false)
         ->assertSee('📷 2')
         ->assertSee(route('tournaments.matches.show', [$tournament, $match]), false);
 

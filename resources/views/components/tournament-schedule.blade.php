@@ -12,15 +12,14 @@
     $categoryId = $matches->first()?->tournament_category_id;
 
     // Strony meczów liczone raz: nazwa, stan (pewna / prognoza / czekamy) i drużyny do filtra.
-    $rows = $matches->map(function ($match) use ($bracket, $now) {
+    $rows = $matches->map(function ($match) use ($bracket) {
         $sides = ['home' => $bracket->side($match, 'home'), 'away' => $bracket->side($match, 'away')];
         $teams = collect($sides)
             ->filter(fn ($side) => $side['participant'] && $side['state'] !== TournamentBracket::PENDING)
             ->map(fn ($side) => (string) $side['participant']->id)
             ->values()
             ->all();
-        $live = $match->starts_at && $match->home_sets === null && $match->away_sets === null
-            && $now->between($match->starts_at, $match->starts_at->copy()->addMinutes(90));
+        $live = $match->is_live;
 
         return compact('match', 'sides', 'teams', 'live');
     });
@@ -231,8 +230,14 @@
                                                 @if($row['live'])
                                                     <span class="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-600 ring-1 ring-red-200">
                                                         <span class="relative flex size-2"><span class="absolute inset-0 animate-ping rounded-full bg-red-500/70"></span><span class="relative size-2 rounded-full bg-red-500"></span></span>
-                                                        {{ __('Na żywo') }}
+                                                        {{ __('Trwa') }}
                                                     </span>
+                                                @endif
+                                                @if($stream = $match->normalizedStreams()[0] ?? null)
+                                                    <a href="{{ $stream['url'] }}" target="_blank" rel="noopener" class="relative z-10 inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-bold text-white hover:bg-red-700" title="{{ __('Transmisja') }}">
+                                                        <svg class="size-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6.3 2.84A1.5 1.5 0 0 0 4 4.11v11.78a1.5 1.5 0 0 0 2.3 1.27l9.34-5.89a1.5 1.5 0 0 0 0-2.54L6.3 2.84Z"/></svg>
+                                                        {{ __('Transmisja') }}
+                                                    </a>
                                                 @endif
                                                 @if($match->court)
                                                     <span @class(['inline-flex items-center gap-1 text-xs text-zinc-500', 'md:hidden' => $column && $courtColumns->count() === 2, 'lg:hidden' => $column && $courtColumns->count() === 3])>
@@ -293,7 +298,7 @@
                                                 @endif
                                             </footer>
                                         @endif
-                                        <div class="relative z-10 px-3 empty:hidden [&>p]:mt-0 [&>p]:pb-2 [&>p]:pt-1"><x-tournament-match-media :match="$match" /></div>
+                                        <div class="relative z-10 px-3 empty:hidden [&>p]:mt-0 [&>p]:pb-2 [&>p]:pt-1"><x-tournament-match-media :match="$match" :streams="false" /></div>
                                     </article>
                                 @endforeach
                             </div>

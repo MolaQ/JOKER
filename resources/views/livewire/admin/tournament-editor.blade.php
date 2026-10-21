@@ -451,6 +451,11 @@
                                     <input type="datetime-local" wire:model.blur.live="results.{{ $tournamentMatch->id }}.starts_at" class="{{ $input }}">
                                     <input type="text" wire:model.blur.live="results.{{ $tournamentMatch->id }}.court" class="{{ $input }}" placeholder="boisko">
                                     <div class="flex items-center gap-3">
+                                        <label @class(['inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold ring-1', 'bg-red-50 text-red-700 ring-red-200' => $results[$tournamentMatch->id]['live'] ?? false, 'text-gray-500 ring-gray-200' => ! ($results[$tournamentMatch->id]['live'] ?? false)]) title="Włącz, gdy mecz się zaczął; wyłącz po wpisaniu wyniku końcowego">
+                                            <input type="checkbox" wire:model.live="results.{{ $tournamentMatch->id }}.live" class="size-3.5 rounded border-gray-300 text-red-600">
+                                            Trwa
+                                        </label>
+                                        @if($tournamentMatch->hasStreams())<span class="text-xs text-red-600" title="Mecz ma transmisję">▶</span>@endif
                                         <button type="button" wire:click="startMatchEdit({{ $tournamentMatch->id }})" class="text-sm text-blue-600 hover:text-blue-800">Edytuj</button>
                                         <button type="button" wire:click="deleteMatch({{ $tournamentMatch->id }})" wire:confirm="Usunąć ten mecz?" class="text-sm text-red-600 hover:text-red-800">Usuń</button>
                                     </div>

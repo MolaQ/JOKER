@@ -1,7 +1,7 @@
-@props(['match'])
+@props(['match', 'streams' => true])
 {{-- Transmisje i zdjęcia z meczu turnieju (liczba zdjęć pobierana raz dla całej kategorii). --}}
 @php
-    $streams = $match->normalizedStreams();
+    $streams = $streams ? $match->normalizedStreams() : [];
     $photoCount = (int) \App\Models\Gallery::photoCountsForTournamentCategory($match->tournament_category_id)->get($match->id, 0);
     $matchTournament = $photoCount > 0 ? $match->tournament() : null;
 @endphp

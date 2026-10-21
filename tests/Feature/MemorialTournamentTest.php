@@ -424,3 +424,41 @@ test('organizer sets the criteria order and moves teams by hand, and the matches
     $editor->call('resetTableOrder', $group->id);
     expect($group->fresh()->manual_order)->toBeNull()->and($table()[0])->toBe($joker->id);
 });
+
+test('organizer marks a match as in progress by hand; its running score does not count until it is switched off', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $match = $category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->group->id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id, 'starts_at' => now()->subMinutes(10), 'streams' => [['url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'label' => '']]]);
+    $page = fn () => Livewire::withQueryParams(['zakladka' => 'mecze'])->test(TournamentPage::class, ['tournament' => $this->tournament->fresh()]);
+
+    $page()->assertDontSeeText('Trwa')->assertSeeText('Transmisja');
+
+    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')->set('categoryId', $category->id)
+        ->set("results.{$match->id}.live", true)
+        ->set("results.{$match->id}.sets", '25:20, 20:25');
+    expect($match->fresh()->is_live)->toBeTrue()->and($match->fresh()->isFinished())->toBeFalse()->and($match->fresh()->home_sets)->toBe(1);
+    $page()->assertSeeText('Trwa');
+
+    $editor->set("results.{$match->id}.sets", '25:20, 20:25, 15:10')->set("results.{$match->id}.live", false);
+    expect($match->fresh()->isFinished())->toBeTrue()->and($match->fresh()->winner()->id)->toBe($joker->id);
+});
+
+test('closing the match editor while a field is still being saved does not lose the change or break the panel', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz, $poznan] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $first = $category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->group->id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id]);
+    $second = $category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->group->id, 'home_participant_id' => $joker->id, 'away_participant_id' => $poznan->id]);
+
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')->set('categoryId', $category->id)
+        ->call('startMatchEdit', $first->id)
+        ->set('editMatch.court', 'Boisko 2')
+        ->call('finishMatchEdit')
+        ->assertSet('editingMatchId', null)
+        ->call('startMatchEdit', $second->id)
+        ->assertSet('editingMatchId', $second->id)
+        ->assertSee('Transmisja i zdjęcia');
+
+    expect($first->fresh()->court)->toBe('Boisko 2');
+});
