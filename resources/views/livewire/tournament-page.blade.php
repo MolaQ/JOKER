@@ -127,30 +127,51 @@
         @if($currentTab === 'drabinka' && $current)
             @foreach($playoff as $bracket)
                 <h2 @class(['heading-md', 'mt-10' => ! $loop->first])>{{ $bracket['from'] === 1 ? __('Drabinka') : __('Drabinka o miejsca :from–:to', ['from' => $bracket['from'], 'to' => $bracket['to']]) }}</h2>
+                @php
+                    // Gdy organizator ustawił pozycje w kolumnach, mecz stoi dokładnie w swoim wierszu; inaczej drabinka się centruje.
+                    $explicitSlots = $bracket['rounds']->flatten()->contains(fn ($match) => $match->bracket_slot !== null);
+                    $columnNames = $bracket['rounds']->map(function ($roundMatches, $round) use ($bracket) {
+                        $isLast = $round === $bracket['rounds']->keys()->last();
+
+                        return match (true) {
+                            filled($roundMatches->pluck('phase_name')->filter()->first()) => $roundMatches->pluck('phase_name')->filter()->first(),
+                            $roundMatches->contains(fn ($match) => $match->decides_place !== null) && $isLast => __('Finały'),
+                            $roundMatches->count() === 1 && $isLast => $bracket['from'] === 1 ? __('Finał') : __('Mecz o :place. miejsce', ['place' => $bracket['from']]),
+                            $roundMatches->count() === 2 => __('Półfinały'),
+                            $roundMatches->count() === 4 => __('Ćwierćfinały'),
+                            $roundMatches->count() === 8 => __('1/8 finału'),
+                            default => __('Runda :round', ['round' => $round]),
+                        };
+                    });
+                    $highlight = fn ($match, $roundMatches, $isLast) => $match->decides_place === 1 || ($roundMatches->count() === 1 && $isLast && $bracket['from'] === 1 && $match->decides_place === null);
+                @endphp
                 <div class="mt-5 overflow-x-auto pb-2">
-                    <div class="flex min-w-max gap-6">
-                        @foreach($bracket['rounds'] as $round => $roundMatches)
-                            @php
-                                $roundName = match (true) {
-                                    filled($roundMatches->pluck('phase_name')->filter()->first()) => $roundMatches->pluck('phase_name')->filter()->first(),
-                                    $roundMatches->contains(fn ($match) => $match->decides_place !== null) && $loop->last => __('Finały'),
-                                    $roundMatches->count() === 1 && $loop->last => $bracket['from'] === 1 ? __('Finał') : __('Mecz o :place. miejsce', ['place' => $bracket['from']]),
-                                    $roundMatches->count() === 2 => __('Półfinały'),
-                                    $roundMatches->count() === 4 => __('Ćwierćfinały'),
-                                    $roundMatches->count() === 8 => __('1/8 finału'),
-                                    default => __('Runda :round', ['round' => $round]),
-                                };
-                            @endphp
-                            <div class="flex w-[22rem] flex-col">
-                                <p class="mb-3 text-xs font-semibold tracking-widest text-zinc-500 uppercase">{{ $roundName }}</p>
-                                <div class="flex flex-1 flex-col justify-around gap-4">
-                                    @foreach($roundMatches as $match)
-                                        <x-tournament-match :match="$match" :show-title="filled($match->label) || $match->decides_place !== null" @class(['ring-2 ring-amber-300' => $match->decides_place === 1 || ($roundMatches->count() === 1 && $loop->parent->last && $bracket['from'] === 1 && $match->decides_place === null)]) wire:key="playoff-{{ $match->id }}" />
-                                    @endforeach
+                    @if($explicitSlots)
+                        <div class="grid min-w-max gap-x-6 gap-y-4" style="grid-template-columns: repeat({{ $bracket['rounds']->count() }}, 22rem)">
+                            @foreach($bracket['rounds'] as $round => $roundMatches)
+                                @php $column = $loop->iteration; $isLast = $loop->last; $nextSlot = 1; @endphp
+                                <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase" style="grid-column: {{ $column }}; grid-row: 1">{{ $columnNames[$round] }}</p>
+                                @foreach($roundMatches as $match)
+                                    @php $slot = $match->bracket_slot ?? $nextSlot; $nextSlot = $slot + 1; @endphp
+                                    <x-tournament-match :match="$match" :show-title="filled($match->label) || $match->decides_place !== null" @class(['ring-2 ring-amber-300' => $highlight($match, $roundMatches, $isLast)]) style="grid-column: {{ $column }}; grid-row: {{ $slot + 1 }}" wire:key="playoff-{{ $match->id }}" />
+                                @endforeach
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="flex min-w-max gap-6">
+                            @foreach($bracket['rounds'] as $round => $roundMatches)
+                                @php $isLast = $loop->last; @endphp
+                                <div class="flex w-[22rem] flex-col">
+                                    <p class="mb-3 text-xs font-semibold tracking-widest text-zinc-500 uppercase">{{ $columnNames[$round] }}</p>
+                                    <div class="flex flex-1 flex-col justify-around gap-4">
+                                        @foreach($roundMatches as $match)
+                                            <x-tournament-match :match="$match" :show-title="filled($match->label) || $match->decides_place !== null" @class(['ring-2 ring-amber-300' => $highlight($match, $roundMatches, $isLast)]) wire:key="playoff-{{ $match->id }}" />
+                                        @endforeach
+                                    </div>
                                 </div>
-                            </div>
-                        @endforeach
-                    </div>
+                            @endforeach
+                        </div>
+                    @endif
                 </div>
             @endforeach
 

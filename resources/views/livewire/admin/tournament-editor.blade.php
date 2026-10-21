@@ -7,9 +7,6 @@
 @endphp
 
 <div class="space-y-6">
-    @if($flashMessage)
-        <div class="rounded-md bg-green-50 p-3 text-sm font-medium text-green-800" wire:key="flash-{{ md5($flashMessage) }}">{{ $flashMessage }}</div>
-    @endif
 
     <div class="flex flex-wrap gap-2 border-b border-gray-200 pb-3">
         @foreach($sections as $key => $name)

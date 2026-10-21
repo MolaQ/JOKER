@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\RivalClub;
 use App\Models\RivalTeam;
 use Illuminate\Contracts\View\View;
@@ -16,7 +17,7 @@ use Livewire\WithFileUploads;
  */
 class RivalTeamManager extends Component
 {
-    use WithFileUploads;
+    use ShowsToasts, WithFileUploads;
 
     public bool $showModal = false;
 
@@ -57,10 +58,6 @@ class RivalTeamManager extends Component
 
     /** @var array<int, array{club: string, merge: string}> */
     public array $review = [];
-
-    public ?string $flashType = null;
-
-    public ?string $flashMessage = null;
 
     protected function rules(): array
     {
@@ -265,8 +262,7 @@ class RivalTeamManager extends Component
 
     private function flash(string $message, string $type = 'success'): void
     {
-        $this->flashType = $type;
-        $this->flashMessage = $message;
+        $this->toast($message, $type);
     }
 
     /**

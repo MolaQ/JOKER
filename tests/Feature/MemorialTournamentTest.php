@@ -204,3 +204,28 @@ test('organizer names bracket phases and puts the third place match under the fi
     Livewire::withQueryParams(['zakladka' => 'drabinka'])->test(TournamentPage::class, ['tournament' => $this->tournament])
         ->assertSeeInOrder(['Półfinał', 'Finały', 'LOMS Joker Piła', 'Mecz o trzecie miejsce']);
 });
+
+test('bracket matches stand in the chosen column and row, and any match can be edited', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $category->matches()->create(['stage' => 'playoff', 'bracket_round' => 1, 'bracket_slot' => 1, 'home_placeholder' => '1. gr. A', 'away_placeholder' => '2. gr. B']);
+    $fifth = $category->matches()->create(['stage' => 'playoff', 'bracket_round' => 3, 'bracket_slot' => 3, 'decides_place' => 5, 'home_placeholder' => 'Przegrany 1', 'away_placeholder' => 'Przegrany 2']);
+    $group = $category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id]);
+
+    Livewire::withQueryParams(['zakladka' => 'drabinka'])->test(TournamentPage::class, ['tournament' => $this->tournament])
+        ->assertSee('grid-column: 2; grid-row: 4', false)
+        ->assertSee('Mecz o 5. miejsce');
+
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])
+        ->call('editMatch', $group->id)
+        ->set('editMatch.starts_at', '2026-11-14T09:30')
+        ->set('editMatch.court', 'Boisko 3')
+        ->call('saveMatchEdit')
+        ->assertHasNoErrors()
+        ->assertDispatched('toast');
+
+    expect($group->fresh())->court->toBe('Boisko 3')
+        ->and($group->fresh()->starts_at->format('H:i'))->toBe('09:30')
+        ->and($fifth->fresh()->title())->toBe('Mecz o 5. miejsce');
+});

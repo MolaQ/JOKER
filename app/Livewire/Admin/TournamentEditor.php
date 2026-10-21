@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\RivalTeam;
 use App\Models\Team;
 use App\Models\Tournament;
@@ -20,7 +21,7 @@ use Livewire\WithFileUploads;
  */
 class TournamentEditor extends Component
 {
-    use WithFileUploads;
+    use ShowsToasts, WithFileUploads;
 
     public Tournament $tournament;
 
@@ -65,8 +66,6 @@ class TournamentEditor extends Component
     /** @var array<int, array{sets: string, starts_at: string, court: string}> */
     public array $results = [];
 
-    public ?string $flashMessage = null;
-
     public function mount(Tournament $tournament): void
     {
         $this->tournament = $tournament;
@@ -102,7 +101,7 @@ class TournamentEditor extends Component
         ] + ($this->image ? ['image_path' => $this->image->store('tournaments', 'public')] : []));
 
         $this->image = null;
-        $this->flashMessage = 'Zapisano informacje o turnieju.';
+        $this->toast('Zapisano informacje o turnieju.');
     }
 
     public function addCategory(): void
@@ -167,7 +166,7 @@ class TournamentEditor extends Component
         }
 
         $this->loadCategoryState();
-        $this->flashMessage = $created ? "Dodano {$created} meczów w grupie {$group->name}." : 'Wszystkie mecze tej grupy już są.';
+        $this->toast($created ? "Dodano {$created} meczów w grupie {$group->name}." : 'Wszystkie mecze tej grupy już są.');
     }
 
     public function addParticipant(): void
@@ -219,7 +218,7 @@ class TournamentEditor extends Component
             }
         }
 
-        $this->flashMessage = 'Zapisano drużyny.';
+        $this->toast('Zapisano drużyny.');
     }
 
     public function deleteParticipant(int $id): void
@@ -277,7 +276,7 @@ class TournamentEditor extends Component
 
         $this->resetMatchForm($data['stage']);
         $this->loadCategoryState();
-        $this->flashMessage = 'Dodano mecz.';
+        $this->toast('Dodano mecz.');
     }
 
     /**
@@ -297,7 +296,7 @@ class TournamentEditor extends Component
             'court' => trim($row['court'] ?? '') ?: null,
         ]);
 
-        $this->flashMessage = 'Zapisano: '.$match->fresh()->homeName().' – '.$match->awayName().'.';
+        $this->toast('Zapisano: '.$match->fresh()->homeName().' – '.$match->awayName().'.');
     }
 
     /**
@@ -318,6 +317,9 @@ class TournamentEditor extends Component
         $this->editingMatchId = $match->id;
         $this->editMatch = [
             'label' => (string) $match->label,
+            'stage' => $match->stage,
+            'starts_at' => (string) $match->starts_at?->format('Y-m-d\TH:i'),
+            'court' => (string) $match->court,
             'phase_name' => (string) $match->phase_name,
             'bracket_round' => (string) $match->bracket_round,
             'bracket_slot' => (string) $match->bracket_slot,
@@ -338,6 +340,9 @@ class TournamentEditor extends Component
         $match = $this->category()->matches()->findOrFail($this->editingMatchId);
         $data = $this->validate([
             'editMatch.label' => 'nullable|string|max:80',
+            'editMatch.stage' => 'required|in:group,playoff,placement',
+            'editMatch.starts_at' => 'nullable|date',
+            'editMatch.court' => 'nullable|string|max:60',
             'editMatch.phase_name' => 'nullable|string|max:60',
             'editMatch.bracket_round' => 'nullable|integer|min:1|max:9',
             'editMatch.bracket_slot' => 'nullable|integer|min:1|max:64',
@@ -355,26 +360,31 @@ class TournamentEditor extends Component
         $number = fn (string $key): ?int => filled($data[$key] ?? null) ? (int) $data[$key] : null;
         $text = fn (string $key): ?string => trim((string) ($data[$key] ?? '')) ?: null;
 
+        $stage = $data['stage'];
         $match->update([
+            'stage' => $stage,
             'label' => $text('label'),
+            'starts_at' => $text('starts_at'),
+            'court' => $text('court'),
             'home_participant_id' => $participantIds->contains($number('home')) ? $number('home') : null,
             'away_participant_id' => $participantIds->contains($number('away')) ? $number('away') : null,
             'home_placeholder' => $text('home_placeholder'),
             'away_placeholder' => $text('away_placeholder'),
-        ] + match ($match->stage) {
-            TournamentMatch::STAGE_PLAYOFF => [
-                'phase_name' => $text('phase_name'),
-                'bracket_round' => $number('bracket_round') ?? $match->bracket_round,
-                'bracket_slot' => $number('bracket_slot'),
-                'placement' => ($number('bracket_from') ?? 1) > 1 ? $number('bracket_from') : null,
-                'decides_place' => $number('decides_place'),
-            ],
-            TournamentMatch::STAGE_PLACEMENT => ['placement' => $number('placement') ?? $match->placement],
-            default => ['tournament_group_id' => $number('group') ?? $match->tournament_group_id],
-        });
+            'tournament_group_id' => $stage === TournamentMatch::STAGE_GROUP ? ($number('group') ?? $match->tournament_group_id ?? $this->category()->groups()->value('id')) : null,
+            'phase_name' => $stage === TournamentMatch::STAGE_PLAYOFF ? $text('phase_name') : null,
+            'bracket_round' => $stage === TournamentMatch::STAGE_PLAYOFF ? ($number('bracket_round') ?? $match->bracket_round ?? 1) : null,
+            'bracket_slot' => $stage === TournamentMatch::STAGE_PLAYOFF ? $number('bracket_slot') : null,
+            'decides_place' => $stage === TournamentMatch::STAGE_PLAYOFF ? $number('decides_place') : null,
+            'placement' => match ($stage) {
+                TournamentMatch::STAGE_PLAYOFF => ($number('bracket_from') ?? 1) > 1 ? $number('bracket_from') : null,
+                TournamentMatch::STAGE_PLACEMENT => $number('placement') ?? $match->placement ?? 1,
+                default => null,
+            },
+        ]);
+        $this->loadCategoryState();
 
         $this->editingMatchId = null;
-        $this->flashMessage = 'Zapisano mecz: '.$match->fresh()->title().'.';
+        $this->toast('Zapisano mecz: '.$match->fresh()->title().'.');
     }
 
     public function setMatchTeams(int $matchId, string $side, string $participantId): void

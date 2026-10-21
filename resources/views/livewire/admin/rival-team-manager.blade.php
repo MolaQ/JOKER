@@ -4,12 +4,6 @@
 @endphp
 
 <div>
-    @if($flashMessage)
-        <div class="p-4 {{ $flashType === 'error' ? 'bg-red-50 text-red-800' : 'bg-green-50 text-green-800' }} text-sm font-medium">
-            {{ $flashMessage }}
-        </div>
-    @endif
-
     <div class="flex flex-col gap-4 border-b border-gray-200 bg-white p-4 lg:flex-row lg:items-center lg:justify-between">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
             <input type="text" wire:model.live.debounce.300ms="search" placeholder="Szukaj klubu, drużyny, dawnej nazwy..." class="{{ $input }} sm:w-80">

@@ -48,3 +48,12 @@ test('the countdown can target the next match of any team', function () {
 
     $this->get('/')->assertSeeInOrder(['Najbliższy mecz', 'ŁKS Łódź']);
 });
+
+test('calendar colours and the birthday icon come from the settings', function () {
+    app(SiteSettings::class)->set(['cal_home_from' => '#112233', 'cal_away_bg' => '#fefefe', 'cal_birthday_icon' => '🎈']);
+
+    $this->get('/mecze?pokaz=wszystkie')
+        ->assertOk()
+        ->assertSee('--cal-home-from: #112233', false)
+        ->assertSee('--cal-away-bg: #fefefe', false);
+});

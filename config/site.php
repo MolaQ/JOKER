@@ -45,6 +45,42 @@ return [
             ],
         ],
 
+        'kalendarz' => [
+            'label' => 'Kalendarz meczów',
+            'icon' => '📅',
+            'fields' => [
+                'cal_home_from' => ['type' => 'color', 'label' => 'Mecz u siebie: kolor gradientu (początek)', 'default' => '#0f2d6b'],
+                'cal_home_to' => ['type' => 'color', 'label' => 'Mecz u siebie: kolor gradientu (koniec)', 'default' => '#2f7fbf'],
+                'cal_home_text' => ['type' => 'color', 'label' => 'Mecz u siebie: tekst', 'default' => '#ffffff'],
+                'cal_away_bg' => ['type' => 'color', 'label' => 'Mecz wyjazdowy: tło', 'default' => '#ffffff'],
+                'cal_away_text' => ['type' => 'color', 'label' => 'Mecz wyjazdowy: tekst', 'default' => '#2f7fbf'],
+                'cal_away_border' => ['type' => 'color', 'label' => 'Mecz wyjazdowy: ramka', 'default' => '#a9cfee'],
+                'cal_birthday_icon' => ['type' => 'text', 'label' => 'Urodziny: ikona (emoji)', 'default' => '🎂'],
+                'cal_birthday_bg' => ['type' => 'color', 'label' => 'Urodziny: tło', 'default' => '#fdf2f8'],
+                'cal_birthday_text' => ['type' => 'color', 'label' => 'Urodziny: tekst', 'default' => '#9d174d'],
+            ],
+        ],
+
+        'powiadomienia' => [
+            'label' => 'Powiadomienia (toasty)',
+            'icon' => '🔔',
+            'fields' => [
+                'toast_success_bg' => ['type' => 'color', 'label' => 'Sukces: tło', 'default' => '#ecfdf5'],
+                'toast_success_text' => ['type' => 'color', 'label' => 'Sukces: tekst i ikona', 'default' => '#047857'],
+                'toast_success_title' => ['type' => 'text', 'label' => 'Sukces: tytuł', 'default' => 'Gotowe'],
+                'toast_error_bg' => ['type' => 'color', 'label' => 'Błąd: tło', 'default' => '#fef2f2'],
+                'toast_error_text' => ['type' => 'color', 'label' => 'Błąd: tekst i ikona', 'default' => '#b91c1c'],
+                'toast_error_title' => ['type' => 'text', 'label' => 'Błąd: tytuł', 'default' => 'Coś poszło nie tak'],
+                'toast_seconds' => ['type' => 'text', 'label' => 'Czas wyświetlania (sekundy)', 'default' => '4'],
+                'toast_position' => ['type' => 'select', 'label' => 'Miejsce na ekranie', 'default' => 'top-right', 'options' => [
+                    'top-right' => 'Prawy górny róg',
+                    'bottom-right' => 'Prawy dolny róg',
+                    'top-center' => 'Na górze, na środku',
+                    'bottom-center' => 'Na dole, na środku',
+                ]],
+            ],
+        ],
+
         'pasek' => [
             'label' => 'Górny pasek',
             'icon' => '🟨',
