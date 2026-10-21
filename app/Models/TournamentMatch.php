@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasMatchMedia;
+use App\Models\Concerns\Likeable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -10,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class TournamentMatch extends Model
 {
+    use HasMatchMedia, Likeable;
+
     public const STAGE_GROUP = 'group';
 
     public const STAGE_PLAYOFF = 'playoff';
@@ -134,6 +138,23 @@ class TournamentMatch extends Model
     public function bracketFrom(): int
     {
         return $this->stage === self::STAGE_PLAYOFF ? max(1, (int) $this->placement) : 0;
+    }
+
+    public function mediaLabel(): string
+    {
+        $category = $this->category;
+
+        return collect([
+            $this->starts_at?->format('d.m.Y H:i'),
+            $category?->tournament?->fullName(),
+            $category?->name,
+            trim($this->title().': '.$this->homeName().' – '.$this->awayName(), ': '),
+        ])->filter()->implode(' · ');
+    }
+
+    public function tournament(): ?Tournament
+    {
+        return $this->category?->tournament;
     }
 
     public function setsLabel(): ?string

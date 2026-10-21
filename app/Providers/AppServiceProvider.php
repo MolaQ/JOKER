@@ -9,6 +9,7 @@ use App\Models\Page;
 use App\Models\Player;
 use App\Models\RivalTeam;
 use App\Models\Team;
+use App\Models\TournamentMatch;
 use App\Models\User;
 use App\Support\SearchIndex;
 use App\Support\SiteSettings;
@@ -44,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
         Relation::morphMap([
             'team' => Team::class,
             'rival_team' => RivalTeam::class,
+            'tournament_match' => TournamentMatch::class,
         ]);
 
         // Każda zmiana treści odświeża indeks wyszukiwarki.

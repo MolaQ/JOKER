@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasEnglishVersion;
+use App\Models\Concerns\Likeable;
 use Database\Factories\PageFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 class Page extends Model
 {
     /** @use HasFactory<PageFactory> */
-    use HasEnglishVersion, HasFactory;
+    use HasEnglishVersion, HasFactory, Likeable;
 
     protected $fillable = [
         'title',

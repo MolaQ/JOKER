@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
- * Umożliwia polubienia (serduszka) dla modelu: artykułów, meczów, zawodników i drużyn.
+ * Polubienia (serduszka) treści: artykułów, meczów, zawodników, drużyn, podstron, turniejów i galerii.
  *
  * @mixin Model
  */

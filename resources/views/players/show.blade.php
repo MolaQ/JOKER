@@ -38,7 +38,7 @@
 
             <div class="mt-6 flex flex-wrap items-center gap-4">
                 <x-view-count :model="$player" class="text-white/70" />
-                @livewire('like-button', ['type' => 'player', 'id' => $player->id], key('player-like-'.$player->id))
+                @livewire('like-button', ['type' => 'player', 'id' => $player->id, 'dark' => true], key('player-like-'.$player->id))
             </div>
         </div>
     </div>

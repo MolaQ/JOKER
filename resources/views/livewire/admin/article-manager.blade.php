@@ -154,7 +154,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Zdjęcie wyróżniające</label>
                                 @if($existingImage && !$featured_image)
-                                    <img src="{{ \App\Support\Media::url($existingImage) }}" onerror="this.style.visibility=\'hidden\'" class="h-24 w-full max-w-xs object-cover rounded mb-2" alt="Obraz">
+                                    <img src="{{ \App\Support\Media::url($existingImage) }}" onerror="this.style.visibility='hidden'" class="h-24 w-full max-w-xs object-cover rounded mb-2" alt="Obraz">
                                 @endif
                                 @if($featured_image)
                                     <img src="{{ $featured_image->temporaryUrl() }}" class="h-24 w-full max-w-xs object-cover rounded mb-2" alt="Podgląd">

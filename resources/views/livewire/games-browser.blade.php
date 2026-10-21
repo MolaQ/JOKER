@@ -167,14 +167,14 @@
                                                         $won = $game->isFinished() && $result ? $result[0] > $result[1] : null;
                                                         $hasTime = $game->game_date->format('H:i') !== '00:00';
                                                         $article = $game->latestArticle();
-                                                        $tag = $article ? 'a' : 'div';
+                                                        $tag = 'a';
                                                     @endphp
                                                     <li wire:key="cell-{{ $game->id }}">
-                                                        <{{ $tag }} @if($article) href="{{ route('articles.show', $article) }}" @endif title="{{ $game->is_home ? __('U siebie') : __('Wyjazd') }} · {{ $game->competitionLabel() }}@if($game->round_label) · {{ $game->round_label }}@endif{{ $game->venue ? ' · '.$game->venue : '' }}{{ is_array($game->sets_score) && count($game->sets_score) ? ' · '.collect($game->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(', ') : '' }}{{ $article ? ' · '.__('Artykuł').': '.$article->localizedTitle() : '' }}" @class([
+                                                        <{{ $tag }} href="{{ route('games.show', $game) }}" title="{{ $game->is_home ? __('U siebie') : __('Wyjazd') }} · {{ $game->competitionLabel() }}@if($game->round_label) · {{ $game->round_label }}@endif{{ $game->venue ? ' · '.$game->venue : '' }}{{ is_array($game->sets_score) && count($game->sets_score) ? ' · '.collect($game->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(', ') : '' }}{{ $article ? ' · '.__('Artykuł').': '.$article->localizedTitle() : '' }}" @class([
                                                             'block rounded-lg px-1.5 py-1 text-[11px] leading-tight transition',
                                                             'bg-linear-to-br from-(--cal-home-from) to-(--cal-home-to) text-(--cal-home-text) shadow-sm' => $game->is_home,
                                                             'bg-(--cal-away-bg) text-(--cal-away-text) shadow-sm ring-1 ring-(--cal-away-border)' => ! $game->is_home,
-                                                            'hover:ring-2 hover:ring-sky-club' => $article,
+                                                            'hover:ring-2 hover:ring-sky-club' => true,
                                                         ])>
                                                             <span class="flex items-start justify-between gap-1">
                                                                 <x-team-label :label="$game->ourLabel()" class="min-w-0 font-semibold break-words" />
@@ -276,6 +276,7 @@
                             @else
                                 <span class="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600">{{ $game->is_home ? __('U siebie') : __('Wyjazd') }}</span>
                             @endif
+                            <a href="{{ route('games.show', $game) }}" class="inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-sky-club-dark hover:underline">{{ __('Szczegóły meczu') }} →</a>
                             @if($article)
                                 <a href="{{ route('articles.show', $article) }}" class="inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-sky-club-dark hover:underline">{{ __('Czytaj artykuł') }} →</a>
                             @endif

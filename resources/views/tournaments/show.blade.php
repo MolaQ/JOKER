@@ -19,6 +19,9 @@
         @if($tournament->description)
             <p class="mt-5 max-w-2xl text-lg text-white/80">{{ $tournament->description }}</p>
         @endif
+        <div class="mt-6">
+            @livewire('like-button', ['type' => 'tournament', 'id' => $tournament->id, 'dark' => true], key('tournament-like-'.$tournament->id))
+        </div>
     </div>
 </section>
 

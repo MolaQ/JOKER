@@ -12,6 +12,7 @@ class ArticleController extends Controller
     public function index()
     {
         $articles = Article::published()
+            ->withCount(['likes', 'approvedComments'])
             ->paginate(13);
 
         return view('articles.index', compact('articles'));
@@ -24,7 +25,12 @@ class ArticleController extends Controller
         }
 
         $article->increment('views_count');
-        $article->load(['author', 'approvedComments.user', 'approvedComments.replies.user']);
+        $article->load([
+            'author',
+            'approvedComments.user',
+            'approvedComments.replies.user',
+            'games' => fn ($query) => $query->with(['team', 'competition.teams', 'opponentTeam', 'tournament', 'publishedGalleries.photos'])->orderBy('game_date'),
+        ]);
 
         $related_articles = Article::published()
             ->where('id', '!=', $article->id)

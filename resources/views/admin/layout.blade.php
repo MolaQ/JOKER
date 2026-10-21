@@ -19,6 +19,7 @@
                 ['label' => 'Aktualności', 'route' => 'admin.articles.index', 'icon' => '📰'],
                 ['label' => 'Mecze i wyniki', 'route' => 'admin.games.index', 'icon' => '🏐'],
                 ['label' => 'Turnieje', 'route' => 'admin.tournaments.index', 'icon' => '🥇'],
+                ['label' => 'Transmisje i galerie', 'route' => 'admin.media.index', 'icon' => '🎥'],
                 ['label' => 'Slajdy na stronie głównej', 'route' => 'admin.hero-slides.index', 'icon' => '🖼️'],
             ],
             'Wygląd strony' => [

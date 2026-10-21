@@ -40,7 +40,7 @@
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                         <div class="flex items-center gap-2">
                             @if($standing->competitorLogoPath())
-                                <img src="{{ \App\Support\Media::url($standing->competitorLogoPath()) }}" onerror="this.style.visibility=\'hidden\'" class="h-6 w-6 object-cover rounded" alt="">
+                                <img src="{{ \App\Support\Media::url($standing->competitorLogoPath()) }}" onerror="this.style.visibility='hidden'" class="h-6 w-6 object-cover rounded" alt="">
                             @endif
                             <span>{{ $standing->competitorName() }}</span>
                             @if(! $standing->isOwnTeam())

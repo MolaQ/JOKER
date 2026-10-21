@@ -48,21 +48,25 @@ export function registerConfirmModal() {
             danger: false,
             onAccept: null,
             returnFocus: null,
+            texts: {},
 
             init() {
+                // $el w getterach wskazuje element z x-text, więc teksty bierzemy raz z korzenia.
+                this.texts = { ...this.$el.dataset };
+
                 window.addEventListener('confirm-modal:open', (event) => this.show(event.detail));
             },
 
             get title() {
-                return this.danger ? this.$el.dataset.titleDanger : this.$el.dataset.title;
+                return this.danger ? this.texts.titleDanger : this.texts.title;
             },
 
             get confirmLabel() {
-                return this.danger ? this.$el.dataset.labelDanger : this.$el.dataset.label;
+                return this.danger ? this.texts.labelDanger : this.texts.label;
             },
 
             show({ message, onAccept }) {
-                this.message = message || this.$el.dataset.fallback;
+                this.message = message || this.texts.fallback;
                 this.danger = DANGER_PATTERN.test(this.message);
                 this.onAccept = onAccept;
                 this.returnFocus = document.activeElement;

@@ -47,6 +47,7 @@
         @if($game->venue)
             <span>{{ $game->venue }}</span>
         @endif
+        <a href="{{ route('games.show', $game) }}" class="inline-flex min-h-11 items-center font-semibold {{ $dark ? 'text-sky-club-light' : 'text-sky-club-dark' }} hover:underline">{{ __('Szczegóły meczu') }} →</a>
         @if($game->isUpcoming())
             <a href="{{ route('games.calendar', $game) }}" class="ml-auto inline-flex min-h-11 items-center gap-1.5 font-semibold {{ $dark ? 'text-sky-club-light' : 'text-sky-club-dark' }}" title="{{ __('Dodaj mecz do kalendarza w telefonie') }}">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M8 3v4m8-4v4M3 10h18M12 14v4m-2-2h4M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>

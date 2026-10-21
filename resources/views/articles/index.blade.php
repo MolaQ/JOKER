@@ -23,6 +23,10 @@
                         <p class="text-xs font-semibold tracking-widest text-sky-club-light uppercase">{{ $article->published_at?->translatedFormat('d F Y') }}</p>
                         <h2 class="mt-3 max-w-3xl font-display text-4xl leading-tight font-bold uppercase lg:text-5xl">{{ $article->localizedTitle() }}@if($article->hasEnglish()) <x-english-badge class="ml-1" />@endif</h2>
                         <p class="mt-3 line-clamp-2 max-w-2xl text-zinc-300">{{ Str::limit(strip_tags((string) $article->localizedExcerpt()), 200) }}</p>
+                        <p class="mt-4 flex items-center gap-4 text-sm font-semibold text-zinc-300 tabular-nums">
+                            <span title="{{ __('Polubienia') }}"><span aria-hidden="true">❤️</span> {{ $article->likes_count }}</span>
+                            @if($article->allow_comments)<span title="{{ __('Komentarze') }}"><span aria-hidden="true">💬</span> {{ $article->approved_comments_count }}</span>@endif
+                        </p>
                     </a>
                 @else
                     <a href="{{ route('articles.show', $article) }}" class="card card-hover group flex flex-col overflow-hidden" data-reveal>
@@ -31,6 +35,10 @@
                             <p class="text-xs font-semibold text-zinc-500">{{ $article->published_at?->translatedFormat('d F Y') }}</p>
                             <h2 class="mt-2 text-lg leading-snug font-semibold group-hover:text-sky-club-dark">{{ $article->localizedTitle() }}@if($article->hasEnglish()) <x-english-badge class="ml-1" />@endif</h2>
                             <p class="mt-2 line-clamp-3 text-sm text-zinc-500">{{ Str::limit(strip_tags((string) $article->localizedExcerpt()), 160) }}</p>
+                            <p class="mt-auto flex items-center gap-4 pt-4 text-xs font-semibold text-zinc-500 tabular-nums">
+                                <span title="{{ __('Polubienia') }}"><span aria-hidden="true">❤️</span> {{ $article->likes_count }}</span>
+                                @if($article->allow_comments)<span title="{{ __('Komentarze') }}"><span aria-hidden="true">💬</span> {{ $article->approved_comments_count }}</span>@endif
+                            </p>
                         </div>
                     </a>
                 @endif

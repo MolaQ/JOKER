@@ -34,6 +34,10 @@
             <div class="prose-club" @if(app()->getLocale() === 'en' && blank($page->content_en)) lang="pl" @endif>
                 {!! $page->localizedContent() !!}
             </div>
+
+            <div class="mt-12 flex justify-end border-t border-zinc-200 pt-6">
+                @livewire('like-button', ['type' => 'page', 'id' => $page->id], key('page-like-'.$page->id))
+            </div>
         </div>
 
         @if($otherPages->isNotEmpty())

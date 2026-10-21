@@ -3,5 +3,7 @@
     "{1} :count turniej|[2,4] :count turnieje|[0,*] :count turniejów": "{1} :count turniej|[2,4] :count turnieje|[0,*] :count turniejów",
     "{1} :count wygrana|[0,*] :count wygranych": "{1} :count wygrana|[0,*] :count wygranych",
     ":count osoba teraz|:count osoby teraz|:count osób teraz": ":count osoba teraz|:count osoby teraz|:count osób teraz",
-    ":count gość dziś|:count gości dziś|:count gości dziś": ":count gość dziś|:count gości dziś|:count gości dziś"
+    ":count gość dziś|:count gości dziś|:count gości dziś": ":count gość dziś|:count gości dziś|:count gości dziś",
+    ":count zdjęcie|:count zdjęcia|:count zdjęć": ":count zdjęcie|:count zdjęcia|:count zdjęć",
+    ":count komentarz|:count komentarze|:count komentarzy": ":count komentarz|:count komentarze|:count komentarzy"
 }

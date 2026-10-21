@@ -18,7 +18,10 @@
         <a href="{{ route('teams.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ __('Wszystkie drużyny') }}</a>
         <p class="eyebrow mt-6">{{ $team->birth_year ? __('Rocznik :year', ['year' => $team->birth_year]) : __('Pierwsza drużyna') }}@if($currentSeason) · {{ __('Sezon') }} {{ $currentSeason->name }}@endif</p>
         <h1 class="heading-xl mt-3">{{ $team->name }}</h1>
-        <x-view-count :model="$team" class="mt-3 text-white/70" />
+        <div class="mt-3 flex flex-wrap items-center gap-4">
+            <x-view-count :model="$team" class="text-white/70" />
+            @livewire('like-button', ['type' => 'team', 'id' => $team->id, 'dark' => true], key('team-like-'.$team->id))
+        </div>
         @if($team->description)
             <div class="mt-5 max-w-2xl text-lg text-zinc-300">{!! strip_tags($team->description, '<p><br><strong><em><b><i>') !!}</div>
         @endif

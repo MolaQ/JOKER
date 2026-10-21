@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Likeable;
 use Database\Factories\TournamentFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,7 +20,7 @@ use Illuminate\Support\Str;
 class Tournament extends Model
 {
     /** @use HasFactory<TournamentFactory> */
-    use HasFactory;
+    use HasFactory, Likeable;
 
     protected $fillable = [
         'season_id',

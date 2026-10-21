@@ -24,6 +24,9 @@ Route::middleware(['auth', 'role:admin,trainer'])->prefix('panel')->name('admin.
     Route::view('/tournaments', 'admin.tournaments.index')->name('tournaments.index');
     Route::get('/tournaments/{tournament}', fn (Tournament $tournament) => view('admin.tournaments.edit', ['tournament' => $tournament]))->name('tournaments.edit');
 
+    // Transmisje i galerie zdjęć meczów ligowych i turniejowych
+    Route::view('/media', 'admin.media.index')->name('media.index');
+
     // Competitions & Standings
     Route::get('/competitions', function () {
         return view('admin.competitions.index');

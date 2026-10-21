@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\GameCalendarController;
+use App\Http\Controllers\GameController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PageController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TournamentController;
+use App\Http\Controllers\TournamentMatchController;
 use App\Http\Controllers\TrainerController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -37,6 +39,7 @@ Route::post('/aktualnosci/{article}/komentarze', [ArticleController::class, 'sto
 // Players
 Route::get('/memorial', [TournamentController::class, 'memorial'])->name('memorial');
 Route::get('/turnieje/{tournament}', [TournamentController::class, 'show'])->name('tournaments.show');
+Route::get('/turnieje/{tournament}/mecze/{match}', [TournamentMatchController::class, 'show'])->whereNumber('match')->name('tournaments.matches.show');
 Route::get('/zawodnicy/{player}', [PlayerController::class, 'show'])->name('players.show');
 
 // Trainers
@@ -46,6 +49,9 @@ Route::get('/sztab/{trainer}', [TrainerController::class, 'show'])->name('traine
 Route::get('/mecze', [ScheduleController::class, 'index'])->name('schedule.index');
 Route::get('/tabele', [ScheduleController::class, 'standings'])->name('standings');
 Route::get('/mecze/{game}/kalendarz.ics', [GameCalendarController::class, 'show'])->name('games.calendar');
+// Strona meczu: transmisje, galerie, artykuły, polubienia i komentarze (dla zalogowanych).
+Route::get('/mecze/{game}', [GameController::class, 'show'])->whereNumber('game')->name('games.show');
+Route::post('/mecze/{game}/komentarze', [GameController::class, 'storeComment'])->whereNumber('game')->middleware(['auth', 'throttle:20,1'])->name('games.comments.store');
 
 // Wyszukiwarka
 Route::get('/szukaj', [SearchController::class, 'index'])->name('search');

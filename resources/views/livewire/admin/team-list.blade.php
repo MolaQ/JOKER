@@ -153,7 +153,7 @@
                                 <label class="block text-sm font-medium text-gray-700">Zdjęcie drużyny (miniatura na stronie)</label>
                                 <p class="text-xs text-gray-500">Najlepiej poziome zdjęcie całej drużyny. Bez zdjęcia strona pokaże zdjęcie tematyczne.</p>
                                 @if($existingPhoto && !$photo)
-                                    <img src="{{ \App\Support\Media::url($existingPhoto) }}" onerror="this.style.visibility=\'hidden\'" class="mt-2 h-24 w-40 object-cover rounded" alt="Zdjęcie drużyny">
+                                    <img src="{{ \App\Support\Media::url($existingPhoto) }}" onerror="this.style.visibility='hidden'" class="mt-2 h-24 w-40 object-cover rounded" alt="Zdjęcie drużyny">
                                 @endif
                                 @if($photo)
                                     <img src="{{ $photo->temporaryUrl() }}" class="mt-2 h-24 w-40 object-cover rounded" alt="Podgląd">
@@ -172,7 +172,7 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Logo drużyny</label>
                                 @if($existingLogo && !$logo)
-                                    <img src="{{ \App\Support\Media::url($existingLogo) }}" onerror="this.style.visibility=\'hidden\'" class="h-16 w-16 object-cover rounded mb-2" alt="Logo">
+                                    <img src="{{ \App\Support\Media::url($existingLogo) }}" onerror="this.style.visibility='hidden'" class="h-16 w-16 object-cover rounded mb-2" alt="Logo">
                                 @endif
                                 @if($logo)
                                     <img src="{{ $logo->temporaryUrl() }}" class="h-16 w-16 object-cover rounded mb-2" alt="Podgląd">

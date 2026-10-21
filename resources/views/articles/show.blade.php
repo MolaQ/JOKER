@@ -37,46 +37,51 @@
 
         <div class="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-zinc-200 pt-6">
             <p class="text-sm text-zinc-500">{{ app()->getLocale() === 'en' ? number_format($article->views_count).' '.($article->views_count === 1 ? 'view' : 'views') : number_format($article->views_count, 0, ',', ' ').' wyświetleń' }}</p>
-            @livewire('like-button', ['type' => 'article', 'id' => $article->id], key('article-like-'.$article->id))
+            <div class="flex items-center gap-2">
+                @if($article->allow_comments)
+                    <a href="#komentarze"><x-comment-count :count="$article->approvedComments->count()" /></a>
+                @endif
+                @livewire('like-button', ['type' => 'article', 'id' => $article->id], key('article-like-'.$article->id))
+            </div>
         </div>
     </div>
 </article>
 
-@if($article->allow_comments)
-<section class="container-site max-w-3xl">
-    <h2 class="heading-md">{{ __('Komentarze') }} ({{ $article->approvedComments->count() }})</h2>
-
-    @auth
-        <form action="{{ route('articles.comments.store', $article) }}" method="POST" class="card mt-6 p-6">
-            @csrf
-            <label for="comment" class="text-sm font-semibold">{{ __('Twój komentarz') }}</label>
-            <textarea id="comment" name="content" rows="4" required class="mt-2 w-full rounded-2xl border border-zinc-200 px-4 py-3 outline-none focus:border-sky-club focus:ring-2 focus:ring-sky-club/30">{{ old('content') }}</textarea>
-            @error('content') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-            <div class="mt-4 flex justify-end"><button type="submit" class="btn-primary">{{ __('Wyślij') }}</button></div>
-        </form>
-    @else
-        <p class="mt-6 rounded-2xl bg-sky-club/10 p-5 text-sm"><a href="{{ route('login') }}" class="font-semibold text-sky-club-dark underline">{{ __('Zaloguj się') }}</a>{{ __(', aby dodać komentarz.') }}</p>
-    @endauth
-
-    <div class="mt-8 space-y-4">
-        @foreach($article->approvedComments->whereNull('parent_id') as $comment)
-            <div class="card p-5">
-                <div class="flex items-center gap-3">
-                    <x-avatar :name="$comment->user?->name ?? '?'" class="h-9 w-9 rounded-full text-sm" />
-                    <p class="text-sm"><span class="font-semibold">{{ $comment->user?->name }}</span> <span class="text-zinc-400">· {{ $comment->created_at->diffForHumans() }}</span></p>
+{{-- Media meczów, których dotyczy artykuł: transmisje i galerie --}}
+@foreach($article->games as $game)
+    @php
+        $gameStreams = $game->normalizedStreams();
+        $gameGalleries = $game->publishedGalleries->filter(fn ($gallery) => $gallery->photos->isNotEmpty());
+        [$gameHome, $gameAway] = $game->sidesNames();
+    @endphp
+    @if(count($gameStreams) || $gameGalleries->isNotEmpty())
+        <section class="container-site max-w-3xl space-y-10 pb-14" aria-label="{{ __('Transmisje i zdjęcia z meczu') }}">
+            <div class="flex flex-wrap items-end justify-between gap-3 border-t border-zinc-200 pt-10">
+                <div>
+                    <p class="eyebrow">{{ __('Mecz') }} · {{ $game->kickoffLabel('d F Y') }}</p>
+                    <h2 class="heading-md mt-2">{{ $gameHome }} – {{ $gameAway }}</h2>
                 </div>
-                <p class="mt-3 text-zinc-700">{{ $comment->content }}</p>
-
-                @foreach($comment->replies->where('is_approved', true) as $reply)
-                    <div class="mt-4 ml-6 border-l-2 border-sky-club/40 pl-4">
-                        <p class="text-sm"><span class="font-semibold">{{ $reply->user?->name }}</span> <span class="text-zinc-400">· {{ $reply->created_at->diffForHumans() }}</span></p>
-                        <p class="mt-1 text-zinc-700">{{ $reply->content }}</p>
-                    </div>
-                @endforeach
+                <a href="{{ route('games.show', $game) }}" class="text-sm font-semibold text-sky-club-dark hover:underline">{{ __('Strona meczu') }} →</a>
             </div>
-        @endforeach
-    </div>
-</section>
+            @if(count($gameStreams))
+                <div>
+                    <h3 class="mb-4 text-sm font-semibold tracking-widest text-zinc-500 uppercase">▶ {{ __('Transmisja') }}</h3>
+                    <x-match-streams :streams="$gameStreams" />
+                </div>
+            @endif
+            @foreach($gameGalleries as $gallery)
+                <x-match-gallery :gallery="$gallery" id="galeria-{{ $gallery->id }}" />
+            @endforeach
+        </section>
+    @else
+        <p class="container-site max-w-3xl pb-10 text-sm">
+            <a href="{{ route('games.show', $game) }}" class="font-semibold text-sky-club-dark hover:underline">{{ __('Strona meczu') }}: {{ $gameHome }} – {{ $gameAway }} →</a>
+        </p>
+    @endif
+@endforeach
+
+@if($article->allow_comments)
+    <x-comments-section :comments="$article->approvedComments" :action="route('articles.comments.store', $article)" class="container-site max-w-3xl" />
 @endif
 
 @if($related_articles->isNotEmpty())

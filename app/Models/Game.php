@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasMatchMedia;
 use App\Models\Concerns\Likeable;
 use Database\Factories\GameFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -30,7 +31,7 @@ class Game extends Model
     public const KINDS = [self::KIND_LEAGUE => 'Ligowy', self::KIND_FRIENDLY => 'Sparing', self::KIND_TOURNAMENT => 'Turniejowy'];
 
     /** @use HasFactory<GameFactory> */
-    use HasFactory, Likeable;
+    use HasFactory, HasMatchMedia, Likeable;
 
     protected $fillable = [
         'team_id',
@@ -209,6 +210,33 @@ class Game extends Model
         $time = $this->game_date->format('H:i');
 
         return $this->game_date->translatedFormat($dateFormat).' · '.($time === '00:00' ? __('godz. do ustalenia') : $time);
+    }
+
+    /**
+     * Gospodarze i goście w kolejności z boiska, np. „LOMS Joker Piła – MKS Kalisz”.
+     *
+     * @return array{0: string, 1: string}
+     */
+    public function sidesNames(): array
+    {
+        $ours = $this->ourLabel()['name'];
+        // Bez nazwy z rozgrywek nazwa drużyny („Kadeci”) nie mówi, kto gra - wtedy „Joker Piła”.
+        $ours = $ours === $this->team?->name ? 'Joker Piła' : $ours;
+        $opponent = (string) $this->opponentDisplayName();
+
+        return $this->is_home ? [$ours, $opponent] : [$opponent, $ours];
+    }
+
+    public function mediaLabel(): string
+    {
+        [$home, $away] = $this->sidesNames();
+        $competition = $this->competitionLabel();
+
+        return collect([
+            $this->game_date?->format('d.m.Y H:i'),
+            $this->team?->name,
+            $home.' – '.$away.($competition ? ' ('.$competition.')' : ''),
+        ])->filter()->implode(' · ');
     }
 
     public function isFinished(): bool
