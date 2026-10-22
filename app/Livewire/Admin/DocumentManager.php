@@ -36,7 +36,7 @@ class DocumentManager extends Component
         $rules = [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'category' => 'required|in:regulations,forms,reports,other',
+            'category' => 'required|in:'.implode(',', array_keys(Document::CATEGORIES)),
             'is_public' => 'boolean',
         ];
 

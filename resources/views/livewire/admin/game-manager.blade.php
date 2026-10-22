@@ -46,7 +46,14 @@
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         @if(!is_null($game->home_score) && !is_null($game->away_score))
-                            <div>{{ $game->home_score }} : {{ $game->away_score }}</div>
+                            <div>
+                                {{ $game->home_score }} : {{ $game->away_score }}
+                                @if($game->result_source === \App\Models\Game::RESULT_MANUAL)
+                                    <span class="ml-1 rounded bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800" title="Wpisany ręcznie, import ze związku go nie zmienia">ręcznie</span>
+                                @elseif($game->result_source)
+                                    <span class="ml-1 rounded bg-green-50 px-1.5 py-0.5 text-xs font-medium text-green-800" title="Pobrany ze strony związku">ze związku</span>
+                                @endif
+                            </div>
                             @if(is_array($game->sets_score) && count($game->sets_score) > 0)
                                 <div class="text-xs text-gray-400 mt-0.5">
                                     @foreach($game->sets_score as $set)
@@ -212,6 +219,15 @@
                                     <input type="text" wire:model="league" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 </div>
                             </div>
+
+                            @if($editingId && $resultSource === \App\Models\Game::RESULT_MANUAL && $competition_id)
+                                <div class="flex flex-wrap items-center justify-between gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-900">
+                                    <span>Wynik wpisany ręcznie. Import ze związku go nie nadpisze.</span>
+                                    <button type="button" wire:click="restoreOfficialResult" wire:confirm="Wrócić do wyniku ze związku? Ręczny wynik zostanie zastąpiony oficjalnym, gdy związek go poda." class="rounded-md bg-white px-3 py-1.5 font-semibold text-amber-900 ring-1 ring-amber-300 hover:bg-amber-100">Wróć do wyniku ze związku</button>
+                                </div>
+                            @elseif($editingId && $resultSource)
+                                <p class="rounded-md bg-green-50 p-3 text-sm text-green-900">Wynik pobrany ze strony związku. Jeśli go zmienisz, import przestanie go aktualizować.</p>
+                            @endif
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>

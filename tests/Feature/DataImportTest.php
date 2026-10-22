@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Admin\DataImporter;
+use App\Models\Article;
 use App\Models\Page;
 use App\Models\Player;
 use App\Models\Season;
@@ -61,11 +62,12 @@ test('import templates download with the column headers', function () {
     $this->get(route('admin.import.index'))->assertOk()->assertSee('Import danych');
 });
 
-test('a clean start has seasons, competition levels and the club pages but no demo teams', function () {
+test('a clean start has seasons, the club teams and pages but no demo content', function () {
     $this->seed(StartSeeder::class);
 
     expect(Season::where('is_current', true)->exists())->toBeTrue()
-        ->and(Team::count())->toBe(0)
+        ->and(Team::count())->toBe(7)
+        ->and(Article::count())->toBe(0)
         ->and(Page::pluck('slug')->all())->toContain('o-klubie', 'system-szkolenia', 'osiagniecia', 'wspolpraca', 'nabor');
 
     $this->get('/')->assertOk()->assertSee('smsjokerpila@gmail.com')->assertSee('System szkolenia');

@@ -70,6 +70,7 @@ Route::get('/szukaj/indeks.json', [SearchController::class, 'data'])->name('sear
 
 // Dokumenty do pobrania
 Route::get('/dokumenty', [DocumentController::class, 'index'])->name('documents.index');
+Route::get('/dokumenty/{document}/pobierz', [DocumentController::class, 'download'])->whereNumber('document')->name('documents.download');
 
 // Zdjęcia (autorzy zdjęć tematycznych)
 Route::view('/zdjecia', 'credits')->name('credits');

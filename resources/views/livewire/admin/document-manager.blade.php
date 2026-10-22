@@ -32,7 +32,7 @@
                         </a>
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ $document->category }}
+                        {{ $document->categoryLabel() }}
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {{ $document->fileSizeFormatted() }}
@@ -41,7 +41,7 @@
                         @if($document->is_public)
                             <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Publiczny</span>
                         @else
-                            <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">Prywatny</span>
+                            <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">Dla zalogowanych</span>
                         @endif
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
@@ -93,10 +93,9 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Kategoria</label>
                                 <select wire:model="category" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="regulations">Regulaminy</option>
-                                    <option value="forms">Formularze</option>
-                                    <option value="reports">Raporty</option>
-                                    <option value="other">Inne</option>
+                                    @foreach(\App\Models\Document::CATEGORIES as $value => $label)
+                                        <option value="{{ $value }}">{{ $label }}</option>
+                                    @endforeach
                                 </select>
                             </div>
 
@@ -114,7 +113,7 @@
 
                             <div class="flex items-center">
                                 <input type="checkbox" wire:model="is_public" id="is_public" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                <label for="is_public" class="ml-2 text-sm text-gray-700">Dokument publiczny</label>
+                                <label for="is_public" class="ml-2 text-sm text-gray-700">Dokument publiczny (bez zaznaczenia: tylko dla zalogowanych, np. zgody i RODO)</label>
                             </div>
                         </div>
 

@@ -2,21 +2,25 @@
 
 namespace Database\Seeders;
 
+use App\Models\Season;
 use Illuminate\Database\Seeder;
 
 /**
- * Start strony z czystą bazą (bez przykładowych drużyn, zawodników i aktualności): sezony, poziomy rozgrywek
- * i podstrony. Drużyny, sztab i zawodników wczytasz w panelu: Import z plików. Administratora tworzy
- * `php artisan joker:admin twoj@email`.
+ * Start strony z czystą bazą (bez przykładowych aktualności): sezony, poziomy rozgrywek, podstrony,
+ * 7 drużyn klubu z trenerami oraz konta administratora, szefa i zawodnika z adresami i hasłami z .env
+ * (SEED_*). Pozostałych zawodników i sztab wczytasz w panelu: Import z plików.
+ * Można uruchomić ponownie: nie dubluje danych i nie zmienia haseł.
  */
 class StartSeeder extends Seeder
 {
     public function run(): void
     {
-        $club = new ClubSeeder;
-        $club->seedSeasons();
-        $club->seedCompetitionLevels();
+        if (Season::doesntExist()) {
+            $club = new ClubSeeder;
+            $club->seedSeasons();
+            $club->seedCompetitionLevels();
+        }
 
-        $this->call(PagesSeeder::class);
+        $this->call([PagesSeeder::class, ClubAccountsSeeder::class]);
     }
 }

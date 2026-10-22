@@ -11,15 +11,18 @@
 </section>
 
 <section class="container-site max-w-4xl">
+    @if($hiddenCount > 0)
+        <p class="rounded-2xl bg-sky-club/10 p-4 text-sm text-sky-club-dark">{{ __('Zgody, dokumenty RODO i wymagania klubu dla rodziców i zawodników są dostępne po zalogowaniu.') }} <a href="{{ route('login') }}" class="font-semibold underline">{{ __('Zaloguj się') }}</a></p>
+    @endif
     @forelse($documents as $category => $group)
         <h2 class="mt-10 text-xs font-semibold tracking-widest text-zinc-400 uppercase">{{ $group->first()->categoryLabel() }}</h2>
         <ul class="mt-3 space-y-3">
             @foreach($group as $document)
                 <li id="dokument-{{ $document->id }}" class="scroll-mt-28">
-                    <a href="{{ \App\Support\Media::url($document->file_path) }}" download class="card card-hover group flex items-center gap-4 p-4 target:ring-2 target:ring-sky-club">
+                    <a href="{{ $document->downloadUrl() }}" @unless($document->is_public) rel="nofollow" @endunless class="card card-hover group flex items-center gap-4 p-4 target:ring-2 target:ring-sky-club">
                         <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sky-club/10 text-xs font-bold text-sky-club-dark uppercase">{{ $document->file_type }}</span>
                         <span class="min-w-0 flex-1">
-                            <span class="block font-semibold group-hover:text-sky-club-dark">{{ $document->title }}</span>
+                            <span class="block font-semibold group-hover:text-sky-club-dark">{{ $document->title }}@unless($document->is_public) <span class="ml-1 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">{{ __('dla zalogowanych') }}</span>@endunless</span>
                             @if($document->description)<span class="block truncate text-sm text-zinc-500">{{ $document->description }}</span>@endif
                         </span>
                         <span class="hidden text-sm text-zinc-400 sm:block">{{ $document->fileSizeFormatted() }}</span>

@@ -3,18 +3,21 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
+use App\Models\AuditLog;
 use App\Models\Competition;
 use App\Models\Game;
 use App\Models\RivalTeam;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\Tournament;
+use App\Services\ScheduleImporter;
 use App\Services\StandingsCalculator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Throwable;
 
 class GameManager extends Component
 {
@@ -31,6 +34,9 @@ class GameManager extends Component
     public ?int $competition_id = null;
 
     public string $kind = 'league';
+
+    /** Skąd jest obecny wynik edytowanego meczu (ręcznie, strona związku, WZPS). */
+    public ?string $resultSource = null;
 
     public ?int $tournament_id = null;
 
@@ -122,6 +128,7 @@ class GameManager extends Component
         $this->team_id = $game->team_id;
         $this->season_id = $game->season_id;
         $this->competition_id = $game->competition_id;
+        $this->resultSource = $game->result_source;
         $this->kind = $game->kind ?? Game::KIND_LEAGUE;
         $this->tournament_id = $game->tournament_id;
         $this->opponent = $game->opponent;
@@ -209,6 +216,7 @@ class GameManager extends Component
     private function resetForm(): void
     {
         $this->editingId = null;
+        $this->resultSource = null;
         $this->team_id = null;
         $this->season_id = null;
         $this->competition_id = null;
@@ -308,6 +316,30 @@ class GameManager extends Component
         }
 
         return $sets;
+    }
+
+    /**
+     * Odblokowuje wynik wpisany ręcznie: od teraz import ze związku znów go aktualizuje.
+     * Od razu próbuje pobrać oficjalny wynik.
+     */
+    public function restoreOfficialResult(): void
+    {
+        $game = $this->managedGames()->with('competition')->findOrFail($this->editingId);
+        abort_unless($game->competition !== null, 422);
+
+        $game->forceFill(['result_source' => null])->save();
+        AuditLog::record('game.result_restored', 'Przywrócono wynik ze związku: '.$game->mediaLabel(), $game);
+
+        try {
+            app(ScheduleImporter::class)->sync($game->competition);
+            $fetched = $game->fresh()->result_source !== null;
+            $this->toast($fetched ? 'Pobrano wynik ze związku.' : 'Odblokowano. Wynik pojawi się przy najbliższym imporcie, gdy związek go poda.');
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->toast('Odblokowano. Nie udało się teraz połączyć ze stroną związku, wynik pobierze najbliższy import.');
+        }
+
+        $this->openEditModal($game->id);
     }
 
     /**
