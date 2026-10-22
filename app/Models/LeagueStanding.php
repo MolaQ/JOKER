@@ -19,6 +19,9 @@ class LeagueStanding extends Model
         'competitor_id',
         'season_id',
         'competition_id',
+        'stage_name',
+        'group_name',
+        'source_name',
         'position',
         'played',
         'won',
@@ -63,11 +66,33 @@ class LeagueStanding extends Model
 
     public function competitorName(): string
     {
+        if ($this->source_name && ! $this->isOwnTeam()) {
+            return $this->source_name;
+        }
+
         if ($this->competitor instanceof RivalTeam) {
             return $this->competitor->full_name;
         }
 
         return $this->competitor?->name ?? '—';
+    }
+
+    /**
+     * Podpis wiersza: dla naszej drużyny nazwa i dopisek z ustawień rozgrywek.
+     *
+     * @return array{name: string, suffix: ?string}
+     */
+    public function competitorLabel(): array
+    {
+        if ($this->isOwnTeam() && $this->competition && $this->competitor instanceof Team) {
+            $label = $this->competition->teamLabel($this->competitor);
+
+            if ($this->competition->teams->firstWhere('id', $this->competitor->id)?->pivot?->display_name) {
+                return $label;
+            }
+        }
+
+        return ['name' => $this->competitorName(), 'suffix' => null];
     }
 
     public function competitorShortName(): string
@@ -81,7 +106,7 @@ class LeagueStanding extends Model
 
     public function competitorLogoPath(): ?string
     {
-        return $this->competitor?->logo_path;
+        return $this->competitor instanceof RivalTeam ? $this->competitor->logoPath() : $this->competitor?->logoPath();
     }
 
     public function isOwnTeam(): bool

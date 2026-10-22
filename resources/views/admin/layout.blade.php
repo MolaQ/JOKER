@@ -1,111 +1,132 @@
 <!DOCTYPE html>
-<html lang="pl" class="h-full bg-gray-100">
+<html lang="pl" class="h-full bg-zinc-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="{{ asset('img/JOKER-18.png') }}">
-    <link rel="shortcut icon" href="{{ asset('img/JOKER-18.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('img/JOKER-18.png') }}">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ $site->image('logo', asset('img/logo-32.png')) }}">
+    <link rel="apple-touch-icon" href="{{ $site->image('logo', asset('img/logo-180.png')) }}">
     <title>@yield('title', 'Panel Administracyjny') - Joker Piła</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="h-full">
-    <div class="min-h-full md:flex">
-        <aside class="hidden md:flex md:w-56 md:flex-col bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 text-white shadow-xl">
-            <div class="px-4 py-4 border-b border-white/10">
-                <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center gap-2">
-                    <span class="text-lg font-bold">🏐 Joker Admin</span>
+<body class="min-h-full admin-panel">
+    @php
+        $adminNavigation = [
+            'Na co dzień' => [
+                ['label' => 'Pulpit', 'route' => 'admin.dashboard', 'icon' => 'home'],
+                ['label' => 'Do zatwierdzenia', 'route' => 'admin.approvals.index', 'icon' => 'inbox', 'can' => fn () => \App\Support\Approvals::sectionsFor(auth()->user())->isNotEmpty(), 'badge' => fn () => \App\Support\Approvals::pendingCountFor(auth()->user()), 'active' => ['admin.approvals.*', 'admin.accounts.*', 'admin.content-proposals.*', 'admin.comments.*', 'admin.photo-tags.*', 'admin.player-change-requests.*', 'admin.profile-change-requests.*']],
+                ['label' => 'Statystyki odwiedzin', 'route' => 'admin.statistics.index', 'icon' => 'chart', 'can' => 'statistics.view'],
+                ['label' => 'Aktualności', 'route' => 'admin.articles.index', 'icon' => 'newspaper', 'can' => 'articles.manage'],
+                ['label' => 'Plan treningów', 'route' => 'admin.trainings.index', 'icon' => 'clock', 'can' => 'trainings.manage'],
+                ['label' => 'Mecze i wyniki', 'route' => 'admin.games.index', 'icon' => 'ball', 'can' => 'games.manage'],
+                ['label' => 'Turnieje', 'route' => 'admin.tournaments.index', 'icon' => 'flag', 'can' => 'tournaments.manage'],
+                ['label' => 'Transmisje i zdjęcia meczów', 'route' => 'admin.media.index', 'icon' => 'video', 'can' => 'media.manage'],
+                ['label' => 'Galerie', 'route' => 'admin.galleries.index', 'icon' => 'photo', 'can' => 'media.manage'],
+                ['label' => 'Slajdy na stronie głównej', 'route' => 'admin.hero-slides.index', 'icon' => 'slides', 'can' => 'homepage.manage'],
+            ],
+            'Wygląd strony' => [
+                ['label' => 'Wygląd i ustawienia', 'route' => 'admin.settings.index', 'icon' => 'cog', 'can' => 'site.manage'],
+                ['label' => 'Podstrony', 'route' => 'admin.pages.index', 'icon' => 'list', 'can' => 'site.manage'],
+            ],
+            'Klub' => [
+                ['label' => 'Drużyny i sztab', 'route' => 'admin.teams.index', 'icon' => 'users', 'can' => 'teams.manage'],
+                ['label' => 'Zawodnicy', 'route' => 'admin.players.index', 'icon' => 'user', 'can' => 'teams.manage'],
+                ['label' => 'Wychowankowie', 'route' => 'admin.alumni.index', 'icon' => 'star', 'can' => 'articles.manage'],
+                ['label' => 'Sponsorzy', 'route' => 'admin.sponsors.index', 'icon' => 'briefcase', 'can' => 'sponsors.manage'],
+                ['label' => 'Wspieraj klub', 'route' => 'admin.support.index', 'icon' => 'heart', 'can' => 'sponsors.manage'],
+                ['label' => 'Dokumenty', 'route' => 'admin.documents.index', 'icon' => 'document', 'can' => 'documents.manage'],
+                ['label' => 'Użytkownicy', 'route' => 'admin.users.index', 'icon' => 'key', 'can' => 'users.manage'],
+                ['label' => 'Role i uprawnienia', 'route' => 'admin.roles.index', 'icon' => 'shield', 'can' => 'roles.manage'],
+                ['label' => 'Import z plików', 'route' => 'admin.import.index', 'icon' => 'upload', 'can' => 'import.run'],
+            ],
+            'Ustawienia rozgrywek (rzadko)' => [
+                ['label' => 'Tabele', 'route' => 'admin.standings.index', 'icon' => 'table', 'can' => 'games.manage'],
+                ['label' => 'Rozgrywki', 'route' => 'admin.competitions.index', 'icon' => 'trophy', 'can' => 'competitions.manage'],
+                ['label' => 'Rywale', 'route' => 'admin.rival-teams.index', 'icon' => 'versus', 'can' => 'competitions.manage'],
+                ['label' => 'Sezony', 'route' => 'admin.seasons.index', 'icon' => 'calendar', 'can' => 'competitions.manage'],
+            ],
+        ];
+    @endphp
+
+    @php
+        $me = auth()->user();
+        $initials = collect(preg_split('/\s+/', trim($me->name)))->filter()->take(2)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->join('');
+        $pendingApprovals = \App\Support\Approvals::pendingCountFor($me);
+    @endphp
+
+    <div x-data="{ menu: false }" @keydown.escape.window="menu = false">
+        {{-- Menu boczne: stałe na dużym ekranie, wysuwane na telefonie. --}}
+        <div x-show="menu" x-cloak x-transition.opacity class="fixed inset-0 z-40 bg-zinc-950/50 backdrop-blur-sm lg:hidden" @click="menu = false"></div>
+
+        <aside :class="menu ? 'translate-x-0' : '-translate-x-full'" class="admin-sidebar fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col bg-ink text-zinc-300 transition-transform duration-200 lg:w-64 lg:translate-x-0">
+            <div class="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-5">
+                <a href="{{ route('admin.dashboard') }}" class="flex min-w-0 items-center gap-3">
+                    <img src="{{ $site->image('logo', asset('img/logo-96.png')) }}" alt="" class="size-9 shrink-0 object-contain">
+                    <span class="min-w-0 leading-tight">
+                        <span class="block truncate text-sm font-semibold text-white">{{ $site['club_name'] ?: 'Joker Piła' }}</span>
+                        <span class="block text-xs text-zinc-500">Panel klubu</span>
+                    </span>
                 </a>
+                <button type="button" class="rounded-md p-1.5 text-zinc-400 hover:bg-white/10 hover:text-white lg:hidden" @click="menu = false" aria-label="Zamknij menu">
+                    <x-admin-icon name="close" />
+                </button>
             </div>
 
-            <nav class="flex-1 overflow-y-auto px-2.5 py-3 space-y-2.5">
-                <a href="{{ route('admin.dashboard') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.dashboard') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Dashboard</a>
-                <a href="{{ route('admin.teams.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.teams.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Drużyny</a>
-                <a href="{{ route('admin.players.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.players.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Zawodnicy</a>
-                <a href="{{ route('admin.games.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.games.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Mecze</a>
-                <a href="{{ route('admin.competitions.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.competitions.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Rozgrywki</a>
-                <a href="{{ route('admin.competition-levels.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.competition-levels.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Poziomy rozgrywek</a>
-                <a href="{{ route('admin.standings.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.standings.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Tabele</a>
-                <a href="{{ route('admin.seasons.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.seasons.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Sezony</a>
-                <a href="{{ route('admin.rival-teams.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.rival-teams.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Rywale</a>
-                <a href="{{ route('admin.articles.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.articles.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Artykuły</a>
-                <a href="{{ route('admin.hero-slides.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.hero-slides.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Slider</a>
-                <a href="{{ route('admin.documents.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.documents.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Dokumenty</a>
-                <a href="{{ route('admin.sponsors.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.sponsors.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Sponsorzy</a>
-                <a href="{{ route('admin.users.index') }}" class="block rounded-lg border px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('admin.users.*') ? 'border-white/90 bg-white text-blue-900 shadow-sm' : 'border-white/65 bg-white/85 text-blue-900 hover:bg-white' }}">Użytkownicy</a>
+            <nav class="admin-scroll flex-1 overflow-y-auto px-3 py-4" aria-label="Menu panelu">
+                @include('admin.partials.nav')
             </nav>
 
-            <div class="p-4 border-t border-white/10">
-                <p class="text-xs text-blue-200 mb-2">{{ auth()->user()->name }}</p>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="w-full rounded-lg border border-white/70 bg-white/90 px-3 py-2 text-sm font-medium text-blue-900 transition hover:bg-white">
-                        Wyloguj
-                    </button>
-                </form>
+            <div class="shrink-0 border-t border-white/[0.06] p-3">
+                <div class="flex items-center gap-3 rounded-lg px-2 py-2">
+                    <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-sky-500/15 text-xs font-semibold text-sky-300 ring-1 ring-sky-400/30">{{ $initials }}</span>
+                    <a href="{{ route('profile.edit') }}" class="min-w-0 flex-1 leading-tight hover:text-white">
+                        <span class="block truncate text-sm font-medium text-zinc-100">{{ $me->name }}</span>
+                        <span class="block truncate text-xs text-zinc-500">{{ $me->roles()->map->label()->join(', ') ?: 'Konto' }}</span>
+                    </a>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="rounded-md p-2 text-zinc-400 transition hover:bg-white/10 hover:text-white" title="Wyloguj" aria-label="Wyloguj">
+                            <x-admin-icon name="logout" />
+                        </button>
+                    </form>
+                </div>
             </div>
         </aside>
 
-        <div class="flex-1 min-w-0">
-            <div class="md:hidden bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white shadow">
-                <div class="px-4 py-4 flex items-center justify-between">
-                    <a href="{{ route('admin.dashboard') }}" class="text-base font-bold">🏐 Joker Piła Admin</a>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="rounded-md border border-white/70 bg-white/90 px-3 py-1.5 text-xs font-medium text-blue-900">Wyloguj</button>
-                    </form>
+        <div class="lg:pl-64">
+            {{-- Górny pasek: ścieżka, podgląd strony i rzeczy do zatwierdzenia. --}}
+            <header class="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-zinc-200/80 bg-white/80 px-4 backdrop-blur-md sm:px-6 lg:px-8">
+                <button type="button" class="-ml-1 rounded-md p-2 text-zinc-600 hover:bg-zinc-100 lg:hidden" @click="menu = true" aria-label="Otwórz menu">
+                    <x-admin-icon name="menu" />
+                </button>
+                <nav class="flex min-w-0 items-center gap-1.5 text-sm" aria-label="Ścieżka">
+                    <a href="{{ route('admin.dashboard') }}" class="hidden shrink-0 text-zinc-500 hover:text-zinc-900 sm:inline">Panel</a>
+                    <x-admin-icon name="chevron" class="hidden size-3.5 text-zinc-300 sm:block" />
+                    <span class="truncate font-medium text-zinc-900">@yield('title', 'Pulpit')</span>
+                </nav>
+                <div class="ml-auto flex items-center gap-1 sm:gap-2">
+                    @if($pendingApprovals > 0)
+                        <a href="{{ route('admin.approvals.index') }}" class="relative rounded-md p-2 text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900" title="Do zatwierdzenia: {{ $pendingApprovals }}" aria-label="Do zatwierdzenia: {{ $pendingApprovals }}">
+                            <x-admin-icon name="inbox" />
+                            <span class="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-zinc-900">{{ $pendingApprovals }}</span>
+                        </a>
+                    @endif
+                    <a href="{{ route('home') }}" target="_blank" class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-zinc-600 ring-1 ring-zinc-200 transition hover:bg-zinc-50 hover:text-zinc-900">
+                        <x-admin-icon name="external" class="size-4" />
+                        <span class="hidden sm:inline">Zobacz stronę</span>
+                    </a>
                 </div>
-                <div class="px-3 pb-4">
-                    <div class="flex flex-col gap-2.5">
-                        <a href="{{ route('admin.dashboard') }}" class="rounded-md border border-white/70 bg-white/90 px-3 py-2 text-xs text-blue-900 {{ request()->routeIs('admin.dashboard') ? 'ring-1 ring-white' : '' }}">Dashboard</a>
-                        <a href="{{ route('admin.teams.index') }}" class="rounded-md border border-white/70 bg-white/90 px-3 py-2 text-xs text-blue-900 {{ request()->routeIs('admin.teams.*') ? 'ring-1 ring-white' : '' }}">Drużyny</a>
-                        <a href="{{ route('admin.players.index') }}" class="rounded-md border border-white/70 bg-white/90 px-3 py-2 text-xs text-blue-900 {{ request()->routeIs('admin.players.*') ? 'ring-1 ring-white' : '' }}">Zawodnicy</a>
-                        <a href="{{ route('admin.games.index') }}" class="rounded-md border border-white/70 bg-white/90 px-3 py-2 text-xs text-blue-900 {{ request()->routeIs('admin.games.*') ? 'ring-1 ring-white' : '' }}">Mecze</a>
-                        <a href="{{ route('admin.standings.index') }}" class="rounded-md border border-white/70 bg-white/90 px-3 py-2 text-xs text-blue-900 {{ request()->routeIs('admin.standings.*') ? 'ring-1 ring-white' : '' }}">Tabele</a>
-                        <a href="{{ route('admin.hero-slides.index') }}" class="rounded-md border border-white/70 bg-white/90 px-3 py-2 text-xs text-blue-900 {{ request()->routeIs('admin.hero-slides.*') ? 'ring-1 ring-white' : '' }}">Slider</a>
-                    </div>
-                </div>
-            </div>
+            </header>
 
-            <!-- Page Content -->
-            <main>
-                <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-                @if(session('success'))
-                    <div class="mb-4 rounded-md bg-green-50 p-4">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm font-medium text-green-800">{{ session('success') }}</p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-
-                @if(session('error'))
-                    <div class="mb-4 rounded-md bg-red-50 p-4">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm font-medium text-red-800">{{ session('error') }}</p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-
+            <main class="mx-auto max-w-7xl py-6 lg:py-8">
                 @yield('content')
-            </div>
             </main>
         </div>
     </div>
+
+    <x-toasts />
+    <x-confirm-modal />
 
     @livewireScripts
 </body>

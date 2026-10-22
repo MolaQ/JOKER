@@ -1,197 +1,223 @@
 @extends('layouts.public')
 
-@section('title', $player->full_name . ' - Joker Piła')
+@section('title', $player->full_name)
+@section('description', __(':name - :position drużyny :team (:club).', ['name' => $player->full_name, 'position' => $player->positionsLabel() ?? __('zawodnik'), 'team' => $player->team?->name, 'club' => $site['club_name']]))
+
+@if($player->photo_path)
+    @section('og_image', \App\Support\Media::url($player->photo_path))
+@endif
+@push('structured-data')
+    {!! \App\Support\Seo::jsonLd(\App\Support\Seo::player($player)) !!}
+@endpush
 
 @section('content')
-<!-- Player Header -->
-<div class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white py-16">
-    <div class="container mx-auto px-4">
-        <div class="flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-8">
-            <!-- Player Number -->
-            <div class="w-32 h-32 bg-white rounded-lg flex items-center justify-center flex-shrink-0">
-                <span class="text-blue-900 font-bold text-6xl">{{ $player->jersey_number }}</span>
-            </div>
+@php
+    $age = $player->age();
+    $stats = array_filter([
+        'Wiek' => $age ? \App\Livewire\GamesBrowser::yearsLabel($age) : null,
+        'Wzrost' => $player->height ? $player->height.' cm' : null,
+        'Waga' => $player->weight ? $player->weight.' kg' : null,
+        'Zasięg w ataku' => $player->spike_reach ? $player->spike_reach.' cm' : null,
+        'Zasięg w bloku' => $player->block_reach ? $player->block_reach.' cm' : null,
+    ]);
+@endphp
+<section class="relative isolate -mt-16 overflow-hidden bg-ink pt-16 text-white lg:-mt-20 lg:pt-20">
+    <div class="net-pattern absolute inset-0 -z-10" aria-hidden="true"></div>
+    <span class="pointer-events-none absolute -right-8 bottom-0 -z-10 font-display text-[16rem] leading-none font-bold text-white/5 select-none sm:text-[24rem]" aria-hidden="true">{{ $player->jersey_number }}</span>
 
-            <!-- Player Info -->
-            <div class="text-center md:text-left">
-                <h1 class="text-4xl md:text-5xl font-bold mb-3">
-                    {{ $player->full_name }}
-                </h1>
-                <div class="flex flex-wrap items-center justify-center md:justify-start gap-4 text-lg text-blue-100">
-                    <span>{{ $player->position->label() }}</span>
-                    <span>•</span>
-                    <a href="{{ route('teams.show', $player->team) }}" class="hover:text-white transition">
-                        {{ $player->team->name }}
-                    </a>
-                </div>
-                <div class="mt-4 flex justify-center md:justify-start">
-                    @livewire('like-button', ['type' => 'player', 'id' => $player->id], key('player-like-'.$player->id))
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Player Details -->
-<div class="container mx-auto px-4 py-12">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Stats Card -->
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-lg shadow-lg p-6 sticky top-4">
-                <h2 class="text-xl font-bold text-gray-900 mb-6">Statystyki</h2>
-
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center pb-3 border-b">
-                        <span class="text-gray-600">Numer</span>
-                        <span class="font-bold text-2xl text-blue-900">{{ $player->jersey_number }}</span>
-                    </div>
-
-                    <div class="flex justify-between items-center pb-3 border-b">
-                        <span class="text-gray-600">Pozycja</span>
-                        <span class="font-semibold text-gray-900">{{ $player->position->label() }}</span>
-                    </div>
-
-                    @if($player->height)
-                        <div class="flex justify-between items-center pb-3 border-b">
-                            <span class="text-gray-600">Wzrost</span>
-                            <span class="font-semibold text-gray-900">{{ $player->height }} cm</span>
-                        </div>
-                    @endif
-
-                    @if($player->weight)
-                        <div class="flex justify-between items-center pb-3 border-b">
-                            <span class="text-gray-600">Waga</span>
-                            <span class="font-semibold text-gray-900">{{ $player->weight }} kg</span>
-                        </div>
-                    @endif
-
-                    @if($player->reach)
-                        <div class="flex justify-between items-center pb-3 border-b">
-                            <span class="text-gray-600">Zasięg</span>
-                            <span class="font-semibold text-gray-900">{{ $player->reach }} cm</span>
-                        </div>
-                    @endif
-
-                    @if($player->spike_reach)
-                        <div class="flex justify-between items-center pb-3 border-b">
-                            <span class="text-gray-600">Zasięg w ataku</span>
-                            <span class="font-semibold text-gray-900">{{ $player->spike_reach }} cm</span>
-                        </div>
-                    @endif
-
-                    @if($player->birth_date)
-                        <div class="flex justify-between items-center pb-3 border-b">
-                            <span class="text-gray-600">Wiek</span>
-                            <span class="font-semibold text-gray-900">{{ $player->age() }} lat</span>
-                        </div>
-
-                        <div class="flex justify-between items-center pb-3 border-b">
-                            <span class="text-gray-600">Data urodzenia</span>
-                            <span class="font-semibold text-gray-900">{{ $player->birth_date->format('d.m.Y') }}</span>
-                        </div>
-                    @endif
-
-                    <div class="flex justify-between items-center pb-3 border-b">
-                        <span class="text-gray-600">Status</span>
-                        @if($player->is_active)
-                            <span class="bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full">
-                                Aktywny
-                            </span>
-                        @else
-                            <span class="bg-gray-100 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full">
-                                Nieaktywny
-                            </span>
-                        @endif
-                    </div>
-
-                    @if(isset($seasonTeams) && $seasonTeams->count() > 1)
-                        <div class="pt-3">
-                            <div class="mb-2 text-gray-600">Gra również w:</div>
-                            <div class="flex flex-wrap gap-2">
-                                @foreach($seasonTeams as $seasonTeam)
-                                    @if($seasonTeam->id !== $player->team_id)
-                                        <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-800">{{ $seasonTeam->name }}</span>
-                                    @endif
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-                </div>
-
-                <div class="mt-6">
-                    <a href="{{ route('teams.show', $player->team) }}" class="block w-full bg-blue-900 text-white text-center py-3 rounded-lg hover:bg-blue-800 transition font-semibold">
-                        Zobacz drużynę
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Bio & Description -->
-        <div class="lg:col-span-2">
-            <div class="bg-white rounded-lg shadow-lg p-8">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6">O zawodniku</h2>
-
-                @if($player->bio)
-                    <div class="prose max-w-none text-gray-700 leading-relaxed">
-                        {!! $player->bio !!}
-                    </div>
-                @else
-                    <div class="bg-gray-50 rounded-lg p-8 text-center">
-                        <p class="text-gray-500">Brak informacji o zawodniku.</p>
-                    </div>
-                @endif
-            </div>
-
-            @if($player->additional_info || $player->instagram)
-                <div class="bg-white rounded-lg shadow-lg p-8 mt-6">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Dodatkowe informacje</h2>
-
-                    @if($player->instagram)
-                        <p class="mb-3 text-sm text-gray-700">
-                            Instagram:
-                            <a href="{{ $player->instagram }}" target="_blank" rel="noopener" class="font-semibold text-blue-700 hover:underline">{{ $player->instagram }}</a>
-                        </p>
-                    @endif
-
-                    @if($player->additional_info)
-                        <div class="text-gray-700 leading-relaxed">{!! $player->additional_info !!}</div>
-                    @endif
+    <div class="container-site grid items-end gap-10 pt-16 pb-14 lg:grid-cols-[auto_1fr] lg:pt-24">
+        <x-avatar :photo="$player->photo_path" :name="$player->full_name" :label="$player->jersey_number" class="aspect-[4/5] w-48 rounded-3xl text-7xl ring-4 ring-sky-club/40 lg:w-64" />
+        <div>
+            @if($player->team)
+                <a href="{{ route('teams.show', $player->team) }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ $player->team->name }}</a>
+            @endif
+            <p class="eyebrow mt-5">{{ $player->positionsLabel() }} @if($player->jersey_number) · #{{ $player->jersey_number }} @endif</p>
+            <h1 class="heading-xl mt-3">{{ $player->first_name }}<br>{{ $player->last_name }}</h1>
+            @if($player->isCaptain())
+                <p class="mt-4 inline-flex items-center gap-2 rounded-full bg-sky-club px-3 py-1 text-sm font-bold text-white"><span class="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs text-sky-club-dark">C</span> {{ __('Kapitan drużyny') }}</p>
+            @endif
+            @if($socialProfiles = $player->socialProfiles())
+                <div class="mt-5 flex flex-wrap gap-2">
+                    @foreach($socialProfiles as $profile)
+                        <a href="{{ $profile['url'] }}" target="_blank" rel="noopener nofollow" class="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 transition hover:bg-sky-club" aria-label="{{ $profile['label'] }}" title="{{ $profile['label'] }}"><x-social-icon :network="$profile['icon']" class="h-4 w-4" /></a>
+                    @endforeach
                 </div>
             @endif
 
-            <!-- Position Description -->
-            <div class="bg-blue-50 rounded-lg p-6 mt-6">
-                <h3 class="text-lg font-bold text-blue-900 mb-3">{{ $player->position->label() }}</h3>
-                <p class="text-gray-700 leading-relaxed">
-                    @switch($player->position->value)
-                        @case('libero')
-                            Libero to zawodnik specjalizujący się w obronie i przyjęciu zagrywki. Nie ma prawa do ataku i gry w polu ataku.
-                            @break
-                        @case('setter')
-                            Rozgrywający to strategiczny zawodnik zespołu, odpowiedzialny za ustawienie piłki do ataku.
-                            @break
-                        @case('outside_hitter')
-                            Przyjmujący to wszechstronny zawodnik grający w pierwszej linii, kluczowy w ataku i przyjęciu.
-                            @break
-                        @case('middle_blocker')
-                            Środkowy to zawodnik odpowiedzialny za blok i szybkie ataki w centrum siatki.
-                            @break
-                        @case('opposite')
-                            Atakujący to główny snajper zespołu, skupiony przede wszystkim na punktowaniu.
-                            @break
-                    @endswitch
-                </p>
+            @if($stats)
+                <dl class="mt-8 grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/10 {{ [1 => 'sm:grid-cols-1', 2 => 'sm:grid-cols-2', 3 => 'sm:grid-cols-3', 4 => 'sm:grid-cols-4', 5 => 'sm:grid-cols-5'][count($stats)] }}">
+                    @foreach($stats as $label => $value)
+                        <div class="bg-ink/80 px-4 py-3">
+                            <dt class="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase">{{ __($label) }}</dt>
+                            <dd class="mt-1 font-display text-2xl font-bold">{{ $value }}</dd>
+                        </div>
+                    @endforeach
+                </dl>
+            @endif
+
+            <div class="mt-6 flex flex-wrap items-center gap-4">
+                <x-view-count :model="$player" class="text-white/70" />
+                @livewire('like-button', ['type' => 'player', 'id' => $player->id, 'dark' => true], key('player-like-'.$player->id))
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<!-- Back to Team -->
-<div class="bg-gray-50 py-8">
-    <div class="container mx-auto px-4 text-center">
-        <a href="{{ route('teams.show', $player->team) }}" class="inline-flex items-center text-blue-900 hover:text-blue-700 font-semibold">
-            ← Powrót do drużyny {{ $player->team->name }}
-        </a>
+<section class="container-site grid gap-8 py-14 lg:grid-cols-3">
+    <div class="card p-6 lg:sticky lg:top-28 lg:self-start">
+        <h2 class="heading-md">{{ __('Informacje') }}</h2>
+        <dl class="mt-5 divide-y divide-zinc-100 text-sm">
+            @foreach([
+                'Data urodzenia' => $player->birth_date?->format('d.m.Y'),
+                (count($player->positions()) > 1 ? 'Pozycje' : 'Pozycja') => $player->positionsLabel(),
+                'Numer' => $player->jersey_number !== null ? '#'.$player->jersey_number : null,
+                'Wzrost' => $player->height ? $player->height.' cm' : null,
+                'Waga' => $player->weight ? $player->weight.' kg' : null,
+                'Zasięg' => $player->reach ? $player->reach.' cm' : null,
+                'Zasięg w ataku' => $player->spike_reach ? $player->spike_reach.' cm' : null,
+                'Zasięg w bloku' => $player->block_reach ? $player->block_reach.' cm' : null,
+            ] as $label => $value)
+                @if($value)
+                    <div class="flex items-center justify-between py-3">
+                        <dt class="text-zinc-500">{{ __($label) }}</dt>
+                        <dd class="font-semibold">{{ $value }}</dd>
+                    </div>
+                @endif
+            @endforeach
+        </dl>
+
+        <h3 class="mt-6 text-xs font-semibold tracking-widest text-zinc-500 uppercase">{{ __('Drużyny w tym sezonie') }}</h3>
+        <div class="mt-3 flex flex-wrap gap-2">
+            @foreach($seasonTeams->filter() as $seasonTeam)
+                <a href="{{ route('teams.show', $seasonTeam) }}" class="chip hover:bg-sky-club hover:text-white">{{ $seasonTeam->name }}</a>
+            @endforeach
+        </div>
     </div>
-</div>
+
+    <div class="space-y-8 lg:col-span-2">
+        @livewire('player-proposal-form', ['player' => $player], key('player-proposal-'.$player->id))
+
+        @if($career->isNotEmpty())
+            <div class="card overflow-hidden">
+                <h2 class="heading-md px-6 pt-6">{{ __('Kariera klubowa') }}</h2>
+                <div class="mt-4 overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-zinc-50 text-xs font-semibold tracking-wider text-zinc-500 uppercase">
+                            <tr>
+                                <th class="px-6 py-3">{{ __('Sezon') }}</th>
+                                <th class="px-3 py-3">{{ __('Drużyna') }}</th>
+                                <th class="px-3 py-3">{{ __('Rozgrywki') }}</th>
+                                <th class="px-6 py-3 text-right">{{ __('Nr') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-zinc-100">
+                            @foreach($career as $entry)
+                                <tr>
+                                    <td class="px-6 py-3 font-semibold whitespace-nowrap tabular-nums">{{ $entry['season']?->name ?? '—' }}</td>
+                                    <td class="px-3 py-3 whitespace-nowrap">
+                                        <a href="{{ route('teams.show', $entry['team']) }}" class="font-semibold text-zinc-900 hover:text-sky-club-dark">{{ $site['club_name'] }} · {{ $entry['team']->name }}</a>
+                                        @if($entry['captain'])<span class="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800" title="{{ __('Kapitan') }}">C</span>@endif
+                                    </td>
+                                    <td class="px-3 py-3 text-zinc-600">{{ $entry['competitions']->join(', ') ?: '—' }}</td>
+                                    <td class="px-6 py-3 text-right tabular-nums">{{ $entry['jersey'] ?? '—' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
+
+        @if($player->achievements->isNotEmpty())
+            <div class="card p-6">
+                <h2 class="heading-md">{{ __('Osiągnięcia') }}</h2>
+                <ul class="mt-5 space-y-3">
+                    @foreach($player->achievements as $achievement)
+                        <li class="flex items-start gap-3">
+                            <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600" aria-hidden="true">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 21h8m-4-4v4M7 4h10v5a5 5 0 0 1-10 0V4Zm0 2H4v1a3 3 0 0 0 3 3m10-4h3v1a3 3 0 0 1-3 3"/></svg>
+                            </span>
+                            <div>
+                                <p class="font-semibold text-zinc-900">{{ $achievement->title }}</p>
+                                @if($achievement->season)<p class="text-xs text-zinc-500">{{ $achievement->season }}</p>@endif
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        @if($recentGames->isNotEmpty())
+            <div class="card p-6">
+                <h2 class="heading-md">{{ __('Ostatnie mecze') }}</h2>
+                <ul class="mt-5 divide-y divide-zinc-100">
+                    @foreach($recentGames as $game)
+                        @php
+                            $result = $game->ourSetsResult();
+                            $won = $result ? $result[0] > $result[1] : null;
+                            $article = $game->latestArticle();
+                        @endphp
+                        <li class="flex items-center gap-3 py-3 text-sm">
+                            @if($won === true)
+                                <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600" aria-label="{{ __('Wygrana') }}"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7"/></svg></span>
+                            @elseif($won === false)
+                                <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-600" aria-label="{{ __('Porażka') }}"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg></span>
+                            @endif
+                            <span class="w-12 shrink-0 text-zinc-500 tabular-nums">{{ $game->game_date?->format('d.m') }}</span>
+                            <span class="min-w-0 flex-1 truncate">
+                                <x-team-label :label="$game->ourLabel()" class="font-semibold text-zinc-900" />
+                                <span class="text-zinc-500">{{ $game->is_home ? __('vs') : __('u') }} {{ $game->opponentShortName() }}</span>
+                            </span>
+                            @if($result)
+                                <span class="font-display text-lg font-bold tabular-nums">{{ $result[0] }}:{{ $result[1] }}</span>
+                            @endif
+                            @if($article)
+                                <a href="{{ route('articles.show', $article) }}" class="text-xs font-semibold text-sky-club-dark hover:underline">{{ __('Relacja') }}</a>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        @if($player->bio || $player->interests)
+            <div class="card p-8">
+                <h2 class="heading-md">{{ __('O zawodniku') }}</h2>
+                @if($player->bio)
+                    <div class="prose-club mt-5">{!! strip_tags($player->bio, '<p><br><strong><em><b><i><u><s><mark><blockquote><hr><ul><ol><li>') !!}</div>
+                @endif
+                @if($player->interests)
+                    <h3 class="mt-6 text-xs font-semibold tracking-widest text-zinc-500 uppercase">{{ __('Zainteresowania') }}</h3>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        @foreach(array_filter(array_map('trim', explode(',', $player->interests))) as $interest)
+                            <span class="chip">{{ $interest }}</span>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        @endif
+
+        @foreach($player->positions() as $playerPosition)
+            <div @class(['relative overflow-hidden rounded-3xl p-8', 'bg-sky-club text-white' => $loop->first, 'bg-white text-zinc-900 ring-1 ring-sky-club/30' => ! $loop->first])>
+                <p class="font-display text-sm font-semibold tracking-[0.25em] uppercase opacity-80">{{ $loop->first ? __('Pozycja') : __('Gra też jako') }}</p>
+                <h2 class="mt-2 font-display text-3xl font-bold uppercase">{{ $playerPosition->label() }}</h2>
+                <p @class(['mt-3 max-w-xl', 'text-white/90' => $loop->first, 'text-zinc-600' => ! $loop->first])>{{ $playerPosition->description() }}</p>
+            </div>
+        @endforeach
+    </div>
+</section>
+
+@if($photos->isNotEmpty())
+    <section id="zdjecia" class="container-site pb-16">
+        <p class="eyebrow">{{ __('Galerie') }}</p>
+        <h2 class="heading-lg mt-3">{{ __('Zdjęcia') }}</h2>
+        <div class="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+            @foreach($photos as $photo)
+                <a href="{{ route('galleries.show', $photo->gallery) }}" class="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-zinc-100" title="{{ $photo->gallery->title }}">
+                    <img src="{{ $photo->url() }}" alt="{{ $photo->altText($player->full_name) }}" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                </a>
+            @endforeach
+        </div>
+    </section>
+@endif
 @endsection

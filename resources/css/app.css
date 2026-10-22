@@ -1,11 +1,481 @@
+@import '@fontsource-variable/inter/wght.css';
+@import '@fontsource-variable/oswald/wght.css';
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
+@source '../../app/**/*.php';
 
+/*
+ * Kolory klubowe (z herbu): grafit + błękit + biel.
+ * navy-* zostawione dla zgodności ze starszymi widokami.
+ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Oswald Variable', 'Arial Narrow', ui-sans-serif, sans-serif;
+
+    --color-ink: #12141a;
+    --color-graphite: #22252d;
+    --color-slate-850: #1a1d24;
+
+    --color-sky-club: #45a0e0;
+    --color-sky-club-light: #7cc0f0;
+    --color-sky-club-dark: #2a7fc0;
+    --color-club-navy: #0f2d6b;
+
+    --color-navy-700: #2b3040;
+    --color-navy-800: #22252d;
+    --color-navy-900: #181b22;
+
+    --ease-snappy: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        @apply bg-zinc-50 font-sans text-zinc-900 antialiased;
+    }
+
+    ::selection {
+        @apply bg-sky-club text-white;
+    }
+
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-sky-club;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+}
+
+/* Panel admina: wyraźne pola formularzy (bez dodatkowych wtyczek). */
+@layer base {
+    .admin-panel :is(input:not([type='checkbox'], [type='radio'], [type='file'], [type='color']), select, textarea) {
+        @apply rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm;
+    }
+
+    .admin-panel :is(input, select, textarea):focus {
+        @apply border-sky-500 ring-2 ring-sky-500/30 outline-none;
+    }
+}
+
+@layer components {
+    .container-site {
+        @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    }
+
+    .eyebrow {
+        @apply font-display text-xs font-semibold tracking-[0.25em] text-sky-club uppercase;
+    }
+
+    .heading-xl {
+        @apply font-display text-5xl leading-[0.9] font-bold tracking-tight uppercase sm:text-7xl lg:text-8xl;
+    }
+
+    .heading-lg {
+        @apply font-display text-3xl leading-none font-bold tracking-tight uppercase sm:text-5xl;
+    }
+
+    .heading-md {
+        @apply font-display text-xl leading-tight font-semibold tracking-tight uppercase sm:text-2xl;
+    }
+
+    .btn-primary {
+        @apply btn bg-sky-club text-white shadow-lg shadow-sky-club/30 hover:-translate-y-0.5 hover:bg-sky-club-dark;
+    }
+
+    .btn-ghost {
+        @apply btn border border-white/30 text-white backdrop-blur hover:border-white hover:bg-white/10;
+    }
+
+    .btn-dark {
+        @apply btn bg-ink text-white hover:-translate-y-0.5 hover:bg-graphite;
+    }
+
+    .card-hover {
+        @apply hover:-translate-y-1 hover:shadow-2xl hover:shadow-zinc-900/10 hover:ring-sky-club/40;
+    }
+
+    .chip {
+        @apply inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700;
+    }
+
+    .link-underline {
+        @apply bg-gradient-to-r from-sky-club to-sky-club bg-[length:0%_2px] bg-left-bottom bg-no-repeat transition-[background-size] duration-300 hover:bg-[length:100%_2px];
+    }
+
+    .prose-club {
+        @apply max-w-none text-lg leading-relaxed text-zinc-700;
+    }
+
+    .prose-club p {
+        @apply mb-5;
+    }
+
+    .prose-club h2,
+    .prose-club h3 {
+        @apply mt-10 mb-4 font-display text-2xl font-semibold text-zinc-900 uppercase;
+    }
+
+    .prose-club ul {
+        @apply mb-5 list-disc pl-6;
+    }
+
+    .prose-club ol {
+        @apply mb-5 list-decimal pl-6;
+    }
+
+    .prose-club a {
+        @apply font-semibold text-sky-club-dark underline;
+    }
+
+    .prose-club blockquote {
+        @apply mb-5 border-l-4 border-sky-club pl-4 text-zinc-600 italic;
+    }
+
+    .prose-club mark {
+        @apply rounded-sm bg-yellow-200 px-0.5 text-inherit;
+    }
+
+    .prose-club hr {
+        @apply my-8 border-zinc-200;
+    }
+}
+
+@utility btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition duration-300 ease-snappy;
+}
+
+@utility card {
+    @apply rounded-3xl bg-white ring-1 ring-zinc-200/70 transition duration-300 ease-snappy;
+}
+
+@utility scrollbar-none {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* Delikatne pojawianie się sekcji przy przewijaniu (bez bibliotek). */
+@media (prefers-reduced-motion: no-preference) {
+    [data-reveal] {
+        opacity: 0;
+        transform: translateY(24px);
+        transition:
+            opacity 0.7s var(--ease-snappy),
+            transform 0.7s var(--ease-snappy);
+    }
+
+    [data-reveal].is-visible {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.net-pattern {
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+
+.grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at top right, rgba(69, 160, 224, 0.25), transparent 60%);
+}
+
+/*
+ * Zegar do meczu: wyświetlacz siedmiosegmentowy (resources/js/countdown.js).
+ * Kolor cyfr ustawia się w panelu: Wygląd i ustawienia → Kolory.
+ */
+.seg-display {
+    --seg-color: var(--color-countdown, #ffd600);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    color: var(--seg-color);
+}
+
+.seg-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.seg-row {
+    display: flex;
+    gap: 0.2rem;
+    padding: 0.4rem 0.45rem;
+    border-radius: 0.6rem;
+    background: rgb(0 0 0 / 0.45);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), inset 0 0 0 1px rgb(255 255 255 / 0.05);
+}
+
+.seg-digit {
+    width: clamp(1.15rem, 3.4vw, 1.75rem);
+    height: auto;
+    transform: skewX(-6deg);
+    overflow: visible;
+}
+
+.seg-digit polygon {
+    fill: currentColor;
+    opacity: 0.08;
+    transition: opacity 0.35s ease, filter 0.35s ease;
+}
+
+.seg-digit polygon.is-on {
+    opacity: 1;
+    filter: drop-shadow(0 0 3px var(--seg-color)) drop-shadow(0 0 10px color-mix(in oklab, var(--seg-color) 55%, transparent));
+}
+
+.seg-digit polygon.is-igniting {
+    animation: seg-ignite 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.seg-label {
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.5);
+}
+
+.seg-colon {
+    position: relative;
+    align-self: stretch;
+    width: 0.3rem;
+    margin-top: 0.4rem;
+    height: clamp(1.9rem, 5.6vw, 2.9rem);
+}
+
+.seg-colon::before,
+.seg-colon::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    width: 0.3rem;
+    height: 0.3rem;
+    border-radius: 9999px;
+    background: var(--seg-color);
+    box-shadow: 0 0 8px var(--seg-color);
+    transform: translateX(-50%);
+    transition: opacity 0.3s ease;
+}
+
+.seg-colon::before {
+    top: 32%;
+}
+
+.seg-colon::after {
+    top: 62%;
+}
+
+.seg-display.is-blink .seg-colon::before,
+.seg-display.is-blink .seg-colon::after {
+    opacity: 0.2;
+}
+
+.seg-display.is-booting .seg-digit polygon {
+    animation: seg-boot 0.9s steps(6) both;
+}
+
+.seg-display.is-live .seg-row {
+    animation: seg-live 1.2s ease-in-out infinite;
+}
+
+@keyframes seg-ignite {
+    0% {
+        opacity: 0.08;
+        filter: brightness(2.2) drop-shadow(0 0 14px var(--seg-color));
+    }
+
+    35% {
+        opacity: 1;
+        filter: brightness(1.8) drop-shadow(0 0 16px var(--seg-color));
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes seg-boot {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.15;
+    }
+}
+
+@keyframes seg-live {
+    50% {
+        box-shadow: 0 0 24px color-mix(in oklab, var(--seg-color) 60%, transparent);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .seg-digit polygon,
+    .seg-digit polygon.is-igniting {
+        animation: none;
+        transition: none;
+    }
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+/* Edytor treści w panelu (TipTap). */
+.rich-editor-content {
+    min-height: inherit;
+
+    & > * + * {
+        margin-top: 0.6em;
+    }
+
+    & h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    & h3 {
+        font-size: 1.05rem;
+        font-weight: 700;
+    }
+
+    & ul {
+        list-style: disc;
+        padding-left: 1.5rem;
+    }
+
+    & ol {
+        list-style: decimal;
+        padding-left: 1.5rem;
+    }
+
+    & blockquote {
+        border-left: 3px solid var(--color-gray-300);
+        padding-left: 0.75rem;
+        color: var(--color-gray-600);
+        font-style: italic;
+    }
+
+    & mark {
+        background: var(--color-yellow-200);
+        border-radius: 2px;
+        padding: 0 2px;
+    }
+
+    & a {
+        color: var(--color-sky-700);
+        text-decoration: underline;
+    }
+
+    & hr {
+        border-color: var(--color-gray-300);
+        margin: 1rem 0;
+    }
+
+    & p.is-editor-empty:first-child::before {
+        content: attr(data-placeholder);
+        color: var(--color-gray-400);
+        float: left;
+        height: 0;
+        pointer-events: none;
+    }
+}
+
+.rich-editor-emoji emoji-picker {
+    width: 100%;
+    height: 320px;
+    --border-size: 0;
+    --background: transparent;
+    --emoji-size: 1.5rem;
+}
+
+/*
+ * Wygląd panelu klubu: spokojne karty, czytelne tabele i jednolite przyciski we wszystkich
+ * sekcjach. Poza warstwami, żeby wygrywało ze starszymi klasami w widokach panelu.
+ */
+.admin-card {
+    @apply overflow-x-auto rounded-xl bg-white shadow-sm ring-1 ring-zinc-200;
+}
+
+.admin-panel main {
+    & h1.text-3xl {
+        @apply text-2xl font-semibold tracking-tight text-zinc-900;
+    }
+
+    & h1 + p.text-sm,
+    & h1 + p.mt-2 {
+        @apply text-zinc-500;
+    }
+
+    & table thead th {
+        @apply bg-zinc-50/80 py-3 text-xs font-semibold tracking-wide whitespace-nowrap text-zinc-500 uppercase;
+    }
+
+    & table thead {
+        @apply border-b border-zinc-200;
+    }
+
+    & table tbody tr {
+        @apply transition-colors;
+    }
+
+    & table tbody tr:hover {
+        @apply bg-zinc-50/70;
+    }
+
+    & table tbody td {
+        @apply text-zinc-700;
+    }
+
+    & button.bg-sky-600,
+    & a.bg-sky-600 {
+        @apply rounded-lg shadow-sm shadow-sky-900/10 transition;
+    }
+
+    & :is(input:not([type='checkbox'], [type='radio'], [type='file'], [type='color'], [type='range']), select, textarea) {
+        @apply rounded-lg border-zinc-300 shadow-xs;
+    }
+
+    & nav[role='navigation'] {
+        @apply text-sm;
+    }
+
+    & input[type='file'] {
+        @apply text-sm text-zinc-500;
+    }
+
+    & input[type='file']::file-selector-button {
+        @apply mr-3 cursor-pointer rounded-lg border-0 bg-zinc-100 px-3 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-200;
+    }
+}
+
+.admin-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.12) transparent;
 }

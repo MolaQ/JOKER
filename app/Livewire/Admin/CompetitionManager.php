@@ -2,16 +2,18 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Competition;
 use App\Models\CompetitionLevel;
 use App\Models\Season;
 use App\Models\Team;
+use App\Services\ScheduleImporter;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class CompetitionManager extends Component
 {
-    use WithPagination;
+    use ShowsToasts, WithPagination;
 
     public bool $showModal = false;
 
@@ -20,8 +22,6 @@ class CompetitionManager extends Component
     public string $name = '';
 
     public string $level = '';
-
-    public ?int $level_id = null;
 
     public ?int $season_id = null;
 
@@ -47,18 +47,36 @@ class CompetitionManager extends Component
     /** @var array<int, int> */
     public array $team_ids = [];
 
+    /**
+     * Nazwa naszej drużyny w tych rozgrywkach (gdy inna niż na stronie), klucz = id drużyny.
+     *
+     * @var array<int, string>
+     */
+    public array $external_names = [];
+
+    /**
+     * Jak podpisać drużynę w tabelach i kalendarzu (np. „LOMS Joker Piła”), klucz = id drużyny.
+     *
+     * @var array<int, string>
+     */
+    public array $display_names = [];
+
+    /**
+     * Dopisek mniejszą kursywą obok nazwy (np. „(kadeci)”), klucz = id drużyny.
+     *
+     * @var array<int, string>
+     */
+    public array $display_suffixes = [];
+
+    public string $source_url = '';
+
     public string $search = '';
-
-    public ?string $flashType = null;
-
-    public ?string $flashMessage = null;
 
     protected function rules(): array
     {
         return [
             'name' => 'required|string|max:255',
             'level' => 'nullable|string|max:255',
-            'level_id' => 'nullable|exists:competition_levels,id',
             'season_id' => 'required|exists:seasons,id',
             'description' => 'nullable|string',
             'display_order' => 'nullable|integer|min:0',
@@ -72,6 +90,23 @@ class CompetitionManager extends Component
             'standings_criteria.*' => 'in:points,sets_ratio,sets_diff,points_ratio,points_diff,wins',
             'team_ids' => 'array',
             'team_ids.*' => 'exists:teams,id',
+            'external_names' => 'array',
+            'external_names.*' => 'nullable|string|max:255',
+            'display_names' => 'array',
+            'display_names.*' => 'nullable|string|max:255',
+            'display_suffixes' => 'array',
+            'display_suffixes.*' => 'nullable|string|max:60',
+            'source_url' => ['nullable', 'string', 'max:2000', 'regex:/^(\s*https?:\/\/\S+\s*)*$/'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function messages(): array
+    {
+        return [
+            'source_url.regex' => 'Wklej pełne adresy stron (zaczynające się od https://), każdy w osobnej linii.',
         ];
     }
 
@@ -80,19 +115,10 @@ class CompetitionManager extends Component
         $this->resetPage();
     }
 
-    public function updatedLevelId(): void
-    {
-        if ($this->level_id && $level = CompetitionLevel::find($this->level_id)) {
-            $this->level = $level->name;
-        }
-    }
-
     public function openCreateModal(): void
     {
         $this->resetForm();
         $this->season_id = Season::current()->value('id');
-        $this->flashType = null;
-        $this->flashMessage = null;
         $this->showModal = true;
     }
 
@@ -102,8 +128,7 @@ class CompetitionManager extends Component
 
         $this->editingId = $competition->id;
         $this->name = $competition->name;
-        $this->level = (string) $competition->level;
-        $this->level_id = $competition->level_id;
+        $this->level = (string) ($competition->level ?: $competition->competitionLevel?->name);
         $this->season_id = $competition->season_id;
         $this->description = (string) $competition->description;
         $this->display_order = $competition->display_order;
@@ -115,8 +140,10 @@ class CompetitionManager extends Component
         $this->points_loss_0_3 = $competition->points_loss_0_3;
         $this->standings_criteria = $competition->sortCriteria();
         $this->team_ids = $competition->teams->pluck('id')->all();
-        $this->flashType = null;
-        $this->flashMessage = null;
+        $this->external_names = $competition->teams->mapWithKeys(fn (Team $team) => [$team->id => (string) $team->pivot->external_name])->all();
+        $this->display_names = $competition->teams->mapWithKeys(fn (Team $team) => [$team->id => (string) $team->pivot->display_name])->all();
+        $this->display_suffixes = $competition->teams->mapWithKeys(fn (Team $team) => [$team->id => (string) $team->pivot->display_suffix])->all();
+        $this->source_url = (string) $competition->source_url;
 
         $this->showModal = true;
     }
@@ -125,29 +152,90 @@ class CompetitionManager extends Component
     {
         $validated = $this->validate();
         $teamIds = $validated['team_ids'] ?? [];
-        unset($validated['team_ids']);
+        unset($validated['team_ids'], $validated['external_names'], $validated['display_names'], $validated['display_suffixes']);
+        $validated['source_url'] = trim($validated['source_url'] ?? '') ?: null;
+        $validated['level'] = trim($validated['level'] ?? '') ?: null;
+        $validated['level_id'] = $validated['level'] ? CompetitionLevel::where('name', $validated['level'])->value('id') : null;
 
         if ($this->editingId) {
             $competition = Competition::findOrFail($this->editingId);
             $competition->update($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Rozgrywki zostały zaktualizowane.';
+            $this->toast('Rozgrywki zostały zaktualizowane.');
         } else {
             $competition = Competition::create($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Rozgrywki zostały dodane.';
+            $this->toast('Rozgrywki zostały dodane.');
         }
 
-        $competition->teams()->sync($teamIds);
+        $competition->teams()->sync(collect($teamIds)->mapWithKeys(fn ($teamId) => [
+            $teamId => [
+                'external_name' => trim($this->external_names[$teamId] ?? '') ?: null,
+                'display_name' => trim($this->display_names[$teamId] ?? '') ?: null,
+                'display_suffix' => trim($this->display_suffixes[$teamId] ?? '') ?: null,
+            ],
+        ])->all());
+
+        if ($competition->source_url) {
+            $this->syncCompetition($competition);
+        }
 
         $this->closeModal();
+    }
+
+    /**
+     * Pobiera terminarz i wyniki ze strony związku (przycisk w tabeli).
+     */
+    public function sync(int $id): void
+    {
+        $this->syncCompetition(Competition::findOrFail($id));
+    }
+
+    private function syncCompetition(Competition $competition): void
+    {
+        app(ScheduleImporter::class)->sync($competition);
+
+        $this->toast($competition->name.': '.$competition->sync_message, str_contains((string) $competition->sync_message, 'Nie udało się') ? 'error' : 'success');
+    }
+
+    /**
+     * Nowy sezon: kopiuje rozgrywki z poprzedniego sezonu do bieżącego i od razu pobiera terminarze.
+     */
+    public function copyFromPreviousSeason(): void
+    {
+        [$current, $previous] = $this->seasonPair();
+
+        if (! $current || ! $previous) {
+            $this->toast('Najpierw dodaj nowy sezon w „Sezony” i ustaw go jako bieżący.', 'error');
+
+            return;
+        }
+
+        $copied = Competition::copyToSeason($previous, $current);
+
+        Competition::where('season_id', $current->id)->whereNull('synced_at')->whereNotNull('source_url')->get()
+            ->each(fn (Competition $competition) => rescue(fn () => app(ScheduleImporter::class)->sync($competition), report: false));
+
+        $this->toast($copied > 0
+            ? "Skopiowano rozgrywki do sezonu {$current->name}: {$copied}. Sprawdź adresy stron związku."
+            : 'Wszystkie rozgrywki z poprzedniego sezonu są już w bieżącym.');
+    }
+
+    /**
+     * Bieżący sezon i ten przed nim.
+     *
+     * @return array{0: ?Season, 1: ?Season}
+     */
+    private function seasonPair(): array
+    {
+        $current = Season::current()->first();
+        $previous = $current ? Season::where('start_date', '<', $current->start_date)->orderByDesc('start_date')->first() : null;
+
+        return [$current, $previous];
     }
 
     public function delete(int $id): void
     {
         Competition::findOrFail($id)->delete();
-        $this->flashType = 'success';
-        $this->flashMessage = 'Rozgrywki zostały usunięte.';
+        $this->toast('Rozgrywki zostały usunięte.');
     }
 
     public function closeModal(): void
@@ -161,7 +249,6 @@ class CompetitionManager extends Component
         $this->editingId = null;
         $this->name = '';
         $this->level = '';
-        $this->level_id = null;
         $this->season_id = null;
         $this->description = '';
         $this->display_order = 0;
@@ -173,6 +260,10 @@ class CompetitionManager extends Component
         $this->points_loss_0_3 = 0;
         $this->standings_criteria = ['points', 'sets_ratio', 'points_ratio'];
         $this->team_ids = [];
+        $this->external_names = [];
+        $this->display_names = [];
+        $this->display_suffixes = [];
+        $this->source_url = '';
         $this->resetErrorBag();
     }
 
@@ -186,9 +277,19 @@ class CompetitionManager extends Component
 
         $seasons = Season::orderBy('start_date', 'desc')->get();
         $teams = Team::orderBy('display_order')->get();
-        $levels = CompetitionLevel::orderBy('display_order')->orderBy('name')->get();
+        $levels = CompetitionLevel::orderBy('display_order')->pluck('name')
+            ->merge(Competition::whereNotNull('level')->distinct()->pluck('level'))
+            ->filter()->unique()->values();
+
+        [$currentSeason, $previousSeason] = $this->seasonPair();
+        $canCopy = $currentSeason && $previousSeason
+            && Competition::where('season_id', $previousSeason->id)->exists()
+            && Competition::where('season_id', $currentSeason->id)->doesntExist();
 
         return view('livewire.admin.competition-manager', [
+            'currentSeason' => $currentSeason,
+            'previousSeason' => $previousSeason,
+            'canCopy' => $canCopy,
             'competitions' => $competitions,
             'seasons' => $seasons,
             'teams' => $teams,

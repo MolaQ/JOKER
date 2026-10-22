@@ -1,62 +1,33 @@
 @extends('layouts.public')
 
-@section('title', 'Drużyny - Joker Piła')
+@section('title', __('Drużyny'))
+@section('description', __('Drużyny siatkarskie Joker Piła: od minisiatkówki po II ligę mężczyzn. Składy, trenerzy, terminarze i tabele.'))
 
 @section('content')
-<!-- Page Header -->
-<div class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white py-16">
-    <div class="container mx-auto px-4">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">Nasze Drużyny</h1>
-        <p class="text-xl text-blue-100">
-            Poznaj wszystkie drużyny Joker Piła
-        </p>
-    </div>
-</div>
+<section class="container-site pt-14 pb-10 lg:pt-20">
+    <p class="eyebrow">{{ __('Sezon') }} {{ \App\Models\Season::current()->value('name') }}</p>
+    <h1 class="heading-xl mt-4">{{ __('Drużyny') }}</h1>
+    <p class="mt-6 max-w-2xl text-lg text-zinc-600">{{ __('Każda drużyna ma swój skład, sztab i terminarz. Kliknij, aby zobaczyć zawodników i trenerów.') }}</p>
+</section>
 
-<!-- Teams Grid -->
-<section class="container mx-auto px-4 py-16">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<section class="container-site">
+    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         @foreach($teams as $team)
-            <article class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition">
-                <div class="bg-gradient-to-r from-blue-900 to-blue-700 h-48 flex items-center justify-center">
-                    <div class="text-center text-white">
-                        <div class="text-6xl font-bold mb-2">{{ Str::substr($team->name, 0, 1) }}</div>
-                        <div class="text-sm opacity-80">{{ Str::limit(strip_tags((string) $team->description), 120) }}</div>
-                    </div>
-                </div>
-
+            <a href="{{ route('teams.show', $team) }}" class="card card-hover group overflow-hidden" data-reveal>
+                <x-photo :src="\App\Support\Media::teamPhoto($team)" :alt="__('Drużyna').' '.$team->name" sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" class="aspect-[4/3] w-full">
+                    <div class="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent"></div>
+                    <span class="chip absolute top-4 left-4 bg-white/90">{{ $team->birth_year ? __('Rocznik :year', ['year' => $team->birth_year]) : __('Seniorzy') }}</span>
+                </x-photo>
                 <div class="p-6">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-4">
-                        {{ $team->name }}
-                    </h2>
-
-                    @if($team->allTrainers()->isNotEmpty())
-                        <div class="mb-4 pb-4 border-b">
-                            <div class="text-sm text-gray-500 mb-1">{{ $team->allTrainers()->count() > 1 ? 'Trenerzy' : 'Trener' }}</div>
-                            <div class="font-semibold text-gray-900">
-                                @foreach($team->allTrainers() as $trainer)
-                                    <a href="{{ route('trainers.show', $trainer) }}" class="text-blue-700 hover:underline">{{ $trainer->name }}</a>@if(! $loop->last), @endif
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div>
-                            <div class="text-sm text-gray-500">Kategoria</div>
-                            <div class="font-semibold text-gray-900">{{ $team->category }}</div>
-                        </div>
-                        <div>
-                            <div class="text-sm text-gray-500">Liczba zawodników</div>
-                            <div class="font-semibold text-gray-900">{{ $team->players_count ?? $team->players()->count() }}</div>
-                        </div>
+                    <h2 class="font-display text-2xl font-bold uppercase group-hover:text-sky-club-dark">{{ $team->name }}</h2>
+                    <div class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-zinc-500">
+                        <span><strong class="text-zinc-900">{{ $team->active_players_count }}</strong> {{ __('zawodników') }}</span>
+                        @if($team->trainer)
+                            <span>{{ __('Trener') }}: <strong class="text-zinc-900">{{ $team->trainer->name }}</strong></span>
+                        @endif
                     </div>
-
-                    <a href="{{ route('teams.show', $team) }}" class="block w-full bg-blue-900 text-white text-center py-3 rounded-lg hover:bg-blue-800 transition font-semibold">
-                        Zobacz Drużynę
-                    </a>
                 </div>
-            </article>
+            </a>
         @endforeach
     </div>
 </section>

@@ -1,59 +1,50 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Joker Piła - strona klubowa
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Strona klubu siatkarskiego Joker Piła (Laravel 12 + Livewire, Tailwind CSS 4).
 
-## About Laravel
+## Obsługa strony (dla opiekunów)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Wszystko zmieniasz w panelu: zaloguj się i kliknij **Panel** w prawym górnym rogu.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Chcę... | Gdzie w panelu |
+| --- | --- |
+| dodać aktualność | Aktualności |
+| wpisać wynik albo dodać mecz | Mecze i wyniki |
+| zmienić zdjęcie drużyny, trenera lub sztab | Drużyny i sztab → Edytuj |
+| dodać zawodnika | Zawodnicy |
+| zmienić slajd na stronie głównej | Slajdy na stronie głównej |
+| dać komuś dostęp do panelu | Użytkownicy → rola „Administrator” lub „Trener” |
+| dodać osobę do sztabu bez dostępu do panelu | Użytkownicy → rola „Członek sztabu” |
+| wrzucić regulamin lub zgodę do pobrania | Dokumenty (zaznacz „publiczny”) |
+| zmienić kolory, logo, nazwę klubu | Wygląd i ustawienia → Ogólne / Kolory |
+| zmienić linki w żółtym pasku lub w menu | Wygląd i ustawienia → Górny pasek / Menu główne |
+| zmienić teksty na stronie głównej, ukryć sekcję | Wygląd i ustawienia → Strona główna |
+| zmienić telefon, e-mail, adres, media społecznościowe | Wygląd i ustawienia → Kontakt i stopka |
+| pobierać terminarz i wyniki ze strony związku (WZPS) | Rozgrywki → Edytuj → wklej adres strony z meczami i zaznacz nasze drużyny (z nazwą, pod którą grają w tych rozgrywkach) |
+| ustawić, do jakiego meczu odlicza zegar | Wygląd i ustawienia → Strona główna |
+| dodać stronę typu „Dla rodziców”, „FAQ” | Podstrony (adres: /strona/nazwa, potem dodaj link w pasku lub menu) |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+„Wygląd i ustawienia” oraz „Podstrony” widzi tylko administrator. Każda zakładka ma przycisk
+„Przywróć domyślne”. Nowe ustawienie programista dodaje w `config/site.php` i od razu pojawia się w panelu.
 
-## Learning Laravel
+Wyszukiwarka (lupa, klawisz `/` lub Ctrl+K) przeszukuje całą stronę: drużyny, zawodników, sztab,
+aktualności, mecze i dokumenty. Nowa treść pojawia się w niej automatycznie.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Jeśli drużyna, artykuł albo slajd nie ma własnego zdjęcia, strona pokazuje darmowe zdjęcie tematyczne
+z Unsplash (lista i autorzy: `config/media.php`, strona `/zdjecia`). Wgranie własnego zdjęcia je zastępuje.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Uruchomienie (dla informatyka)
 
-## Laravel Sponsors
+Terminarze z rozgrywek z wpisanym adresem odświeżają się same co 3 godziny, jeśli na serwerze działa
+cron: `* * * * * cd /sciezka/do/projektu && php artisan schedule:run >> /dev/null 2>&1`.
+Ręcznie: `php artisan joker:sync-schedules` albo przycisk „Pobierz terminarz” w panelu (Rozgrywki). Wyniki i tabele (wszystkie etapy i grupy) pochodzą z wielkopolskasiatkowka.com.pl, a gdy jej brak - z WZPS; godziny, hale i numery meczów z WZPS. Wynik wpisany ręcznie w panelu nie jest nadpisywany. `php artisan migrate:fresh --seed` zakłada prawdziwe drużyny i rozgrywki WZPS i od razu pobiera dane.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+composer setup                 # instalacja, .env, migracje, build
+php artisan db:seed            # przykładowa treść (wypisze hasło administratora)
+composer dev                   # serwer deweloperski
+```
 
-### Premium Partners
+Administrator: `php artisan joker:admin marcin.molak@gmail.com` nadaje uprawnienia (lub tworzy konto i wypisuje hasło).
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Testy: `php artisan test --compact`.

@@ -2,24 +2,33 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasEnglishVersion;
+use App\Models\Concerns\HasSlugRouteKey;
 use App\Models\Concerns\Likeable;
 use Database\Factories\ArticleFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Article extends Model
 {
+    use HasEnglishVersion, HasSlugRouteKey;
+
     /** @use HasFactory<ArticleFactory> */
     use HasFactory, Likeable;
 
     protected $fillable = [
         'title',
+        'title_en',
         'slug',
         'excerpt',
+        'excerpt_en',
         'content',
+        'content_en',
         'featured_image',
+        'featured_image_focus',
         'author_id',
         'status',
         'published_at',
@@ -40,6 +49,14 @@ class Article extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'author_id');
+    }
+
+    /**
+     * Mecze, których dotyczy artykuł (relacja, zapowiedź) - otwierane z kalendarza.
+     */
+    public function games(): BelongsToMany
+    {
+        return $this->belongsToMany(Game::class);
     }
 
     public function comments(): HasMany
@@ -65,10 +82,23 @@ class Article extends Model
         return $query->where('is_featured', true);
     }
 
+    public function localizedExcerpt(): ?string
+    {
+        return $this->localized('excerpt');
+    }
+
     public function isPublished(): bool
     {
         return $this->status === 'published' &&
                $this->published_at &&
                $this->published_at <= now();
+    }
+
+    /**
+     * Punkt zdjęcia, który zostaje widoczny przy przycinaniu (CSS object-position).
+     */
+    public function imageFocus(): string
+    {
+        return preg_match('/^\d{1,3}% \d{1,3}%$/', (string) $this->featured_image_focus) ? $this->featured_image_focus : '50% 50%';
     }
 }

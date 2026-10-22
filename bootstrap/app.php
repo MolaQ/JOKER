@@ -1,6 +1,9 @@
 <?php
 
-use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\EnsurePrivacyConsent;
+use App\Http\Middleware\RedirectToCanonicalUrl;
+use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\TrackPageView;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,9 +20,15 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias([
-            'role' => CheckRole::class,
+        $middleware->web(append: [
+            RedirectToCanonicalUrl::class,
+            SetLocale::class,
+            TrackPageView::class,
+            EnsurePrivacyConsent::class,
         ]);
+
+        // Skrypt statystyk wysyła dane przez sendBeacon (bez tokenu CSRF).
+        $middleware->validateCsrfTokens(except: ['statystyki/*', 'powiadomienia/*']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

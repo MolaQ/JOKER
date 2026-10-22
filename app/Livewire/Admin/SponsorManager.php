@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Sponsor;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -9,7 +10,7 @@ use Livewire\WithPagination;
 
 class SponsorManager extends Component
 {
-    use WithFileUploads, WithPagination;
+    use ShowsToasts, WithFileUploads, WithPagination;
 
     public bool $showModal = false;
 
@@ -33,10 +34,6 @@ class SponsorManager extends Component
 
     public string $search = '';
 
-    public ?string $flashType = null;
-
-    public ?string $flashMessage = null;
-
     protected function rules(): array
     {
         $rules = [
@@ -48,7 +45,7 @@ class SponsorManager extends Component
             'is_active' => 'boolean',
         ];
 
-        $rules['logo'] = $this->editingId ? 'nullable|image|max:2048' : 'required|image|max:2048';
+        $rules['logo'] = 'nullable|image|max:2048';
 
         return $rules;
     }
@@ -61,8 +58,6 @@ class SponsorManager extends Component
     public function openCreateModal(): void
     {
         $this->resetForm();
-        $this->flashType = null;
-        $this->flashMessage = null;
         $this->showModal = true;
     }
 
@@ -79,8 +74,6 @@ class SponsorManager extends Component
         $this->is_active = $sponsor->is_active;
         $this->existingLogo = $sponsor->logo_path;
         $this->logo = null;
-        $this->flashType = null;
-        $this->flashMessage = null;
 
         $this->showModal = true;
     }
@@ -96,12 +89,10 @@ class SponsorManager extends Component
         if ($this->editingId) {
             $sponsor = Sponsor::findOrFail($this->editingId);
             $sponsor->update($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Sponsor został zaktualizowany.';
+            $this->toast('Sponsor został zaktualizowany.');
         } else {
             Sponsor::create($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Sponsor został dodany.';
+            $this->toast('Sponsor został dodany.');
         }
 
         $this->closeModal();
@@ -110,8 +101,7 @@ class SponsorManager extends Component
     public function delete(int $id): void
     {
         Sponsor::findOrFail($id)->delete();
-        $this->flashType = 'success';
-        $this->flashMessage = 'Sponsor został usunięty.';
+        $this->toast('Sponsor został usunięty.');
     }
 
     public function closeModal(): void

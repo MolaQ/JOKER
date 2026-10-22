@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Competition;
 use App\Models\LeagueStanding;
 use App\Models\RivalTeam;
@@ -11,6 +12,8 @@ use Livewire\Component;
 
 class StandingManager extends Component
 {
+    use ShowsToasts;
+
     public bool $showModal = false;
 
     public ?int $editingId = null;
@@ -43,10 +46,6 @@ class StandingManager extends Component
 
     public ?int $competitionFilter = null;
 
-    public ?string $flashType = null;
-
-    public ?string $flashMessage = null;
-
     protected function rules(): array
     {
         return [
@@ -75,8 +74,6 @@ class StandingManager extends Component
     {
         $this->resetForm();
         $this->competition_id = $this->competitionFilter;
-        $this->flashType = null;
-        $this->flashMessage = null;
         $this->showModal = true;
     }
 
@@ -98,8 +95,6 @@ class StandingManager extends Component
         $this->points_against = $standing->points_against;
         $this->points = $standing->points;
         $this->is_manual_override = $standing->is_manual_override;
-        $this->flashType = null;
-        $this->flashMessage = null;
 
         $this->showModal = true;
     }
@@ -114,12 +109,10 @@ class StandingManager extends Component
 
         if ($this->editingId) {
             LeagueStanding::findOrFail($this->editingId)->update($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Wpis w tabeli został zaktualizowany.';
+            $this->toast('Wpis w tabeli został zaktualizowany.');
         } else {
             LeagueStanding::create($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Drużyna została dodana do tabeli.';
+            $this->toast('Drużyna została dodana do tabeli.');
         }
 
         $this->closeModal();
@@ -128,8 +121,7 @@ class StandingManager extends Component
     public function delete(int $id): void
     {
         LeagueStanding::findOrFail($id)->delete();
-        $this->flashType = 'success';
-        $this->flashMessage = 'Wpis został usunięty.';
+        $this->toast('Wpis został usunięty.');
     }
 
     /**
@@ -138,8 +130,7 @@ class StandingManager extends Component
     public function recalculate(): void
     {
         if (! $this->competitionFilter) {
-            $this->flashType = 'error';
-            $this->flashMessage = 'Wybierz rozgrywki, dla których chcesz przeliczyć tabelę.';
+            $this->toast('Wybierz rozgrywki, dla których chcesz przeliczyć tabelę.', 'error');
 
             return;
         }
@@ -147,8 +138,7 @@ class StandingManager extends Component
         $competition = Competition::findOrFail($this->competitionFilter);
         StandingsCalculator::recalculate($competition);
 
-        $this->flashType = 'success';
-        $this->flashMessage = 'Tabela została przeliczona na podstawie zakończonych meczów.';
+        $this->toast('Tabela została przeliczona na podstawie zakończonych meczów.');
     }
 
     public function closeModal(): void

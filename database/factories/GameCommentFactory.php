@@ -18,7 +18,16 @@ class GameCommentFactory extends Factory
     public function definition(): array
     {
         return [
-            'content' => fake()->paragraph(),
+            'content' => fake()->randomElement([
+                'Brawo chłopaki, tak trzymać!',
+                'Świetny mecz, emocje do ostatniej piłki.',
+                'Gratulacje dla całej drużyny i trenerów!',
+                'Byliśmy na hali całą rodziną - super atmosfera.',
+                'Ten blok w trzecim secie to majstersztyk.',
+                'Do zobaczenia na kolejnym meczu, będziemy kibicować!',
+                'Widać postęp z meczu na mecz. Oby tak dalej.',
+                'Dziękujemy za relację i zdjęcia!',
+            ]),
             'is_approved' => fake()->boolean(90), // 90% szans na zatwierdzenie
         ];
     }

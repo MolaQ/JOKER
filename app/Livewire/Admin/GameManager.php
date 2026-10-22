@@ -2,19 +2,27 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
+use App\Models\AuditLog;
 use App\Models\Competition;
 use App\Models\Game;
 use App\Models\RivalTeam;
 use App\Models\Season;
 use App\Models\Team;
+use App\Models\Tournament;
+use App\Services\ScheduleImporter;
 use App\Services\StandingsCalculator;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Throwable;
 
 class GameManager extends Component
 {
-    use WithPagination;
+    use ShowsToasts, WithPagination;
 
     public bool $showModal = false;
 
@@ -25,6 +33,13 @@ class GameManager extends Component
     public ?int $season_id = null;
 
     public ?int $competition_id = null;
+
+    public string $kind = 'league';
+
+    /** Skąd jest obecny wynik edytowanego meczu (ręcznie, strona związku, WZPS). */
+    public ?string $resultSource = null;
+
+    public ?int $tournament_id = null;
 
     public string $opponent = '';
 
@@ -58,16 +73,27 @@ class GameManager extends Component
 
     public string $statusFilter = '';
 
-    public ?string $flashType = null;
+    public string $mediaFilter = '';
 
-    public ?string $flashMessage = null;
+    public string $teamFilter = '';
+
+    /** Filtr materiałów meczu: wiadomość, wideo, galeria, relacja albo brak czegokolwiek. */
+    public const MEDIA_FILTERS = [
+        'wiadomosc' => 'Z wiadomością',
+        'wideo' => 'Z wideo',
+        'galeria' => 'Z galerią',
+        'relacja' => 'Z relacją',
+        'bez' => 'Bez żadnej wzmianki',
+    ];
 
     protected function rules(): array
     {
         return [
-            'team_id' => 'required|exists:teams,id',
+            'team_id' => ['required', Rule::in(Team::managedBy(Auth::user())->pluck('id'))],
             'season_id' => 'required|exists:seasons,id',
             'competition_id' => 'nullable|exists:competitions,id',
+            'kind' => 'required|in:league,friendly,tournament',
+            'tournament_id' => 'nullable|required_if:kind,tournament|exists:tournaments,id',
             'opponent' => 'required|string|max:255',
             'opponent_team_id' => 'nullable|exists:rival_teams,id',
             'is_home' => 'boolean',
@@ -102,22 +128,58 @@ class GameManager extends Component
         $this->resetPage();
     }
 
+    public function updatingMediaFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingTeamFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    /**
+     * Mecze z wybranym rodzajem materiałów (albo bez żadnych: wiadomości, wideo, galerii i relacji).
+     */
+    private function applyMediaFilter(Builder $games): Builder
+    {
+        $hasVideo = fn (Builder $query) => $query->where(fn (Builder $video) => $video
+            ->where(fn (Builder $url) => $url->whereNotNull('video_url')->where('video_url', '!=', ''))
+            ->orWhereJsonLength('streams', '>', 0));
+        $hasReport = fn (Builder $query) => $query->whereNotNull('match_report')->where('match_report', '!=', '');
+
+        return match ($this->mediaFilter) {
+            'wiadomosc' => $games->whereHas('articles'),
+            'wideo' => $hasVideo($games),
+            'galeria' => $games->whereHas('galleries'),
+            'relacja' => $hasReport($games),
+            // Warunki wprost (nie przez NOT), bo puste pola NULL dałyby w SQL wynik nieokreślony.
+            'bez' => $games->whereDoesntHave('articles')
+                ->whereDoesntHave('galleries')
+                ->where(fn (Builder $url) => $url->whereNull('video_url')->orWhere('video_url', ''))
+                ->where(fn (Builder $streams) => $streams->whereNull('streams')->orWhereJsonLength('streams', 0))
+                ->where(fn (Builder $report) => $report->whereNull('match_report')->orWhere('match_report', '')),
+            default => $games,
+        };
+    }
+
     public function openCreateModal(): void
     {
         $this->resetForm();
-        $this->flashType = null;
-        $this->flashMessage = null;
         $this->showModal = true;
     }
 
     public function openEditModal(int $id): void
     {
-        $game = Game::findOrFail($id);
+        $game = $this->managedGames()->findOrFail($id);
 
         $this->editingId = $game->id;
         $this->team_id = $game->team_id;
         $this->season_id = $game->season_id;
         $this->competition_id = $game->competition_id;
+        $this->resultSource = $game->result_source;
+        $this->kind = $game->kind ?? Game::KIND_LEAGUE;
+        $this->tournament_id = $game->tournament_id;
         $this->opponent = $game->opponent;
         $this->opponent_team_id = $game->opponent_team_id;
         $this->is_home = $game->is_home;
@@ -141,8 +203,6 @@ class GameManager extends Component
             ->implode(', ');
         $this->match_report = (string) $game->match_report;
         $this->video_url = (string) $game->video_url;
-        $this->flashType = null;
-        $this->flashMessage = null;
 
         $this->showModal = true;
     }
@@ -152,15 +212,28 @@ class GameManager extends Component
         $validated = $this->validate();
         $this->applySetResults($validated);
 
+        // Sparing i mecz turniejowy nie liczą się do tabeli ligowej.
+        if ($validated['kind'] !== Game::KIND_LEAGUE) {
+            $validated['competition_id'] = null;
+        }
+
+        if ($validated['kind'] !== Game::KIND_TOURNAMENT) {
+            $validated['tournament_id'] = null;
+        }
+
         if ($this->editingId) {
-            $game = Game::findOrFail($this->editingId);
+            $game = $this->managedGames()->findOrFail($this->editingId);
             $game->update($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Mecz został zaktualizowany.';
+
+            if ($game->wasChanged(['home_score', 'away_score', 'sets_score', 'status'])) {
+                // Wynik poprawiony ręcznie - import ze związku go nie nadpisze.
+                $game->forceFill(['result_source' => Game::RESULT_MANUAL])->save();
+            }
+
+            $this->toast('Mecz został zaktualizowany.');
         } else {
-            $game = Game::create($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Mecz został dodany.';
+            $game = Game::create($validated + ['result_source' => ($validated['home_score'] ?? null) !== null ? Game::RESULT_MANUAL : null]);
+            $this->toast('Mecz został dodany.');
         }
 
         if ($game->competition_id && $competition = Competition::find($game->competition_id)) {
@@ -172,7 +245,7 @@ class GameManager extends Component
 
     public function delete(int $id): void
     {
-        $game = Game::findOrFail($id);
+        $game = $this->managedGames()->findOrFail($id);
         $competitionId = $game->competition_id;
         $game->delete();
 
@@ -180,8 +253,7 @@ class GameManager extends Component
             StandingsCalculator::recalculate($competition);
         }
 
-        $this->flashType = 'success';
-        $this->flashMessage = 'Mecz został usunięty.';
+        $this->toast('Mecz został usunięty.');
     }
 
     public function closeModal(): void
@@ -193,9 +265,12 @@ class GameManager extends Component
     private function resetForm(): void
     {
         $this->editingId = null;
+        $this->resultSource = null;
         $this->team_id = null;
         $this->season_id = null;
         $this->competition_id = null;
+        $this->kind = Game::KIND_LEAGUE;
+        $this->tournament_id = null;
         $this->opponent = '';
         $this->opponent_team_id = null;
         $this->is_home = true;
@@ -292,17 +367,55 @@ class GameManager extends Component
         return $sets;
     }
 
+    /**
+     * Odblokowuje wynik wpisany ręcznie: od teraz import ze związku znów go aktualizuje.
+     * Od razu próbuje pobrać oficjalny wynik.
+     */
+    public function restoreOfficialResult(): void
+    {
+        $game = $this->managedGames()->with('competition')->findOrFail($this->editingId);
+        abort_unless($game->competition !== null, 422);
+
+        $game->forceFill(['result_source' => null])->save();
+        AuditLog::record('game.result_restored', 'Przywrócono wynik ze związku: '.$game->mediaLabel(), $game);
+
+        try {
+            app(ScheduleImporter::class)->sync($game->competition);
+            $fetched = $game->fresh()->result_source !== null;
+            $this->toast($fetched ? 'Pobrano wynik ze związku.' : 'Odblokowano. Wynik pojawi się przy najbliższym imporcie, gdy związek go poda.');
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->toast('Odblokowano. Nie udało się teraz połączyć ze stroną związku, wynik pobierze najbliższy import.');
+        }
+
+        $this->openEditModal($game->id);
+    }
+
+    /**
+     * Mecze drużyn, którymi użytkownik zarządza (trener tylko swoich).
+     */
+    private function managedGames()
+    {
+        $teamIds = Auth::user()->managedTeamIds();
+
+        return Game::query()->when($teamIds !== null, fn ($games) => $games->whereIn('team_id', $teamIds));
+    }
+
     public function render()
     {
-        $games = Game::with(['team', 'opponentTeam'])
+        $games = $this->applyMediaFilter($this->managedGames())
+            ->with(['team', 'opponentTeam'])
+            ->withCount(['articles', 'galleries'])
             ->when($this->search, fn ($q) => $q->where('opponent', 'like', "%{$this->search}%"))
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
+            ->when($this->teamFilter, fn ($q) => $q->where('team_id', $this->teamFilter))
             ->orderBy('game_date', 'desc')
             ->paginate(12);
 
-        $teams = Team::orderBy('display_order')->get();
+        $teams = Team::managedBy(Auth::user())->orderBy('display_order')->get();
         $seasons = Season::orderBy('start_date', 'desc')->get();
         $competitions = Competition::orderBy('name')->get();
+        $tournaments = Tournament::orderByDesc('start_date')->get();
         $rivalTeams = RivalTeam::orderBy('full_name')->get();
 
         return view('livewire.admin.game-manager', [
@@ -310,6 +423,7 @@ class GameManager extends Component
             'teams' => $teams,
             'seasons' => $seasons,
             'competitions' => $competitions,
+            'tournaments' => $tournaments,
             'rivalTeams' => $rivalTeams,
         ]);
     }

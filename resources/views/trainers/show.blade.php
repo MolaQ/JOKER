@@ -1,80 +1,58 @@
 @extends('layouts.public')
 
-@section('title', $trainer->name . ' - Joker Piła')
+@section('title', $trainer->name.' - '.__('sztab'))
+@section('description', __(':name - sztab szkoleniowy klubu siatkarskiego Joker Piła.', ['name' => $trainer->name]))
 
 @section('content')
-<!-- Trainer Header -->
-<div class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white py-16">
-    <div class="container mx-auto px-4">
-        <div class="flex flex-col md:flex-row items-center space-y-6 md:space-y-0 md:space-x-8">
-            @if($trainer->avatar_path)
-                <img src="{{ Storage::url($trainer->avatar_path) }}" alt="{{ $trainer->name }}" class="w-32 h-32 rounded-full object-cover flex-shrink-0 border-4 border-white/20">
-            @else
-                <div class="w-32 h-32 bg-white rounded-full flex items-center justify-center flex-shrink-0">
-                    <span class="text-blue-900 font-bold text-4xl">{{ Str::of($trainer->name)->explode(' ')->map(fn ($part) => Str::substr($part, 0, 1))->join('') }}</span>
-                </div>
-            @endif
+<section class="relative isolate -mt-16 overflow-hidden bg-ink pt-16 text-white lg:-mt-20 lg:pt-20">
+    <div class="net-pattern absolute inset-0 -z-10" aria-hidden="true"></div>
 
-            <div class="text-center md:text-left">
-                <h1 class="text-4xl md:text-5xl font-bold mb-3">{{ $trainer->name }}</h1>
-                <div class="flex flex-wrap items-center justify-center md:justify-start gap-4 text-lg text-blue-100">
-                    <span>Trener</span>
-                </div>
-            </div>
+    <div class="container-site grid items-end gap-10 pt-16 pb-14 lg:grid-cols-[auto_1fr] lg:pt-24">
+        <x-avatar :photo="$trainer->avatar_path" :name="$trainer->name" class="aspect-square w-40 rounded-3xl text-6xl ring-4 ring-sky-club/40 lg:w-56" />
+        <div>
+            <a href="{{ route('teams.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ __('Drużyny') }}</a>
+            <p class="eyebrow mt-5">{{ $roles->pluck('role')->unique()->implode(' · ') ?: __('Sztab klubu') }}</p>
+            <h1 class="heading-xl mt-3">{{ $trainer->name }}</h1>
+            <x-view-count :model="$trainer" class="mt-3 text-white/70" />
         </div>
     </div>
-</div>
+</section>
 
-<!-- Trainer Details -->
-<div class="container mx-auto px-4 py-12">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Teams Card -->
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-lg shadow-lg p-6 sticky top-4">
-                <h2 class="text-xl font-bold text-gray-900 mb-6">Prowadzone drużyny</h2>
+<section class="container-site grid gap-8 py-14 lg:grid-cols-3">
+    <div class="card p-6 lg:self-start">
+        <h2 class="heading-md">{{ __('Funkcje w klubie') }}</h2>
+        <ul class="mt-5 space-y-3">
+            @forelse($roles as $entry)
+                <li>
+                    <a href="{{ route('teams.show', $entry['team']) }}" class="group flex items-center justify-between gap-4 rounded-2xl bg-zinc-50 p-4 transition hover:bg-sky-club/10">
+                        <span>
+                            <span class="block text-xs font-semibold tracking-widest text-sky-club-dark uppercase">{{ $entry['role'] }}</span>
+                            <span class="block font-semibold">{{ $entry['team']->name }}</span>
+                        </span>
+                        <span class="transition group-hover:translate-x-1" aria-hidden="true">→</span>
+                    </a>
+                </li>
+            @empty
+                <li class="text-sm text-zinc-500">{{ __('Brak przypisanych drużyn.') }}</li>
+            @endforelse
+        </ul>
 
-                @if($teams->isNotEmpty())
-                    <div class="space-y-3">
-                        @foreach($teams as $team)
-                            <a href="{{ route('teams.show', $team) }}" class="flex items-center justify-between rounded-lg border border-gray-100 px-4 py-3 hover:border-blue-300 hover:bg-blue-50 transition">
-                                <span class="font-semibold text-gray-900">{{ $team->name }}</span>
-                                @if($team->trainer_id === $trainer->id)
-                                    <span class="text-xs font-medium text-blue-700 bg-blue-100 rounded-full px-2 py-0.5">Trener główny</span>
-                                @else
-                                    <span class="text-xs font-medium text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">Trener pomocniczy</span>
-                                @endif
-                            </a>
-                        @endforeach
-                    </div>
-                @else
-                    <p class="text-gray-500 text-sm">Ten trener nie prowadzi obecnie żadnej drużyny.</p>
-                @endif
-            </div>
-        </div>
+        @if($trainer->instagram)
+            <a href="{{ $trainer->instagram }}" target="_blank" rel="noopener" class="btn-dark mt-6 w-full">Instagram</a>
+        @endif
+    </div>
 
-        <!-- Bio & Description -->
-        <div class="lg:col-span-2">
-            <div class="bg-white rounded-lg shadow-lg p-8">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6">O trenerze</h2>
-
+    <div class="lg:col-span-2">
+        <div class="card p-8">
+            <h2 class="heading-md">{{ __('O mnie') }}</h2>
+            <div class="prose-club mt-5">
                 @if($trainer->additional_info)
-                    <div class="prose max-w-none text-gray-700 leading-relaxed">
-                        {!! $trainer->additional_info !!}
-                    </div>
+                    {!! strip_tags($trainer->additional_info, '<p><br><strong><em><b><i><ul><ol><li>') !!}
                 @else
-                    <div class="bg-gray-50 rounded-lg p-8 text-center">
-                        <p class="text-gray-500">Brak informacji o trenerze.</p>
-                    </div>
-                @endif
-
-                @if($trainer->instagram)
-                    <p class="mt-6 text-sm text-gray-700">
-                        Instagram:
-                        <a href="{{ $trainer->instagram }}" target="_blank" rel="noopener" class="font-semibold text-blue-700 hover:underline">{{ $trainer->instagram }}</a>
-                    </p>
+                    <p class="text-zinc-500">{{ __('Opis zostanie wkrótce uzupełniony.') }}</p>
                 @endif
             </div>
         </div>
     </div>
-</div>
+</section>
 @endsection
