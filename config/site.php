@@ -101,6 +101,7 @@ return [
                     ['label' => 'Dla rodziców', 'url' => '/strona/dla-rodzicow'],
                     ['label' => 'Dla kibiców', 'url' => '/strona/dla-kibicow'],
                     ['label' => 'Nabór', 'url' => '/strona/nabor'],
+                    ['label' => 'Galerie', 'url' => '/galerie'],
                     ['label' => 'Dokumenty', 'url' => '/dokumenty'],
                 ]],
                 'topbar_links_right' => ['type' => 'links', 'label' => 'Linki po prawej', 'default' => [
@@ -188,6 +189,7 @@ return [
                     ['label' => 'O klubie', 'url' => '/strona/o-klubie'],
                     ['label' => 'System szkolenia', 'url' => '/strona/system-szkolenia'],
                     ['label' => 'Osiągnięcia', 'url' => '/strona/osiagniecia'],
+                    ['label' => 'Galerie zdjęć', 'url' => '/galerie'],
                     ['label' => 'Nabór', 'url' => '/strona/nabor'],
                     ['label' => 'Współpraca i sponsoring', 'url' => '/strona/wspolpraca'],
                     ['label' => 'Dokumenty', 'url' => '/dokumenty'],

@@ -67,6 +67,8 @@ class PlayerManager extends Component
 
     public bool $is_active = true;
 
+    public bool $image_consent = true;
+
     public $photo = null;
 
     public ?string $existingPhoto = null;
@@ -102,6 +104,7 @@ class PlayerManager extends Component
             'extra_team_ids' => 'array',
             'extra_team_ids.*' => 'exists:teams,id',
             'is_active' => 'boolean',
+            'image_consent' => 'boolean',
             'photo' => 'nullable|image|max:4096|dimensions:ratio=4/5',
         ];
     }
@@ -145,6 +148,7 @@ class PlayerManager extends Component
         $this->bio = (string) $player->bio;
         $this->team_id = $player->team_id;
         $this->is_active = $player->is_active;
+        $this->image_consent = $player->image_consent;
         $this->existingPhoto = $player->photo_path;
         $this->photo = null;
 
@@ -261,6 +265,7 @@ class PlayerManager extends Component
         $this->team_id = null;
         $this->extra_team_ids = [];
         $this->is_active = true;
+        $this->image_consent = true;
         $this->photo = null;
         $this->existingPhoto = null;
         $this->resetErrorBag();

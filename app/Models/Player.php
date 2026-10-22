@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Collection;
 
 class Player extends Model
 {
@@ -53,6 +55,8 @@ class Player extends Model
         'team_id',
         'user_id',
         'is_active',
+        'image_consent',
+        'image_consent_changed_at',
     ];
 
     protected function casts(): array
@@ -60,6 +64,8 @@ class Player extends Model
         return [
             'birth_date' => 'date',
             'is_active' => 'boolean',
+            'image_consent' => 'boolean',
+            'image_consent_changed_at' => 'datetime',
             'birthday_display' => BirthdayDisplay::class,
             'position' => PlayerPosition::class,
             'extra_positions' => 'array',
@@ -196,5 +202,31 @@ class Player extends Model
         return $query->where(fn ($players) => $players
             ->whereIn('team_id', $teamIds)
             ->orWhereHas('teams', fn ($teams) => $teams->whereIn('teams.id', $teamIds)));
+    }
+
+    public function photoTags(): MorphMany
+    {
+        return $this->morphMany(PhotoTag::class, 'taggable');
+    }
+
+    /**
+     * Zdjęcia z opublikowanych galerii, na których zawodnik jest oznaczony
+     * (puste, gdy nie ma zgody na wizerunek).
+     *
+     * @return Collection<int, GalleryPhoto>
+     */
+    public function taggedPhotos(int $limit = 24): Collection
+    {
+        if (! $this->image_consent) {
+            return collect();
+        }
+
+        return GalleryPhoto::query()
+            ->whereHas('tags', fn ($tags) => $tags->approved()->where('taggable_type', $this->getMorphClass())->where('taggable_id', $this->id))
+            ->whereHas('gallery', fn ($gallery) => $gallery->published())
+            ->with(['gallery', 'tags.taggable'])
+            ->latest('id')
+            ->limit($limit)
+            ->get();
     }
 }

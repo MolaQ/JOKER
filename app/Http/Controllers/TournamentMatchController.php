@@ -13,7 +13,7 @@ class TournamentMatchController extends Controller
      */
     public function show(Tournament $tournament, TournamentMatch $match): View
     {
-        $match->load(['category.tournament', 'group', 'home.competitor', 'away.competitor', 'publishedGalleries.photos']);
+        $match->load(['category.tournament', 'group', 'home.competitor', 'away.competitor', 'publishedGalleries.photos.tags.taggable']);
 
         abort_unless($tournament->has_page && $match->category?->tournament_id === $tournament->id, 404);
 

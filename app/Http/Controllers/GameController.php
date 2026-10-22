@@ -22,7 +22,7 @@ class GameController extends Controller
             'opponentTeam.club',
             'tournament',
             'articles' => fn ($query) => $query->published()->orderByDesc('published_at'),
-            'publishedGalleries.photos',
+            'publishedGalleries.photos.tags.taggable',
             'approvedComments' => fn ($query) => $query->with('user')->latest(),
         ]);
 

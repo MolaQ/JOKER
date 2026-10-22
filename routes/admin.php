@@ -28,6 +28,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
 
     // Transmisje i galerie zdjęć meczów ligowych i turniejowych
     Route::view('/media', 'admin.media.index')->middleware('can:media.manage')->name('media.index');
+    Route::view('/galerie', 'admin.galleries.index')->middleware('can:media.manage')->name('galleries.index');
 
     Route::middleware('can:competitions.manage')->group(function () {
         Route::view('/competitions', 'admin.competitions.index')->name('competitions.index');

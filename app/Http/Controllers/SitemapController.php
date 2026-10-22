@@ -55,6 +55,7 @@ class SitemapController extends Controller
             ['loc' => route('schedule.index'), 'lastmod' => Game::max('updated_at'), 'priority' => '0.8'],
             ['loc' => route('standings'), 'lastmod' => null, 'priority' => '0.6'],
             ['loc' => route('teams.index'), 'lastmod' => Team::max('updated_at'), 'priority' => '0.8'],
+            ['loc' => route('galleries.index'), 'lastmod' => Gallery::max('updated_at'), 'priority' => '0.6'],
             ['loc' => route('documents.index'), 'lastmod' => null, 'priority' => '0.4'],
             ['loc' => route('contact.index'), 'lastmod' => null, 'priority' => '0.5'],
         ];

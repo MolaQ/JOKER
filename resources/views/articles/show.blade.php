@@ -76,7 +76,7 @@
                 </div>
             @endif
             @foreach($gameGalleries as $gallery)
-                <x-match-gallery :gallery="$gallery" id="galeria-{{ $gallery->id }}" />
+                <x-match-gallery :gallery="$gallery" :limit="8" id="galeria-{{ $gallery->id }}" />
             @endforeach
         </section>
     @else

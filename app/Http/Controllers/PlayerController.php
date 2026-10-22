@@ -41,6 +41,7 @@ class PlayerController extends Controller
             'seasonTeams' => $seasonTeams,
             'career' => $this->career($player),
             'recentGames' => $recentGames,
+            'photos' => $player->taggedPhotos(),
         ]);
     }
 

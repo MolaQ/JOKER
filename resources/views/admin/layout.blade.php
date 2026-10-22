@@ -22,7 +22,8 @@
                 ['label' => 'Komentarze', 'route' => 'admin.comments.index', 'icon' => '💬', 'can' => 'comments.moderate', 'badge' => fn () => \App\Livewire\Admin\CommentModeration::pendingCount()],
                 ['label' => 'Mecze i wyniki', 'route' => 'admin.games.index', 'icon' => '🏐', 'can' => 'games.manage'],
                 ['label' => 'Turnieje', 'route' => 'admin.tournaments.index', 'icon' => '🥇', 'can' => 'tournaments.manage'],
-                ['label' => 'Transmisje i galerie', 'route' => 'admin.media.index', 'icon' => '🎥', 'can' => 'media.manage'],
+                ['label' => 'Transmisje i zdjęcia meczów', 'route' => 'admin.media.index', 'icon' => '🎥', 'can' => 'media.manage'],
+                ['label' => 'Galerie', 'route' => 'admin.galleries.index', 'icon' => '📷', 'can' => 'media.manage', 'badge' => fn () => \App\Livewire\Admin\PhotoTagReview::pendingFor(auth()->user())->count()],
                 ['label' => 'Slajdy na stronie głównej', 'route' => 'admin.hero-slides.index', 'icon' => '🖼️', 'can' => 'homepage.manage'],
             ],
             'Wygląd strony' => [

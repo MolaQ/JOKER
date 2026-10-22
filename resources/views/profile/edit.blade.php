@@ -51,9 +51,18 @@
             <p class="mt-1 text-sm text-zinc-500">{{ __('Na stronie zawodnika kliknij „Zaproponuj zmiany”, aby wysłać nowe zdjęcie lub dane do zatwierdzenia.') }}</p>
             <ul class="mt-4 divide-y divide-zinc-100">
                 @foreach($players as $player)
-                    <li class="flex items-center justify-between gap-3 py-3">
+                    <li class="flex flex-wrap items-center justify-between gap-3 py-3">
                         <span><span class="font-semibold">{{ $player->full_name }}</span> <span class="text-sm text-zinc-500">{{ $player->team?->name }}</span></span>
                         <a href="{{ route('players.show', $player) }}" class="text-sm font-semibold text-sky-club-dark hover:underline">{{ __('Otwórz profil') }} →</a>
+                        <form method="POST" action="{{ route('profile.consent', $player) }}" class="w-full text-sm" x-data>
+                            @csrf
+                            @method('PUT')
+                            <input type="hidden" name="image_consent" value="0">
+                            <label class="flex items-center gap-2 text-zinc-700">
+                                <input type="checkbox" name="image_consent" value="1" @checked($player->image_consent) x-on:change="$el.form.submit()" class="rounded border-zinc-300 text-sky-club-dark">
+                                {{ __('Zgoda na oznaczanie imieniem i nazwiskiem na zdjęciach') }}
+                            </label>
+                        </form>
                     </li>
                 @endforeach
             </ul>

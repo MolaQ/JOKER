@@ -3,6 +3,8 @@
 namespace App\Support;
 
 use App\Models\Article;
+use App\Models\Gallery;
+use App\Models\GalleryPhoto;
 use App\Models\Game;
 use App\Models\Player;
 use App\Models\Team;
@@ -87,6 +89,26 @@ class Seo
             'author' => $article->author ? ['@type' => 'Person', 'name' => $article->author->name] : ['@type' => 'Organization', 'name' => config('app.name')],
             'publisher' => ['@id' => url('/').'#klub'],
             'mainEntityOfPage' => route('articles.show', $article),
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function gallery(Gallery $gallery): array
+    {
+        return array_filter([
+            '@type' => 'ImageGallery',
+            'name' => $gallery->title,
+            'description' => $gallery->description,
+            'url' => route('galleries.show', $gallery),
+            'datePublished' => $gallery->displayDate()?->toDateString(),
+            'publisher' => ['@id' => url('/').'#klub'],
+            'image' => $gallery->photos->take(30)->map(fn (GalleryPhoto $photo) => array_filter([
+                '@type' => 'ImageObject',
+                'contentUrl' => $photo->url(),
+                'caption' => $photo->altText() ?: null,
+            ]))->values()->all(),
         ]);
     }
 

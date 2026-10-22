@@ -105,7 +105,7 @@
                 <h2 class="heading-lg mt-3">{{ __('Zdjęcia z meczu') }}</h2>
             </div>
             @foreach($galleries as $gallery)
-                <x-match-gallery :gallery="$gallery" id="galeria-{{ $gallery->id }}" />
+                <x-match-gallery :gallery="$gallery" :limit="8" id="galeria-{{ $gallery->id }}" />
             @endforeach
         </section>
     @endif

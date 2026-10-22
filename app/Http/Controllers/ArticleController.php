@@ -29,7 +29,7 @@ class ArticleController extends Controller
             'author',
             'approvedComments.user',
             'approvedComments.replies.user',
-            'games' => fn ($query) => $query->with(['team', 'competition.teams', 'opponentTeam', 'tournament', 'publishedGalleries.photos'])->orderBy('game_date'),
+            'games' => fn ($query) => $query->with(['team', 'competition.teams', 'opponentTeam', 'tournament', 'publishedGalleries.photos.tags.taggable'])->orderBy('game_date'),
         ]);
 
         $related_articles = Article::published()

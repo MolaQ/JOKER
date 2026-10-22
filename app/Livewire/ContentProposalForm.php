@@ -4,8 +4,7 @@ namespace App\Livewire;
 
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\ContentProposal;
-use App\Models\Game;
-use App\Models\TournamentMatch;
+use App\Support\MatchPicker;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -38,29 +37,11 @@ class ContentProposalForm extends Component
     }
 
     /**
-     * Mecze z ostatnich 6 tygodni i najbliższych 2 tygodni, do wyboru w formularzu.
-     *
      * @return array<string, array<string, string>>
      */
     public function matchOptions(): array
     {
-        $from = now()->subWeeks(6);
-        $to = now()->addWeeks(2);
-
-        return array_filter([
-            __('Mecze ligowe') => Game::with(['team', 'competition', 'opponentTeam'])
-                ->whereBetween('game_date', [$from, $to])
-                ->orderByDesc('game_date')
-                ->get()
-                ->mapWithKeys(fn (Game $game) => ['game:'.$game->id => $game->mediaLabel()])
-                ->all(),
-            __('Turnieje') => TournamentMatch::with(['category.tournament', 'home.competitor', 'away.competitor'])
-                ->whereBetween('starts_at', [$from, $to])
-                ->orderByDesc('starts_at')
-                ->get()
-                ->mapWithKeys(fn (TournamentMatch $match) => ['tournament_match:'.$match->id => $match->mediaLabel()])
-                ->all(),
-        ]);
+        return MatchPicker::recent();
     }
 
     public function submit(): void
@@ -68,7 +49,7 @@ class ContentProposalForm extends Component
         $types = ContentProposal::typesFor(Auth::user());
         abort_if($types === [], 403);
 
-        $matchKeys = collect($this->matchOptions())->flatMap(fn (array $options) => array_keys($options))->all();
+        $matchKeys = MatchPicker::keys($this->matchOptions());
 
         $validated = $this->validate([
             'type' => ['required', Rule::in($types)],
@@ -88,14 +69,13 @@ class ContentProposalForm extends Component
             'url' => __('adres transmisji'),
         ]);
 
-        [$matchKey, $matchId] = $validated['match'] ? explode(':', $validated['match'], 2) : [null, null];
-        $matchType = $matchKey ? (new (['game' => Game::class, 'tournament_match' => TournamentMatch::class][$matchKey]))->getMorphClass() : null;
+        $match = MatchPicker::find($validated['match']);
 
         ContentProposal::create([
             'user_id' => Auth::id(),
             'type' => $validated['type'],
-            'match_type' => $matchType,
-            'match_id' => $matchId,
+            'match_type' => $match?->getMorphClass(),
+            'match_id' => $match?->getKey(),
             'title' => $validated['title'] ?: null,
             'content' => $validated['content'] ?: null,
             'url' => $validated['url'] ?: null,

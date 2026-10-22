@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\GameCalendarController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\HomeController;
@@ -36,6 +37,8 @@ Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');
 Route::get('/jezyk/{locale}', LocaleController::class)->whereIn('locale', ['pl', 'en'])->name('locale.switch');
 
 // Teams
+Route::get('/galerie', [GalleryController::class, 'index'])->name('galleries.index');
+Route::get('/galerie/{gallery}', [GalleryController::class, 'show'])->name('galleries.show');
 Route::get('/druzyny', [TeamController::class, 'index'])->name('teams.index');
 Route::get('/druzyny/{team}', [TeamController::class, 'show'])->name('teams.show');
 
@@ -109,6 +112,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/moj-profil', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/moj-profil/prosba-o-zmiane', [ProfileController::class, 'requestChange'])->name('profile.request-change');
     Route::put('/moj-profil/haslo', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::put('/moj-profil/zgoda-na-wizerunek/{player}', [ProfileController::class, 'updateConsent'])->name('profile.consent');
 });
 
 /*

@@ -267,6 +267,11 @@
                                 <input type="checkbox" wire:model="is_active" id="player_is_active" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                                 <label for="player_is_active" class="ml-2 text-sm text-gray-700">Zawodnik aktywny</label>
                             </div>
+
+                            <div class="flex items-center">
+                                <input type="checkbox" wire:model="image_consent" id="player_image_consent" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <label for="player_image_consent" class="ml-2 text-sm text-gray-700">Zgoda na wizerunek (oznaczenia na zdjęciach widoczne)</label>
+                            </div>
                         </div>
 
                         <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3 rounded-b-lg">
