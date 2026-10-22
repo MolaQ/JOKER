@@ -24,7 +24,7 @@
                     @endif
                     @if($proposal->title)<p class="mt-1 text-base font-semibold text-gray-900">{{ $proposal->title }}</p>@endif
                     @if($proposal->content)<div class="mt-1 max-h-48 overflow-y-auto whitespace-pre-line text-gray-700">{{ $proposal->content }}</div>@endif
-                    @if($proposal->url)<a href="{{ $proposal->url }}" target="_blank" rel="noopener" class="mt-1 block break-all text-blue-600 underline">{{ $proposal->url }}</a>@endif
+                    @if($proposal->url)<a href="{{ $proposal->url }}" target="_blank" rel="noopener" class="mt-1 block break-all text-sky-700 underline">{{ $proposal->url }}</a>@endif
                     @if($proposal->files)
                         <div class="mt-2 flex flex-wrap gap-2">
                             @foreach($proposal->files as $path)

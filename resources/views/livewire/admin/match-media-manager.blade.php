@@ -1,6 +1,6 @@
 <div class="space-y-6">
     {{-- WYBÓR MECZU --}}
-    <div class="rounded-lg bg-white p-4 shadow ring-1 ring-black/5 sm:p-6">
+    <div class="rounded-lg bg-white p-4 shadow ring-1 ring-zinc-200 sm:p-6">
         <h2 class="text-lg font-semibold text-gray-900">1. Wybierz mecz</h2>
         <p class="mt-1 text-sm text-gray-500">Wpisz datę, drużynę, rywala albo nazwę turnieju, np. „21.10 kadeci kalisz”. Najnowsze mecze są na górze.</p>
 
@@ -9,9 +9,9 @@
                 type="search"
                 wire:model.live.debounce.300ms="search"
                 placeholder="Szukaj meczu…"
-                class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"
             >
-            <select wire:model.live="selected" class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" aria-label="Mecz">
+            <select wire:model.live="selected" class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500" aria-label="Mecz">
                 <option value="">— wybierz mecz ({{ collect($this->matchOptions)->flatten()->count() }} na liście) —</option>
                 @foreach($this->matchOptions as $group => $options)
                     <optgroup label="{{ $group }}">
@@ -36,7 +36,7 @@
         </div>
 
         {{-- TRANSMISJE --}}
-        <div class="rounded-lg bg-white p-4 shadow ring-1 ring-black/5 sm:p-6">
+        <div class="rounded-lg bg-white p-4 shadow ring-1 ring-zinc-200 sm:p-6">
             <h2 class="text-lg font-semibold text-gray-900">2. Transmisje</h2>
             <p class="mt-1 text-sm text-gray-500">Link do YouTube zostanie osadzony na stronie meczu, Facebook i inne serwisy pojawią się jako przycisk. Opis jest opcjonalny, np. „Nagranie rodziców”, „Transmisja klubu”.</p>
 
@@ -44,13 +44,13 @@
                 @forelse($streams as $index => $stream)
                     <div class="grid gap-2 sm:grid-cols-[1fr_14rem_auto] sm:items-start" wire:key="stream-{{ $index }}">
                         <div>
-                            <input type="url" wire:model.blur="streams.{{ $index }}.url" placeholder="https://www.youtube.com/watch?v=…" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <input type="url" wire:model.blur="streams.{{ $index }}.url" placeholder="https://www.youtube.com/watch?v=…" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">
                             @if($platform = $this->platformOf($stream['url'] ?? ''))
                                 <p class="mt-1 text-xs text-gray-500">Rozpoznano: <span class="font-semibold">{{ $platform }}</span></p>
                             @endif
                             @error('streams.'.$index.'.url') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
-                        <input type="text" wire:model="streams.{{ $index }}.label" placeholder="Opis (opcjonalnie)" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" wire:model="streams.{{ $index }}.label" placeholder="Opis (opcjonalnie)" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">
                         <button type="button" wire:click="removeStream({{ $index }})" class="rounded-md px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50">Usuń</button>
                     </div>
                 @empty
@@ -59,7 +59,7 @@
 
                 <div class="flex flex-wrap items-center gap-3 pt-2">
                     <button type="button" wire:click="addStream" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset hover:bg-gray-50">+ Dodaj link</button>
-                    <button type="submit" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                    <button type="submit" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
                         <span wire:loading.remove wire:target="saveStreams">Zapisz transmisje</span>
                         <span wire:loading wire:target="saveStreams">Zapisywanie…</span>
                     </button>
@@ -68,7 +68,7 @@
         </div>
 
         {{-- GALERIE --}}
-        <div class="rounded-lg bg-white p-4 shadow ring-1 ring-black/5 sm:p-6">
+        <div class="rounded-lg bg-white p-4 shadow ring-1 ring-zinc-200 sm:p-6">
             <h2 class="text-lg font-semibold text-gray-900">3. Galerie zdjęć</h2>
 
             <div class="mt-4 space-y-4">
@@ -95,7 +95,7 @@
                                 @if($editingGalleryId === $gallery->id)
                                     <button type="button" wire:click="cancelEdit" class="font-semibold text-gray-600 hover:text-gray-900">Zwiń</button>
                                 @else
-                                    <button type="button" wire:click="editGallery({{ $gallery->id }})" class="font-semibold text-blue-600 hover:text-blue-900">Edytuj</button>
+                                    <button type="button" wire:click="editGallery({{ $gallery->id }})" class="font-semibold text-sky-700 hover:text-sky-900">Edytuj</button>
                                 @endif
                                 <button type="button" wire:click="deleteGallery({{ $gallery->id }})" wire:confirm="Usunąć galerię „{{ $gallery->title }}” razem ze wszystkimi zdjęciami?" class="font-semibold text-red-600 hover:text-red-900">Usuń</button>
                             </div>
@@ -106,12 +106,12 @@
                                 <div class="grid gap-4 sm:grid-cols-2">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700">Tytuł</label>
-                                        <input type="text" wire:model="editTitle" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <input type="text" wire:model="editTitle" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                         @error('editTitle') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700">Opis (opcjonalnie)</label>
-                                        <input type="text" wire:model="editDescription" placeholder="np. Zdjęcia: Anna Kowalska" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <input type="text" wire:model="editDescription" placeholder="np. Zdjęcia: Anna Kowalska" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     </div>
                                 </div>
 
@@ -121,7 +121,7 @@
                                             <li class="flex gap-3 rounded-md bg-white p-2 ring-1 ring-gray-200" wire:key="photo-{{ $photo->id }}">
                                                 <img src="{{ $photo->url() }}" alt="" class="h-20 w-24 shrink-0 rounded object-cover" onerror="this.style.visibility='hidden'">
                                                 <div class="flex min-w-0 flex-1 flex-col gap-2">
-                                                    <input type="text" wire:model="captions.{{ $photo->id }}" placeholder="Podpis (opcjonalnie)" class="block w-full rounded-md border-gray-300 text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                    <input type="text" wire:model="captions.{{ $photo->id }}" placeholder="Podpis (opcjonalnie)" class="block w-full rounded-md border-gray-300 text-xs shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                                     <div class="flex items-center gap-1 text-xs">
                                                         <button type="button" wire:click="movePhoto({{ $photo->id }}, -1)" @disabled($loop->first) class="rounded px-2 py-1 font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-30" title="Przesuń wcześniej">↑</button>
                                                         <button type="button" wire:click="movePhoto({{ $photo->id }}, 1)" @disabled($loop->last) class="rounded px-2 py-1 font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-30" title="Przesuń dalej">↓</button>
@@ -151,7 +151,7 @@
 
                                 <div class="flex justify-end gap-3">
                                     <button type="button" wire:click="cancelEdit" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset hover:bg-gray-50">Anuluj</button>
-                                    <button type="submit" wire:loading.attr="disabled" wire:target="saveGallery,morePhotos" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">Zapisz galerię</button>
+                                    <button type="submit" wire:loading.attr="disabled" wire:target="saveGallery,morePhotos" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 disabled:opacity-50">Zapisz galerię</button>
                                 </div>
                             </form>
                         @endif
@@ -167,12 +167,12 @@
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Tytuł</label>
-                        <input type="text" wire:model="galleryTitle" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" wire:model="galleryTitle" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">
                         @error('galleryTitle') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Opis (opcjonalnie)</label>
-                        <input type="text" wire:model="galleryDescription" placeholder="np. Zdjęcia: Anna Kowalska" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input type="text" wire:model="galleryDescription" placeholder="np. Zdjęcia: Anna Kowalska" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">
                     </div>
                 </div>
                 <div>
@@ -194,10 +194,10 @@
                 </div>
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                        <input type="checkbox" wire:model="galleryPublished" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <input type="checkbox" wire:model="galleryPublished" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500">
                         Opublikuj od razu
                     </label>
-                    <button type="submit" wire:loading.attr="disabled" wire:target="createGallery,galleryPhotos" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50">
+                    <button type="submit" wire:loading.attr="disabled" wire:target="createGallery,galleryPhotos" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 disabled:opacity-50">
                         <span wire:loading.remove wire:target="createGallery">Utwórz galerię</span>
                         <span wire:loading wire:target="createGallery">Zapisywanie…</span>
                     </button>

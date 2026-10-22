@@ -1,6 +1,6 @@
 <div class="space-y-8">
     @if($editing)
-        <form wire:submit="save" class="space-y-4 rounded-lg bg-white p-5 shadow ring-1 ring-black/5">
+        <form wire:submit="save" class="space-y-4 rounded-lg bg-white p-5 shadow ring-1 ring-zinc-200">
             <h2 class="text-lg font-semibold text-gray-900">{{ $editing === 'package' ? ($editingId ? 'Edytuj pakiet sponsorski' : 'Nowy pakiet sponsorski') : ($editingId ? 'Edytuj gadżet' : 'Nowy gadżet') }}</h2>
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
@@ -54,7 +54,7 @@
             <h2 class="text-lg font-semibold text-gray-900">🤝 Pakiety sponsorskie</h2>
             <button type="button" wire:click="createPackage" class="rounded-md bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-700">+ Dodaj pakiet</button>
         </div>
-        <ul class="divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow ring-1 ring-black/5">
+        <ul class="divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow ring-1 ring-zinc-200">
             @forelse($packages as $package)
                 <li class="flex items-center gap-4 p-4" wire:key="package-{{ $package->id }}">
                     <div class="min-w-0 flex-1">
@@ -75,7 +75,7 @@
             <h2 class="text-lg font-semibold text-gray-900">🛍️ Gadżety klubowe</h2>
             <button type="button" wire:click="createProduct" class="rounded-md bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-700">+ Dodaj gadżet</button>
         </div>
-        <ul class="divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow ring-1 ring-black/5">
+        <ul class="divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow ring-1 ring-zinc-200">
             @forelse($products as $product)
                 <li class="flex items-center gap-4 p-4" wire:key="product-{{ $product->id }}">
                     @if($product->photoUrl())

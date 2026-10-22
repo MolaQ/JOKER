@@ -1,4 +1,4 @@
-<div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-black/5">
+<div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-zinc-200">
     <ul class="divide-y divide-gray-200">
         @forelse($pending as $account)
             <li class="p-4" wire:key="pending-{{ $account->id }}">
@@ -17,7 +17,7 @@
                     </div>
                     @if($activatingId !== $account->id)
                         <div class="flex gap-2">
-                            <button type="button" wire:click="start({{ $account->id }})" class="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-blue-700">Aktywuj i powiąż</button>
+                            <button type="button" wire:click="start({{ $account->id }})" class="rounded-md bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-700">Aktywuj i powiąż</button>
                             <button type="button" wire:click="startRejecting({{ $account->id }})" class="rounded-md px-3 py-1.5 text-sm font-semibold text-red-600 ring-1 ring-red-200 hover:bg-red-50">Odrzuć</button>
                             <button type="button" wire:click="deleteSpam({{ $account->id }})" wire:confirm="Usunąć konto {{ $account->name }} jako spam? Tego nie da się cofnąć." class="rounded-md px-2 py-1.5 text-xs text-gray-500 hover:text-red-700" title="Konto założone przez robota albo dla żartu">Usuń (spam)</button>
                         </div>
@@ -71,9 +71,9 @@
                                     @forelse($players as $player)
                                         <label class="flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-gray-50" wire:key="pick-{{ $player->id }}">
                                             @if($role === 'player')
-                                                <input type="radio" wire:model="playerId" value="{{ $player->id }}" @disabled($player->user_id) class="text-blue-600">
+                                                <input type="radio" wire:model="playerId" value="{{ $player->id }}" @disabled($player->user_id) class="text-sky-700">
                                             @else
-                                                <input type="checkbox" wire:model="childIds" value="{{ $player->id }}" class="rounded text-blue-600">
+                                                <input type="checkbox" wire:model="childIds" value="{{ $player->id }}" class="rounded text-sky-700">
                                             @endif
                                             <span>{{ $player->full_name }} <span class="text-gray-500">{{ $player->team?->name }}@if($role === 'player' && $player->user_id) · ma już konto @endif</span></span>
                                         </label>
@@ -101,13 +101,13 @@
                                     <input type="text" wire:model="function" placeholder="np. asystent trenera" class="mt-1 w-full rounded-md border-gray-300 text-sm">
                                 </div>
                                 <label class="flex items-end gap-2 pb-2 text-sm text-gray-700">
-                                    <input type="checkbox" wire:model="headCoach" class="rounded text-blue-600"> Trener główny
+                                    <input type="checkbox" wire:model="headCoach" class="rounded text-sky-700"> Trener główny
                                 </label>
                             </div>
                         @endif
 
                         <div class="flex gap-2">
-                            <button type="submit" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Aktywuj konto</button>
+                            <button type="submit" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Aktywuj konto</button>
                             <button type="button" wire:click="cancel" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-gray-300 hover:bg-gray-50">Anuluj</button>
                         </div>
                     </form>

@@ -5,9 +5,9 @@
             type="text"
             wire:model.live.debounce.300ms="search"
             placeholder="Szukaj dokumentu..."
-            class="w-full sm:w-64 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+            class="w-full sm:w-64 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"
         >
-        <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+        <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
             + Dodaj dokument
         </button>
     </div>
@@ -48,7 +48,7 @@
                         {{ $document->download_count }}
                     </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <button type="button" wire:click="openEditModal({{ $document->id }})" class="text-blue-600 hover:text-blue-900 mr-4">Edytuj</button>
+                        <button type="button" wire:click="openEditModal({{ $document->id }})" class="text-sky-700 hover:text-sky-900 mr-4">Edytuj</button>
                         <button type="button" wire:click="delete({{ $document->id }})" wire:confirm="Czy na pewno chcesz usunąć ten dokument?" class="text-red-600 hover:text-red-900">Usuń</button>
                     </td>
                 </tr>
@@ -67,10 +67,10 @@
     <!-- Modal -->
     @if($showModal)
         <div class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="fixed inset-0 bg-gray-500/75" wire:click="closeModal"></div>
+            <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="closeModal"></div>
 
             <div class="flex min-h-full items-center justify-center p-4">
-                <div class="relative bg-white rounded-lg shadow-xl w-full max-w-lg" @click.stop>
+                <div class="relative bg-white rounded-2xl shadow-2xl ring-1 ring-zinc-900/5 w-full max-w-lg" @click.stop>
                     <form wire:submit.prevent="save">
                         <div class="px-6 py-4 border-b border-gray-200">
                             <h3 class="text-lg font-semibold text-gray-900">
@@ -81,7 +81,7 @@
                         <div class="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Tytuł</label>
-                                <input type="text" wire:model="title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <input type="text" wire:model="title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 @error('title') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
@@ -92,7 +92,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Kategoria</label>
-                                <select wire:model="category" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <select wire:model="category" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     @foreach(\App\Models\Document::CATEGORIES as $value => $label)
                                         <option value="{{ $value }}">{{ $label }}</option>
                                     @endforeach
@@ -103,7 +103,7 @@
                                 <label class="block text-sm font-medium text-gray-700">Plik</label>
                                 @if($existingFile && !$file)
                                     <p class="text-sm text-gray-500 mb-2">
-                                        Aktualny plik: <a href="{{ \App\Support\Media::url($existingFile) }}" target="_blank" class="text-blue-600 hover:underline">pobierz</a>
+                                        Aktualny plik: <a href="{{ \App\Support\Media::url($existingFile) }}" target="_blank" class="text-sky-700 hover:underline">pobierz</a>
                                     </p>
                                 @endif
                                 <input type="file" wire:model="file" class="mt-1 block w-full text-sm text-gray-700">
@@ -112,7 +112,7 @@
                             </div>
 
                             <div class="flex items-center">
-                                <input type="checkbox" wire:model="is_public" id="is_public" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <input type="checkbox" wire:model="is_public" id="is_public" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500">
                                 <label for="is_public" class="ml-2 text-sm text-gray-700">Dokument publiczny (bez zaznaczenia: tylko dla zalogowanych, np. zgody i RODO)</label>
                             </div>
                         </div>
@@ -121,7 +121,7 @@
                             <button type="button" wire:click="closeModal" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                                 Anuluj
                             </button>
-                            <button type="submit" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                            <button type="submit" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
                                 <span wire:loading.remove wire:target="save">Zapisz</span>
                                 <span wire:loading wire:target="save">Zapisywanie...</span>
                             </button>

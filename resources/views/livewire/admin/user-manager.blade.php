@@ -6,9 +6,9 @@
                 type="text"
                 wire:model.live.debounce.300ms="search"
                 placeholder="Szukaj użytkownika..."
-                class="w-full sm:w-64 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                class="w-full sm:w-64 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"
             >
-            <select wire:model.live="roleFilter" class="w-full sm:w-48 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+            <select wire:model.live="roleFilter" class="w-full sm:w-48 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
                 <option value="">Wszystkie role</option>
                 <option value="none">Bez roli</option>
                 @foreach($roleOptions as $r)
@@ -22,7 +22,7 @@
                 @endforeach
             </select>
         </div>
-        <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+        <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
             + Dodaj użytkownika
         </button>
     </div>
@@ -63,7 +63,7 @@
                         </div>
                     </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <button type="button" wire:click="openEditModal({{ $user->id }})" class="text-blue-600 hover:text-blue-900 mr-4">Edytuj</button>
+                        <button type="button" wire:click="openEditModal({{ $user->id }})" class="text-sky-700 hover:text-sky-900 mr-4">Edytuj</button>
                         <button type="button" wire:click="delete({{ $user->id }})" wire:confirm="Czy na pewno chcesz usunąć użytkownika {{ $user->name }}?" class="text-red-600 hover:text-red-900">Usuń</button>
                     </td>
                 </tr>
@@ -82,10 +82,10 @@
     <!-- Modal -->
     @if($showModal)
         <div class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="fixed inset-0 bg-gray-500/75" wire:click="closeModal"></div>
+            <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="closeModal"></div>
 
             <div class="flex min-h-full items-center justify-center p-4">
-                <div class="relative bg-white rounded-lg shadow-xl w-full max-w-lg" @click.stop>
+                <div class="relative bg-white rounded-2xl shadow-2xl ring-1 ring-zinc-900/5 w-full max-w-lg" @click.stop>
                     <form wire:submit.prevent="save">
                         <div class="px-6 py-4 border-b border-gray-200">
                             <h3 class="text-lg font-semibold text-gray-900">
@@ -96,13 +96,13 @@
                         <div class="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Imię i nazwisko</label>
-                                <input type="text" wire:model="name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <input type="text" wire:model="name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Email</label>
-                                <input type="email" wire:model="email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <input type="email" wire:model="email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 @error('email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
@@ -110,12 +110,12 @@
                                 <label class="block text-sm font-medium text-gray-700">
                                     Hasło {{ $editingId ? '(zostaw puste, aby nie zmieniać)' : '' }}
                                 </label>
-                                <input type="password" wire:model="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <input type="password" wire:model="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 @error('password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
                             <label class="flex items-center gap-2 text-sm font-medium text-gray-700">
-                                <input type="checkbox" wire:model="is_active" class="rounded border-gray-300 text-blue-600">
+                                <input type="checkbox" wire:model="is_active" class="rounded border-gray-300 text-sky-700">
                                 Konto aktywne (może się logować i korzystać z uprawnień)
                             </label>
                             @error('is_active') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
@@ -125,13 +125,13 @@
                                 <div class="mt-2 grid gap-2 sm:grid-cols-2">
                                     @foreach($assignableRoles as $r)
                                         <label class="flex items-start gap-2 rounded-md border border-gray-200 p-2 text-sm hover:bg-gray-50">
-                                            <input type="checkbox" wire:model="selectedRoles" value="{{ $r->value }}" class="mt-0.5 rounded border-gray-300 text-blue-600">
+                                            <input type="checkbox" wire:model="selectedRoles" value="{{ $r->value }}" class="mt-0.5 rounded border-gray-300 text-sky-700">
                                             <span><span class="font-medium text-gray-900">{{ $r->label() }}</span><span class="block text-xs text-gray-500">{{ $r->description() }}</span></span>
                                         </label>
                                     @endforeach
                                 </div>
                                 @can('roles.manage')
-                                    <p class="mt-1 text-xs text-gray-500">Co dokładnie może każda rola, ustawisz w sekcji <a href="{{ route('admin.roles.index') }}" class="text-blue-600 underline">Role i uprawnienia</a>.</p>
+                                    <p class="mt-1 text-xs text-gray-500">Co dokładnie może każda rola, ustawisz w sekcji <a href="{{ route('admin.roles.index') }}" class="text-sky-700 underline">Role i uprawnienia</a>.</p>
                                 @endcan
                                 @error('selectedRoles') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 @error('selectedRoles.*') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
@@ -140,12 +140,12 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Data urodzenia</label>
-                                    <input type="date" wire:model="birth_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="date" wire:model="birth_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     @error('birth_date') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Urodziny w kalendarzu 🎂</label>
-                                    <select wire:model="birthday_display" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <select wire:model="birthday_display" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                         @foreach(\App\BirthdayDisplay::cases() as $mode)
                                             <option value="{{ $mode->value }}">{{ $mode->label() }}</option>
                                         @endforeach
@@ -159,7 +159,7 @@
                             <button type="button" wire:click="closeModal" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                                 Anuluj
                             </button>
-                            <button type="submit" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                            <button type="submit" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
                                 <span wire:loading.remove wire:target="save">Zapisz</span>
                                 <span wire:loading wire:target="save">Zapisywanie...</span>
                             </button>

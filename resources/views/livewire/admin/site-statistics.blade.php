@@ -6,7 +6,7 @@
 <div class="space-y-6">
     <div class="flex flex-wrap gap-2">
         @foreach(\App\Livewire\Admin\SiteStatistics::PERIODS as $value => $label)
-            <button type="button" wire:click="setPeriod({{ $value }})" @class(['rounded-full px-4 py-1.5 text-sm font-semibold', 'bg-blue-600 text-white' => $days === $value, 'bg-white text-gray-700 ring-1 ring-gray-300 hover:bg-gray-50' => $days !== $value])>{{ $label }}</button>
+            <button type="button" wire:click="setPeriod({{ $value }})" @class(['rounded-full px-4 py-1.5 text-sm font-semibold', 'bg-sky-600 text-white' => $days === $value, 'bg-white text-gray-700 ring-1 ring-gray-300 hover:bg-gray-50' => $days !== $value])>{{ $label }}</button>
         @endforeach
     </div>
 
@@ -17,7 +17,7 @@
             ['Średni czas na stronie', $duration($totals->avg_duration), 'aktywne oglądanie karty'],
             ['Średnie przewinięcie', round((float) ($totals->avg_scroll ?? 0)).'%', 'jak daleko czytają'],
         ] as [$label, $value, $hint])
-            <div class="rounded-lg bg-white p-5 shadow ring-1 ring-black/5">
+            <div class="rounded-lg bg-white p-5 shadow ring-1 ring-zinc-200">
                 <p class="text-sm text-gray-500">{{ $label }}</p>
                 <p class="mt-1 text-3xl font-bold text-gray-900">{{ $value }}</p>
                 <p class="mt-1 text-xs text-gray-400">{{ $hint }}</p>
@@ -25,12 +25,12 @@
         @endforeach
     </div>
 
-    <div class="rounded-lg bg-white p-5 shadow ring-1 ring-black/5">
+    <div class="rounded-lg bg-white p-5 shadow ring-1 ring-zinc-200">
         <h2 class="font-semibold text-gray-900">Wyświetlenia dzień po dniu</h2>
         <div class="mt-4 flex h-40 items-end gap-px" role="img" aria-label="Wykres wyświetleń dziennie">
             @foreach($series as $point)
                 <div class="group relative flex h-full flex-1 items-end">
-                    <div class="w-full rounded-t bg-blue-500/80 group-hover:bg-blue-600" style="height: {{ max(1, round($point['views'] / $maxDaily * 100)) }}%"></div>
+                    <div class="w-full rounded-t bg-blue-500/80 group-hover:bg-sky-600" style="height: {{ max(1, round($point['views'] / $maxDaily * 100)) }}%"></div>
                     <span class="pointer-events-none absolute -top-7 left-1/2 hidden -translate-x-1/2 rounded bg-gray-900 px-1.5 py-0.5 text-[11px] whitespace-nowrap text-white group-hover:block">{{ $point['date']->format('d.m') }}: {{ $point['views'] }}</span>
                 </div>
             @endforeach
@@ -39,7 +39,7 @@
     </div>
 
     <div class="grid gap-6 lg:grid-cols-2">
-        <div class="rounded-lg bg-white shadow ring-1 ring-black/5">
+        <div class="rounded-lg bg-white shadow ring-1 ring-zinc-200">
             <h2 class="border-b px-5 py-3 font-semibold text-gray-900">Najczęściej oglądane <span class="text-xs font-normal text-gray-500">— co przyciąga</span></h2>
             <table class="w-full text-sm">
                 <thead class="text-left text-xs text-gray-500"><tr><th class="px-5 py-2 font-medium">Strona</th><th class="px-2 py-2 text-right font-medium">Wyśw.</th><th class="px-2 py-2 text-right font-medium">Osoby</th><th class="px-5 py-2 text-right font-medium">Czas</th></tr></thead>
@@ -58,7 +58,7 @@
             </table>
         </div>
 
-        <div class="rounded-lg bg-white shadow ring-1 ring-black/5">
+        <div class="rounded-lg bg-white shadow ring-1 ring-zinc-200">
             <h2 class="border-b px-5 py-3 font-semibold text-gray-900">Najdłużej czytane <span class="text-xs font-normal text-gray-500">— co skupia uwagę (min. 3 wyświetlenia)</span></h2>
             <table class="w-full text-sm">
                 <thead class="text-left text-xs text-gray-500"><tr><th class="px-5 py-2 font-medium">Strona</th><th class="px-2 py-2 text-right font-medium">Czas</th><th class="px-2 py-2 text-right font-medium">Przewinięcie</th><th class="px-5 py-2 text-right font-medium">Wyśw.</th></tr></thead>
@@ -77,7 +77,7 @@
             </table>
         </div>
 
-        <div class="rounded-lg bg-white shadow ring-1 ring-black/5">
+        <div class="rounded-lg bg-white shadow ring-1 ring-zinc-200">
             <h2 class="border-b px-5 py-3 font-semibold text-gray-900">Działy strony</h2>
             <ul class="divide-y divide-gray-100 text-sm">
                 @forelse($sections as $section)
@@ -93,7 +93,7 @@
             </ul>
         </div>
 
-        <div class="rounded-lg bg-white shadow ring-1 ring-black/5">
+        <div class="rounded-lg bg-white shadow ring-1 ring-zinc-200">
             <h2 class="border-b px-5 py-3 font-semibold text-gray-900">Otwierane zakładki i filtry</h2>
             <ul class="divide-y divide-gray-100 text-sm">
                 @forelse($tabs as $tab)
@@ -107,7 +107,7 @@
             </ul>
         </div>
 
-        <div class="rounded-lg bg-white shadow ring-1 ring-black/5">
+        <div class="rounded-lg bg-white shadow ring-1 ring-zinc-200">
             <h2 class="border-b px-5 py-3 font-semibold text-gray-900">Skąd przychodzą</h2>
             <ul class="divide-y divide-gray-100 text-sm">
                 @forelse($referrers as $referrer)
@@ -118,7 +118,7 @@
             </ul>
         </div>
 
-        <div class="rounded-lg bg-white p-5 shadow ring-1 ring-black/5">
+        <div class="rounded-lg bg-white p-5 shadow ring-1 ring-zinc-200">
             <h2 class="font-semibold text-gray-900">Urządzenia</h2>
             <div class="mt-4 space-y-3 text-sm">
                 @foreach(['mobile' => 'Telefon', 'desktop' => 'Komputer', 'tablet' => 'Tablet'] as $key => $label)

@@ -1,7 +1,7 @@
 <div>
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border-b border-gray-200">
         <div class="w-full sm:w-80">
-            <select wire:model.live="competitionFilter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+            <select wire:model.live="competitionFilter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
                 <option value="">Wszystkie rozgrywki</option>
                 @foreach($competitions as $competition)
                     <option value="{{ $competition->id }}">{{ $competition->name }} ({{ $competition->season?->name }})</option>
@@ -13,7 +13,7 @@
                 <span wire:loading.remove wire:target="recalculate">↻ Przelicz tabelę</span>
                 <span wire:loading wire:target="recalculate">Przeliczanie...</span>
             </button>
-            <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+            <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
                 + Dodaj wpis do tabeli
             </button>
         </div>
@@ -61,7 +61,7 @@
                         @endif
                     </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <button type="button" wire:click="openEditModal({{ $standing->id }})" class="text-blue-600 hover:text-blue-900 mr-4">Edytuj</button>
+                        <button type="button" wire:click="openEditModal({{ $standing->id }})" class="text-sky-700 hover:text-sky-900 mr-4">Edytuj</button>
                         <button type="button" wire:click="delete({{ $standing->id }})" wire:confirm="Czy na pewno chcesz usunąć ten wpis?" class="text-red-600 hover:text-red-900">Usuń</button>
                     </td>
                 </tr>
@@ -75,10 +75,10 @@
 
     @if($showModal)
         <div class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="fixed inset-0 bg-gray-500/75" wire:click="closeModal"></div>
+            <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="closeModal"></div>
 
             <div class="flex min-h-full items-center justify-center p-4">
-                <div class="relative bg-white rounded-lg shadow-xl w-full max-w-lg" @click.stop>
+                <div class="relative bg-white rounded-2xl shadow-2xl ring-1 ring-zinc-900/5 w-full max-w-lg" @click.stop>
                     <form wire:submit.prevent="save">
                         <div class="px-6 py-4 border-b border-gray-200">
                             <h3 class="text-lg font-semibold text-gray-900">
@@ -90,7 +90,7 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Rozgrywki</label>
-                                    <select wire:model="competition_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <select wire:model="competition_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                         <option value="">Wybierz</option>
                                         @foreach($competitions as $competition)
                                             <option value="{{ $competition->id }}">{{ $competition->name }}</option>
@@ -100,7 +100,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Typ drużyny</label>
-                                    <select wire:model="competitor_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <select wire:model="competitor_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                         <option value="team">Nasza drużyna</option>
                                         <option value="rival_team">Drużyna rywala</option>
                                     </select>
@@ -110,7 +110,7 @@
                             <div>
                                 @if($competitor_type === 'rival_team')
                                     <label class="block text-sm font-medium text-gray-700">Drużyna rywala</label>
-                                    <select wire:model="competitor_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <select wire:model="competitor_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                         <option value="">Wybierz</option>
                                         @foreach($rivalTeams as $rivalTeam)
                                             <option value="{{ $rivalTeam->id }}">{{ $rivalTeam->full_name }}</option>
@@ -118,7 +118,7 @@
                                     </select>
                                 @else
                                     <label class="block text-sm font-medium text-gray-700">Drużyna</label>
-                                    <select wire:model="competitor_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <select wire:model="competitor_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                         <option value="">Wybierz</option>
                                         @foreach($teams as $team)
                                             <option value="{{ $team->id }}">{{ $team->name }}</option>
@@ -130,7 +130,7 @@
 
                             <div>
                                 <label class="flex items-center text-sm font-medium text-gray-700">
-                                    <input type="checkbox" wire:model="is_manual_override" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
+                                    <input type="checkbox" wire:model="is_manual_override" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500 mr-2">
                                     Ręczna korekta (kara, walkower) — nie będzie nadpisywana automatycznym przeliczeniem
                                 </label>
                             </div>
@@ -138,48 +138,48 @@
                             <div class="grid grid-cols-3 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Pozycja</label>
-                                    <input type="number" wire:model="position" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="number" wire:model="position" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Mecze</label>
-                                    <input type="number" wire:model="played" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="number" wire:model="played" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Punkty</label>
-                                    <input type="number" wire:model="points" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="number" wire:model="points" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Wygrane</label>
-                                    <input type="number" wire:model="won" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="number" wire:model="won" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Przegrane</label>
-                                    <input type="number" wire:model="lost" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="number" wire:model="lost" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Sety wygrane</label>
-                                    <input type="number" wire:model="sets_won" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="number" wire:model="sets_won" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Sety przegrane</label>
-                                    <input type="number" wire:model="sets_lost" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="number" wire:model="sets_lost" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Małe punkty zdobyte</label>
-                                    <input type="number" wire:model="points_for" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="number" wire:model="points_for" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Małe punkty stracone</label>
-                                    <input type="number" wire:model="points_against" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="number" wire:model="points_against" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                             </div>
                         </div>
@@ -188,7 +188,7 @@
                             <button type="button" wire:click="closeModal" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                                 Anuluj
                             </button>
-                            <button type="submit" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                            <button type="submit" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
                                 <span wire:loading.remove wire:target="save">Zapisz</span>
                                 <span wire:loading wire:target="save">Zapisywanie...</span>
                             </button>

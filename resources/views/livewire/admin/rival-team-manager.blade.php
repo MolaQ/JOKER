@@ -1,5 +1,5 @@
 @php
-    $input = 'block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm';
+    $input = 'block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm';
     $logoBox = 'h-10 w-10 shrink-0 rounded bg-gray-100 flex items-center justify-center text-gray-400 text-xs';
 @endphp
 
@@ -8,13 +8,13 @@
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
             <input type="text" wire:model.live.debounce.300ms="search" placeholder="Szukaj klubu, drużyny, dawnej nazwy..." class="{{ $input }} sm:w-80">
             <label class="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" wire:model.live="showArchived" class="rounded border-gray-300 text-blue-600">
+                <input type="checkbox" wire:model.live="showArchived" class="rounded border-gray-300 text-sky-700">
                 Pokaż archiwalne ({{ $archivedCount }})
             </label>
         </div>
         <div class="flex gap-2">
             <button type="button" wire:click="openClubModal" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">+ Klub</button>
-            <button type="button" wire:click="openCreateModal" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">+ Drużyna rywali</button>
+            <button type="button" wire:click="openCreateModal" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">+ Drużyna rywali</button>
         </div>
     </div>
 
@@ -61,7 +61,7 @@
                     <li class="flex flex-wrap items-center gap-2 text-sm" wire:key="suggest-{{ $group->first()->id }}">
                         @php $existingClub = $group->pluck('club')->filter()->first(); @endphp
                         <span class="text-gray-900">{{ $group->pluck('full_name')->implode(', ') }}</span>
-                        <button type="button" wire:click="createSuggestedClub(@js($group->pluck('id')->all()))" class="rounded-md bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700">{{ $existingClub ? 'Dodaj do klubu '.$existingClub->name : 'Utwórz klub' }}</button>
+                        <button type="button" wire:click="createSuggestedClub(@js($group->pluck('id')->all()))" class="rounded-md bg-sky-600 px-3 py-1 text-xs font-semibold text-white hover:bg-sky-700">{{ $existingClub ? 'Dodaj do klubu '.$existingClub->name : 'Utwórz klub' }}</button>
                     </li>
                 @endforeach
             </ul>
@@ -81,7 +81,7 @@
             @if($groupClubId === '')
                 <input type="text" wire:model="groupClubName" placeholder="Nazwa nowego klubu" class="{{ $input }} w-64">
             @endif
-            <button type="button" wire:click="groupSelected" class="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">Połącz w klub</button>
+            <button type="button" wire:click="groupSelected" class="rounded-md bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700">Połącz w klub</button>
             @error('groupClubName') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
         </div>
     @endif
@@ -100,7 +100,7 @@
                         <span class="truncate text-sm font-semibold text-gray-900">{{ $club->name }}</span>
                         <span class="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{{ $club->visibleTeams->count() }} {{ $club->visibleTeams->count() === 1 ? 'drużyna' : ($club->visibleTeams->count() < 5 && $club->visibleTeams->count() > 0 ? 'drużyny' : 'drużyn') }}</span>
                     </button>
-                    <button type="button" wire:click="openClubModal({{ $club->id }})" class="text-sm text-blue-600 hover:text-blue-900">Edytuj klub</button>
+                    <button type="button" wire:click="openClubModal({{ $club->id }})" class="text-sm text-sky-700 hover:text-sky-900">Edytuj klub</button>
                     <button type="button" wire:click="deleteClub({{ $club->id }})" wire:confirm="Usunąć klub {{ $club->name }}? Drużyny zostaną, tylko bez klubu." class="text-sm text-red-600 hover:text-red-900">Usuń</button>
                 </div>
                 <ul x-show="open" x-cloak class="border-t border-gray-100 bg-gray-50/60">
@@ -130,9 +130,9 @@
     {{-- Drużyna --}}
     @if($showModal)
         <div class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="fixed inset-0 bg-gray-500/75" wire:click="closeModal"></div>
+            <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="closeModal"></div>
             <div class="flex min-h-full items-center justify-center p-4">
-                <div class="relative w-full max-w-lg rounded-lg bg-white shadow-xl" @click.stop>
+                <div class="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl ring-1 ring-zinc-900/5" @click.stop>
                     <form wire:submit.prevent="save">
                         <div class="border-b border-gray-200 px-6 py-4">
                             <h3 class="text-lg font-semibold text-gray-900">{{ $editingId ? 'Edytuj drużynę rywali' : 'Dodaj drużynę rywali' }}</h3>
@@ -180,7 +180,7 @@
                         </div>
                         <div class="flex justify-end space-x-3 rounded-b-lg bg-gray-50 px-6 py-4">
                             <button type="button" wire:click="closeModal" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Anuluj</button>
-                            <button type="submit" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">Zapisz</button>
+                            <button type="submit" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">Zapisz</button>
                         </div>
                     </form>
                 </div>
@@ -191,9 +191,9 @@
     {{-- Klub --}}
     @if($showClubModal)
         <div class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="fixed inset-0 bg-gray-500/75" wire:click="$set('showClubModal', false)"></div>
+            <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="$set('showClubModal', false)"></div>
             <div class="flex min-h-full items-center justify-center p-4">
-                <div class="relative w-full max-w-lg rounded-lg bg-white shadow-xl" @click.stop>
+                <div class="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl ring-1 ring-zinc-900/5" @click.stop>
                     <form wire:submit.prevent="saveClub">
                         <div class="border-b border-gray-200 px-6 py-4">
                             <h3 class="text-lg font-semibold text-gray-900">{{ $editingClubId ? 'Edytuj klub' : 'Dodaj klub' }}</h3>
@@ -219,7 +219,7 @@
                         </div>
                         <div class="flex justify-end space-x-3 rounded-b-lg bg-gray-50 px-6 py-4">
                             <button type="button" wire:click="$set('showClubModal', false)" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Anuluj</button>
-                            <button type="submit" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">Zapisz</button>
+                            <button type="submit" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">Zapisz</button>
                         </div>
                     </form>
                 </div>

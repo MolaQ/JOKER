@@ -9,7 +9,7 @@
         <p class="mt-2 text-sm text-gray-700">Kolory, górny pasek, menu, teksty na stronie głównej, kontakt i stopka. Zmiany widać na stronie od razu po zapisaniu.</p>
     </div>
 
-    <div class="overflow-clip shadow ring-1 ring-black/5 sm:rounded-lg">
+    <div class="overflow-clip shadow ring-1 ring-zinc-200 sm:rounded-lg">
         @livewire('admin.site-settings-manager')
     </div>
 </div>

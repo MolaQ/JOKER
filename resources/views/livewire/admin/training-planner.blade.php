@@ -1,7 +1,7 @@
 @php use App\Models\TrainingSession; @endphp
 <div class="grid gap-6 lg:grid-cols-[22rem_1fr]">
     {{-- Formularz --}}
-    <form wire:submit="save" class="h-fit space-y-4 rounded-lg bg-white p-5 shadow ring-1 ring-black/5 lg:sticky lg:top-6">
+    <form wire:submit="save" class="h-fit space-y-4 rounded-lg bg-white p-5 shadow ring-1 ring-zinc-200 lg:sticky lg:top-6">
         <h2 class="text-lg font-semibold text-gray-900">{{ $editingId ? 'Edytuj trening' : 'Dodaj trening' }}</h2>
 
         @if($this->teams->isEmpty())
@@ -96,11 +96,11 @@
         </div>
 
         @if($days->isEmpty())
-            <p class="rounded-lg bg-white p-6 text-sm text-gray-500 shadow ring-1 ring-black/5">Plan jest pusty. Dodaj pierwszy trening w formularzu.</p>
+            <p class="rounded-lg bg-white p-6 text-sm text-gray-500 shadow ring-1 ring-zinc-200">Plan jest pusty. Dodaj pierwszy trening w formularzu.</p>
         @else
             <div class="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
                 @foreach($days as $weekday => $sessions)
-                    <div class="rounded-lg bg-white p-4 shadow ring-1 ring-black/5" wire:key="day-{{ $weekday }}">
+                    <div class="rounded-lg bg-white p-4 shadow ring-1 ring-zinc-200" wire:key="day-{{ $weekday }}">
                         <h3 class="font-semibold text-gray-900">{{ TrainingSession::WEEKDAYS[$weekday] }}</h3>
                         <ul class="mt-3 space-y-2">
                             @foreach($sessions as $session)

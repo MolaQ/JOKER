@@ -9,7 +9,7 @@
         <p class="mt-2 text-sm text-gray-700">Turnieje w trakcie sezonu, np. Turniej im. Włodzimierza Winklera albo wyjazdy na turnieje innych klubów.</p>
     </div>
 
-    <div class="overflow-hidden rounded-lg shadow ring-1 ring-black/5">
+    <div class="overflow-hidden rounded-lg shadow ring-1 ring-zinc-200">
         @livewire('admin.tournament-manager')
     </div>
 </div>

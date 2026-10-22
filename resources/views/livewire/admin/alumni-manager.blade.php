@@ -4,7 +4,7 @@
     </div>
 
     @if($showForm)
-        <form wire:submit="save" class="space-y-4 rounded-lg bg-white p-5 shadow ring-1 ring-black/5">
+        <form wire:submit="save" class="space-y-4 rounded-lg bg-white p-5 shadow ring-1 ring-zinc-200">
             <h2 class="text-lg font-semibold text-gray-900">{{ $editingId ? 'Edytuj wychowanka' : 'Nowy wychowanek' }}</h2>
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
@@ -70,7 +70,7 @@
         </form>
     @endif
 
-    <div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-black/5">
+    <div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-zinc-200">
         <ul class="divide-y divide-gray-200">
             @forelse($alumni as $alumnus)
                 <li class="flex items-center gap-4 p-4" wire:key="alumnus-{{ $alumnus->id }}">

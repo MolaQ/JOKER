@@ -1,7 +1,7 @@
 <div>
     <div class="flex items-center justify-between gap-4 border-b border-gray-200 bg-white p-4">
         <p class="text-sm text-gray-600">Turnieje pokazują się w kalendarzu meczów. Mecze rozegrane na turnieju dodasz w „Mecze i wyniki” (rodzaj: turniejowy).</p>
-        <button type="button" wire:click="openCreateModal" class="inline-flex shrink-0 items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">+ Dodaj turniej</button>
+        <button type="button" wire:click="openCreateModal" class="inline-flex shrink-0 items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">+ Dodaj turniej</button>
     </div>
 
     <table class="min-w-full divide-y divide-gray-300 bg-white">
@@ -27,8 +27,8 @@
                         @endforeach
                     </td>
                     <td class="py-4 pr-4 pl-3 text-right text-sm font-medium whitespace-nowrap sm:pr-6">
-                        <a href="{{ route('admin.tournaments.edit', $tournament) }}" class="mr-4 text-blue-600 hover:text-blue-900">Strona turnieju</a>
-                        <button type="button" wire:click="openEditModal({{ $tournament->id }})" class="text-blue-600 hover:text-blue-900">Edytuj</button>
+                        <a href="{{ route('admin.tournaments.edit', $tournament) }}" class="mr-4 text-sky-700 hover:text-sky-900">Strona turnieju</a>
+                        <button type="button" wire:click="openEditModal({{ $tournament->id }})" class="text-sky-700 hover:text-sky-900">Edytuj</button>
                         <button type="button" wire:click="delete({{ $tournament->id }})" wire:confirm="Usunąć turniej? Mecze turniejowe zostaną, ale bez przypisania." class="ml-4 text-red-600 hover:text-red-900">Usuń</button>
                     </td>
                 </tr>
@@ -42,9 +42,9 @@
 
     @if($showModal)
         <div class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="fixed inset-0 bg-gray-500/75" wire:click="closeModal"></div>
+            <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="closeModal"></div>
             <div class="flex min-h-full items-center justify-center p-4">
-                <div class="relative w-full max-w-2xl rounded-lg bg-white shadow-xl" @click.stop>
+                <div class="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl ring-1 ring-zinc-900/5" @click.stop>
                     <form wire:submit.prevent="save">
                         <div class="border-b border-gray-200 px-6 py-4">
                             <h3 class="text-lg font-semibold text-gray-900">{{ $editingId ? 'Edytuj turniej' : 'Dodaj turniej' }}</h3>
@@ -54,24 +54,24 @@
                             <div class="grid gap-4 sm:grid-cols-[1fr_10rem]">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Nazwa</label>
-                                    <input type="text" wire:model="name" placeholder="np. Turniej im. Włodzimierza Winklera" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="text" wire:model="name" placeholder="np. Turniej im. Włodzimierza Winklera" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Edycja</label>
-                                    <input type="text" wire:model="edition" placeholder="np. XII" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="text" wire:model="edition" placeholder="np. XII" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Od</label>
-                                    <input type="date" wire:model="start_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="date" wire:model="start_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     @error('start_date') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Do (gdy kilka dni)</label>
-                                    <input type="date" wire:model="end_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="date" wire:model="end_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     @error('end_date') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
                             </div>
@@ -79,16 +79,16 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Miejscowość</label>
-                                    <input type="text" wire:model="city" placeholder="np. Sulęcin" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="text" wire:model="city" placeholder="np. Sulęcin" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Hala</label>
-                                    <input type="text" wire:model="venue" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="text" wire:model="venue" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                             </div>
 
                             <label class="flex items-center text-sm text-gray-700">
-                                <input type="checkbox" wire:model="is_organizer" class="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <input type="checkbox" wire:model="is_organizer" class="mr-2 rounded border-gray-300 text-sky-700 focus:ring-sky-500">
                                 Organizuje Joker Piła (w kalendarzu jak mecz u siebie)
                             </label>
 
@@ -98,7 +98,7 @@
                                     @foreach($teams as $team)
                                         <div class="flex items-center gap-3" wire:key="tournament-team-{{ $team->id }}">
                                             <label class="flex w-40 items-center text-sm text-gray-700">
-                                                <input type="checkbox" wire:model.live="team_ids" value="{{ $team->id }}" class="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                                <input type="checkbox" wire:model.live="team_ids" value="{{ $team->id }}" class="mr-2 rounded border-gray-300 text-sky-700 focus:ring-sky-500">
                                                 {{ $team->name }}
                                             </label>
                                             @if(in_array($team->id, array_map('intval', $team_ids), true))
@@ -112,13 +112,13 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Opis</label>
-                                <textarea wire:model="description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                                <textarea wire:model="description" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500"></textarea>
                             </div>
                         </div>
 
                         <div class="flex justify-end space-x-3 rounded-b-lg bg-gray-50 px-6 py-4">
                             <button type="button" wire:click="closeModal" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset hover:bg-gray-50">Anuluj</button>
-                            <button type="submit" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">Zapisz</button>
+                            <button type="submit" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">Zapisz</button>
                         </div>
                     </form>
                 </div>

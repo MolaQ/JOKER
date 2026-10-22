@@ -31,10 +31,10 @@
 
     @if($showModal)
         <div class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="fixed inset-0 bg-gray-500/75" wire:click="closeModal"></div>
+            <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="closeModal"></div>
 
             <div class="flex min-h-full items-center justify-center p-4">
-                <div class="relative w-full max-w-3xl rounded-lg bg-white shadow-xl">
+                <div class="relative w-full max-w-3xl rounded-2xl bg-white shadow-2xl ring-1 ring-zinc-900/5">
                     <form wire:submit="save">
                         <div class="border-b border-gray-200 px-6 py-4">
                             <h3 class="text-lg font-semibold text-gray-900">{{ $editingId ? 'Edytuj podstronę' : 'Nowa podstrona' }}</h3>

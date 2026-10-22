@@ -1,5 +1,5 @@
 <div class="space-y-8">
-    <section class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-black/5">
+    <section class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-zinc-200">
         <h2 class="border-b border-gray-200 px-4 py-3 text-lg font-semibold text-gray-900">Co może każda rola</h2>
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
@@ -27,7 +27,7 @@
                                             @checked($checked)
                                             @disabled(! $this->mayEditRole($role))
                                             wire:click="toggle('{{ $role->value }}', '{{ $permission->value }}')"
-                                            class="h-4 w-4 rounded border-gray-300 text-blue-600 disabled:opacity-50">
+                                            class="h-4 w-4 rounded border-gray-300 text-sky-700 disabled:opacity-50">
                                     </td>
                                 @endforeach
                             </tr>
@@ -39,12 +39,12 @@
         <p class="border-t border-gray-200 px-4 py-3 text-xs text-gray-500">Administrator ma zawsze wszystko. Uprawnienia szefa zmienia tylko administrator. Rodzic, zawodnik i kibic korzystają ze strony (profil, propozycje, komentarze); panel klubu dostają dopiero po zaznaczeniu czegoś tutaj.</p>
     </section>
 
-    <section class="rounded-lg bg-white p-4 shadow ring-1 ring-black/5">
+    <section class="rounded-lg bg-white p-4 shadow ring-1 ring-zinc-200">
         <h2 class="text-lg font-semibold text-gray-900">Wyjątki dla jednego konta</h2>
         <p class="mt-1 text-sm text-gray-600">Np. rodzic, który pomaga przy transmisjach, dostaje tylko „Transmisje i galerie”, bez zmiany roli.</p>
 
         <div class="relative mt-4 max-w-md">
-            <input type="search" wire:model.live.debounce.300ms="userSearch" placeholder="Szukaj konta po nazwisku lub e-mailu..." class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <input type="search" wire:model.live.debounce.300ms="userSearch" placeholder="Szukaj konta po nazwisku lub e-mailu..." class="w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">
             @if($matches->isNotEmpty())
                 <ul class="absolute z-10 mt-1 w-full overflow-hidden rounded-md bg-white shadow-lg ring-1 ring-black/10">
                     @foreach($matches as $match)
@@ -86,7 +86,7 @@
         @endif
     </section>
 
-    <section class="rounded-lg bg-white p-4 shadow ring-1 ring-black/5">
+    <section class="rounded-lg bg-white p-4 shadow ring-1 ring-zinc-200">
         <h2 class="text-lg font-semibold text-gray-900">Ostatnie zmiany</h2>
         <ul class="mt-3 divide-y divide-gray-100 text-sm">
             @forelse($log as $entry)

@@ -6,10 +6,10 @@
                 type="text"
                 wire:model.live.debounce.300ms="search"
                 placeholder="Szukaj rozgrywek..."
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"
             >
         </div>
-        <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+        <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
             + Dodaj rozgrywki
         </button>
     </div>
@@ -55,7 +55,7 @@
                                 <span wire:loading wire:target="sync({{ $competition->id }})">Pobieram…</span>
                             </button>
                         @endif
-                        <button type="button" wire:click="openEditModal({{ $competition->id }})" class="text-blue-600 hover:text-blue-900 mr-4">Edytuj</button>
+                        <button type="button" wire:click="openEditModal({{ $competition->id }})" class="text-sky-700 hover:text-sky-900 mr-4">Edytuj</button>
                         <button type="button" wire:click="delete({{ $competition->id }})" wire:confirm="Czy na pewno chcesz usunąć te rozgrywki?" class="text-red-600 hover:text-red-900">Usuń</button>
                     </td>
                 </tr>
@@ -73,10 +73,10 @@
 
     @if($showModal)
         <div class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="fixed inset-0 bg-gray-500/75" wire:click="closeModal"></div>
+            <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="closeModal"></div>
 
             <div class="flex min-h-full items-center justify-center p-4">
-                <div class="relative bg-white rounded-lg shadow-xl w-full max-w-lg" @click.stop>
+                <div class="relative bg-white rounded-2xl shadow-2xl ring-1 ring-zinc-900/5 w-full max-w-lg" @click.stop>
                     <form wire:submit.prevent="save">
                         <div class="px-6 py-4 border-b border-gray-200">
                             <h3 class="text-lg font-semibold text-gray-900">
@@ -87,14 +87,14 @@
                         <div class="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Nazwa</label>
-                                <input type="text" wire:model="name" placeholder="np. Liga Wojewódzka Juniorów" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <input type="text" wire:model="name" placeholder="np. Liga Wojewódzka Juniorów" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label for="competition-level" class="block text-sm font-medium text-gray-700">Poziom rozgrywek</label>
-                                    <input type="text" id="competition-level" wire:model="level" list="competition-levels" placeholder="np. wojewódzka, 3 liga" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="text" id="competition-level" wire:model="level" list="competition-levels" placeholder="np. wojewódzka, 3 liga" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     <datalist id="competition-levels">
                                         @foreach($levels as $levelName)
                                             <option value="{{ $levelName }}"></option>
@@ -105,7 +105,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Sezon</label>
-                                    <select wire:model="season_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <select wire:model="season_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                         <option value="">Wybierz</option>
                                         @foreach($seasons as $season)
                                             <option value="{{ $season->id }}">{{ $season->name }}</option>
@@ -133,27 +133,27 @@
                                 <div class="grid grid-cols-3 gap-3">
                                     <div>
                                         <label class="block text-xs font-medium text-gray-500">Wygrana 3:0</label>
-                                        <input type="number" wire:model="points_win_3_0" min="0" max="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                        <input type="number" wire:model="points_win_3_0" min="0" max="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-gray-500">Wygrana 3:1</label>
-                                        <input type="number" wire:model="points_win_3_1" min="0" max="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                        <input type="number" wire:model="points_win_3_1" min="0" max="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-gray-500">Wygrana 3:2</label>
-                                        <input type="number" wire:model="points_win_3_2" min="0" max="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                        <input type="number" wire:model="points_win_3_2" min="0" max="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-gray-500">Przegrana 2:3</label>
-                                        <input type="number" wire:model="points_loss_2_3" min="0" max="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                        <input type="number" wire:model="points_loss_2_3" min="0" max="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-gray-500">Przegrana 1:3</label>
-                                        <input type="number" wire:model="points_loss_1_3" min="0" max="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                        <input type="number" wire:model="points_loss_1_3" min="0" max="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-gray-500">Przegrana 0:3</label>
-                                        <input type="number" wire:model="points_loss_0_3" min="0" max="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                        <input type="number" wire:model="points_loss_0_3" min="0" max="10" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
                                     </div>
                                 </div>
                             </div>
@@ -165,7 +165,7 @@
                                     @foreach([0, 1, 2] as $i)
                                         <div>
                                             <label class="block text-xs font-medium text-gray-500">{{ $i + 1 }}. kryterium</label>
-                                            <select wire:model="standings_criteria.{{ $i }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                            <select wire:model="standings_criteria.{{ $i }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
                                                 <option value="points">Punkty</option>
                                                 <option value="wins">Liczba zwycięstw</option>
                                                 <option value="sets_ratio">Stosunek setów</option>
@@ -181,7 +181,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Kolejność</label>
-                                <input type="number" wire:model="display_order" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <input type="number" wire:model="display_order" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                             </div>
 
                             <div>
@@ -191,7 +191,7 @@
                                     @foreach($teams as $team)
                                         <div class="flex flex-wrap items-center gap-2 rounded-md px-1 py-1 hover:bg-gray-50" wire:key="competition-team-{{ $team->id }}">
                                             <label class="flex min-w-40 flex-1 items-center text-sm text-gray-700">
-                                                <input type="checkbox" wire:model.live="team_ids" value="{{ $team->id }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
+                                                <input type="checkbox" wire:model.live="team_ids" value="{{ $team->id }}" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500 mr-2">
                                                 {{ $team->name }}
                                             </label>
                                             @if(in_array($team->id, array_map('intval', $team_ids), true))
@@ -211,7 +211,7 @@
                             <button type="button" wire:click="closeModal" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                                 Anuluj
                             </button>
-                            <button type="submit" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                            <button type="submit" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
                                 <span wire:loading.remove wire:target="save">Zapisz</span>
                                 <span wire:loading wire:target="save">Zapisywanie...</span>
                             </button>

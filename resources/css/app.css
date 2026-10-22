@@ -414,3 +414,68 @@
     --background: transparent;
     --emoji-size: 1.5rem;
 }
+
+/*
+ * Wygląd panelu klubu: spokojne karty, czytelne tabele i jednolite przyciski we wszystkich
+ * sekcjach. Poza warstwami, żeby wygrywało ze starszymi klasami w widokach panelu.
+ */
+.admin-card {
+    @apply overflow-x-auto rounded-xl bg-white shadow-sm ring-1 ring-zinc-200;
+}
+
+.admin-panel main {
+    & h1.text-3xl {
+        @apply text-2xl font-semibold tracking-tight text-zinc-900;
+    }
+
+    & h1 + p.text-sm,
+    & h1 + p.mt-2 {
+        @apply text-zinc-500;
+    }
+
+    & table thead th {
+        @apply bg-zinc-50/80 py-3 text-xs font-semibold tracking-wide whitespace-nowrap text-zinc-500 uppercase;
+    }
+
+    & table thead {
+        @apply border-b border-zinc-200;
+    }
+
+    & table tbody tr {
+        @apply transition-colors;
+    }
+
+    & table tbody tr:hover {
+        @apply bg-zinc-50/70;
+    }
+
+    & table tbody td {
+        @apply text-zinc-700;
+    }
+
+    & button.bg-sky-600,
+    & a.bg-sky-600 {
+        @apply rounded-lg shadow-sm shadow-sky-900/10 transition;
+    }
+
+    & :is(input:not([type='checkbox'], [type='radio'], [type='file'], [type='color'], [type='range']), select, textarea) {
+        @apply rounded-lg border-zinc-300 shadow-xs;
+    }
+
+    & nav[role='navigation'] {
+        @apply text-sm;
+    }
+
+    & input[type='file'] {
+        @apply text-sm text-zinc-500;
+    }
+
+    & input[type='file']::file-selector-button {
+        @apply mr-3 cursor-pointer rounded-lg border-0 bg-zinc-100 px-3 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-200;
+    }
+}
+
+.admin-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.12) transparent;
+}

@@ -30,22 +30,22 @@ class DashboardController extends Controller
         $wins = $results->filter(fn (array $sets) => $sets[0] > $sets[1])->count();
         $views = PageView::where('kind', PageView::KIND_PAGE);
 
-        // Kafelki: [ikona, podpis, liczba, dopisek, trasa, uprawnienie]
+        // Kafelki: [ikona (x-admin-icon), podpis, liczba, dopisek, trasa, uprawnienie]
         $stats = [
-            ['👥', 'Drużyny', Team::count(), null, 'admin.teams.index', 'teams.manage'],
-            ['🎽', 'Zawodnicy', Player::where('is_active', true)->count(), 'aktywni', 'admin.players.index', 'teams.manage'],
-            ['🏐', 'Mecze w sezonie', $seasonGames->count(), $season?->name, 'admin.games.index', 'games.manage'],
-            ['🏆', 'Bilans sezonu', $wins.'–'.($results->count() - $wins), 'wygrane–przegrane', 'admin.games.index', 'games.manage'],
-            ['📅', 'Nadchodzące mecze', Game::upcoming()->count(), null, 'admin.games.index', 'games.manage'],
-            ['🥇', 'Turnieje', Tournament::count(), null, 'admin.tournaments.index', 'tournaments.manage'],
-            ['📰', 'Aktualności', Article::published()->count(), 'opublikowane', 'admin.articles.index', 'articles.manage'],
-            ['📷', 'Galerie', Gallery::count(), GalleryPhoto::count().' zdjęć', 'admin.galleries.index', 'media.manage'],
-            ['💬', 'Komentarze', Comment::count() + GameComment::count(), null, 'admin.comments.index', 'comments.moderate'],
-            ['❤️', 'Polubienia', Like::count(), null, null, null],
-            ['📄', 'Pobrania dokumentów', (int) Document::sum('download_count'), Document::count().' dokumentów', 'admin.documents.index', 'documents.manage'],
-            ['🔑', 'Konta', User::where('is_active', true)->count(), User::where('is_active', false)->count().' nieaktywnych', 'admin.users.index', 'users.manage'],
-            ['👀', 'Odwiedziny dziś', (clone $views)->where('created_at', '>=', today())->count(), null, 'admin.statistics.index', 'statistics.view'],
-            ['📈', 'Odwiedziny 7 dni', (clone $views)->where('created_at', '>=', now()->subDays(7))->count(), (clone $views)->where('created_at', '>=', now()->subDays(7))->distinct()->count('visitor_hash').' osób', 'admin.statistics.index', 'statistics.view'],
+            ['users', 'Drużyny', Team::count(), null, 'admin.teams.index', 'teams.manage'],
+            ['user', 'Zawodnicy', Player::where('is_active', true)->count(), 'aktywni', 'admin.players.index', 'teams.manage'],
+            ['ball', 'Mecze w sezonie', $seasonGames->count(), $season?->name, 'admin.games.index', 'games.manage'],
+            ['trophy', 'Bilans sezonu', $wins.'–'.($results->count() - $wins), 'wygrane–przegrane', 'admin.games.index', 'games.manage'],
+            ['calendar', 'Nadchodzące mecze', Game::upcoming()->count(), null, 'admin.games.index', 'games.manage'],
+            ['flag', 'Turnieje', Tournament::count(), null, 'admin.tournaments.index', 'tournaments.manage'],
+            ['newspaper', 'Aktualności', Article::published()->count(), 'opublikowane', 'admin.articles.index', 'articles.manage'],
+            ['photo', 'Galerie', Gallery::count(), GalleryPhoto::count().' zdjęć', 'admin.galleries.index', 'media.manage'],
+            ['chat', 'Komentarze', Comment::count() + GameComment::count(), null, 'admin.comments.index', 'comments.moderate'],
+            ['heart', 'Polubienia', Like::count(), null, null, null],
+            ['document', 'Pobrania dokumentów', (int) Document::sum('download_count'), Document::count().' dokumentów', 'admin.documents.index', 'documents.manage'],
+            ['key', 'Konta', User::where('is_active', true)->count(), User::where('is_active', false)->count().' nieaktywnych', 'admin.users.index', 'users.manage'],
+            ['eye', 'Odwiedziny dziś', (clone $views)->where('created_at', '>=', today())->count(), null, 'admin.statistics.index', 'statistics.view'],
+            ['chart', 'Odwiedziny 7 dni', (clone $views)->where('created_at', '>=', now()->subDays(7))->count(), (clone $views)->where('created_at', '>=', now()->subDays(7))->distinct()->count('visitor_hash').' osób', 'admin.statistics.index', 'statistics.view'],
         ];
 
         $user = $request->user();

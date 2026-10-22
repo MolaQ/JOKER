@@ -1,8 +1,8 @@
-<div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-black/5">
+<div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-zinc-200">
     <div class="flex items-center justify-between gap-3 border-b p-4">
         <h3 class="text-lg font-semibold text-gray-900">{{ $showAll ? 'Ostatnie komentarze' : 'Czekają na akceptację' }}</h3>
         <label class="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" wire:model.live="showAll" class="rounded border-gray-300 text-blue-600"> Pokaż też opublikowane
+            <input type="checkbox" wire:model.live="showAll" class="rounded border-gray-300 text-sky-700"> Pokaż też opublikowane
         </label>
     </div>
     <ul class="divide-y divide-gray-200">
@@ -14,7 +14,7 @@
                         <span class="font-semibold text-gray-900">{{ $comment->user?->name }}</span>
                         · {{ $comment->created_at->format('d.m.Y H:i') }}
                         · {{ $row['kind'] === 'article' ? 'aktualność' : 'mecz' }}:
-                        @if($row['url'])<a href="{{ $row['url'] }}" target="_blank" class="text-blue-600 hover:underline">{{ $row['where'] }}</a>@else{{ $row['where'] }}@endif
+                        @if($row['url'])<a href="{{ $row['url'] }}" target="_blank" class="text-sky-700 hover:underline">{{ $row['where'] }}</a>@else{{ $row['where'] }}@endif
                     </p>
                     <p class="mt-1 whitespace-pre-line text-gray-800">{{ $comment->content }}</p>
                 </div>

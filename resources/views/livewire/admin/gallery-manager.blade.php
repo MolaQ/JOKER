@@ -1,11 +1,11 @@
 <div class="space-y-6">
     @if($gallery || $creating)
-        <div class="rounded-lg bg-white p-4 shadow ring-1 ring-black/5 sm:p-6">
+        <div class="rounded-lg bg-white p-4 shadow ring-1 ring-zinc-200 sm:p-6">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <h2 class="text-lg font-semibold text-gray-900">{{ $gallery ? 'Galeria: '.$gallery->title : 'Nowa galeria' }}</h2>
                 <div class="flex gap-3 text-sm">
                     @if($gallery?->is_published)
-                        <a href="{{ route('galleries.show', $gallery) }}" target="_blank" class="font-semibold text-blue-600 hover:underline">Zobacz na stronie ↗</a>
+                        <a href="{{ route('galleries.show', $gallery) }}" target="_blank" class="font-semibold text-sky-700 hover:underline">Zobacz na stronie ↗</a>
                     @endif
                     <button type="button" wire:click="close" class="font-semibold text-gray-600 hover:text-gray-900">← Wszystkie galerie</button>
                 </div>
@@ -57,8 +57,8 @@
                     @error('uploads.*')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
                 <div class="flex items-end justify-between gap-3">
-                    <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" wire:model="is_published" class="rounded border-gray-300 text-blue-600"> Opublikowana</label>
-                    <button type="submit" wire:loading.attr="disabled" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Zapisz galerię</button>
+                    <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" wire:model="is_published" class="rounded border-gray-300 text-sky-700"> Opublikowana</label>
+                    <button type="submit" wire:loading.attr="disabled" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Zapisz galerię</button>
                 </div>
             </form>
         </div>
@@ -66,7 +66,7 @@
         @if($gallery)
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 @foreach($gallery->photos as $photo)
-                    <div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-black/5" wire:key="photo-{{ $photo->id }}">
+                    <div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-zinc-200" wire:key="photo-{{ $photo->id }}">
                         <img src="{{ $photo->url() }}" alt="" class="aspect-[4/3] w-full object-cover" loading="lazy">
                         <div class="space-y-2 p-3 text-sm">
                             <input type="text" wire:model.blur.live="captions.{{ $photo->id }}" placeholder="Opis zdjęcia" class="block w-full rounded-md border-gray-300 text-sm">
@@ -104,10 +104,10 @@
             </div>
         @endif
     @else
-        <div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-black/5">
+        <div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-zinc-200">
             <div class="flex flex-wrap items-center justify-between gap-3 border-b p-4">
                 <input type="search" wire:model.live.debounce.300ms="search" placeholder="Szukaj galerii..." class="w-full rounded-md border-gray-300 text-sm sm:w-64">
-                <button type="button" wire:click="create" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">+ Nowa galeria</button>
+                <button type="button" wire:click="create" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">+ Nowa galeria</button>
             </div>
             <ul class="divide-y divide-gray-200">
                 @forelse($galleries as $item)
@@ -116,7 +116,7 @@
                             <p class="font-semibold text-gray-900">{{ $item->title }} @unless($item->is_published)<span class="ml-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-normal text-gray-600">ukryta</span>@endunless</p>
                             <p class="text-gray-500">{{ $item->displayDate()?->format('d.m.Y') }} · {{ $item->photos_count }} zdj.@if($item->team) · {{ $item->team->name }}@endif @if($item->match) · mecz @endif</p>
                         </div>
-                        <button type="button" wire:click="edit({{ $item->id }})" class="font-semibold text-blue-600 hover:underline">Edytuj</button>
+                        <button type="button" wire:click="edit({{ $item->id }})" class="font-semibold text-sky-700 hover:underline">Edytuj</button>
                     </li>
                 @empty
                     <li class="p-6 text-center text-gray-500">Brak galerii.</li>

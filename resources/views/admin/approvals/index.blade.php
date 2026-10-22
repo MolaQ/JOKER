@@ -24,7 +24,7 @@
 
     <p class="mt-5 mb-4 max-w-3xl text-sm text-gray-700">{{ $sections[$current]['intro'] }}</p>
 
-    <div @class(['overflow-hidden rounded-lg shadow ring-1 ring-black/5' => in_array($current, ['propozycje', 'zawodnicy', 'profile'], true)])>
+    <div @class(['overflow-hidden rounded-lg shadow ring-1 ring-zinc-200' => in_array($current, ['propozycje', 'zawodnicy', 'profile'], true)])>
         @livewire($sections[$current]['component'], $current === 'oznaczenia' ? ['showEmpty' => true] : [])
     </div>
 </div>

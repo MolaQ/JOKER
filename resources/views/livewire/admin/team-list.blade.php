@@ -6,14 +6,14 @@
                 type="text"
                 wire:model.live.debounce.300ms="search"
                 placeholder="Szukaj drużyny..."
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"
             >
         </div>
         @can('teams.all')
             <button
                 type="button"
                 wire:click="openCreateModal"
-                class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+                class="inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700"
             >
                 + Dodaj drużynę
             </button>
@@ -53,7 +53,7 @@
                         {{ $team->players_count }}
                     </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <button type="button" wire:click="openEditModal({{ $team->id }})" class="text-blue-600 hover:text-blue-900 mr-4">Edytuj</button>
+                        <button type="button" wire:click="openEditModal({{ $team->id }})" class="text-sky-700 hover:text-sky-900 mr-4">Edytuj</button>
                         <button
                             type="button"
                             wire:click="delete({{ $team->id }})"
@@ -79,10 +79,10 @@
     <!-- Modal -->
     @if($showModal)
         <div class="fixed inset-0 z-50 overflow-y-auto" x-data x-init="$el.querySelector('input')?.focus()">
-            <div class="fixed inset-0 bg-gray-500/75" wire:click="closeModal"></div>
+            <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="closeModal"></div>
 
             <div class="flex min-h-full items-center justify-center p-4">
-                <div class="relative bg-white rounded-lg shadow-xl w-full max-w-lg" @click.stop>
+                <div class="relative bg-white rounded-2xl shadow-2xl ring-1 ring-zinc-900/5 w-full max-w-lg" @click.stop>
                     <form wire:submit.prevent="save">
                         <div class="px-6 py-4 border-b border-gray-200">
                             <h3 class="text-lg font-semibold text-gray-900">
@@ -93,7 +93,7 @@
                         <div class="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Nazwa</label>
-                                <input type="text" wire:model="name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <input type="text" wire:model="name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
@@ -105,7 +105,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Kategoria</label>
-                                <select wire:model="category" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <select wire:model="category" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     <option value="senior">Seniorzy</option>
                                     <option value="junior">Juniorzy</option>
                                     <option value="junior_mlodszy">Juniorzy Młodsi</option>
@@ -116,14 +116,14 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Rocznik (puste dla Seniorów)</label>
-                                <input type="number" wire:model="birth_year" min="1990" max="2020" placeholder="np. 2010" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <input type="number" wire:model="birth_year" min="1990" max="2020" placeholder="np. 2010" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 @error('birth_year') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Trener główny</label>
                                 <p class="text-xs text-gray-500">Lista zawiera osoby z rolą Trener lub Członek sztabu (ustawisz w zakładce Użytkownicy).</p>
-                                <select wire:model="trainer_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <select wire:model="trainer_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     <option value="">Brak</option>
                                     @foreach($trainers as $trainer)
                                         <option value="{{ $trainer->id }}">{{ $trainer->name }}</option>
@@ -139,11 +139,11 @@
                                     @foreach($trainers as $trainer)
                                         <div class="flex items-center gap-2">
                                             <label class="flex w-1/2 items-center text-sm text-gray-700">
-                                                <input type="checkbox" wire:model.live="assistant_trainer_ids" value="{{ $trainer->id }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
+                                                <input type="checkbox" wire:model.live="assistant_trainer_ids" value="{{ $trainer->id }}" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500 mr-2">
                                                 {{ $trainer->name }}
                                             </label>
                                             @if(in_array($trainer->id, array_map('intval', $assistant_trainer_ids)))
-                                                <input type="text" wire:model="staff_roles.{{ $trainer->id }}" placeholder="Funkcja" class="w-1/2 rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                <input type="text" wire:model="staff_roles.{{ $trainer->id }}" placeholder="Funkcja" class="w-1/2 rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                             @endif
                                         </div>
                                     @endforeach
@@ -167,7 +167,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Kolejność wyświetlania</label>
-                                <input type="number" wire:model="display_order" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <input type="number" wire:model="display_order" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 @error('display_order') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
@@ -194,7 +194,7 @@
                             <button type="button" wire:click="closeModal" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                                 Anuluj
                             </button>
-                            <button type="submit" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                            <button type="submit" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
                                 <span wire:loading.remove wire:target="save">Zapisz</span>
                                 <span wire:loading wire:target="save">Zapisywanie...</span>
                             </button>
