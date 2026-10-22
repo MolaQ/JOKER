@@ -3,6 +3,13 @@
 @section('title', $player->full_name)
 @section('description', __(':name - :position drużyny :team (:club).', ['name' => $player->full_name, 'position' => $player->positionsLabel() ?? __('zawodnik'), 'team' => $player->team?->name, 'club' => $site['club_name']]))
 
+@if($player->photo_path)
+    @section('og_image', \App\Support\Media::url($player->photo_path))
+@endif
+@push('structured-data')
+    {!! \App\Support\Seo::jsonLd(\App\Support\Seo::player($player)) !!}
+@endpush
+
 @section('content')
 @php
     $age = $player->age();

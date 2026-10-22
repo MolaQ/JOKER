@@ -2,6 +2,8 @@
 
 @section('title', __('Mój profil'))
 
+@section('robots', 'noindex, follow')
+
 @section('content')
 <div class="container mx-auto max-w-3xl px-4 py-12">
     <h1 class="mb-6 text-3xl font-bold text-zinc-900">{{ __('Mój profil') }}</h1>

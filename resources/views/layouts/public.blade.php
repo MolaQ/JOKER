@@ -14,12 +14,27 @@
     @endphp
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    @php
+        $metaDescription = trim($__env->yieldContent('description')) ?: __($site['site_description']);
+        $canonicalUrl = trim($__env->yieldContent('canonical')) ?: \App\Support\Seo::canonical(request());
+        $ogImage = trim($__env->yieldContent('og_image')) ?: $logoUrl;
+    @endphp
     <title>{{ $fullTitle }}</title>
-    <meta name="description" content="@yield('description', __($site['site_description']))">
+    <meta name="description" content="{{ $metaDescription }}">
+    <meta name="robots" content="@yield('robots', 'index, follow, max-image-preview:large')">
+    <link rel="canonical" href="{{ $canonicalUrl }}">
     <meta name="theme-color" content="{{ $site->color('color_dark') }}">
+    <meta property="og:site_name" content="{{ $site['club_name'] }}">
+    <meta property="og:locale" content="{{ app()->getLocale() === 'en' ? 'en_GB' : 'pl_PL' }}">
     <meta property="og:title" content="{{ $fullTitle }}">
-    <meta property="og:type" content="website">
-    <meta property="og:image" content="{{ $logoUrl }}">
+    <meta property="og:description" content="{{ $metaDescription }}">
+    <meta property="og:type" content="@yield('og_type', 'website')">
+    <meta property="og:url" content="{{ $canonicalUrl }}">
+    <meta property="og:image" content="{{ $ogImage }}">
+    <meta name="twitter:card" content="{{ $ogImage === $logoUrl ? 'summary' : 'summary_large_image' }}">
+    <link rel="sitemap" type="application/xml" href="{{ route('sitemap') }}">
+    {!! \App\Support\Seo::jsonLd(\App\Support\Seo::organization($site, $logoUrl)) !!}
+    @stack('structured-data')
     <link rel="icon" type="image/png" sizes="32x32" href="{{ $site['logo'] ? $logoUrl : asset('img/logo-32.png') }}">
     <link rel="apple-touch-icon" href="{{ $site['logo'] ? $logoUrl : asset('img/logo-180.png') }}">
     <link rel="preconnect" href="https://images.unsplash.com" crossorigin>

@@ -2,6 +2,8 @@
 
 @section('title', __('Logowanie'))
 
+@section('robots', 'noindex, follow')
+
 @section('content')
 <section class="container-site pt-14 pb-6 lg:pt-20">
     <p class="eyebrow">{{ __('Zaloguj się do swojego konta') }}</p>

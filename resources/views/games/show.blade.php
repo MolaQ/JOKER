@@ -19,6 +19,10 @@
 @section('title', $homeName.' – '.$awayName)
 @section('description', trim(collect([$game->kickoffLabel('d F Y'), $competition, $game->venue])->filter()->implode(' · ').'. '.__('Wynik, transmisje, zdjęcia i relacje z meczu.')))
 
+@push('structured-data')
+    {!! \App\Support\Seo::jsonLd(\App\Support\Seo::game($game)) !!}
+@endpush
+
 @section('content')
 <section class="relative isolate -mt-16 overflow-hidden bg-ink pt-16 text-white lg:-mt-20 lg:pt-20">
     <div class="net-pattern absolute inset-0 -z-10 opacity-40" aria-hidden="true"></div>

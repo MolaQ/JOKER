@@ -5,6 +5,12 @@
 
 @php use App\Support\Media; @endphp
 
+@section('og_type', 'article')
+@section('og_image', \App\Support\Media::articleImage($article))
+@push('structured-data')
+    {!! \App\Support\Seo::jsonLd(\App\Support\Seo::article($article)) !!}
+@endpush
+
 @section('content')
 <article>
     <header class="relative isolate -mt-16 overflow-hidden bg-ink pt-16 text-white lg:-mt-20 lg:pt-20">

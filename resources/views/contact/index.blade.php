@@ -1,6 +1,7 @@
 @extends('layouts.public')
 
 @section('title', __('Kontakt'))
+@section('description', __('Kontakt z klubem siatkarskim Joker Piła: telefon, e-mail, media społecznościowe, zapisy na treningi i współpraca.'))
 
 @section('content')
 <section class="container-site pt-14 pb-6 lg:pt-20">

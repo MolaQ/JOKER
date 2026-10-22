@@ -3,6 +3,10 @@
 @section('title', $page->localizedTitle())
 @section('description', Str::limit(strip_tags((string) ($page->localizedLead() ?: $page->localizedContent())), 155))
 
+@if($page->image_path)
+    @section('og_image', \App\Support\Media::url($page->image_path))
+@endif
+
 @section('content')
 <article>
     @if($page->image_path)

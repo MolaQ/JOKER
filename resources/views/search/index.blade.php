@@ -2,6 +2,8 @@
 
 @section('title', ($query ? $query.' - ' : '').__('Szukaj'))
 
+@section('robots', 'noindex, follow')
+
 @section('content')
 <section class="container-site max-w-3xl pt-14 pb-6 lg:pt-20">
     <p class="eyebrow">{{ __('Wyszukiwarka') }}</p>

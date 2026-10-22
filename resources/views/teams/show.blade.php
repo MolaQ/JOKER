@@ -8,6 +8,11 @@
     use App\Support\Media;
 @endphp
 
+@section('og_image', \App\Support\Media::teamPhoto($team))
+@push('structured-data')
+    {!! \App\Support\Seo::jsonLd(\App\Support\Seo::team($team)) !!}
+@endpush
+
 @section('content')
 {{-- NAGŁÓWEK DRUŻYNY --}}
 <section class="relative isolate -mt-16 overflow-hidden bg-ink pt-16 text-white lg:-mt-20 lg:pt-20">

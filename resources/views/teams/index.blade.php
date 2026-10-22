@@ -1,6 +1,7 @@
 @extends('layouts.public')
 
 @section('title', __('Drużyny'))
+@section('description', __('Drużyny siatkarskie Joker Piła: od minisiatkówki po II ligę mężczyzn. Składy, trenerzy, terminarze i tabele.'))
 
 @section('content')
 <section class="container-site pt-14 pb-10 lg:pt-20">

@@ -29,6 +29,10 @@
     @endif
 @endpush
 
+@push('structured-data')
+    {!! \App\Support\Seo::jsonLd(\App\Support\Seo::website()) !!}
+@endpush
+
 @section('content')
 {{-- HERO --}}
 <section data-hero-slider class="relative isolate -mt-16 overflow-hidden bg-ink text-white lg:-mt-20">
