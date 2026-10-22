@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Competition;
+use App\Models\Season;
 use App\Services\ScheduleImporter;
 use Illuminate\Console\Command;
 
@@ -26,7 +27,10 @@ class SyncSchedules extends Command
             ->sortBy(fn (Competition $competition) => str_contains($competition->source_url, 'mode=12') ? 0 : 1);
 
         if ($competitions->isEmpty()) {
-            $this->info('Żadne rozgrywki bieżącego sezonu nie mają adresu terminarza.');
+            $season = Season::current()->value('name');
+            $this->warn($season
+                ? "Żadne rozgrywki sezonu {$season} nie mają adresu terminarza. Uruchom: php artisan db:seed --class=StartSeeder albo wpisz adresy w panelu: Rozgrywki."
+                : 'Brak bieżącego sezonu. Ustaw go w panelu: Sezony, albo uruchom: php artisan db:seed --class=StartSeeder.');
 
             return self::SUCCESS;
         }

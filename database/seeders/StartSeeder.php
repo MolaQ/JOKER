@@ -21,10 +21,36 @@ class StartSeeder extends Seeder
             $club->seedCompetitionLevels();
         }
 
+        $this->ensureCurrentSeason();
+
         $this->call([PagesSeeder::class, ClubAccountsSeeder::class]);
 
         // Rozgrywki bieżącego sezonu z adresami stron związku: terminarz, wyniki i tabele
         // pobierze `php artisan joker:sync-schedules` (i potem cron co 3 godziny).
-        (new ClubSeeder)->seedCompetitions();
+        $club = new ClubSeeder;
+        if ($this->command) {
+            $club->setCommand($this->command);
+        }
+        $club->seedCompetitions();
+    }
+
+    /**
+     * Sezon trwający dziś (od 1 września) musi istnieć i być bieżący, bo do niego trafiają rozgrywki.
+     * Gdy bieżący sezon jest już ustawiony w panelu, zostaje bez zmian.
+     */
+    private function ensureCurrentSeason(): void
+    {
+        if (Season::current()->exists()) {
+            return;
+        }
+
+        $startYear = now()->month >= 8 ? now()->year : now()->year - 1;
+        $season = Season::firstOrCreate(['name' => $startYear.'/'.($startYear + 1)], [
+            'start_date' => "{$startYear}-09-01",
+            'end_date' => ($startYear + 1).'-06-30',
+        ]);
+        $season->update(['is_current' => true]);
+
+        $this->command?->info("Ustawiono bieżący sezon: {$season->name}.");
     }
 }

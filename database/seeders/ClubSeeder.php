@@ -304,13 +304,16 @@ class ClubSeeder extends Seeder
     /**
      * Rozgrywki naszych drużyn w bieżącym sezonie. Terminarz, wyniki i tabele pobiera `php artisan joker:sync-schedules`.
      * Przy drużynie zapisane są nazwy (oddzielone średnikiem), pod którymi występuje w danych rozgrywkach.
-     * Można uruchomić ponownie: istniejących rozgrywek (ta sama nazwa i sezon) nie dubluje ani nie zmienia.
+     * Można uruchomić ponownie: istniejących rozgrywek (ta sama nazwa i sezon) nie dubluje; uzupełnia tylko
+     * brakujący adres stron związku, poziom i drużyny.
      */
     public function seedCompetitions(): void
     {
         $season = Season::current()->first();
 
         if (! $season) {
+            $this->command?->warn('Brak bieżącego sezonu - rozgrywki pominięte. Ustaw sezon jako bieżący w panelu: Sezony.');
+
             return;
         }
 
@@ -359,15 +362,22 @@ class ClubSeeder extends Seeder
                 'source_url' => implode("\n", $data['sources']),
             ]);
 
-            if (! $competition->wasRecentlyCreated) {
-                continue;
+            if (blank($competition->source_url) || blank($competition->level)) {
+                $competition->update([
+                    'source_url' => $competition->source_url ?: implode("\n", $data['sources']),
+                    'level' => $competition->level ?: $data['level'],
+                ]);
             }
 
+            $attached = $competition->teams()->pluck('teams.id');
+
             foreach ($data['teams'] as $slug => $externalName) {
-                if ($team = $teams->get($slug)) {
+                if (($team = $teams->get($slug)) && ! $attached->contains($team->id)) {
                     $competition->teams()->attach($team->id, ['external_name' => $externalName] + Competition::defaultTeamLabel($team->name, $team->slug, $externalName));
                 }
             }
         }
+
+        $this->command?->info("Rozgrywki sezonu {$season->name}: ".count($competitions).' z adresami stron związku. Wyniki pobierze: php artisan joker:sync-schedules');
     }
 }

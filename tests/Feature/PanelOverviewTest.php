@@ -69,7 +69,7 @@ test('the start seeder adds this season competitions with the union pages', func
 });
 
 test('a new season copies last season competitions with the new year in the addresses', function () {
-    $this->mock(ScheduleImporter::class)->shouldReceive('sync')->andReturnNull();
+    $this->mock(ScheduleImporter::class)->shouldReceive('sync')->andReturn([]);
     $old = Season::create(['name' => '2026/2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30', 'is_current' => false]);
     $new = Season::create(['name' => '2027/2028', 'start_date' => '2027-09-01', 'end_date' => '2028-06-30', 'is_current' => true]);
     $team = Team::factory()->create();
@@ -99,4 +99,21 @@ test('competition level is typed with suggestions instead of a separate list', f
 
     expect(Competition::firstWhere('name', 'Liga Młodzików')->levelName())->toBe('wojewódzka');
     $this->get('/panel/competition-levels')->assertNotFound();
+});
+
+test('the start seeder fixes a missing current season and fills competitions without addresses', function () {
+    $this->travelTo('2026-10-22');
+    $this->mock(ScheduleImporter::class)->shouldReceive('sync')->times(5)->andReturn([]);
+    Season::create(['name' => '2025/2026', 'start_date' => '2025-09-01', 'end_date' => '2026-06-30', 'is_current' => false]);
+    $current = Season::create(['name' => '2026/2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30', 'is_current' => false]);
+    Competition::create(['name' => 'Liga Kadetów', 'season_id' => $current->id]);
+
+    $this->seed(StartSeeder::class);
+
+    expect($current->fresh()->is_current)->toBeTrue()
+        ->and(Competition::where('season_id', $current->id)->count())->toBe(5)
+        ->and(Competition::firstWhere('name', 'Liga Kadetów')->source_url)->toContain('liga-kadetow')
+        ->and(Competition::firstWhere('name', 'Liga Kadetów')->teams)->toHaveCount(2);
+
+    $this->artisan('joker:sync-schedules')->doesntExpectOutputToContain('nie mają adresu');
 });
