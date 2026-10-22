@@ -18,6 +18,8 @@
                 ['label' => 'Pulpit', 'route' => 'admin.dashboard', 'icon' => '🏠'],
                 ['label' => 'Statystyki odwiedzin', 'route' => 'admin.statistics.index', 'icon' => '📈', 'can' => 'statistics.view'],
                 ['label' => 'Aktualności', 'route' => 'admin.articles.index', 'icon' => '📰', 'can' => 'articles.manage'],
+                ['label' => 'Propozycje treści', 'route' => 'admin.content-proposals.index', 'icon' => '💡', 'can' => 'proposals.content', 'badge' => fn () => \App\Models\ContentProposal::pending()->count()],
+                ['label' => 'Komentarze', 'route' => 'admin.comments.index', 'icon' => '💬', 'can' => 'comments.moderate', 'badge' => fn () => \App\Livewire\Admin\CommentModeration::pendingCount()],
                 ['label' => 'Mecze i wyniki', 'route' => 'admin.games.index', 'icon' => '🏐', 'can' => 'games.manage'],
                 ['label' => 'Turnieje', 'route' => 'admin.tournaments.index', 'icon' => '🥇', 'can' => 'tournaments.manage'],
                 ['label' => 'Transmisje i galerie', 'route' => 'admin.media.index', 'icon' => '🎥', 'can' => 'media.manage'],

@@ -44,7 +44,7 @@ test('guests see only comment counts and a login link', function () {
 });
 
 test('logged in users see and add comments on articles and games', function () {
-    $user = User::factory()->fan()->create();
+    $user = User::factory()->parent()->create();
     Comment::create(['article_id' => $this->article->id, 'user_id' => User::factory()->create()->id, 'content' => 'Tajny komentarz kibica', 'is_approved' => true]);
 
     $this->actingAs($user)->get(route('articles.show', $this->article))

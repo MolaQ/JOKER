@@ -37,6 +37,8 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     });
 
     Route::view('/articles', 'admin.articles.index')->middleware('can:articles.manage')->name('articles.index');
+    Route::view('/komentarze', 'admin.comments.index')->middleware('can:comments.moderate')->name('comments.index');
+    Route::view('/propozycje', 'admin.content-proposals.index')->middleware('can:proposals.content')->name('content-proposals.index');
     Route::view('/hero-slides', 'admin.hero-slides.index')->middleware('can:homepage.manage')->name('hero-slides.index');
     Route::view('/documents', 'admin.documents.index')->middleware('can:documents.manage')->name('documents.index');
     Route::view('/sponsors', 'admin.sponsors.index')->middleware('can:sponsors.manage')->name('sponsors.index');

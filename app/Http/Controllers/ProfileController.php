@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ContentProposal;
 use App\Models\Player;
 use App\Models\PlayerChangeRequest;
 use App\Models\ProfileChangeRequest;
@@ -39,6 +40,8 @@ class ProfileController extends Controller
             'latestRequest' => $latestRequest,
             'players' => $players,
             'proposals' => $proposals,
+            'contentProposals' => ContentProposal::where('user_id', $user->id)->latest('id')->limit(10)->get(),
+            'canPropose' => ContentProposal::typesFor($user) !== [],
             'teams' => $user->allCoachedTeams(),
         ]);
     }

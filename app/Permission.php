@@ -12,6 +12,7 @@ enum Permission: string
     case Media = 'media.manage';
     case Homepage = 'homepage.manage';
     case Comments = 'comments.moderate';
+    case ContentProposals = 'proposals.content';
     case Teams = 'teams.manage';
     case AllTeams = 'teams.all';
     case Games = 'games.manage';
@@ -34,6 +35,7 @@ enum Permission: string
             self::Media => 'Transmisje i galerie',
             self::Homepage => 'Slajdy na stronie głównej',
             self::Comments => 'Moderacja komentarzy',
+            self::ContentProposals => 'Zatwierdzanie artykułów, zdjęć i transmisji od rodziców i zawodników',
             self::Teams => 'Drużyny, sztab i zawodnicy',
             self::AllTeams => 'Wszystkie drużyny, nie tylko własne',
             self::Games => 'Mecze, wyniki i tabele',
@@ -64,7 +66,7 @@ enum Permission: string
     public function group(): string
     {
         return match ($this) {
-            self::Articles, self::Media, self::Homepage, self::Comments => 'Treści',
+            self::Articles, self::Media, self::Homepage, self::Comments, self::ContentProposals => 'Treści',
             self::Teams, self::AllTeams, self::Games, self::Tournaments, self::Competitions, self::Proposals => 'Drużyny i rozgrywki',
             self::Documents, self::Sponsors => 'Klub',
             default => 'Konta i strona',

@@ -42,13 +42,15 @@ class GameController extends Controller
             'content' => 'required|string|max:1000',
         ]);
 
-        GameComment::create([
+        $user = $request->user();
+
+        $comment = GameComment::create([
             'game_id' => $game->id,
             'user_id' => $request->user()->id,
             'content' => $validated['content'],
-            'is_approved' => true,
+            'is_approved' => ! $user->commentsNeedApproval(),
         ]);
 
-        return redirect()->to(route('games.show', $game).'#komentarze')->with('success', __('Komentarz został dodany!'));
+        return redirect()->to(route('games.show', $game).'#komentarze')->with('success', $comment->is_approved ? __('Komentarz został dodany!') : __('Dziękujemy! Komentarz pojawi się po akceptacji moderatora.'));
     }
 }

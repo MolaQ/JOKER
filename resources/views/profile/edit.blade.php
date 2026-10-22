@@ -60,9 +60,35 @@
         </div>
     @endif
 
+    @if($canPropose)
+        <h2 id="zaproponuj" class="mb-3 text-xl font-bold text-zinc-900">{{ __('Zaproponuj treść') }}</h2>
+        <p class="mb-3 text-sm text-zinc-600">{{ __('Relacja z meczu, zdjęcia albo link do transmisji. Po zatwierdzeniu przez klub pojawią się na stronie.') }}</p>
+        <div class="mb-6">@livewire('content-proposal-form')</div>
+    @endif
+
+    @if($contentProposals->isNotEmpty())
+        <div class="mb-6 rounded-xl bg-white p-6 shadow">
+            <h2 class="text-lg font-semibold text-zinc-900">{{ __('Moje propozycje treści') }}</h2>
+            <ul class="mt-3 divide-y divide-zinc-100 text-sm">
+                @foreach($contentProposals as $proposal)
+                    <li class="flex flex-wrap items-center justify-between gap-2 py-2">
+                        <span>{{ __($proposal->typeLabel()) }}@if($proposal->title): {{ $proposal->title }}@endif <span class="text-zinc-500">{{ $proposal->created_at->format('d.m.Y') }}</span></span>
+                        <span @class([
+                            'rounded-full px-2 py-0.5 text-xs font-semibold',
+                            'bg-amber-100 text-amber-800' => $proposal->status === 'pending',
+                            'bg-green-100 text-green-800' => $proposal->status === 'approved',
+                            'bg-red-100 text-red-800' => $proposal->status === 'rejected',
+                        ])>{{ ['pending' => __('czeka'), 'approved' => __('zatwierdzona'), 'rejected' => __('odrzucona')][$proposal->status] ?? $proposal->status }}</span>
+                        @if($proposal->review_note)<span class="w-full text-zinc-500">{{ $proposal->review_note }}</span>@endif
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     @if($proposals->isNotEmpty())
         <div class="mb-6 rounded-xl bg-white p-6 shadow">
-            <h2 class="text-lg font-semibold text-zinc-900">{{ __('Moje propozycje') }}</h2>
+            <h2 class="text-lg font-semibold text-zinc-900">{{ __('Moje propozycje zmian w profilach') }}</h2>
             <ul class="mt-3 divide-y divide-zinc-100 text-sm">
                 @foreach($proposals as $proposal)
                     <li class="flex flex-wrap items-center justify-between gap-2 py-2">

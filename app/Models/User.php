@@ -266,6 +266,15 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Komentarz kibica (konta bez innej roli w klubie) czeka na akceptację moderatora.
+     */
+    public function commentsNeedApproval(): bool
+    {
+        return ! $this->hasPermission(Permission::Comments)
+            && $this->roles()->every(fn (UserRole $role) => $role === UserRole::Fan);
+    }
+
+    /**
      * Drużyny, którymi konto zarządza: null oznacza wszystkie,
      * inaczej tylko te, które prowadzi jako trener główny lub pomocniczy.
      *

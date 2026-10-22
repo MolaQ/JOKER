@@ -58,13 +58,15 @@ class ArticleController extends Controller
             'content' => 'required|string|max:1000',
         ]);
 
-        Comment::create([
+        $user = Auth::user();
+
+        $comment = Comment::create([
             'article_id' => $article->id,
             'user_id' => Auth::id(),
             'content' => $validated['content'],
-            'is_approved' => true,
+            'is_approved' => ! $user->commentsNeedApproval(),
         ]);
 
-        return redirect()->back()->with('success', __('Komentarz został dodany!'));
+        return redirect()->back()->with('success', $comment->is_approved ? __('Komentarz został dodany!') : __('Dziękujemy! Komentarz pojawi się po akceptacji moderatora.'));
     }
 }
