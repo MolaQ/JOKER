@@ -7,7 +7,8 @@ setlocal EnableDelayedExpansion
 
 set "ZRODLO=C:\xampp\www\molak\JOKER"
 set "CEL=D:\JOKER"
-set "MYSQLDUMP=C:\xampp\mysql\bin\mysqldump.exe"
+rem Sciezke do mysqldump.exe skrypt znajdzie sam; mozesz ja tez wpisac tutaj:
+set "MYSQLDUMP_RECZNIE="
 
 if not exist "%ZRODLO%\artisan" (
     echo Nie znaleziono strony w %ZRODLO%. Popraw sciezke ZRODLO w tym pliku.
@@ -29,23 +30,55 @@ if not exist "%CEL%\storage\logs" mkdir "%CEL%\storage\logs"
 
 echo [2/2] Zrzut bazy danych ...
 for /f "usebackq eol=# tokens=1,* delims==" %%A in ("%ZRODLO%\.env") do (
+    if "%%A"=="DB_CONNECTION" set "DB_RODZAJ=%%~B"
     if "%%A"=="DB_DATABASE" set "DB_NAZWA=%%~B"
     if "%%A"=="DB_USERNAME" set "DB_UZYTKOWNIK=%%~B"
     if "%%A"=="DB_PASSWORD" set "DB_HASLO=%%~B"
+    if "%%A"=="DB_PORT" set "DB_PORT=%%~B"
 )
-if not defined DB_UZYTKOWNIK set "DB_UZYTKOWNIK=root"
 if not exist "%CEL%\_baza" mkdir "%CEL%\_baza"
-if defined DB_HASLO (
-    "%MYSQLDUMP%" -u "!DB_UZYTKOWNIK!" -p"!DB_HASLO!" --default-character-set=utf8mb4 --routines --single-transaction "!DB_NAZWA!" > "%CEL%\_baza\joker.sql"
-) else (
-    "%MYSQLDUMP%" -u "!DB_UZYTKOWNIK!" --default-character-set=utf8mb4 --routines --single-transaction "!DB_NAZWA!" > "%CEL%\_baza\joker.sql"
+
+rem Baza w pliku SQLite: wystarczy skopiowac plik.
+if /i "!DB_RODZAJ!"=="sqlite" (
+    copy /y "%ZRODLO%\database\database.sqlite" "%CEL%\_baza\database.sqlite" >nul
+    echo Baza SQLite skopiowana do %CEL%\_baza\database.sqlite
+    goto koniec
 )
-if errorlevel 1 (
-    echo Zrzut bazy nie powiodl sie. Czy MySQL w XAMPP jest uruchomiony?
+
+if not defined DB_UZYTKOWNIK set "DB_UZYTKOWNIK=root"
+if not defined DB_PORT set "DB_PORT=3306"
+if not defined DB_NAZWA (
+    echo W pliku %ZRODLO%\.env nie ma DB_DATABASE.
     pause
     exit /b 1
 )
 
+rem mysqldump: najpierw XAMPP z dysku, na ktorym jest strona, potem C:\xampp, potem PATH.
+set "MYSQLDUMP=%MYSQLDUMP_RECZNIE%"
+for %%P in ("%ZRODLO:~0,2%\xampp\mysql\bin\mysqldump.exe" "C:\xampp\mysql\bin\mysqldump.exe" "D:\xampp\mysql\bin\mysqldump.exe") do (
+    if not defined MYSQLDUMP if exist %%P set "MYSQLDUMP=%%~P"
+)
+if not defined MYSQLDUMP for /f "delims=" %%P in ('where mysqldump 2^>nul') do if not defined MYSQLDUMP set "MYSQLDUMP=%%P"
+if not defined MYSQLDUMP (
+    echo Nie znalazlem programu mysqldump.exe. Wpisz jego sciezke w linii set "MYSQLDUMP_RECZNIE=..." na gorze pliku.
+    pause
+    exit /b 1
+)
+
+echo Baza: !DB_NAZWA!, uzytkownik: !DB_UZYTKOWNIK!, port: !DB_PORT!
+echo Program: !MYSQLDUMP!
+set "HASLO="
+if defined DB_HASLO set "HASLO=-p!DB_HASLO!"
+"!MYSQLDUMP!" -h 127.0.0.1 -P !DB_PORT! -u "!DB_UZYTKOWNIK!" !HASLO! --default-character-set=utf8mb4 --routines --single-transaction --result-file="%CEL%\_baza\joker.sql" "!DB_NAZWA!"
+if errorlevel 1 (
+    echo.
+    echo Zrzut bazy nie powiodl sie. Komunikat MySQL jest powyzej - wklej go Claude.
+    pause
+    exit /b 1
+)
+echo Baza zapisana w %CEL%\_baza\joker.sql
+
+:koniec
 echo.
 echo Gotowe. Pliki sa w %CEL%, baza w %CEL%\_baza\joker.sql
 echo W domu uruchom narzedzia\przywroc-w-domu.bat z folderu, do ktorego skopiujesz strone.
