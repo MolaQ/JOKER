@@ -156,3 +156,9 @@ test('users change their password in my profile', function () {
 
     expect(Hash::check('nowehaslo123', $user->fresh()->password))->toBeTrue();
 });
+
+test('the join button in the menu leads guests to registration', function () {
+    $this->get('/')->assertOk()->assertSee('href="'.url('/rejestracja').'"', false);
+
+    $this->actingAs(User::factory()->create())->get('/')->assertOk()->assertDontSee('href="'.url('/rejestracja').'"', false);
+});

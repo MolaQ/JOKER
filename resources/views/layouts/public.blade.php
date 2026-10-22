@@ -11,6 +11,10 @@
         $topbarRight = $site->links('topbar_links_right');
         $socials = $site->socials();
         $topbarSearch = $site['topbar_enabled'] && $site['topbar_show_search'];
+        // Zalogowany nie potrzebuje przycisku prowadzącego do rejestracji.
+        $navButtonUrl = (string) $site['nav_button_url'];
+        $showNavButton = $site['nav_button_enabled'] && filled($site['nav_button_label'])
+            && ! (auth()->check() && rtrim($navButtonUrl, '/') === '/rejestracja');
     @endphp
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -120,8 +124,8 @@
                         'text-zinc-300 hover:text-white' => ! $site->isCurrent($link['url']),
                     ])>{{ __($link['label']) }}</a>
                 @endforeach
-                @if($site['nav_button_enabled'] && filled($site['nav_button_label']))
-                    <a href="{{ $site->href((string) $site['nav_button_url']) }}" class="ml-2 rounded-md bg-[var(--color-nav-button-bg)] px-4 py-2 font-display text-[15px] font-semibold tracking-wide text-[var(--color-nav-button-text)] uppercase transition hover:brightness-95">{{ __($site['nav_button_label']) }}</a>
+                @if($showNavButton)
+                    <a href="{{ $site->href($navButtonUrl) }}" class="ml-2 rounded-md bg-[var(--color-nav-button-bg)] px-4 py-2 font-display text-[15px] font-semibold tracking-wide text-[var(--color-nav-button-text)] uppercase transition hover:brightness-95">{{ __($site['nav_button_label']) }}</a>
                 @endif
             </nav>
 
@@ -156,8 +160,8 @@
                 @foreach($navItems as $link)
                     <a href="{{ $site->href($link['url']) }}" class="border-b border-white/5 py-4 font-display text-3xl font-semibold uppercase {{ $site->isCurrent($link['url']) ? 'text-sky-club' : 'text-white' }}">{{ __($link['label']) }}</a>
                 @endforeach
-                @if($site['nav_button_enabled'] && filled($site['nav_button_label']))
-                    <a href="{{ $site->href((string) $site['nav_button_url']) }}" class="mt-4 rounded-xl bg-[var(--color-nav-button-bg)] py-4 text-center font-display text-2xl font-semibold text-[var(--color-nav-button-text)] uppercase">{{ __($site['nav_button_label']) }}</a>
+                @if($showNavButton)
+                    <a href="{{ $site->href($navButtonUrl) }}" class="mt-4 rounded-xl bg-[var(--color-nav-button-bg)] py-4 text-center font-display text-2xl font-semibold text-[var(--color-nav-button-text)] uppercase">{{ __($site['nav_button_label']) }}</a>
                 @endif
                 @if($topbarLeft || $topbarRight)
                     <div class="mt-6 grid grid-cols-2 gap-x-4 gap-y-3 text-sm text-zinc-300">

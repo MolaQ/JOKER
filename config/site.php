@@ -128,7 +128,7 @@ return [
                 ]],
                 'nav_button_enabled' => ['type' => 'toggle', 'label' => 'Wyróżniony przycisk na końcu menu', 'default' => true],
                 'nav_button_label' => ['type' => 'text', 'label' => 'Wyróżniony przycisk: tekst', 'default' => 'Dołącz'],
-                'nav_button_url' => ['type' => 'url', 'label' => 'Wyróżniony przycisk: adres', 'default' => '/kontakt'],
+                'nav_button_url' => ['type' => 'url', 'label' => 'Wyróżniony przycisk: adres', 'default' => '/rejestracja'],
             ],
         ],
 
