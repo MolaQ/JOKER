@@ -32,7 +32,7 @@
             <span class="mr-1 text-sm font-semibold text-amber-900">Czeka na zatwierdzenie:</span>
             @foreach($approvals as $section)
                 <a href="{{ route($section['route']) }}" class="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-sm font-medium text-gray-800 ring-1 ring-amber-200 hover:ring-amber-400">
-                    <span aria-hidden="true">{{ $section['icon'] }}</span> {{ $section['label'] }}
+                    <x-admin-icon :name="$section['icon']" class="size-4 text-zinc-500" /> {{ $section['label'] }}
                     <span class="rounded-full bg-amber-400 px-1.5 text-xs font-bold text-gray-900">{{ $section['count'] }}</span>
                 </a>
             @endforeach

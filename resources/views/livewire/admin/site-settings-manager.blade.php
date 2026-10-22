@@ -6,13 +6,13 @@
                 type="button"
                 wire:click="selectTab('{{ $groupKey }}')"
                 @class([
-                    'rounded-lg px-3 py-2 text-left text-sm font-semibold transition',
-                    'bg-sky-50 text-sky-700 ring-1 ring-sky-200' => $tab === $groupKey,
-                    'text-gray-600 hover:bg-gray-50 hover:text-gray-900' => $tab !== $groupKey,
+                    'flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition',
+                    'bg-sky-50 text-sky-800 ring-1 ring-sky-200' => $tab === $groupKey,
+                    'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900' => $tab !== $groupKey,
                 ])
                 @if($tab === $groupKey) aria-current="true" @endif
             >
-                <span aria-hidden="true">{{ $group['icon'] }}</span> {{ $group['label'] }}
+                <x-admin-icon :name="$group['icon']" @class(['size-[18px]', 'text-sky-600' => $tab === $groupKey, 'text-zinc-400' => $tab !== $groupKey]) /> <span>{{ $group['label'] }}</span>
             </button>
         @endforeach
     </nav>

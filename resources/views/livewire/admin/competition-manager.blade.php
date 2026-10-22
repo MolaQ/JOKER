@@ -44,7 +44,7 @@
                         {{ $competition->teams->pluck('name')->join(', ') }}
                         @if($competition->source_url)
                             <p title="{{ $competition->sync_message }}" class="mt-1 line-clamp-2 max-w-md text-xs {{ str_contains((string) $competition->sync_message, 'Nie udało się') || str_contains((string) $competition->sync_message, 'Nieprzypisane') ? 'text-amber-700' : 'text-gray-400' }}">
-                                🔄 {{ $competition->synced_at ? 'Pobrano '.$competition->synced_at->diffForHumans().'. '.$competition->sync_message : 'Terminarz jeszcze nie pobrany.' }}
+                                <x-admin-icon name="refresh" class="inline size-3.5 align-[-2px] text-zinc-400" /> {{ $competition->synced_at ? 'Pobrano '.$competition->synced_at->diffForHumans().'. '.$competition->sync_message : 'Terminarz jeszcze nie pobrany.' }}
                             </p>
                         @endif
                     </td>

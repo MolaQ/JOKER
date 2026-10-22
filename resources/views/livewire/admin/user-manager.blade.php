@@ -144,7 +144,7 @@
                                     @error('birth_date') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700">Urodziny w kalendarzu 🎂</label>
+                                    <label class="block text-sm font-medium text-gray-700">Urodziny w kalendarzu</label>
                                     <select wire:model="birthday_display" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                         @foreach(\App\BirthdayDisplay::cases() as $mode)
                                             <option value="{{ $mode->value }}">{{ $mode->label() }}</option>

@@ -18,7 +18,7 @@ return [
 
         'ogolne' => [
             'label' => 'Ogólne',
-            'icon' => '⚙️',
+            'icon' => 'cog',
             'fields' => [
                 'club_name' => ['type' => 'text', 'label' => 'Nazwa klubu', 'default' => 'Joker Piła'],
                 'club_tagline' => ['type' => 'text', 'label' => 'Podpis pod nazwą', 'default' => 'Klub siatkówki od 1992 roku'],
@@ -30,7 +30,7 @@ return [
 
         'kolory' => [
             'label' => 'Kolory',
-            'icon' => '🎨',
+            'icon' => 'swatch',
             'fields' => [
                 'color_accent' => ['type' => 'color', 'label' => 'Kolor główny (przyciski, wyróżnienia)', 'default' => '#45a0e0'],
                 'color_dark' => ['type' => 'color', 'label' => 'Kolor ciemnego tła (nagłówek, stopka)', 'default' => '#12141a'],
@@ -47,7 +47,7 @@ return [
 
         'kalendarz' => [
             'label' => 'Kalendarz meczów',
-            'icon' => '📅',
+            'icon' => 'calendar',
             'fields' => [
                 'cal_home_bg' => ['type' => 'color', 'label' => 'Mecz domowy: tło', 'default' => '#0f2d6b'],
                 'cal_home_text' => ['type' => 'color', 'label' => 'Mecz domowy: tekst', 'default' => '#2f7fbf'],
@@ -63,7 +63,7 @@ return [
 
         'powiadomienia' => [
             'label' => 'Powiadomienia (toasty)',
-            'icon' => '🔔',
+            'icon' => 'bell',
             'fields' => [
                 'toast_success_bg' => ['type' => 'color', 'label' => 'Sukces: tło', 'default' => '#ecfdf5'],
                 'toast_success_text' => ['type' => 'color', 'label' => 'Sukces: tekst i ikona', 'default' => '#047857'],
@@ -83,7 +83,7 @@ return [
 
         'push' => [
             'label' => 'Powiadomienia na telefon',
-            'icon' => '📲',
+            'icon' => 'phone',
             'fields' => [
                 'push_enabled' => ['type' => 'toggle', 'label' => 'Powiadomienia push włączone', 'help' => 'Kibic po zgodzie dostaje na telefonie lub komputerze wyskakujące powiadomienia, jak z innych serwisów. Na iPhonie działa po dodaniu strony do ekranu początkowego.', 'default' => true],
                 'push_prompt' => ['type' => 'toggle', 'label' => 'Zaproszenie do włączenia powiadomień', 'help' => 'Mała karta na dole strony przy drugiej wizycie. Kibic może też włączyć powiadomienia ikoną dzwonka w menu.', 'default' => true],
@@ -96,7 +96,7 @@ return [
 
         'wsparcie' => [
             'label' => 'Wspieraj klub',
-            'icon' => '💙',
+            'icon' => 'heart',
             'fields' => [
                 'support_intro' => ['type' => 'textarea', 'label' => 'Tekst na górze strony „Wspieraj klub”', 'default' => 'Dzięki wsparciu rodziców, kibiców i firm ponad 100 młodych siatkarzy może trenować, jeździć na turnieje i rozwijać pasję.'],
                 'support_krs' => ['type' => 'text', 'label' => 'Numer KRS do przekazania 1,5% podatku', 'help' => 'Puste = sekcja 1,5% jest ukryta. Wpisz tylko, jeśli klub ma status organizacji pożytku publicznego.', 'default' => ''],
@@ -108,7 +108,7 @@ return [
 
         'turnieje' => [
             'label' => 'Turnieje: drabinka',
-            'icon' => '🏆',
+            'icon' => 'trophy',
             'fields' => [
                 'tm_bar_bg' => ['type' => 'color', 'label' => 'Belka meczu: tło', 'default' => '#0f2d6b'],
                 'tm_bar_text' => ['type' => 'color', 'label' => 'Belka meczu: tekst', 'default' => '#ffffff'],
@@ -119,7 +119,7 @@ return [
 
         'pasek' => [
             'label' => 'Górny pasek',
-            'icon' => '🟨',
+            'icon' => 'window',
             'fields' => [
                 'topbar_enabled' => ['type' => 'toggle', 'label' => 'Pokazuj górny pasek', 'default' => true],
                 'topbar_links_left' => ['type' => 'links', 'label' => 'Linki po lewej', 'default' => [
@@ -140,7 +140,7 @@ return [
 
         'menu' => [
             'label' => 'Menu główne',
-            'icon' => '🧭',
+            'icon' => 'menu',
             'fields' => [
                 'nav_items' => ['type' => 'links', 'label' => 'Pozycje menu', 'help' => 'Kolejność ustawiasz strzałkami.', 'default' => [
                     ['label' => 'Aktualności', 'url' => '/aktualnosci'],
@@ -159,7 +159,7 @@ return [
 
         'glowna' => [
             'label' => 'Strona główna',
-            'icon' => '🏠',
+            'icon' => 'home',
             'fields' => [
                 'hero_title' => ['type' => 'text', 'label' => 'Duży napis (gdy nie ma slajdów)', 'default' => 'Gramy razem. Wygrywamy razem.'],
                 'hero_subtitle' => ['type' => 'textarea', 'label' => 'Tekst pod dużym napisem', 'default' => 'Każdego dnia około 100 młodych ludzi z Piły i regionu rozwija u nas swoje siatkarskie pasje. Od minisiatkówki po II ligę.'],
@@ -200,7 +200,7 @@ return [
 
         'kontakt' => [
             'label' => 'Kontakt i stopka',
-            'icon' => '📇',
+            'icon' => 'envelope',
             'fields' => [
                 'contact_email' => ['type' => 'text', 'label' => 'E-mail', 'default' => 'smsjokerpila@gmail.com'],
                 'contact_phone' => ['type' => 'text', 'label' => 'Telefon klubu', 'default' => '+48 531 064 100'],

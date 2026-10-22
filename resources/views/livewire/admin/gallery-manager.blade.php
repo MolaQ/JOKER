@@ -74,7 +74,7 @@
                                 @foreach($photo->tags as $tag)
                                     <span @class(['inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs', 'bg-blue-50 text-blue-800' => $tag->status === 'approved', 'bg-amber-50 text-amber-800' => $tag->status !== 'approved'])>
                                         {{ $tag->label() }}@if($tag->status !== 'approved') (czeka)@endif
-                                        @if(! $tag->isVisible())<span title="Brak zgody na wizerunek: oznaczenie jest ukryte">🚫</span>@endif
+                                        @if(! $tag->isVisible())<span title="Brak zgody na wizerunek: oznaczenie jest ukryte" class="text-red-500"><x-admin-icon name="eyeoff" class="inline size-3.5 align-[-2px]" /></span>@endif
                                         <button type="button" wire:click="removeTag({{ $tag->id }})" class="text-gray-400 hover:text-red-600" aria-label="Usuń oznaczenie">×</button>
                                     </span>
                                 @endforeach

@@ -14,7 +14,7 @@
                 'bg-sky-600 text-white ring-sky-600' => $key === $current,
                 'bg-white text-gray-700 ring-gray-200 hover:ring-sky-400' => $key !== $current,
             ]) @if($key === $current) aria-current="page" @endif>
-                <span aria-hidden="true">{{ $section['icon'] }}</span> {{ $section['label'] }}
+                <x-admin-icon :name="$section['icon']" class="size-4 opacity-70" /> {{ $section['label'] }}
                 @if($section['count'] > 0)
                     <span @class(['rounded-full px-2 py-0.5 text-xs font-bold', 'bg-white text-sky-700' => $key === $current, 'bg-amber-400 text-gray-900' => $key !== $current])>{{ $section['count'] }}</span>
                 @endif

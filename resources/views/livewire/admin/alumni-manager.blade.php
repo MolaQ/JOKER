@@ -77,7 +77,7 @@
                     @if($alumnus->photoUrl())
                         <img src="{{ $alumnus->photoUrl() }}" alt="" class="h-12 w-12 rounded object-cover">
                     @else
-                        <span class="flex h-12 w-12 items-center justify-center rounded bg-gray-100 text-lg">🏐</span>
+                        <span class="flex h-12 w-12 items-center justify-center rounded bg-zinc-100 text-zinc-400"><x-admin-icon name="user" /></span>
                     @endif
                     <div class="min-w-0 flex-1">
                         <p class="font-semibold text-gray-900">{{ $alumnus->name }} @if($alumnus->is_featured)<span class="text-amber-500">★</span>@endif @unless($alumnus->is_published)<span class="text-xs font-normal text-gray-400">(ukryty)</span>@endunless</p>

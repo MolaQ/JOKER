@@ -51,7 +51,7 @@
 
     <section>
         <div class="mb-3 flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-gray-900">🤝 Pakiety sponsorskie</h2>
+            <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900"><x-admin-icon name="briefcase" class="text-zinc-400" /> Pakiety sponsorskie</h2>
             <button type="button" wire:click="createPackage" class="rounded-md bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-700">+ Dodaj pakiet</button>
         </div>
         <ul class="divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow ring-1 ring-zinc-200">
@@ -72,7 +72,7 @@
 
     <section>
         <div class="mb-3 flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-gray-900">🛍️ Gadżety klubowe</h2>
+            <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900"><x-admin-icon name="bag" class="text-zinc-400" /> Gadżety klubowe</h2>
             <button type="button" wire:click="createProduct" class="rounded-md bg-sky-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-sky-700">+ Dodaj gadżet</button>
         </div>
         <ul class="divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow ring-1 ring-zinc-200">
@@ -81,7 +81,7 @@
                     @if($product->photoUrl())
                         <img src="{{ $product->photoUrl() }}" alt="" class="h-12 w-12 rounded object-cover">
                     @else
-                        <span class="flex h-12 w-12 items-center justify-center rounded bg-gray-100">🛍️</span>
+                        <span class="flex h-12 w-12 items-center justify-center rounded bg-zinc-100 text-zinc-400"><x-admin-icon name="bag" /></span>
                     @endif
                     <div class="min-w-0 flex-1">
                         <p class="font-semibold text-gray-900">{{ $product->name }} @unless($product->is_available)<span class="text-xs font-normal text-gray-400">(niedostępny)</span>@endunless</p>

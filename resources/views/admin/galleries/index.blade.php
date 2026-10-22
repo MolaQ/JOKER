@@ -10,7 +10,7 @@
     </div>
 
     @if(($pendingTags = \App\Livewire\Admin\PhotoTagReview::pendingFor(auth()->user())->count()) > 0)
-        <a href="{{ route('admin.photo-tags.index') }}" class="mb-6 block rounded-lg bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 ring-1 ring-amber-300 hover:bg-amber-100">🏷️ Oznaczenia na zdjęciach czekają na zatwierdzenie: {{ $pendingTags }} →</a>
+        <a href="{{ route('admin.photo-tags.index') }}" class="mb-6 block rounded-lg bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 ring-1 ring-amber-300 hover:bg-amber-100"><x-admin-icon name="tag" class="mr-1 inline size-4 align-[-3px]" /> Oznaczenia na zdjęciach czekają na zatwierdzenie: {{ $pendingTags }} →</a>
     @endif
     @livewire('admin.gallery-manager')
 </div>

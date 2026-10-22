@@ -96,14 +96,14 @@
                     <td class="whitespace-nowrap px-3 py-4 text-sm">
                         @php
                             $materials = array_filter([
-                                ['📰', 'Wiadomość', $game->articles_count > 0],
-                                ['🎥', 'Wideo', $game->hasStreams()],
-                                ['📷', 'Galeria', $game->galleries_count > 0],
-                                ['✍️', 'Relacja', filled($game->match_report)],
+                                ['newspaper', 'Wiadomość', $game->articles_count > 0],
+                                ['video', 'Wideo', $game->hasStreams()],
+                                ['photo', 'Galeria', $game->galleries_count > 0],
+                                ['pencil', 'Relacja', filled($game->match_report)],
                             ], fn (array $material) => $material[2]);
                         @endphp
                         @forelse($materials as [$icon, $label])
-                            <span class="mr-1 inline-flex items-center rounded-md bg-gray-100 px-1.5 py-0.5 text-sm" title="{{ $label }}" aria-label="{{ $label }}">{{ $icon }}</span>
+                            <span class="mr-1 inline-flex size-7 items-center justify-center rounded-md bg-sky-50 text-sky-700 ring-1 ring-sky-100" title="{{ $label }}" aria-label="{{ $label }}"><x-admin-icon :name="$icon" class="size-4" /></span>
                         @empty
                             <span class="text-xs text-gray-400">brak</span>
                         @endforelse
