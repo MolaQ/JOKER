@@ -46,6 +46,11 @@ class ArticleManager extends Component
 
     public ?string $existingImage = null;
 
+    /** Punkt ostrości zdjęcia w procentach (lewo-prawo, góra-dół). */
+    public int $focusX = 50;
+
+    public int $focusY = 50;
+
     /**
      * Mecze, których dotyczy artykuł (otwierany z kalendarza meczów).
      *
@@ -73,6 +78,8 @@ class ArticleManager extends Component
             'is_featured' => 'boolean',
             'allow_comments' => 'boolean',
             'featured_image' => 'nullable|image|max:4096',
+            'focusX' => 'integer|between:0,100',
+            'focusY' => 'integer|between:0,100',
             'gameIds' => 'array',
             'gameIds.*' => 'integer|exists:games,id',
         ];
@@ -111,6 +118,7 @@ class ArticleManager extends Component
         $this->allow_comments = $article->allow_comments;
         $this->existingImage = $article->featured_image;
         $this->featured_image = null;
+        [$this->focusX, $this->focusY] = array_map('intval', explode(' ', str_replace('%', '', $article->imageFocus())));
         $this->gameIds = $article->games()->pluck('games.id')->all();
         $this->gameSearch = '';
 
@@ -127,7 +135,8 @@ class ArticleManager extends Component
             unset($validated['featured_image']);
         }
 
-        unset($validated['gameIds'], $validated['gameIds.*']);
+        unset($validated['gameIds'], $validated['gameIds.*'], $validated['focusX'], $validated['focusY']);
+        $validated['featured_image_focus'] = $this->focusX.'% '.$this->focusY.'%';
 
         foreach (['title_en', 'excerpt_en', 'content_en'] as $englishField) {
             $validated[$englishField] = filled(strip_tags((string) $validated[$englishField])) ? $validated[$englishField] : null;
@@ -221,6 +230,8 @@ class ArticleManager extends Component
         $this->allow_comments = true;
         $this->featured_image = null;
         $this->existingImage = null;
+        $this->focusX = 50;
+        $this->focusY = 50;
         $this->gameIds = [];
         $this->gameSearch = '';
         $this->resetErrorBag();

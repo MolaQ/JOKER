@@ -188,7 +188,7 @@
     <div class="mt-10 grid gap-6 lg:grid-cols-2">
         @php $lead = $articles->first(); @endphp
         <a href="{{ route('articles.show', $lead) }}" class="group relative isolate flex min-h-[28rem] flex-col justify-end overflow-hidden rounded-3xl p-8 text-white">
-            <x-photo :src="Media::articleImage($lead)" :alt="$lead->localizedTitle()" sizes="(min-width: 1024px) 50vw, 100vw" class="absolute inset-0 -z-10 h-full w-full transition duration-700 group-hover:scale-105" />
+            <x-photo :src="Media::articleImage($lead)" :focus="$lead->imageFocus()" :alt="$lead->localizedTitle()" sizes="(min-width: 1024px) 50vw, 100vw" class="absolute inset-0 -z-10 h-full w-full transition duration-700 group-hover:scale-105" />
             <div class="absolute inset-0 -z-10 bg-gradient-to-t from-ink via-ink/50 to-transparent"></div>
             <p class="text-xs font-semibold tracking-widest text-sky-club-light uppercase">{{ $lead->published_at?->translatedFormat('d F Y') }}</p>
             <h3 class="mt-3 font-display text-3xl leading-tight font-bold uppercase sm:text-4xl">{{ $lead->localizedTitle() }}@if($lead->hasEnglish()) <x-english-badge class="ml-1" />@endif</h3>
@@ -198,7 +198,7 @@
         <div class="grid gap-4">
             @foreach($articles->skip(1) as $article)
                 <a href="{{ route('articles.show', $article) }}" class="card card-hover group flex gap-5 p-3">
-                    <x-photo :src="Media::articleImage($article)" :alt="$article->localizedTitle()" sizes="160px" width="320" height="240" class="aspect-[4/3] w-32 shrink-0 rounded-2xl sm:w-40" />
+                    <x-photo :src="Media::articleImage($article)" :focus="$article->imageFocus()" :alt="$article->localizedTitle()" sizes="160px" width="320" height="240" class="aspect-[4/3] w-32 shrink-0 rounded-2xl sm:w-40" />
                     <div class="flex flex-col justify-center py-2 pr-2">
                         <p class="text-xs font-semibold text-zinc-500">{{ $article->published_at?->translatedFormat('d F Y') }}</p>
                         <h3 class="mt-1 line-clamp-2 font-semibold text-zinc-900 group-hover:text-sky-club-dark">{{ $article->localizedTitle() }}@if($article->hasEnglish()) <x-english-badge class="ml-1" />@endif</h3>

@@ -2,6 +2,7 @@
 
 use App\AccountStatus;
 use App\Livewire\Admin\AccountActivation;
+use App\Livewire\Admin\ArticleManager;
 use App\Livewire\Admin\GameManager;
 use App\Livewire\Admin\UserManager;
 use App\Models\Article;
@@ -130,4 +131,22 @@ test('games are filtered by their materials', function () {
     $component->set('mediaFilter', 'wideo')->assertSee('Rywal Wideo')->assertDontSee('Rywal Galeria');
     $component->set('mediaFilter', 'galeria')->assertSee('Rywal Galeria')->assertDontSee('Rywal Wideo');
     $component->set('mediaFilter', 'bez')->assertSee('Rywal Pusty')->assertDontSee('Rywal Artykuł')->assertDontSee('Rywal Wideo')->assertDontSee('Rywal Galeria');
+});
+
+test('the featured image focus point is saved and used on the article page', function () {
+    $article = Article::factory()->create(['author_id' => $this->admin->id, 'status' => 'published', 'published_at' => now()->subDay(), 'featured_image' => 'articles/zdjecie.jpg']);
+
+    Livewire::actingAs($this->admin)->test(ArticleManager::class)
+        ->call('openEditModal', $article->id)
+        ->assertSet('focusX', 50)
+        ->set('focusX', 80)
+        ->set('focusY', 25)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($article->fresh()->featured_image_focus)->toBe('80% 25%')
+        ->and($article->fresh()->imageFocus())->toBe('80% 25%');
+
+    $article->update(['featured_image_focus' => 'zły tekst']);
+    expect($article->fresh()->imageFocus())->toBe('50% 50%');
 });

@@ -128,7 +128,7 @@
             <div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach($articles as $article)
                     <a href="{{ route('articles.show', $article) }}" class="card card-hover group overflow-hidden">
-                        <x-photo :src="Media::articleImage($article)" :alt="$article->localizedTitle()" sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" class="aspect-[16/10] w-full" />
+                        <x-photo :src="Media::articleImage($article)" :focus="$article->imageFocus()" :alt="$article->localizedTitle()" sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" class="aspect-[16/10] w-full" />
                         <div class="p-5">
                             <p class="text-xs font-semibold text-zinc-500">{{ $article->published_at?->translatedFormat('d F Y') }}</p>
                             <h3 class="mt-1 font-semibold group-hover:text-sky-club-dark">{{ $article->localizedTitle() }}</h3>

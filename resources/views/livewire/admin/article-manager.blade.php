@@ -153,13 +153,32 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Zdjęcie wyróżniające</label>
-                                @if($existingImage && !$featured_image)
-                                    <img src="{{ \App\Support\Media::url($existingImage) }}" onerror="this.style.visibility='hidden'" class="h-24 w-full max-w-xs object-cover rounded mb-2" alt="Obraz">
+                                @php $previewUrl = $featured_image ? $featured_image->temporaryUrl() : ($existingImage ? \App\Support\Media::url($existingImage) : null); @endphp
+                                @if($previewUrl)
+                                    {{-- Kadr: kliknij (albo przeciągnij) punkt, który ma być zawsze widoczny; podglądy pokazują kadry ze strony. --}}
+                                    <div class="mt-2 rounded-xl bg-zinc-50 p-3 ring-1 ring-zinc-200" x-data="{ x: $wire.entangle('focusX'), y: $wire.entangle('focusY'), dragging: false,
+                                        pick(event) { const box = this.$refs.frame.getBoundingClientRect(); this.x = Math.round(Math.min(100, Math.max(0, (event.clientX - box.left) / box.width * 100))); this.y = Math.round(Math.min(100, Math.max(0, (event.clientY - box.top) / box.height * 100))); } }">
+                                        <p class="text-xs text-zinc-600"><strong>Kadr:</strong> kliknij na zdjęciu to, co ma być zawsze widoczne (np. twarze zawodników). Poniżej podgląd, jak zdjęcie wytnie się na stronie.</p>
+                                        <div class="mt-2 grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                                            <div x-ref="frame" class="relative self-start cursor-crosshair touch-none select-none overflow-hidden rounded-lg bg-zinc-200"
+                                                @pointerdown.prevent="dragging = true; pick($event)" @pointermove="dragging && pick($event)" @pointerup.window="dragging = false">
+                                                <img src="{{ $previewUrl }}" alt="Zdjęcie wyróżniające" class="block h-auto w-full" draggable="false">
+                                                <span class="pointer-events-none absolute size-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-sky-500/40 shadow-[0_0_0_1px_rgba(0,0,0,.4)]" :style="`left: ${x}%; top: ${y}%`"></span>
+                                            </div>
+                                            <div class="space-y-2">
+                                                @foreach(['Nagłówek artykułu' => 'aspect-[21/9] w-full', 'Kafelek na liście' => 'aspect-[16/10] w-full', 'Miniatura' => 'aspect-[4/3] w-1/2'] as $label => $shape)
+                                                    <figure>
+                                                        <img src="{{ $previewUrl }}" alt="" class="{{ $shape }} rounded-md object-cover ring-1 ring-zinc-300" :style="`object-position: ${x}% ${y}%`">
+                                                        <figcaption class="mt-0.5 text-[11px] text-zinc-500">{{ $label }}</figcaption>
+                                                    </figure>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                        <button type="button" class="mt-2 text-xs font-medium text-zinc-500 underline hover:text-zinc-800" @click="x = 50; y = 50">Środek zdjęcia</button>
+                                    </div>
                                 @endif
-                                @if($featured_image)
-                                    <img src="{{ $featured_image->temporaryUrl() }}" class="h-24 w-full max-w-xs object-cover rounded mb-2" alt="Podgląd">
-                                @endif
-                                <input type="file" wire:model="featured_image" accept="image/*" class="mt-1 block w-full text-sm text-gray-700">
+                                <input type="file" wire:model="featured_image" accept="image/*" class="mt-2 block w-full text-sm text-gray-700">
+                                <p class="mt-1 text-xs text-gray-500">Najlepiej poziome zdjęcie, co najmniej 1600 px szerokości.</p>
                                 @error('featured_image') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 

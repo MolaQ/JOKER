@@ -5,6 +5,8 @@
     'width' => 800,
     'height' => 600,
     'eager' => false,
+    // Punkt, który zostaje widoczny przy przycinaniu (np. „50% 30%”).
+    'focus' => null,
 ])
 
 @php
@@ -28,6 +30,7 @@
             @if($eager) fetchpriority="high" @endif
             onerror="this.remove()"
             class="absolute inset-0 h-full w-full object-cover"
+            @if($focus) style="object-position: {{ $focus }}" @endif
         >
     @endif
     {{ $slot }}

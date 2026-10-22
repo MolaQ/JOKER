@@ -28,6 +28,7 @@ class Article extends Model
         'content',
         'content_en',
         'featured_image',
+        'featured_image_focus',
         'author_id',
         'status',
         'published_at',
@@ -91,5 +92,13 @@ class Article extends Model
         return $this->status === 'published' &&
                $this->published_at &&
                $this->published_at <= now();
+    }
+
+    /**
+     * Punkt zdjęcia, który zostaje widoczny przy przycinaniu (CSS object-position).
+     */
+    public function imageFocus(): string
+    {
+        return preg_match('/^\d{1,3}% \d{1,3}%$/', (string) $this->featured_image_focus) ? $this->featured_image_focus : '50% 50%';
     }
 }
