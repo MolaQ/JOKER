@@ -23,7 +23,7 @@ use Livewire\Component;
  */
 class GamesBrowser extends Component
 {
-    public const PERIODS = ['nadchodzace' => 'Nadchodzące', 'wyniki' => 'Wyniki', 'wszystkie' => 'Wszystkie'];
+    public const PERIODS = ['wszystkie' => 'Wszystkie', 'nadchodzace' => 'Nadchodzące', 'wyniki' => 'Wyniki'];
 
     /** Wartości filtra rozgrywek obok id lig. */
     public const FILTER_TOURNAMENTS = 'turnieje';
@@ -39,8 +39,8 @@ class GamesBrowser extends Component
     #[Url(as: 'rozgrywki', except: '')]
     public string $competition = '';
 
-    #[Url(as: 'pokaz', except: 'nadchodzace')]
-    public string $period = 'nadchodzace';
+    #[Url(as: 'pokaz', except: 'wszystkie')]
+    public string $period = 'wszystkie';
 
     #[Url(as: 'miejsce', except: '')]
     public string $place = '';
@@ -50,7 +50,7 @@ class GamesBrowser extends Component
 
     public function setPeriod(string $period): void
     {
-        $this->period = array_key_exists($period, self::PERIODS) ? $period : 'nadchodzace';
+        $this->period = array_key_exists($period, self::PERIODS) ? $period : 'wszystkie';
     }
 
     public function toggleTeam(string $slug): void
