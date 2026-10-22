@@ -171,7 +171,7 @@
         @if($player->bio)
             <div class="card p-8">
                 <h2 class="heading-md">{{ __('O zawodniku') }}</h2>
-                <div class="prose-club mt-5">{!! strip_tags($player->bio, '<p><br><strong><em><b><i><ul><ol><li>') !!}</div>
+                <div class="prose-club mt-5">{!! strip_tags($player->bio, '<p><br><strong><em><b><i><u><s><mark><blockquote><hr><ul><ol><li>') !!}</div>
             </div>
         @endif
 

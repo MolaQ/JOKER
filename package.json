@@ -16,6 +16,14 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
-        "cropperjs": "^1.6.2"
+        "@tiptap/core": "^3.32.0",
+        "@tiptap/extension-highlight": "^3.32.0",
+        "@tiptap/extension-text-align": "^3.32.0",
+        "@tiptap/extensions": "^3.32.0",
+        "@tiptap/pm": "^3.32.0",
+        "@tiptap/starter-kit": "^3.32.0",
+        "cropperjs": "^1.6.2",
+        "emoji-picker-element": "^1.29.1",
+        "emoji-picker-element-data": "^1.8.0"
     }
 }

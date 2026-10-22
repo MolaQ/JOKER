@@ -113,7 +113,11 @@
     @if(filled($game->match_report))
         <section>
             <p class="eyebrow">{{ __('Relacja') }}</p>
-            <div class="mt-4 max-w-3xl text-lg leading-relaxed whitespace-pre-line text-zinc-700">{{ strip_tags($game->match_report) }}</div>
+            @if($game->match_report !== strip_tags($game->match_report))
+                <div class="prose-club mt-4 max-w-3xl">{!! strip_tags($game->match_report, '<p><br><strong><em><b><i><u><s><mark><blockquote><hr><ul><ol><li><h2><h3><a>') !!}</div>
+            @else
+                <div class="mt-4 max-w-3xl text-lg leading-relaxed whitespace-pre-line text-zinc-700">{{ $game->match_report }}</div>
+            @endif
         </section>
     @endif
 

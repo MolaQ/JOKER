@@ -3,10 +3,12 @@ import { initCountdowns } from './countdown';
 import { initPageStats } from './page-stats';
 import { initPush } from './push';
 import { registerPhotoCropper } from './photo-cropper';
+import { registerRichEditor } from './rich-editor';
 import { initSearch } from './search';
 import { registerToasts } from './toasts';
 
 registerPhotoCropper();
+registerRichEditor();
 registerToasts();
 registerConfirmModal();
 
