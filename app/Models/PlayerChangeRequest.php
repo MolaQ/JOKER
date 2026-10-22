@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Permission;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -72,15 +73,17 @@ class PlayerChangeRequest extends Model
     }
 
     /**
-     * Zgłoszenia, które użytkownik może rozpatrzyć: admin wszystkie, trener - swoich drużyn.
+     * Zgłoszenia, które użytkownik może rozpatrzyć: z prawem zatwierdzania, ze wszystkich drużyn albo tylko z prowadzonych.
      */
     public function scopeReviewableBy($query, User $user)
     {
-        if ($user->isAdmin()) {
-            return $query;
+        if (! $user->hasPermission(Permission::Proposals)) {
+            return $query->whereIn('id', []);
         }
 
-        $teamIds = $user->allCoachedTeams()->pluck('id');
+        if (($teamIds = $user->managedTeamIds()) === null) {
+            return $query;
+        }
 
         return $query->whereHas('player', fn ($player) => $player->whereIn('team_id', $teamIds));
     }

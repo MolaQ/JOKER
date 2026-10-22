@@ -244,7 +244,8 @@ class DataImport
         $values = array_filter(['email' => $data['email'] ?: null, 'additional_info' => $data['bio'] ? '<p>'.e($data['bio']).'</p>' : null], fn ($value) => $value !== null);
 
         if ($user) {
-            $user->update($values + ($user->role === UserRole::Admin ? [] : ['role' => $role]));
+            $user->update($values);
+            $user->assignRole($role);
         } else {
             $user = User::create($values + [
                 'name' => $data['name'],
@@ -323,7 +324,7 @@ class DataImport
             return $user;
         }
 
-        return User::whereIn('role', [UserRole::Trainer, UserRole::Staff, UserRole::Admin])->get()
+        return User::withRole(UserRole::Trainer, UserRole::Staff, UserRole::Boss, UserRole::Admin)->get()
             ->first(fn (User $user) => self::normalize($user->name) === self::normalize($data['name']));
     }
 

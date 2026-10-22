@@ -117,4 +117,14 @@ class Team extends Model
     {
         return $this->hasMany(LeagueStanding::class);
     }
+
+    /**
+     * Drużyny, którymi użytkownik może zarządzać (trener tylko swoimi).
+     */
+    public function scopeManagedBy($query, User $user)
+    {
+        $teamIds = $user->managedTeamIds();
+
+        return $teamIds === null ? $query : $query->whereIn('teams.id', $teamIds);
+    }
 }

@@ -25,7 +25,8 @@ class UserManager extends Component
 
     public string $password = '';
 
-    public string $role = 'fan';
+    /** @var list<string> */
+    public array $selectedRoles = [];
 
     public ?string $birth_date = null;
 
@@ -47,7 +48,8 @@ class UserManager extends Component
                 Rule::unique('users', 'email')->ignore($this->editingId),
             ],
             'password' => $this->editingId ? 'nullable|string|min:8' : 'required|string|min:8',
-            'role' => 'required|in:admin,trainer,staff,parent,player,fan,guest',
+            'selectedRoles' => 'array',
+            'selectedRoles.*' => Rule::in(array_map(fn (UserRole $role) => $role->value, $this->assignableRoles())),
             'birth_date' => 'nullable|date|before:today',
             'birthday_display' => 'required|in:hidden,cake,age',
         ];
@@ -73,20 +75,49 @@ class UserManager extends Component
     {
         $user = User::findOrFail($id);
 
+        if (! $this->mayEdit($user)) {
+            $this->toast('Konto administratora zmienia tylko administrator.', 'error');
+
+            return;
+        }
+
         $this->editingId = $user->id;
         $this->name = $user->name;
         $this->email = $user->email;
         $this->password = '';
-        $this->role = $user->role->value;
+        $this->selectedRoles = $user->roles()->map->value->all();
         $this->birth_date = $user->birth_date?->format('Y-m-d');
         $this->birthday_display = $user->birthday_display?->value ?? 'age';
 
         $this->showModal = true;
     }
 
+    /**
+     * Role, które może nadać zalogowana osoba: rolę administratora nadaje tylko administrator.
+     *
+     * @return list<UserRole>
+     */
+    public function assignableRoles(): array
+    {
+        return array_values(array_filter(UserRole::cases(), fn (UserRole $role) => $role !== UserRole::Admin || Auth::user()->isAdmin()));
+    }
+
+    private function mayEdit(User $user): bool
+    {
+        return Auth::user()->isAdmin() || ! $user->isAdmin();
+    }
+
     public function save(): void
     {
         $validated = $this->validate();
+        $roles = $validated['selectedRoles'] ?? [];
+        unset($validated['selectedRoles']);
+
+        if ($this->editingId === Auth::id() && Auth::user()->isAdmin() && ! in_array(UserRole::Admin->value, $roles, true)) {
+            $this->addError('selectedRoles', 'Nie możesz odebrać sobie roli administratora.');
+
+            return;
+        }
 
         if (empty($validated['password'])) {
             unset($validated['password']);
@@ -96,11 +127,13 @@ class UserManager extends Component
 
         if ($this->editingId) {
             $user = User::findOrFail($this->editingId);
+            abort_unless($this->mayEdit($user), 403);
             $user->update($validated);
+            $user->syncRoles($roles);
             $this->toast('Użytkownik został zaktualizowany.');
         } else {
             $validated['email_verified_at'] = now();
-            User::create($validated);
+            User::create($validated)->syncRoles($roles);
             $this->toast('Użytkownik został dodany.');
         }
 
@@ -115,7 +148,15 @@ class UserManager extends Component
             return;
         }
 
-        User::findOrFail($id)->delete();
+        $user = User::findOrFail($id);
+
+        if (! $this->mayEdit($user)) {
+            $this->toast('Konto administratora usuwa tylko administrator.', 'error');
+
+            return;
+        }
+
+        $user->delete();
         $this->toast('Użytkownik został usunięty.');
     }
 
@@ -131,7 +172,7 @@ class UserManager extends Component
         $this->name = '';
         $this->email = '';
         $this->password = '';
-        $this->role = 'fan';
+        $this->selectedRoles = [];
         $this->birth_date = null;
         $this->birthday_display = 'age';
         $this->resetErrorBag();
@@ -143,15 +184,16 @@ class UserManager extends Component
             ->where('name', 'like', "%{$this->search}%")
             ->orWhere('email', 'like', "%{$this->search}%")
         ))
-            ->when($this->roleFilter, fn ($q) => $q->where('role', $this->roleFilter))
+            ->when($this->roleFilter === 'none', fn ($q) => $q->doesntHave('roleAssignments'))
+            ->when(UserRole::tryFrom($this->roleFilter), fn ($q, UserRole $role) => $q->withRole($role))
+            ->with('roleAssignments')
             ->orderBy('name')
             ->paginate(15);
 
-        $roles = UserRole::cases();
-
         return view('livewire.admin.user-manager', [
             'users' => $users,
-            'roles' => $roles,
+            'roleOptions' => UserRole::cases(),
+            'assignableRoles' => $this->assignableRoles(),
         ]);
     }
 }

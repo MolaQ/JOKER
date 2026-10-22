@@ -306,7 +306,7 @@ class GamesBrowser extends Component
             ->where('birthday_display', '!=', BirthdayDisplay::Hidden->value)
             ->whereNotNull('birth_date')
             ->when($staffIds, fn ($query) => $query->whereIn('id', $staffIds), fn ($query) => $query->where(fn ($staffQuery) => $staffQuery
-                ->whereIn('role', [UserRole::Trainer->value, UserRole::Staff->value])
+                ->withRole(UserRole::Trainer, UserRole::Staff)
                 ->orWhereHas('headCoachTeams')
                 ->orWhereHas('assistantTeams')))
             ->get()

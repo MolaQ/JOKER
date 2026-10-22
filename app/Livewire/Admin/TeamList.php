@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Support\SearchIndex;
 use App\Support\Slug;
 use App\UserRole;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -83,7 +84,7 @@ class TeamList extends Component
 
     public function openEditModal(int $id): void
     {
-        $team = Team::findOrFail($id);
+        $team = Team::managedBy(Auth::user())->findOrFail($id);
 
         $this->editingId = $team->id;
         $this->name = $team->name;
@@ -119,10 +120,11 @@ class TeamList extends Component
         }
 
         if ($this->editingId) {
-            $team = Team::findOrFail($this->editingId);
+            $team = Team::managedBy(Auth::user())->findOrFail($this->editingId);
             $team->update($validated);
             $this->toast('Drużyna została zaktualizowana.');
         } else {
+            abort_unless(Auth::user()->can('teams.all'), 403);
             $validated['slug'] = Slug::unique(Team::class, $this->name);
             $team = Team::create($validated);
             $this->toast('Drużyna została dodana.');
@@ -141,7 +143,7 @@ class TeamList extends Component
 
     public function delete(int $id): void
     {
-        $team = Team::findOrFail($id);
+        $team = Team::managedBy(Auth::user())->findOrFail($id);
 
         if ($team->players()->count() > 0) {
             $this->toast('Nie można usunąć drużyny, która ma przypisanych zawodników.', 'error');
@@ -179,13 +181,13 @@ class TeamList extends Component
 
     public function render()
     {
-        $teams = Team::withCount('players')
+        $teams = Team::managedBy(Auth::user())->withCount('players')
             ->with(['trainer', 'assistantTrainers'])
             ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
             ->orderBy('display_order')
             ->paginate(10);
 
-        $trainers = User::whereIn('role', [UserRole::Trainer, UserRole::Staff, UserRole::Admin])->orderBy('name')->get();
+        $trainers = User::withRole(UserRole::Trainer, UserRole::Staff, UserRole::Boss, UserRole::Admin)->orderBy('name')->get();
 
         return view('livewire.admin.team-list', [
             'teams' => $teams,

@@ -5,78 +5,52 @@ use App\Models\Tournament;
 use App\Support\DataImport;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'role:admin,trainer'])->prefix('panel')->name('admin.')->group(function () {
+// Każda sekcja panelu wymaga swojego uprawnienia (App\Permission). Uprawnienia ról
+// zmienia się w panelu: Role i uprawnienia.
+Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Teams & Players
-    Route::get('/teams', function () {
-        return view('admin.teams.index');
-    })->name('teams.index');
-    Route::get('/players', function () {
-        return view('admin.players.index');
-    })->name('players.index');
+    Route::middleware('can:teams.manage')->group(function () {
+        Route::view('/teams', 'admin.teams.index')->name('teams.index');
+        Route::view('/players', 'admin.players.index')->name('players.index');
+    });
 
-    // Games
-    Route::get('/games', function () {
-        return view('admin.games.index');
-    })->name('games.index');
+    Route::middleware('can:games.manage')->group(function () {
+        Route::view('/games', 'admin.games.index')->name('games.index');
+        Route::view('/standings', 'admin.standings.index')->name('standings.index');
+    });
 
     // Turnieje i sparingi w trakcie sezonu
-    Route::view('/tournaments', 'admin.tournaments.index')->name('tournaments.index');
-    Route::get('/tournaments/{tournament}', fn (Tournament $tournament) => view('admin.tournaments.edit', ['tournament' => $tournament]))->name('tournaments.edit');
+    Route::middleware('can:tournaments.manage')->group(function () {
+        Route::view('/tournaments', 'admin.tournaments.index')->name('tournaments.index');
+        Route::get('/tournaments/{tournament}', fn (Tournament $tournament) => view('admin.tournaments.edit', ['tournament' => $tournament]))->name('tournaments.edit');
+    });
 
     // Transmisje i galerie zdjęć meczów ligowych i turniejowych
-    Route::view('/media', 'admin.media.index')->name('media.index');
+    Route::view('/media', 'admin.media.index')->middleware('can:media.manage')->name('media.index');
 
-    // Competitions & Standings
-    Route::get('/competitions', function () {
-        return view('admin.competitions.index');
-    })->name('competitions.index');
-    Route::get('/competition-levels', function () {
-        return view('admin.competition-levels.index');
-    })->name('competition-levels.index');
-    Route::get('/standings', function () {
-        return view('admin.standings.index');
-    })->name('standings.index');
+    Route::middleware('can:competitions.manage')->group(function () {
+        Route::view('/competitions', 'admin.competitions.index')->name('competitions.index');
+        Route::view('/competition-levels', 'admin.competition-levels.index')->name('competition-levels.index');
+        Route::view('/seasons', 'admin.seasons.index')->name('seasons.index');
+        Route::view('/rival-teams', 'admin.rival-teams.index')->name('rival-teams.index');
+    });
 
-    // Seasons & Rival teams
-    Route::get('/seasons', function () {
-        return view('admin.seasons.index');
-    })->name('seasons.index');
-    Route::get('/rival-teams', function () {
-        return view('admin.rival-teams.index');
-    })->name('rival-teams.index');
+    Route::view('/articles', 'admin.articles.index')->middleware('can:articles.manage')->name('articles.index');
+    Route::view('/hero-slides', 'admin.hero-slides.index')->middleware('can:homepage.manage')->name('hero-slides.index');
+    Route::view('/documents', 'admin.documents.index')->middleware('can:documents.manage')->name('documents.index');
+    Route::view('/sponsors', 'admin.sponsors.index')->middleware('can:sponsors.manage')->name('sponsors.index');
+    Route::view('/users', 'admin.users.index')->middleware('can:users.manage')->name('users.index');
+    Route::view('/roles', 'admin.roles.index')->middleware('can:roles.manage')->name('roles.index');
 
-    // Articles
-    Route::get('/articles', function () {
-        return view('admin.articles.index');
-    })->name('articles.index');
-
-    // Hero slider
-    Route::get('/hero-slides', function () {
-        return view('admin.hero-slides.index');
-    })->name('hero-slides.index');
-
-    // Documents
-    Route::get('/documents', function () {
-        return view('admin.documents.index');
-    })->name('documents.index');
-
-    // Sponsors
-    Route::get('/sponsors', function () {
-        return view('admin.sponsors.index');
-    })->name('sponsors.index');
-
-    // Users
-    Route::get('/users', function () {
-        return view('admin.users.index');
-    })->name('users.index');
-
-    // Site settings & pages
-    Route::middleware('role:admin')->group(function () {
+    Route::middleware('can:site.manage')->group(function () {
         Route::view('/settings', 'admin.settings.index')->name('settings.index');
         Route::view('/pages', 'admin.pages.index')->name('pages.index');
-        Route::view('/statistics', 'admin.statistics.index')->name('statistics.index');
+    });
+
+    Route::view('/statistics', 'admin.statistics.index')->middleware('can:statistics.view')->name('statistics.index');
+
+    Route::middleware('can:import.run')->group(function () {
         Route::view('/import', 'admin.import.index')->name('import.index');
         Route::get('/import/wzor/{type}', fn (string $type) => response(DataImport::template($type), 200, [
             'Content-Type' => 'text/csv; charset=UTF-8',
@@ -84,13 +58,11 @@ Route::middleware(['auth', 'role:admin,trainer'])->prefix('panel')->name('admin.
         ]))->whereIn('type', array_keys(DataImport::TYPES))->name('import.template');
     });
 
-    // Zdjęcia i dane proponowane przez zawodników i rodziców
-    Route::view('/player-change-requests', 'admin.player-change-requests.index')->name('player-change-requests.index');
-
-    // Profile change requests
-    Route::get('/profile-change-requests', function () {
-        return view('admin.profile-change-requests.index');
-    })->name('profile-change-requests.index');
+    // Zdjęcia i dane proponowane przez zawodników i rodziców, prośby o zmianę profilu
+    Route::middleware('can:proposals.review')->group(function () {
+        Route::view('/player-change-requests', 'admin.player-change-requests.index')->name('player-change-requests.index');
+        Route::view('/profile-change-requests', 'admin.profile-change-requests.index')->name('profile-change-requests.index');
+    });
 });
 
 // Stary adres panelu. Na XAMPP /admin bywa zajęty przez narzędzie bazy danych, dlatego panel jest pod /panel.

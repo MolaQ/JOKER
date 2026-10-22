@@ -8,17 +8,15 @@
     <p class="mt-1 mb-6 text-gray-600">Co chcesz dziś zrobić?</p>
 
     @php
-        $quickActions = [
-            ['📰', 'Dodaj aktualność', 'Napisz wpis na stronę', 'admin.articles.index'],
-            ['🏐', 'Wpisz wynik meczu', 'Albo dodaj nowy mecz', 'admin.games.index'],
-            ['🎽', 'Dodaj zawodnika', 'Lub popraw dane w kadrze', 'admin.players.index'],
-            ['👥', 'Drużyny i sztab', 'Zdjęcie, trenerzy, funkcje', 'admin.teams.index'],
-        ];
-
-        if (auth()->user()->isAdmin()) {
-            $quickActions[] = ['🎨', 'Wygląd i ustawienia', 'Kolory, menu, pasek, teksty', 'admin.settings.index'];
-            $quickActions[] = ['📑', 'Podstrony', 'Dla rodziców, FAQ, O klubie', 'admin.pages.index'];
-        }
+        $quickActions = array_filter([
+            ['📰', 'Dodaj aktualność', 'Napisz wpis na stronę', 'admin.articles.index', 'articles.manage'],
+            ['🏐', 'Wpisz wynik meczu', 'Albo dodaj nowy mecz', 'admin.games.index', 'games.manage'],
+            ['🎽', 'Dodaj zawodnika', 'Lub popraw dane w kadrze', 'admin.players.index', 'teams.manage'],
+            ['👥', 'Drużyny i sztab', 'Zdjęcie, trenerzy, funkcje', 'admin.teams.index', 'teams.manage'],
+            ['🎥', 'Transmisje i galerie', 'Link do transmisji, zdjęcia', 'admin.media.index', 'media.manage'],
+            ['🎨', 'Wygląd i ustawienia', 'Kolory, menu, pasek, teksty', 'admin.settings.index', 'site.manage'],
+            ['📑', 'Podstrony', 'Dla rodziców, FAQ, O klubie', 'admin.pages.index', 'site.manage'],
+        ], fn (array $action) => auth()->user()->can($action[4]));
     @endphp
     <div class="mb-10 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
         @foreach($quickActions as [$icon, $title, $hint, $route])

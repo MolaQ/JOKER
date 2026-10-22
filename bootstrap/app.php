@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\RedirectToCanonicalUrl;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\TrackPageView;
@@ -20,10 +19,6 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias([
-            'role' => CheckRole::class,
-        ]);
-
         $middleware->web(append: [
             RedirectToCanonicalUrl::class,
             SetLocale::class,

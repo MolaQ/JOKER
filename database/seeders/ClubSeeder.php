@@ -219,7 +219,7 @@ class ClubSeeder extends Seeder
     private function seedPlayers(): void
     {
         $currentSeason = Season::current()->first();
-        $playerUsers = User::where('role', UserRole::Player)->get();
+        $playerUsers = User::withRole(UserRole::Player)->get();
 
         $teams = Team::orderBy('display_order')->get()->keyBy('slug');
 

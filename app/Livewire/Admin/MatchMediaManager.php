@@ -68,7 +68,7 @@ class MatchMediaManager extends Component
 
     public function mount(): void
     {
-        abort_unless(Auth::user()?->canManageContent(), 403);
+        abort_unless(Auth::user()?->can('media.manage'), 403);
 
         if ($this->selectedMatch() === null) {
             $this->selected = '';

@@ -23,7 +23,7 @@ class MakeAdmin extends Command
         $user = User::firstWhere('email', $email);
 
         if ($user) {
-            $user->update(['role' => UserRole::Admin]);
+            $user->assignRole(UserRole::Admin);
             $this->info("{$email} jest teraz administratorem.");
 
             return self::SUCCESS;

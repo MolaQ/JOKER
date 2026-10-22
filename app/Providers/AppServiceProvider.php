@@ -11,10 +11,12 @@ use App\Models\RivalTeam;
 use App\Models\Team;
 use App\Models\TournamentMatch;
 use App\Models\User;
+use App\Permission;
 use App\Support\SearchIndex;
 use App\Support\SiteSettings;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -35,6 +37,10 @@ class AppServiceProvider extends ServiceProvider
     {
         // Ustawienia z panelu dostępne w każdym widoku jako $site['klucz'].
         View::share('site', $this->app->make(SiteSettings::class));
+
+        // Uprawnienia z App\Permission (np. can:teams.manage) liczone z ról konta i jego wyjątków.
+        Gate::before(fn (User $user, string $ability) => ($permission = Permission::tryFrom($ability)) ? $user->hasPermission($permission) : null);
+        Gate::define('panel', fn (User $user) => $user->canAccessPanel());
 
         // Polskie nazwy dni i miesięcy w datach (np. "sob, 18 paź").
         Carbon::setLocale(config('app.locale'));

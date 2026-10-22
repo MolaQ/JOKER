@@ -2,36 +2,61 @@
 
 namespace App;
 
+/**
+ * Role w klubie. Konto może mieć kilka ról naraz (np. administrator i rodzic).
+ * Kolejność przypadków to ważność roli: pierwsza z ról konta jest jego "główną" rolą.
+ */
 enum UserRole: string
 {
     case Admin = 'admin';
+    case Boss = 'boss';
+    case Editor = 'editor';
     case Trainer = 'trainer';
     case Staff = 'staff';
     case Parent = 'parent';
     case Player = 'player';
     case Fan = 'fan';
-    case Guest = 'guest';
 
     public function label(): string
     {
         return match ($this) {
             self::Admin => 'Administrator',
+            self::Boss => 'Szef',
+            self::Editor => 'Redaktor',
             self::Trainer => 'Trener',
             self::Staff => 'Członek sztabu',
             self::Parent => 'Rodzic',
             self::Player => 'Zawodnik',
             self::Fan => 'Kibic',
-            self::Guest => 'Gość',
         };
     }
 
-    public function canManageContent(): bool
+    public function description(): string
     {
-        return in_array($this, [self::Admin, self::Trainer]);
+        return match ($this) {
+            self::Admin => 'Wszystkie uprawnienia, nie da się ich odebrać.',
+            self::Boss => 'Prawie wszystko. Nadaje role poza rolą administratora.',
+            self::Editor => 'Pisze aktualności, dodaje zdjęcia i transmisje.',
+            self::Trainer => 'Prowadzi swoje drużyny: zawodnicy, mecze, wyniki.',
+            self::Staff => 'Kierownik, fizjoterapeuta, statystyk. Ma publiczny profil w sztabie.',
+            self::Parent => 'Opiekun konkretnego zawodnika lub kilku zawodników.',
+            self::Player => 'Zawodnik z profilem w kadrze.',
+            self::Fan => 'Konto bez funkcji w klubie: serduszka i komentarze.',
+        };
     }
 
-    public function canComment(): bool
+    /**
+     * Uprawnienia, z którymi rola startuje. Później zmienia się je w panelu "Role i uprawnienia".
+     *
+     * @return list<Permission>
+     */
+    public function defaultPermissions(): array
     {
-        return $this !== self::Guest;
+        return match ($this) {
+            self::Admin, self::Boss => Permission::cases(),
+            self::Editor => [Permission::Articles, Permission::Media, Permission::Homepage, Permission::Documents, Permission::Comments],
+            self::Trainer => [Permission::Teams, Permission::Games, Permission::Tournaments, Permission::Media, Permission::Proposals, Permission::ActivateAccounts],
+            default => [],
+        };
     }
 }

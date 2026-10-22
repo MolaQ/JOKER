@@ -94,8 +94,8 @@ class ContentSeeder extends Seeder
 
     private function seedArticles(): void
     {
-        $authors = User::whereIn('role', [UserRole::Admin, UserRole::Trainer])->get();
-        $commenters = User::whereIn('role', [UserRole::Player, UserRole::Fan, UserRole::Parent])->get();
+        $authors = User::withRole(UserRole::Admin, UserRole::Trainer)->get();
+        $commenters = User::withRole(UserRole::Player, UserRole::Fan, UserRole::Parent)->get();
 
         foreach (self::ARTICLES as $index => $data) {
             $article = Article::create([
@@ -127,7 +127,7 @@ class ContentSeeder extends Seeder
      */
     private function seedDocuments(): void
     {
-        $adminId = User::where('role', UserRole::Admin)->value('id');
+        $adminId = User::withRole(UserRole::Admin)->value('id');
 
         $documents = [
             ['Regulamin klubu Joker Piła', 'regulations', 'Zasady uczestnictwa w treningach i rozgrywkach.'],

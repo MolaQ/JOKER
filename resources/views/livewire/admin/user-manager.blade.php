@@ -10,7 +10,8 @@
             >
             <select wire:model.live="roleFilter" class="w-full sm:w-48 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
                 <option value="">Wszystkie role</option>
-                @foreach($roles as $r)
+                <option value="none">Bez roli</option>
+                @foreach($roleOptions as $r)
                     <option value="{{ $r->value }}">{{ $r->label() }}</option>
                 @endforeach
             </select>
@@ -25,7 +26,7 @@
             <tr>
                 <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Imię i nazwisko</th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Email</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Rola</th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Role</th>
                 <th class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Akcje</span></th>
             </tr>
         </thead>
@@ -38,10 +39,18 @@
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {{ $user->email }}
                     </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm">
-                        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                            {{ $user->role->label() }}
-                        </span>
+                    <td class="px-3 py-4 text-sm">
+                        <div class="flex flex-wrap gap-1">
+                            @forelse($user->roles() as $userRole)
+                                <span @class([
+                                    'inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset',
+                                    'bg-red-50 text-red-700 ring-red-700/10' => $userRole === \App\UserRole::Admin,
+                                    'bg-blue-50 text-blue-700 ring-blue-700/10' => $userRole !== \App\UserRole::Admin,
+                                ])>{{ $userRole->label() }}</span>
+                            @empty
+                                <span class="text-xs text-gray-400">bez roli</span>
+                            @endforelse
+                        </div>
                     </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <button type="button" wire:click="openEditModal({{ $user->id }})" class="text-blue-600 hover:text-blue-900 mr-4">Edytuj</button>
@@ -95,15 +104,22 @@
                                 @error('password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Rola</label>
-                                <select wire:model="role" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    @foreach($roles as $r)
-                                        <option value="{{ $r->value }}">{{ $r->label() }}</option>
+                            <fieldset>
+                                <legend class="block text-sm font-medium text-gray-700">Role (można zaznaczyć kilka)</legend>
+                                <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                                    @foreach($assignableRoles as $r)
+                                        <label class="flex items-start gap-2 rounded-md border border-gray-200 p-2 text-sm hover:bg-gray-50">
+                                            <input type="checkbox" wire:model="selectedRoles" value="{{ $r->value }}" class="mt-0.5 rounded border-gray-300 text-blue-600">
+                                            <span><span class="font-medium text-gray-900">{{ $r->label() }}</span><span class="block text-xs text-gray-500">{{ $r->description() }}</span></span>
+                                        </label>
                                     @endforeach
-                                </select>
-                                @error('role') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                            </div>
+                                </div>
+                                @can('roles.manage')
+                                    <p class="mt-1 text-xs text-gray-500">Co dokładnie może każda rola, ustawisz w sekcji <a href="{{ route('admin.roles.index') }}" class="text-blue-600 underline">Role i uprawnienia</a>.</p>
+                                @endcan
+                                @error('selectedRoles') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                @error('selectedRoles.*') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </fieldset>
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>

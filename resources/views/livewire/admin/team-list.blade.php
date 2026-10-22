@@ -9,13 +9,15 @@
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
             >
         </div>
-        <button
-            type="button"
-            wire:click="openCreateModal"
-            class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
-        >
-            + Dodaj drużynę
-        </button>
+        @can('teams.all')
+            <button
+                type="button"
+                wire:click="openCreateModal"
+                class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+            >
+                + Dodaj drużynę
+            </button>
+        @endcan
     </div>
 
     <table class="min-w-full divide-y divide-gray-300">

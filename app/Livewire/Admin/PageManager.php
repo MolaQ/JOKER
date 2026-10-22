@@ -46,7 +46,7 @@ class PageManager extends Component
 
     public function boot(): void
     {
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        abort_unless(auth()->user()?->can('site.manage'), 403);
     }
 
     /**

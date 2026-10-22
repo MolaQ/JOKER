@@ -10,6 +10,8 @@ use App\Models\Team;
 use App\Models\User;
 use App\PlayerPosition;
 use App\UserRole;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -96,7 +98,7 @@ class PlayerManager extends Component
             'achievements.*.season' => 'nullable|string|max:20',
             'achievements.*.title' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
-            'team_id' => 'required|exists:teams,id',
+            'team_id' => ['required', Rule::in(Team::managedBy(Auth::user())->pluck('id'))],
             'extra_team_ids' => 'array',
             'extra_team_ids.*' => 'exists:teams,id',
             'is_active' => 'boolean',
@@ -122,7 +124,7 @@ class PlayerManager extends Component
 
     public function openEditModal(int $id): void
     {
-        $player = Player::findOrFail($id);
+        $player = Player::managedBy(Auth::user())->findOrFail($id);
 
         $this->editingId = $player->id;
         $this->first_name = $player->first_name;
@@ -167,7 +169,7 @@ class PlayerManager extends Component
         }
 
         if ($this->editingId) {
-            $player = Player::findOrFail($this->editingId);
+            $player = Player::managedBy(Auth::user())->findOrFail($this->editingId);
             $player->update($validated);
             $this->toast('Zawodnik został zaktualizowany.');
         } else {
@@ -227,7 +229,7 @@ class PlayerManager extends Component
 
     public function delete(int $id): void
     {
-        Player::findOrFail($id)->delete();
+        Player::managedBy(Auth::user())->findOrFail($id)->delete();
         $this->toast('Zawodnik został usunięty.');
     }
 
@@ -266,7 +268,7 @@ class PlayerManager extends Component
 
     public function render()
     {
-        $players = Player::with('team')
+        $players = Player::managedBy(Auth::user())->with('team')
             ->when($this->search, fn ($q) => $q->where(fn ($q2) => $q2
                 ->where('first_name', 'like', "%{$this->search}%")
                 ->orWhere('last_name', 'like', "%{$this->search}%")
@@ -276,15 +278,15 @@ class PlayerManager extends Component
             ->orderBy('jersey_number')
             ->paginate(12);
 
-        $teams = Team::orderBy('display_order')->get();
+        $teams = Team::managedBy(Auth::user())->orderBy('display_order')->get();
         $positions = PlayerPosition::cases();
 
         return view('livewire.admin.player-manager', [
             'players' => $players,
             'teams' => $teams,
             'positions' => $positions,
-            'playerAccounts' => $this->showModal ? User::where('role', UserRole::Player)->orderBy('name')->get(['id', 'name', 'email']) : collect(),
-            'parentAccounts' => $this->showModal ? User::where('role', UserRole::Parent)->orderBy('name')->get(['id', 'name', 'email']) : collect(),
+            'playerAccounts' => $this->showModal ? User::withRole(UserRole::Player)->orderBy('name')->get(['id', 'name', 'email']) : collect(),
+            'parentAccounts' => $this->showModal ? User::withRole(UserRole::Parent)->orderBy('name')->get(['id', 'name', 'email']) : collect(),
         ]);
     }
 }

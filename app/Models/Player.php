@@ -6,6 +6,7 @@ use App\BirthdayDisplay;
 use App\Models\Concerns\CountsViews;
 use App\Models\Concerns\HasReadableRouteKey;
 use App\Models\Concerns\Likeable;
+use App\Permission;
 use App\PlayerPosition;
 use Database\Factories\PlayerFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -100,7 +101,7 @@ class Player extends Model
     }
 
     /**
-     * Czy użytkownik może zatwierdzać zmiany tego zawodnika: administrator albo trener jego drużyny.
+     * Czy użytkownik może zatwierdzać zmiany tego zawodnika: ktoś z prawem zatwierdzania zmian, kto prowadzi drużynę zawodnika (albo wszystkie drużyny).
      */
     public function isReviewableBy(?User $user): bool
     {
@@ -108,12 +109,7 @@ class Player extends Model
             return false;
         }
 
-        if ($user->isAdmin()) {
-            return true;
-        }
-
-        return $user->isTrainer() && $this->team_id !== null
-            && $user->allCoachedTeams()->contains('id', $this->team_id);
+        return $user->hasPermission(Permission::Proposals) && $user->managesTeam($this->team_id);
     }
 
     /**
@@ -174,5 +170,21 @@ class Player extends Model
     protected function routeSlugSource(): string
     {
         return (string) $this->full_name;
+    }
+
+    /**
+     * Zawodnicy, których użytkownik może edytować: z prowadzonych drużyn (także grający w nich dodatkowo).
+     */
+    public function scopeManagedBy($query, User $user)
+    {
+        $teamIds = $user->managedTeamIds();
+
+        if ($teamIds === null) {
+            return $query;
+        }
+
+        return $query->where(fn ($players) => $players
+            ->whereIn('team_id', $teamIds)
+            ->orWhereHas('teams', fn ($teams) => $teams->whereIn('teams.id', $teamIds)));
     }
 }

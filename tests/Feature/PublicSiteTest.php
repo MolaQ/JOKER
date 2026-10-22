@@ -35,21 +35,21 @@ test('player and staff profiles load', function () {
 });
 
 test('users outside the staff have no public profile', function () {
-    $fan = User::where('role', UserRole::Fan)->first();
+    $fan = User::withRole(UserRole::Fan)->first();
 
     $this->get(route('trainers.show', $fan))->assertNotFound();
 });
 
 test('seeded admin is marcin.molak@gmail.com', function () {
-    expect(User::firstWhere('email', 'marcin.molak@gmail.com')?->role)->toBe(UserRole::Admin);
+    expect(User::firstWhere('email', 'marcin.molak@gmail.com')?->isAdmin())->toBeTrue();
 });
 
 test('joker:admin promotes an existing user', function () {
-    $fan = User::where('role', UserRole::Fan)->first();
+    $fan = User::withRole(UserRole::Fan)->first();
 
     $this->artisan('joker:admin', ['email' => $fan->email])->assertSuccessful();
 
-    expect($fan->fresh()->role)->toBe(UserRole::Admin);
+    expect($fan->fresh()->roles()->all())->toBe([UserRole::Admin, UserRole::Fan]);
 });
 
 test('search finds people without Polish characters', function () {

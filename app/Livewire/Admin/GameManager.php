@@ -10,6 +10,8 @@ use App\Models\Season;
 use App\Models\Team;
 use App\Models\Tournament;
 use App\Services\StandingsCalculator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -67,7 +69,7 @@ class GameManager extends Component
     protected function rules(): array
     {
         return [
-            'team_id' => 'required|exists:teams,id',
+            'team_id' => ['required', Rule::in(Team::managedBy(Auth::user())->pluck('id'))],
             'season_id' => 'required|exists:seasons,id',
             'competition_id' => 'nullable|exists:competitions,id',
             'kind' => 'required|in:league,friendly,tournament',
@@ -114,7 +116,7 @@ class GameManager extends Component
 
     public function openEditModal(int $id): void
     {
-        $game = Game::findOrFail($id);
+        $game = $this->managedGames()->findOrFail($id);
 
         $this->editingId = $game->id;
         $this->team_id = $game->team_id;
@@ -164,7 +166,7 @@ class GameManager extends Component
         }
 
         if ($this->editingId) {
-            $game = Game::findOrFail($this->editingId);
+            $game = $this->managedGames()->findOrFail($this->editingId);
             $game->update($validated);
 
             if ($game->wasChanged(['home_score', 'away_score', 'sets_score', 'status'])) {
@@ -187,7 +189,7 @@ class GameManager extends Component
 
     public function delete(int $id): void
     {
-        $game = Game::findOrFail($id);
+        $game = $this->managedGames()->findOrFail($id);
         $competitionId = $game->competition_id;
         $game->delete();
 
@@ -308,15 +310,25 @@ class GameManager extends Component
         return $sets;
     }
 
+    /**
+     * Mecze drużyn, którymi użytkownik zarządza (trener tylko swoich).
+     */
+    private function managedGames()
+    {
+        $teamIds = Auth::user()->managedTeamIds();
+
+        return Game::query()->when($teamIds !== null, fn ($games) => $games->whereIn('team_id', $teamIds));
+    }
+
     public function render()
     {
-        $games = Game::with(['team', 'opponentTeam'])
+        $games = $this->managedGames()->with(['team', 'opponentTeam'])
             ->when($this->search, fn ($q) => $q->where('opponent', 'like', "%{$this->search}%"))
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
             ->orderBy('game_date', 'desc')
             ->paginate(12);
 
-        $teams = Team::orderBy('display_order')->get();
+        $teams = Team::managedBy(Auth::user())->orderBy('display_order')->get();
         $seasons = Season::orderBy('start_date', 'desc')->get();
         $competitions = Competition::orderBy('name')->get();
         $tournaments = Tournament::orderByDesc('start_date')->get();
