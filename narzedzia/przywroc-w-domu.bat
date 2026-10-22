@@ -25,6 +25,7 @@ for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do (
 rem XAMPP: najpierw na dysku ze strona, potem C:\xampp, potem PATH.
 set "XAMPP="
 for %%P in ("%CD:~0,2%\xampp" "C:\xampp" "D:\xampp") do if not defined XAMPP if exist "%%~P\php\php.exe" set "XAMPP=%%~P"
+if not defined XAMPP for %%P in ("%CD:~0,2%\xampp" "C:\xampp" "D:\xampp") do if not defined XAMPP if exist "%%~P\apps\php\php.exe" set "XAMPP=%%~P\apps"
 if not defined XAMPP (
     echo Nie znalazlem XAMPP. Wpisz jego folder w linii set "XAMPP=..." w tym pliku.
     pause
@@ -32,6 +33,7 @@ if not defined XAMPP (
 )
 set "PHP=%XAMPP%\php\php.exe"
 set "MYSQL=%XAMPP%\mysql\bin\mysql.exe"
+if not exist "%MYSQL%" set "MYSQL=%XAMPP%\apps\mysql\bin\mysql.exe"
 
 if /i "!DB_RODZAJ!"=="sqlite" (
     echo [1/3] Kopiuje baze SQLite ...

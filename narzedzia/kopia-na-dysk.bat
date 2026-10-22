@@ -55,7 +55,7 @@ if not defined DB_NAZWA (
 
 rem mysqldump: najpierw XAMPP z dysku, na ktorym jest strona, potem C:\xampp, potem PATH.
 set "MYSQLDUMP=%MYSQLDUMP_RECZNIE%"
-for %%P in ("%ZRODLO:~0,2%\xampp\mysql\bin\mysqldump.exe" "C:\xampp\mysql\bin\mysqldump.exe" "D:\xampp\mysql\bin\mysqldump.exe") do (
+for %%P in ("C:\xampp\apps\mysql\bin\mysqldump.exe" "%ZRODLO:~0,2%\xampp\apps\mysql\bin\mysqldump.exe" "%ZRODLO:~0,2%\xampp\mysql\bin\mysqldump.exe" "C:\xampp\mysql\bin\mysqldump.exe" "D:\xampp\mysql\bin\mysqldump.exe") do (
     if not defined MYSQLDUMP if exist %%P set "MYSQLDUMP=%%~P"
 )
 if not defined MYSQLDUMP for /f "delims=" %%P in ('where mysqldump 2^>nul') do if not defined MYSQLDUMP set "MYSQLDUMP=%%P"
