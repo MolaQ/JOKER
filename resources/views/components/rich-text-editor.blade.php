@@ -8,10 +8,6 @@
     'saveOnBlur' => false,
 ])
 
-@php
-    $toolbarButton = 'rounded-md border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50';
-@endphp
-
 @if($model)
     <div
         wire:ignore
@@ -21,15 +17,7 @@
         x-effect="if (($refs.editor.innerHTML || '') !== (content || '')) { $refs.editor.innerHTML = content || '' }"
         class="space-y-2"
     >
-        <div class="flex flex-wrap gap-2">
-            <button type="button" class="{{ $toolbarButton }}" @click.prevent="document.execCommand('bold'); $refs.editor.focus()"><strong>B</strong></button>
-            <button type="button" class="{{ $toolbarButton }}" @click.prevent="document.execCommand('italic'); $refs.editor.focus()"><em>I</em></button>
-            <button type="button" class="{{ $toolbarButton }}" @click.prevent="document.execCommand('underline'); $refs.editor.focus()"><u>U</u></button>
-            <button type="button" class="{{ $toolbarButton }}" @click.prevent="document.execCommand('insertUnorderedList'); $refs.editor.focus()">• {{ __('Lista') }}</button>
-            <button type="button" class="{{ $toolbarButton }}" @click.prevent="document.execCommand('insertOrderedList'); $refs.editor.focus()">1. {{ __('Lista') }}</button>
-            <button type="button" class="{{ $toolbarButton }}" @click.prevent="document.execCommand('formatBlock', false, 'h3'); $refs.editor.focus()">{{ __('Nagłówek') }}</button>
-            <button type="button" class="{{ $toolbarButton }}" @click.prevent="document.execCommand('removeFormat'); $refs.editor.focus()">{{ __('Wyczyść') }}</button>
-        </div>
+        <x-rich-text-toolbar />
 
         <div
             x-ref="editor"
@@ -46,15 +34,7 @@
         x-effect="if (($refs.editor.innerHTML || '') !== (content || '')) { $refs.editor.innerHTML = content || '' }"
         class="space-y-2"
     >
-        <div class="flex flex-wrap gap-2">
-            <button type="button" class="{{ $toolbarButton }}" @click.prevent="document.execCommand('bold'); $refs.editor.focus()"><strong>B</strong></button>
-            <button type="button" class="{{ $toolbarButton }}" @click.prevent="document.execCommand('italic'); $refs.editor.focus()"><em>I</em></button>
-            <button type="button" class="{{ $toolbarButton }}" @click.prevent="document.execCommand('underline'); $refs.editor.focus()"><u>U</u></button>
-            <button type="button" class="{{ $toolbarButton }}" @click.prevent="document.execCommand('insertUnorderedList'); $refs.editor.focus()">• {{ __('Lista') }}</button>
-            <button type="button" class="{{ $toolbarButton }}" @click.prevent="document.execCommand('insertOrderedList'); $refs.editor.focus()">1. {{ __('Lista') }}</button>
-            <button type="button" class="{{ $toolbarButton }}" @click.prevent="document.execCommand('formatBlock', false, 'h3'); $refs.editor.focus()">{{ __('Nagłówek') }}</button>
-            <button type="button" class="{{ $toolbarButton }}" @click.prevent="document.execCommand('removeFormat'); $refs.editor.focus()">{{ __('Wyczyść') }}</button>
-        </div>
+        <x-rich-text-toolbar />
 
         <div
             x-ref="editor"
