@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\Alumnus;
 use App\Models\Season;
 use App\Models\Setting;
+use App\Models\SupportPackage;
 use App\Support\SiteSettings;
 use Illuminate\Database\Seeder;
 
@@ -25,6 +27,7 @@ class StartSeeder extends Seeder
 
         $this->ensureCurrentSeason();
         $this->seedContact();
+        $this->seedSupport();
 
         $this->call([PagesSeeder::class, ClubAccountsSeeder::class]);
 
@@ -57,6 +60,29 @@ class StartSeeder extends Seeder
         $site->set(collect($contact)
             ->filter(fn (string $value, string $key) => blank($stored->get($key)) || $stored->get($key) === 'Piła')
             ->all());
+    }
+
+    /**
+     * Najbardziej znany wychowanek i szkic pakietów sponsorskich (korzyści ze strony „Współpraca”).
+     * Pakiety powstają tylko, gdy nie ma żadnego; ceny i zakres ustawisz w panelu: Wspieraj klub.
+     */
+    private function seedSupport(): void
+    {
+        Alumnus::firstOrCreate(['name' => 'Mateusz Malinowski'], ['level' => 'PlusLiga', 'is_featured' => true]);
+
+        if (SupportPackage::exists()) {
+            return;
+        }
+
+        $packages = [
+            ['Partner główny', true, "Logo na strojach zawodników\nLogo na banerach w hali podczas meczów i turniejów\nWyróżnienie na stronie i w mediach społecznościowych\nWspólne akcje marketingowe i wydarzenia\nRaport z działań promocyjnych po sezonie"],
+            ['Partner', false, "Logo na banerach w hali\nLogo na stronie klubu\nPodziękowania w mediach społecznościowych"],
+            ['Przyjaciel klubu', false, "Wpis na stronie klubu\nPodziękowanie w mediach społecznościowych"],
+        ];
+
+        foreach ($packages as $order => [$name, $highlighted, $benefits]) {
+            SupportPackage::create(['name' => $name, 'price' => 'Cena do ustalenia', 'benefits' => $benefits, 'is_highlighted' => $highlighted, 'display_order' => $order]);
+        }
     }
 
     /**

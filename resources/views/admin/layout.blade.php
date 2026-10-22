@@ -18,6 +18,7 @@
                 ['label' => 'Do zatwierdzenia', 'route' => 'admin.approvals.index', 'icon' => '📥', 'can' => fn () => \App\Support\Approvals::sectionsFor(auth()->user())->isNotEmpty(), 'badge' => fn () => \App\Support\Approvals::pendingCountFor(auth()->user()), 'active' => ['admin.approvals.*', 'admin.accounts.*', 'admin.content-proposals.*', 'admin.comments.*', 'admin.photo-tags.*', 'admin.player-change-requests.*', 'admin.profile-change-requests.*']],
                 ['label' => 'Statystyki odwiedzin', 'route' => 'admin.statistics.index', 'icon' => '📈', 'can' => 'statistics.view'],
                 ['label' => 'Aktualności', 'route' => 'admin.articles.index', 'icon' => '📰', 'can' => 'articles.manage'],
+                ['label' => 'Plan treningów', 'route' => 'admin.trainings.index', 'icon' => '🗓️', 'can' => 'trainings.manage'],
                 ['label' => 'Mecze i wyniki', 'route' => 'admin.games.index', 'icon' => '🏐', 'can' => 'games.manage'],
                 ['label' => 'Turnieje', 'route' => 'admin.tournaments.index', 'icon' => '🥇', 'can' => 'tournaments.manage'],
                 ['label' => 'Transmisje i zdjęcia meczów', 'route' => 'admin.media.index', 'icon' => '🎥', 'can' => 'media.manage'],
@@ -31,7 +32,9 @@
             'Klub' => [
                 ['label' => 'Drużyny i sztab', 'route' => 'admin.teams.index', 'icon' => '👥', 'can' => 'teams.manage'],
                 ['label' => 'Zawodnicy', 'route' => 'admin.players.index', 'icon' => '🎽', 'can' => 'teams.manage'],
+                ['label' => 'Wychowankowie', 'route' => 'admin.alumni.index', 'icon' => '⭐', 'can' => 'articles.manage'],
                 ['label' => 'Sponsorzy', 'route' => 'admin.sponsors.index', 'icon' => '🤝', 'can' => 'sponsors.manage'],
+                ['label' => 'Wspieraj klub', 'route' => 'admin.support.index', 'icon' => '💙', 'can' => 'sponsors.manage'],
                 ['label' => 'Dokumenty', 'route' => 'admin.documents.index', 'icon' => '📄', 'can' => 'documents.manage'],
                 ['label' => 'Użytkownicy', 'route' => 'admin.users.index', 'icon' => '🔑', 'can' => 'users.manage'],
                 ['label' => 'Role i uprawnienia', 'route' => 'admin.roles.index', 'icon' => '🛡️', 'can' => 'roles.manage'],

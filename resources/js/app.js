@@ -1,6 +1,7 @@
 import { registerConfirmModal } from './confirm-modal';
 import { initCountdowns } from './countdown';
 import { initPageStats } from './page-stats';
+import { initPush } from './push';
 import { registerPhotoCropper } from './photo-cropper';
 import { initSearch } from './search';
 import { registerToasts } from './toasts';
@@ -11,6 +12,7 @@ registerConfirmModal();
 
 initSearch();
 initPageStats();
+initPush();
 
 // Pojawianie się sekcji przy przewijaniu.
 const revealObserver = 'IntersectionObserver' in window

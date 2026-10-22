@@ -153,10 +153,17 @@ class ClubAccountsSeeder extends Seeder
      */
     private function seedMarcel(array $teams, ?User $account): Player
     {
+        // Numer 10, a gdy w kadetach ktoś już go ma (np. po imporcie kadry), pierwszy wolny od 10 w górę.
+        $taken = Player::where('team_id', $teams['kadeci']->id)->pluck('jersey_number')->all();
+        $number = 10;
+        while (in_array($number, $taken)) {
+            $number++;
+        }
+
         $player = Player::firstOrCreate(['first_name' => 'Marcel', 'last_name' => 'Molak'], [
             'team_id' => $teams['kadeci']->id,
             'position' => PlayerPosition::Opposite,
-            'jersey_number' => 10,
+            'jersey_number' => $number,
             'is_active' => true,
         ]);
 

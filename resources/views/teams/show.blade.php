@@ -46,6 +46,9 @@
     <div class="container-site scrollbar-none flex gap-6 overflow-x-auto text-sm font-semibold">
         <a href="#kadra" class="border-b-2 border-transparent py-4 whitespace-nowrap hover:border-sky-club">{{ __('Kadra') }}</a>
         <a href="#sztab" class="border-b-2 border-transparent py-4 whitespace-nowrap hover:border-sky-club">{{ __('Sztab') }}</a>
+        @if($team->trainingSessions->isNotEmpty())
+            <a href="#treningi" class="border-b-2 border-transparent py-4 whitespace-nowrap hover:border-sky-club">{{ __('Treningi') }}</a>
+        @endif
         <a href="#mecze" class="border-b-2 border-transparent py-4 whitespace-nowrap hover:border-sky-club">{{ __('Mecze') }}</a>
         @if($seasonCompetitions->isNotEmpty())
             <a href="#tabela" class="border-b-2 border-transparent py-4 whitespace-nowrap hover:border-sky-club">{{ __('Rozgrywki') }}</a>
@@ -112,6 +115,24 @@
         @endif
     </div>
 </section>
+
+@if($team->trainingSessions->isNotEmpty())
+{{-- TRENINGI --}}
+<section id="treningi" class="container-site scroll-mt-32 pt-16 lg:pt-20" data-reveal>
+    <p class="eyebrow">{{ __('Treningi') }}</p>
+    <h2 class="heading-lg mt-3">{{ __('Plan treningów') }}</h2>
+    <ul class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        @foreach($team->trainingSessions as $session)
+            <li class="card p-4">
+                <p class="text-xs font-semibold tracking-widest text-sky-club-dark uppercase">{{ $session->weekdayLabel() }}</p>
+                <p class="mt-1 text-lg font-semibold tabular-nums">{{ $session->timeRange() }}</p>
+                <p class="text-sm text-zinc-600">{{ $session->venueLabel() }}@if($session->note) · {{ $session->note }}@endif</p>
+            </li>
+        @endforeach
+    </ul>
+    <a href="{{ route('trainings.index') }}" class="mt-6 inline-block text-sm font-semibold text-sky-club-dark hover:underline">{{ __('Plan wszystkich drużyn') }} →</a>
+</section>
+@endif
 
 {{-- MECZE --}}
 <section id="mecze" class="container-site scroll-mt-32 py-16 lg:py-20" data-reveal>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Alumnus;
 use App\Models\Article;
 use App\Models\Game;
 use App\Models\HeroSlide;
@@ -50,7 +51,9 @@ class HomeController extends Controller
 
         $countdownGame = $this->countdownGame($site['countdown_target']) ?? $upcoming_games->first();
 
-        return view('home', compact('seasonName', 'heroSlides', 'upcoming_games', 'recent_results', 'articles', 'teams', 'sponsors', 'stats', 'countdownGame'));
+        $alumni = $site['home_alumni_enabled'] ? Alumnus::published()->with('player')->limit(4)->get() : collect();
+
+        return view('home', compact('seasonName', 'heroSlides', 'upcoming_games', 'recent_results', 'articles', 'teams', 'sponsors', 'stats', 'countdownGame', 'alumni'));
     }
 
     /**

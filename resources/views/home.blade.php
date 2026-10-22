@@ -232,6 +232,33 @@
 @endif
 
 {{-- DOŁĄCZ --}}
+@if($alumni->isNotEmpty())
+    <section class="container-site py-16 lg:py-20" data-reveal>
+        <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <p class="eyebrow">{{ __('Od Jokera do PlusLigi') }}</p>
+                <h2 class="heading-lg mt-3">{{ __('Nasi wychowankowie') }}</h2>
+            </div>
+            <a href="{{ route('alumni.index') }}" class="text-sm font-semibold text-sky-club-dark hover:underline">{{ __('Wszyscy wychowankowie') }} →</a>
+        </div>
+        <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            @foreach($alumni as $alumnus)
+                <a href="{{ route('alumni.index') }}" class="card card-hover flex items-center gap-4 p-4">
+                    @if($alumnus->photoUrl())
+                        <img src="{{ $alumnus->photoUrl() }}" alt="" loading="lazy" class="h-16 w-16 shrink-0 rounded-2xl object-cover object-top">
+                    @else
+                        <img src="{{ $site->image('logo', asset('img/logo-96.png')) }}" alt="" loading="lazy" class="h-16 w-16 shrink-0 object-contain opacity-60">
+                    @endif
+                    <div class="min-w-0">
+                        <p class="font-semibold">{{ $alumnus->name }}</p>
+                        <p class="truncate text-sm text-zinc-500">{{ collect([$alumnus->level, $alumnus->current_club])->filter()->implode(' · ') }}</p>
+                    </div>
+                </a>
+            @endforeach
+        </div>
+    </section>
+@endif
+
 @if($site['home_join_enabled'])
 <section class="container-site pt-20 lg:pt-28" data-reveal>
     <div class="relative isolate overflow-hidden rounded-[2rem] bg-sky-club px-8 py-14 text-white sm:px-14 lg:py-20">

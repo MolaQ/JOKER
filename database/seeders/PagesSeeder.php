@@ -123,6 +123,24 @@ class PagesSeeder extends Seeder
                     .'<p><em>Treść tymczasowa: terminy treningów i szczegóły zapisów do uzupełnienia w panelu (Podstrony).</em></p>',
             ],
             [
+                'title' => 'Dla zawodników spoza Piły',
+                'slug' => 'spoza-pily',
+                'lead' => 'Trenujesz siatkówkę i chcesz rozwijać się w czołowym ośrodku szkolenia młodzieży? Szkoła, treningi i hala są w jednym miejscu w Pile.',
+                'content' => '<h2>Szkoła i treningi w jednym miejscu</h2>'
+                    .'<p>Od poziomu juniora młodszego szkolimy wspólnie z <a href="https://lo-ms.pila.pl/">Liceum Ogólnokształcącym Mistrzostwa Sportowego w Pile</a>. Lekcje i treningi są ułożone tak, żeby dało się pogodzić naukę z grą na wysokim poziomie.</p>'
+                    .'<ul>'
+                    .'<li><strong>Adres:</strong> ul. Wincentego Pola 11, 64-920 Piła</li>'
+                    .'<li><strong>Telefon szkoły:</strong> <a href="tel:+48673490093">+48 67 349 00 93</a></li>'
+                    .'<li><strong>Telefon klubu:</strong> <a href="tel:+48531064100">+48 531 064 100</a></li>'
+                    .'</ul>'
+                    .'<h2>Treningi</h2>'
+                    .'<p>Każda grupa ma stały plan zajęć w tygodniu. Zobacz <a href="/plan-treningow">plan treningów</a> i wybierz grupę z rocznika.</p>'
+                    .'<h2>Zakwaterowanie i dojazd</h2>'
+                    .'<p><em>Do uzupełnienia w panelu (Podstrony): informacje o internacie lub zakwaterowaniu, kosztach i dojeździe do Piły.</em></p>'
+                    .'<h2>Jak zacząć?</h2>'
+                    .'<p>Zadzwoń albo napisz: umówimy trening próbny i opowiemy o szkole. Zobacz też, kto już przeszedł tę drogę: <a href="/wychowankowie">nasi wychowankowie</a>.</p>',
+            ],
+            [
                 'title' => 'Dla rodziców',
                 'slug' => 'dla-rodzicow',
                 'lead' => 'Najważniejsze informacje dla rodziców młodych siatkarzy.',

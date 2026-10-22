@@ -26,7 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Skrypt statystyk wysyła dane przez sendBeacon (bez tokenu CSRF).
-        $middleware->validateCsrfTokens(except: ['statystyki/*']);
+        $middleware->validateCsrfTokens(except: ['statystyki/*', 'powiadomienia/*']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

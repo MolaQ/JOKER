@@ -55,7 +55,8 @@ enum UserRole: string
         return match ($this) {
             self::Admin, self::Boss => Permission::cases(),
             self::Editor => [Permission::Articles, Permission::Media, Permission::Homepage, Permission::Documents, Permission::Comments, Permission::ContentProposals],
-            self::Trainer => [Permission::Teams, Permission::Games, Permission::Tournaments, Permission::Media, Permission::Proposals, Permission::ActivateAccounts],
+            self::Trainer => [Permission::Teams, Permission::Trainings, Permission::Games, Permission::Tournaments, Permission::Media, Permission::Proposals, Permission::ActivateAccounts],
+            self::Staff => [Permission::Trainings],
             default => [],
         };
     }

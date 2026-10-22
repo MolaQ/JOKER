@@ -81,6 +81,31 @@ return [
             ],
         ],
 
+        'push' => [
+            'label' => 'Powiadomienia na telefon',
+            'icon' => '📲',
+            'fields' => [
+                'push_enabled' => ['type' => 'toggle', 'label' => 'Powiadomienia push włączone', 'help' => 'Kibic po zgodzie dostaje na telefonie lub komputerze wyskakujące powiadomienia, jak z innych serwisów. Na iPhonie działa po dodaniu strony do ekranu początkowego.', 'default' => true],
+                'push_prompt' => ['type' => 'toggle', 'label' => 'Zaproszenie do włączenia powiadomień', 'help' => 'Mała karta na dole strony przy drugiej wizycie. Kibic może też włączyć powiadomienia ikoną dzwonka w menu.', 'default' => true],
+                'push_prompt_text' => ['type' => 'text', 'label' => 'Tekst zaproszenia', 'default' => 'Chcesz wiedzieć od razu o wynikach meczów, nowych aktualnościach i galeriach?'],
+                'push_articles' => ['type' => 'toggle', 'label' => 'Powiadamiaj o nowych aktualnościach', 'default' => true],
+                'push_results' => ['type' => 'toggle', 'label' => 'Powiadamiaj o wynikach meczów', 'default' => true],
+                'push_galleries' => ['type' => 'toggle', 'label' => 'Powiadamiaj o nowych galeriach', 'default' => true],
+            ],
+        ],
+
+        'wsparcie' => [
+            'label' => 'Wspieraj klub',
+            'icon' => '💙',
+            'fields' => [
+                'support_intro' => ['type' => 'textarea', 'label' => 'Tekst na górze strony „Wspieraj klub”', 'default' => 'Dzięki wsparciu rodziców, kibiców i firm ponad 100 młodych siatkarzy może trenować, jeździć na turnieje i rozwijać pasję.'],
+                'support_krs' => ['type' => 'text', 'label' => 'Numer KRS do przekazania 1,5% podatku', 'help' => 'Puste = sekcja 1,5% jest ukryta. Wpisz tylko, jeśli klub ma status organizacji pożytku publicznego.', 'default' => ''],
+                'support_tax_goal' => ['type' => 'text', 'label' => 'Cel szczegółowy w PIT (opcjonalnie)', 'default' => ''],
+                'support_account' => ['type' => 'text', 'label' => 'Numer konta do darowizn (puste = ukryty)', 'default' => ''],
+                'support_shop_note' => ['type' => 'textarea', 'label' => 'Gadżety: jak zamówić', 'default' => 'Wybierz gadżet i kliknij „Zamów”. Odpiszemy z informacją o płatności i odbiorze (w hali albo na treningu).'],
+            ],
+        ],
+
         'turnieje' => [
             'label' => 'Turnieje: drabinka',
             'icon' => '🏆',
@@ -162,6 +187,7 @@ return [
                 'home_news_title' => ['type' => 'text', 'label' => 'Aktualności: tytuł', 'default' => 'Z życia klubu'],
                 'home_sponsors_enabled' => ['type' => 'toggle', 'label' => 'Sekcja: Sponsorzy', 'default' => true],
                 'home_sponsors_title' => ['type' => 'text', 'label' => 'Sponsorzy: napis', 'default' => 'Wspierają nas'],
+                'home_alumni_enabled' => ['type' => 'toggle', 'label' => 'Sekcja: Wychowankowie (Od Jokera do PlusLigi)', 'default' => true],
                 'home_join_enabled' => ['type' => 'toggle', 'label' => 'Sekcja: Zaproszenie na trening', 'default' => true],
                 'home_join_eyebrow' => ['type' => 'text', 'label' => 'Zaproszenie: mały napis', 'default' => 'Nabór trwa cały rok'],
                 'home_join_title' => ['type' => 'text', 'label' => 'Zaproszenie: tytuł', 'default' => 'Dołącz do Jokera'],
@@ -193,7 +219,11 @@ return [
                     ['label' => 'System szkolenia', 'url' => '/strona/system-szkolenia'],
                     ['label' => 'Osiągnięcia', 'url' => '/strona/osiagniecia'],
                     ['label' => 'Galerie zdjęć', 'url' => '/galerie'],
+                    ['label' => 'Wychowankowie', 'url' => '/wychowankowie'],
                     ['label' => 'Nabór', 'url' => '/strona/nabor'],
+                    ['label' => 'Plan treningów', 'url' => '/plan-treningow'],
+                    ['label' => 'Dla zawodników spoza Piły', 'url' => '/strona/spoza-pily'],
+                    ['label' => 'Wspieraj klub', 'url' => '/wspieraj-klub'],
                     ['label' => 'Współpraca i sponsoring', 'url' => '/strona/wspolpraca'],
                     ['label' => 'Dokumenty', 'url' => '/dokumenty'],
                     ['label' => 'Kontakt', 'url' => '/kontakt'],

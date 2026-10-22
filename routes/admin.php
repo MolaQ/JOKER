@@ -16,6 +16,10 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
         Route::view('/players', 'admin.players.index')->name('players.index');
     });
 
+    Route::view('/plan-treningow', 'admin.trainings.index')->middleware('can:trainings.manage')->name('trainings.index');
+    Route::view('/wychowankowie', 'admin.alumni.index')->middleware('can:articles.manage')->name('alumni.index');
+    Route::view('/wsparcie', 'admin.support.index')->middleware('can:sponsors.manage')->name('support.index');
+
     Route::middleware('can:games.manage')->group(function () {
         Route::view('/games', 'admin.games.index')->name('games.index');
         Route::view('/standings', 'admin.standings.index')->name('standings.index');

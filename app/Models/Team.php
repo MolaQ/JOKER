@@ -94,6 +94,11 @@ class Team extends Model
         return $staff;
     }
 
+    public function trainingSessions(): HasMany
+    {
+        return $this->hasMany(TrainingSession::class)->ordered();
+    }
+
     public function players(): HasMany
     {
         return $this->hasMany(Player::class);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Alumnus;
 use App\Models\Article;
 use App\Models\Gallery;
 use App\Models\Game;
@@ -10,6 +11,7 @@ use App\Models\Player;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\Tournament;
+use App\Models\TrainingSession;
 use App\Models\User;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
@@ -56,6 +58,9 @@ class SitemapController extends Controller
             ['loc' => route('standings'), 'lastmod' => null, 'priority' => '0.6'],
             ['loc' => route('teams.index'), 'lastmod' => Team::max('updated_at'), 'priority' => '0.8'],
             ['loc' => route('galleries.index'), 'lastmod' => Gallery::max('updated_at'), 'priority' => '0.6'],
+            ['loc' => route('alumni.index'), 'lastmod' => Alumnus::max('updated_at'), 'priority' => '0.7'],
+            ['loc' => route('trainings.index'), 'lastmod' => TrainingSession::max('updated_at'), 'priority' => '0.7'],
+            ['loc' => route('support.index'), 'lastmod' => null, 'priority' => '0.5'],
             ['loc' => route('documents.index'), 'lastmod' => null, 'priority' => '0.4'],
             ['loc' => route('contact.index'), 'lastmod' => null, 'priority' => '0.5'],
         ];

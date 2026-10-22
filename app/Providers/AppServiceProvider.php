@@ -12,6 +12,7 @@ use App\Models\Team;
 use App\Models\TournamentMatch;
 use App\Models\User;
 use App\Permission;
+use App\Support\PushTriggers;
 use App\Support\SearchIndex;
 use App\Support\SiteSettings;
 use Illuminate\Auth\Notifications\ResetPassword;
@@ -44,6 +45,9 @@ class AppServiceProvider extends ServiceProvider
         // Uprawnienia z App\Permission (np. can:teams.manage) liczone z ról konta i jego wyjątków.
         Gate::before(fn (User $user, string $ability) => ($permission = Permission::tryFrom($ability)) ? $user->hasPermission($permission) : null);
         Gate::define('panel', fn (User $user) => $user->canAccessPanel());
+
+        // Powiadomienia push o nowych aktualnościach, wynikach i galeriach.
+        PushTriggers::register();
 
         // Wiadomości o koncie po polsku.
         VerifyEmail::toMailUsing(fn (User $user, string $url) => (new MailMessage)

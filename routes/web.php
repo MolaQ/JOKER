@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\ClubInfoController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\GalleryController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\PageViewController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SitemapController;
@@ -37,6 +39,9 @@ Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');
 Route::get('/jezyk/{locale}', LocaleController::class)->whereIn('locale', ['pl', 'en'])->name('locale.switch');
 
 // Teams
+Route::get('/wychowankowie', [ClubInfoController::class, 'alumni'])->name('alumni.index');
+Route::get('/plan-treningow', [ClubInfoController::class, 'trainings'])->name('trainings.index');
+Route::get('/wspieraj-klub', [ClubInfoController::class, 'support'])->name('support.index');
 Route::get('/galerie', [GalleryController::class, 'index'])->name('galleries.index');
 Route::get('/galerie/{gallery}', [GalleryController::class, 'show'])->name('galleries.show');
 Route::get('/druzyny', [TeamController::class, 'index'])->name('teams.index');
@@ -87,6 +92,13 @@ Route::middleware('throttle:120,1')->group(function () {
 });
 
 Route::post('/kontakt', [ContactController::class, 'send'])->name('contact.send');
+
+// Powiadomienia push na telefon i komputer
+Route::middleware('throttle:30,1')->group(function () {
+    Route::get('/powiadomienia/klucz', [PushSubscriptionController::class, 'key'])->name('push.key');
+    Route::post('/powiadomienia/subskrypcja', [PushSubscriptionController::class, 'store'])->name('push.subscribe');
+    Route::delete('/powiadomienia/subskrypcja', [PushSubscriptionController::class, 'destroy'])->name('push.unsubscribe');
+});
 
 // Auth routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
