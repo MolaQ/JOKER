@@ -229,10 +229,16 @@
                             <li><a href="mailto:{{ $site['contact_email'] }}" class="transition hover:text-white">{{ $site['contact_email'] }}</a></li>
                         @endif
                         @if(filled($site['contact_phone']))
-                            <li><a href="tel:{{ preg_replace('/[^0-9+]/', '', $site['contact_phone']) }}" class="transition hover:text-white">{{ $site['contact_phone'] }}</a></li>
+                            <li><a href="tel:{{ preg_replace('/[^0-9+]/', '', $site['contact_phone']) }}" class="transition hover:text-white">{{ $site['contact_phone'] }}</a> <span class="text-zinc-500">· {{ __('klub') }}</span></li>
+                        @endif
+                        @if(filled($site['contact_school_phone']))
+                            <li><a href="tel:{{ preg_replace('/[^0-9+]/', '', $site['contact_school_phone']) }}" class="transition hover:text-white">{{ $site['contact_school_phone'] }}</a> <span class="text-zinc-500">· {{ __('szkoła') }}</span></li>
                         @endif
                         @if(filled($site['contact_address']))
                             <li>{{ $site['contact_address'] }}</li>
+                        @endif
+                        @if(filled($site['contact_school_name']))
+                            <li>@if(filled($site['contact_school_url']))<a href="{{ $site['contact_school_url'] }}" target="_blank" rel="noopener" class="transition hover:text-white">{{ $site['contact_school_name'] }} ↗</a>@else{{ $site['contact_school_name'] }}@endif</li>
                         @endif
                     </ul>
                     @if($socials)

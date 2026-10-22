@@ -7,6 +7,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Services\ScheduleImporter;
 use App\Support\Approvals;
+use App\Support\SiteSettings;
 use Database\Seeders\StartSeeder;
 use Livewire\Livewire;
 
@@ -116,4 +117,21 @@ test('the start seeder fixes a missing current season and fills competitions wit
         ->and(Competition::firstWhere('name', 'Liga Kadetów')->teams)->toHaveCount(2);
 
     $this->artisan('joker:sync-schedules')->doesntExpectOutputToContain('nie mają adresu');
+});
+
+test('the start seeder fills the club and school contact without overwriting panel changes', function () {
+    app(SiteSettings::class)->set(['contact_address' => 'Piła', 'contact_phone' => '+48 600 000 000']);
+
+    $this->seed(StartSeeder::class);
+
+    $site = app(SiteSettings::class);
+    expect($site['contact_address'])->toBe('ul. Wincentego Pola 11, 64-920 Piła')
+        ->and($site['contact_phone'])->toBe('+48 600 000 000')
+        ->and($site['contact_school_phone'])->toBe('+48 67 349 00 93');
+
+    $this->get(route('contact.index'))->assertOk()
+        ->assertSee('ul. Wincentego Pola 11, 64-920 Piła')
+        ->assertSee('Liceum Ogólnokształcące Mistrzostwa Sportowego w Pile')
+        ->assertSee('google.com/maps', false)
+        ->assertSee('"postalCode":"64-920"', false);
 });

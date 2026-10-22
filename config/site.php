@@ -177,8 +177,11 @@ return [
             'icon' => '📇',
             'fields' => [
                 'contact_email' => ['type' => 'text', 'label' => 'E-mail', 'default' => 'smsjokerpila@gmail.com'],
-                'contact_phone' => ['type' => 'text', 'label' => 'Telefon', 'default' => '+48 531 064 100'],
-                'contact_address' => ['type' => 'text', 'label' => 'Adres', 'default' => 'Piła'],
+                'contact_phone' => ['type' => 'text', 'label' => 'Telefon klubu', 'default' => '+48 531 064 100'],
+                'contact_address' => ['type' => 'text', 'label' => 'Adres', 'help' => 'Ulica, kod i miasto, np. ul. Wincentego Pola 11, 64-920 Piła. Na stronie Kontakt pod adresem jest link do mapy.', 'default' => 'ul. Wincentego Pola 11, 64-920 Piła'],
+                'contact_school_name' => ['type' => 'text', 'label' => 'Szkoła (puste = ukryta)', 'default' => 'Liceum Ogólnokształcące Mistrzostwa Sportowego w Pile'],
+                'contact_school_phone' => ['type' => 'text', 'label' => 'Telefon szkoły', 'default' => '+48 67 349 00 93'],
+                'contact_school_url' => ['type' => 'url', 'label' => 'Strona szkoły', 'default' => 'https://lo-ms.pila.pl/'],
                 'contact_hours' => ['type' => 'textarea', 'label' => 'Godziny otwarcia biura', 'help' => 'Każda linia wyświetli się osobno.', 'default' => ''],
                 'contact_intro' => ['type' => 'textarea', 'label' => 'Tekst na stronie Kontakt (pod tytułem)', 'default' => 'Masz pytanie o treningi, nabór, mecze albo współpracę? Zadzwoń lub napisz.'],
                 'footer_text' => ['type' => 'text', 'label' => 'Hasło w stopce', 'default' => 'Szkolimy siatkarzy od 1992 roku. Wychowujemy, szkolimy, rozwijamy pasję.'],

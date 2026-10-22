@@ -127,6 +127,9 @@
                     <div>
                         <h3 class="font-semibold text-zinc-900 mb-1">{{ __('Adres') }}</h3>
                         <p class="text-zinc-600">{{ $site['contact_address'] }}</p>
+                        @if(filled($site['contact_address']))
+                            <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($site['club_name'].', '.$site['contact_address']) }}" target="_blank" rel="noopener" class="mt-1 inline-block text-sm font-semibold text-sky-club-dark hover:underline">{{ __('Zobacz na mapie') }} ↗</a>
+                        @endif
                     </div>
                 </div>
 
@@ -141,7 +144,14 @@
                         <h3 class="font-semibold text-zinc-900 mb-1">{{ __('Telefon') }}</h3>
                         <p class="text-zinc-600">
                             <a href="tel:{{ preg_replace('/[^0-9+]/', '', (string) $site['contact_phone']) }}" class="hover:text-sky-club-dark transition">{{ $site['contact_phone'] }}</a>
+                            <span class="text-sm text-zinc-400">· {{ __('klub') }}</span>
                         </p>
+                        @if(filled($site['contact_school_phone']))
+                            <p class="text-zinc-600">
+                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', (string) $site['contact_school_phone']) }}" class="hover:text-sky-club-dark transition">{{ $site['contact_school_phone'] }}</a>
+                                <span class="text-sm text-zinc-400">· {{ __('szkoła') }}</span>
+                            </p>
+                        @endif
                     </div>
                 </div>
 
@@ -160,6 +170,26 @@
                     </div>
                 </div>
 
+                @if(filled($site['contact_school_name']))
+                    <!-- School -->
+                    <div class="flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-ink text-white rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m-6.16-9.42A12.08 12.08 0 006 14.5c0 1.5 2.69 3.5 6 3.5s6-2 6-3.5c0-1.37-.06-2.68-.16-3.92"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-zinc-900 mb-1">{{ __('Szkoła') }}</h3>
+                            @if(filled($site['contact_school_url']))
+                                <a href="{{ $site['contact_school_url'] }}" target="_blank" rel="noopener" class="text-zinc-600 hover:text-sky-club-dark transition">{{ $site['contact_school_name'] }} ↗</a>
+                            @else
+                                <p class="text-zinc-600">{{ $site['contact_school_name'] }}</p>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
+                @if(filled($site['contact_hours']))
                 <!-- Hours -->
                 <div class="flex items-start space-x-4">
                     <div class="w-12 h-12 bg-ink text-white rounded-lg flex items-center justify-center flex-shrink-0">
@@ -172,6 +202,7 @@
                         <p class="whitespace-pre-line text-zinc-600">{{ __($site['contact_hours']) }}</p>
                     </div>
                 </div>
+                @endif
             </div>
 
             @if($site->socials())

@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Season;
+use App\Models\Setting;
+use App\Support\SiteSettings;
 use Illuminate\Database\Seeder;
 
 /**
@@ -22,6 +24,7 @@ class StartSeeder extends Seeder
         }
 
         $this->ensureCurrentSeason();
+        $this->seedContact();
 
         $this->call([PagesSeeder::class, ClubAccountsSeeder::class]);
 
@@ -32,6 +35,28 @@ class StartSeeder extends Seeder
             $club->setCommand($this->command);
         }
         $club->seedCompetitions();
+    }
+
+    /**
+     * Dane kontaktowe klubu i szkoły (LO Mistrzostwa Sportowego) w stopce, na stronie Kontakt i dla Google.
+     * Zapisuje tylko pola puste albo ze starym domyślnym adresem „Piła”, więc zmian z panelu nie nadpisuje.
+     */
+    private function seedContact(): void
+    {
+        $site = app(SiteSettings::class);
+        $contact = [
+            'contact_email' => 'smsjokerpila@gmail.com',
+            'contact_phone' => '+48 531 064 100',
+            'contact_address' => 'ul. Wincentego Pola 11, 64-920 Piła',
+            'contact_school_name' => 'Liceum Ogólnokształcące Mistrzostwa Sportowego w Pile',
+            'contact_school_phone' => '+48 67 349 00 93',
+            'contact_school_url' => 'https://lo-ms.pila.pl/',
+        ];
+        $stored = Setting::whereIn('key', array_keys($contact))->pluck('value', 'key');
+
+        $site->set(collect($contact)
+            ->filter(fn (string $value, string $key) => blank($stored->get($key)) || $stored->get($key) === 'Piła')
+            ->all());
     }
 
     /**

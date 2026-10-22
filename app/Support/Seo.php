@@ -52,7 +52,7 @@ class Seo
             'sport' => 'Volleyball',
             'email' => $site['contact_email'] ?: null,
             'telephone' => $site['contact_phone'] ?: null,
-            'address' => filled($site['contact_address']) ? ['@type' => 'PostalAddress', 'streetAddress' => $site['contact_address'], 'addressCountry' => 'PL'] : null,
+            'address' => self::postalAddress((string) $site['contact_address']),
             'sameAs' => array_values($site->socials()) ?: null,
         ]);
     }
@@ -178,5 +178,23 @@ class Seo
                 '@type' => 'ListItem', 'position' => $index + 1, 'name' => $item[0], 'item' => $item[1],
             ])->all(),
         ];
+    }
+
+    /**
+     * Adres w formacie schema.org; „ul. Wincentego Pola 11, 64-920 Piła” rozbija na ulicę, kod i miasto.
+     *
+     * @return array<string, string>|null
+     */
+    public static function postalAddress(string $address): ?array
+    {
+        if (blank($address)) {
+            return null;
+        }
+
+        if (preg_match('/^(.+?),\s*(\d{2}-\d{3})\s+(.+)$/u', trim($address), $parts)) {
+            return ['@type' => 'PostalAddress', 'streetAddress' => $parts[1], 'postalCode' => $parts[2], 'addressLocality' => $parts[3], 'addressCountry' => 'PL'];
+        }
+
+        return ['@type' => 'PostalAddress', 'streetAddress' => $address, 'addressCountry' => 'PL'];
     }
 }
