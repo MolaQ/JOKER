@@ -18,5 +18,7 @@
                 @endforeach
             </ul>
         </div>
+    @elseif($showEmpty)
+        <p class="rounded-lg bg-white p-6 text-sm text-gray-500 shadow ring-1 ring-black/5">Żadne oznaczenie nie czeka na zatwierdzenie.</p>
     @endif
 </div>

@@ -14,6 +14,16 @@
         </button>
     </div>
 
+    @if($canCopy)
+        <div class="flex flex-col gap-3 border-b border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-sm text-amber-900">Sezon <strong>{{ $currentSeason->name }}</strong> nie ma jeszcze rozgrywek. Skopiuj je z sezonu {{ $previousSeason->name }}: drużyny, punktacja i adresy stron związku przejdą z nowym rokiem w adresie.</p>
+            <button type="button" wire:click="copyFromPreviousSeason" class="shrink-0 rounded-md bg-amber-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-600">
+                <span wire:loading.remove wire:target="copyFromPreviousSeason">Skopiuj z {{ $previousSeason->name }}</span>
+                <span wire:loading wire:target="copyFromPreviousSeason">Kopiuję i pobieram…</span>
+            </button>
+        </div>
+    @endif
+
     <table class="min-w-full divide-y divide-gray-300">
         <thead class="bg-gray-50">
             <tr>
@@ -33,7 +43,7 @@
                     <td class="px-3 py-4 text-sm text-gray-500">
                         {{ $competition->teams->pluck('name')->join(', ') }}
                         @if($competition->source_url)
-                            <p class="mt-1 text-xs {{ str_contains((string) $competition->sync_message, 'Nie udało się') || str_contains((string) $competition->sync_message, 'Nieprzypisane') ? 'text-amber-700' : 'text-gray-400' }}">
+                            <p title="{{ $competition->sync_message }}" class="mt-1 line-clamp-2 max-w-md text-xs {{ str_contains((string) $competition->sync_message, 'Nie udało się') || str_contains((string) $competition->sync_message, 'Nieprzypisane') ? 'text-amber-700' : 'text-gray-400' }}">
                                 🔄 {{ $competition->synced_at ? 'Pobrano '.$competition->synced_at->diffForHumans().'. '.$competition->sync_message : 'Terminarz jeszcze nie pobrany.' }}
                             </p>
                         @endif
@@ -83,15 +93,15 @@
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700">Poziom rozgrywek</label>
-                                    <select wire:model="level_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                        <option value="">Brak (wpisz ręcznie poniżej)</option>
-                                        @foreach($levels as $lvl)
-                                            <option value="{{ $lvl->id }}">{{ $lvl->name }}</option>
+                                    <label for="competition-level" class="block text-sm font-medium text-gray-700">Poziom rozgrywek</label>
+                                    <input type="text" id="competition-level" wire:model="level" list="competition-levels" placeholder="np. wojewódzka, 3 liga" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <datalist id="competition-levels">
+                                        @foreach($levels as $levelName)
+                                            <option value="{{ $levelName }}"></option>
                                         @endforeach
-                                    </select>
-                                    <input type="text" wire:model="level" placeholder="np. 3 liga" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
-                                    @error('level_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    </datalist>
+                                    <p class="mt-1 text-xs text-gray-500">Podpis pod nazwą rozgrywek w tabelach. Wybierz z listy albo wpisz.</p>
+                                    @error('level') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Sezon</label>

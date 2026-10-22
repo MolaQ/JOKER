@@ -1,24 +1,23 @@
-<div class="bg-white">
-    {{-- Zakładki --}}
-    <div class="border-b border-gray-200 overflow-x-auto">
-        <nav class="flex min-w-max gap-1 px-4 pt-3">
-            @foreach($groups as $groupKey => $group)
-                <button
-                    type="button"
-                    wire:click="selectTab('{{ $groupKey }}')"
-                    @class([
-                        'rounded-t-lg px-4 py-2.5 text-sm font-semibold transition',
-                        'bg-sky-50 text-sky-700 border-b-2 border-sky-600' => $tab === $groupKey,
-                        'text-gray-600 hover:bg-gray-50 hover:text-gray-900' => $tab !== $groupKey,
-                    ])
-                >
-                    <span aria-hidden="true">{{ $group['icon'] }}</span> {{ $group['label'] }}
-                </button>
-            @endforeach
-        </nav>
-    </div>
+<div class="bg-white lg:flex">
+    {{-- Zakładki: na telefonie zawijają się w kilka rzędów, na komputerze są kolumną po lewej --}}
+    <nav class="flex flex-wrap gap-1 border-b border-gray-200 p-3 lg:w-56 lg:shrink-0 lg:flex-col lg:flex-nowrap lg:border-r lg:border-b-0" aria-label="Sekcje ustawień">
+        @foreach($groups as $groupKey => $group)
+            <button
+                type="button"
+                wire:click="selectTab('{{ $groupKey }}')"
+                @class([
+                    'rounded-lg px-3 py-2 text-left text-sm font-semibold transition',
+                    'bg-sky-50 text-sky-700 ring-1 ring-sky-200' => $tab === $groupKey,
+                    'text-gray-600 hover:bg-gray-50 hover:text-gray-900' => $tab !== $groupKey,
+                ])
+                @if($tab === $groupKey) aria-current="true" @endif
+            >
+                <span aria-hidden="true">{{ $group['icon'] }}</span> {{ $group['label'] }}
+            </button>
+        @endforeach
+    </nav>
 
-    <form wire:submit="save" class="p-4 sm:p-6">
+    <form wire:submit="save" class="min-w-0 flex-1 p-4 sm:p-6">
         @if($errors->any())
             <div class="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-800">
                 Popraw zaznaczone pola i zapisz ponownie.
@@ -74,6 +73,11 @@
                                         <img src="{{ $uploads[$key]->temporaryUrl() }}" alt="Podgląd" class="h-20 w-20 rounded-lg border object-cover">
                                     @elseif($values[$key])
                                         <img src="{{ \App\Support\Media::url($values[$key]) }}" onerror="this.style.visibility='hidden'" alt="" class="h-20 w-20 rounded-lg border object-cover">
+                                    @elseif(isset($field['preview']))
+                                        <figure class="text-center">
+                                            <img src="{{ asset($field['preview']) }}" alt="" class="h-20 w-20 rounded-lg border object-contain p-1">
+                                            <figcaption class="mt-1 text-xs text-gray-500">domyślny</figcaption>
+                                        </figure>
                                     @else
                                         <span class="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed text-xs text-gray-400">brak</span>
                                     @endif

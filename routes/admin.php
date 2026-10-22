@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ApprovalsController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Models\Tournament;
 use App\Support\DataImport;
@@ -32,20 +33,16 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
 
     Route::middleware('can:competitions.manage')->group(function () {
         Route::view('/competitions', 'admin.competitions.index')->name('competitions.index');
-        Route::view('/competition-levels', 'admin.competition-levels.index')->name('competition-levels.index');
         Route::view('/seasons', 'admin.seasons.index')->name('seasons.index');
         Route::view('/rival-teams', 'admin.rival-teams.index')->name('rival-teams.index');
     });
 
     Route::view('/articles', 'admin.articles.index')->middleware('can:articles.manage')->name('articles.index');
-    Route::view('/komentarze', 'admin.comments.index')->middleware('can:comments.moderate')->name('comments.index');
-    Route::view('/propozycje', 'admin.content-proposals.index')->middleware('can:proposals.content')->name('content-proposals.index');
     Route::view('/hero-slides', 'admin.hero-slides.index')->middleware('can:homepage.manage')->name('hero-slides.index');
     Route::view('/documents', 'admin.documents.index')->middleware('can:documents.manage')->name('documents.index');
     Route::view('/sponsors', 'admin.sponsors.index')->middleware('can:sponsors.manage')->name('sponsors.index');
     Route::view('/users', 'admin.users.index')->middleware('can:users.manage')->name('users.index');
     Route::view('/roles', 'admin.roles.index')->middleware('can:roles.manage')->name('roles.index');
-    Route::view('/konta-do-aktywacji', 'admin.accounts.index')->middleware('can:users.activate')->name('accounts.index');
 
     Route::middleware('can:site.manage')->group(function () {
         Route::view('/settings', 'admin.settings.index')->name('settings.index');
@@ -62,11 +59,14 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
         ]))->whereIn('type', array_keys(DataImport::TYPES))->name('import.template');
     });
 
-    // Zdjęcia i dane proponowane przez zawodników i rodziców, prośby o zmianę profilu
-    Route::middleware('can:proposals.review')->group(function () {
-        Route::view('/player-change-requests', 'admin.player-change-requests.index')->name('player-change-requests.index');
-        Route::view('/profile-change-requests', 'admin.profile-change-requests.index')->name('profile-change-requests.index');
-    });
+    // Do zatwierdzenia: jedna strona z zakładkami (App\Support\Approvals), każda zakładka pod własnym adresem
+    Route::get('/do-zatwierdzenia', ApprovalsController::class)->name('approvals.index');
+    Route::get('/konta-do-aktywacji', ApprovalsController::class)->defaults('section', 'konta')->name('accounts.index');
+    Route::get('/propozycje', ApprovalsController::class)->defaults('section', 'propozycje')->name('content-proposals.index');
+    Route::get('/komentarze', ApprovalsController::class)->defaults('section', 'komentarze')->name('comments.index');
+    Route::get('/oznaczenia-zdjec', ApprovalsController::class)->defaults('section', 'oznaczenia')->name('photo-tags.index');
+    Route::get('/player-change-requests', ApprovalsController::class)->defaults('section', 'zawodnicy')->name('player-change-requests.index');
+    Route::get('/profile-change-requests', ApprovalsController::class)->defaults('section', 'profile')->name('profile-change-requests.index');
 });
 
 // Stary adres panelu. Na XAMPP /admin bywa zajęty przez narzędzie bazy danych, dlatego panel jest pod /panel.

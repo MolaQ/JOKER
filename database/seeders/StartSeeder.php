@@ -7,7 +7,7 @@ use Illuminate\Database\Seeder;
 
 /**
  * Start strony z czystą bazą (bez przykładowych aktualności): sezony, poziomy rozgrywek, podstrony,
- * 7 drużyn klubu z trenerami oraz konta administratora, szefa i zawodnika z adresami i hasłami z .env
+ * 7 drużyn klubu z trenerami, rozgrywki bieżącego sezonu z adresami stron związku oraz konta administratora, szefa i zawodnika z adresami i hasłami z .env
  * (SEED_*). Pozostałych zawodników i sztab wczytasz w panelu: Import z plików.
  * Można uruchomić ponownie: nie dubluje danych i nie zmienia haseł.
  */
@@ -22,5 +22,9 @@ class StartSeeder extends Seeder
         }
 
         $this->call([PagesSeeder::class, ClubAccountsSeeder::class]);
+
+        // Rozgrywki bieżącego sezonu z adresami stron związku: terminarz, wyniki i tabele
+        // pobierze `php artisan joker:sync-schedules` (i potem cron co 3 godziny).
+        (new ClubSeeder)->seedCompetitions();
     }
 }

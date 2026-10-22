@@ -4,26 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <link rel="icon" type="image/png" href="{{ asset('img/JOKER-18.png') }}">
-    <link rel="shortcut icon" href="{{ asset('img/JOKER-18.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('img/JOKER-18.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ $site->image('logo', asset('img/logo-32.png')) }}">
+    <link rel="apple-touch-icon" href="{{ $site->image('logo', asset('img/logo-180.png')) }}">
     <title>@yield('title', 'Panel Administracyjny') - Joker Piła</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
-<body class="h-full admin-panel">
+<body class="min-h-full admin-panel">
     @php
         $adminNavigation = [
             'Na co dzień' => [
                 ['label' => 'Pulpit', 'route' => 'admin.dashboard', 'icon' => '🏠'],
+                ['label' => 'Do zatwierdzenia', 'route' => 'admin.approvals.index', 'icon' => '📥', 'can' => fn () => \App\Support\Approvals::sectionsFor(auth()->user())->isNotEmpty(), 'badge' => fn () => \App\Support\Approvals::pendingCountFor(auth()->user()), 'active' => ['admin.approvals.*', 'admin.accounts.*', 'admin.content-proposals.*', 'admin.comments.*', 'admin.photo-tags.*', 'admin.player-change-requests.*', 'admin.profile-change-requests.*']],
                 ['label' => 'Statystyki odwiedzin', 'route' => 'admin.statistics.index', 'icon' => '📈', 'can' => 'statistics.view'],
                 ['label' => 'Aktualności', 'route' => 'admin.articles.index', 'icon' => '📰', 'can' => 'articles.manage'],
-                ['label' => 'Propozycje treści', 'route' => 'admin.content-proposals.index', 'icon' => '💡', 'can' => 'proposals.content', 'badge' => fn () => \App\Models\ContentProposal::pending()->count()],
-                ['label' => 'Komentarze', 'route' => 'admin.comments.index', 'icon' => '💬', 'can' => 'comments.moderate', 'badge' => fn () => \App\Livewire\Admin\CommentModeration::pendingCount()],
                 ['label' => 'Mecze i wyniki', 'route' => 'admin.games.index', 'icon' => '🏐', 'can' => 'games.manage'],
                 ['label' => 'Turnieje', 'route' => 'admin.tournaments.index', 'icon' => '🥇', 'can' => 'tournaments.manage'],
                 ['label' => 'Transmisje i zdjęcia meczów', 'route' => 'admin.media.index', 'icon' => '🎥', 'can' => 'media.manage'],
-                ['label' => 'Galerie', 'route' => 'admin.galleries.index', 'icon' => '📷', 'can' => 'media.manage', 'badge' => fn () => \App\Livewire\Admin\PhotoTagReview::pendingFor(auth()->user())->count()],
+                ['label' => 'Galerie', 'route' => 'admin.galleries.index', 'icon' => '📷', 'can' => 'media.manage'],
                 ['label' => 'Slajdy na stronie głównej', 'route' => 'admin.hero-slides.index', 'icon' => '🖼️', 'can' => 'homepage.manage'],
             ],
             'Wygląd strony' => [
@@ -33,21 +31,17 @@
             'Klub' => [
                 ['label' => 'Drużyny i sztab', 'route' => 'admin.teams.index', 'icon' => '👥', 'can' => 'teams.manage'],
                 ['label' => 'Zawodnicy', 'route' => 'admin.players.index', 'icon' => '🎽', 'can' => 'teams.manage'],
-                ['label' => 'Zmiany od zawodników', 'route' => 'admin.player-change-requests.index', 'icon' => '📸', 'can' => 'proposals.review', 'badge' => fn () => \App\Models\PlayerChangeRequest::pending()->reviewableBy(auth()->user())->count()],
                 ['label' => 'Sponsorzy', 'route' => 'admin.sponsors.index', 'icon' => '🤝', 'can' => 'sponsors.manage'],
                 ['label' => 'Dokumenty', 'route' => 'admin.documents.index', 'icon' => '📄', 'can' => 'documents.manage'],
-                ['label' => 'Konta do aktywacji', 'route' => 'admin.accounts.index', 'icon' => '✅', 'can' => 'users.activate', 'badge' => fn () => \App\Livewire\Admin\AccountActivation::pendingFor(auth()->user())->count()],
                 ['label' => 'Użytkownicy', 'route' => 'admin.users.index', 'icon' => '🔑', 'can' => 'users.manage'],
                 ['label' => 'Role i uprawnienia', 'route' => 'admin.roles.index', 'icon' => '🛡️', 'can' => 'roles.manage'],
                 ['label' => 'Import z plików', 'route' => 'admin.import.index', 'icon' => '📥', 'can' => 'import.run'],
-                ['label' => 'Prośby o zmianę profilu', 'route' => 'admin.profile-change-requests.index', 'icon' => '✉️', 'can' => 'proposals.review'],
             ],
             'Ustawienia rozgrywek (rzadko)' => [
                 ['label' => 'Tabele', 'route' => 'admin.standings.index', 'icon' => '📊', 'can' => 'games.manage'],
                 ['label' => 'Rozgrywki', 'route' => 'admin.competitions.index', 'icon' => '🏆', 'can' => 'competitions.manage'],
                 ['label' => 'Rywale', 'route' => 'admin.rival-teams.index', 'icon' => '🆚', 'can' => 'competitions.manage'],
                 ['label' => 'Sezony', 'route' => 'admin.seasons.index', 'icon' => '📅', 'can' => 'competitions.manage'],
-                ['label' => 'Poziomy rozgrywek', 'route' => 'admin.competition-levels.index', 'icon' => '🪜', 'can' => 'competitions.manage'],
             ],
         ];
     @endphp
@@ -56,7 +50,7 @@
         <aside class="md:flex md:w-64 md:flex-col bg-[#12141a] text-white md:min-h-screen">
             <div class="flex items-center justify-between px-4 py-4 border-b border-white/10">
                 <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center gap-3">
-                    <img src="{{ asset('img/logo-96.png') }}" alt="" class="h-9 w-9">
+                    <img src="{{ $site->image('logo', asset('img/logo-96.png')) }}" alt="" class="h-9 w-9 object-contain">
                     <span class="font-bold leading-tight">Joker Piła<span class="block text-xs font-normal text-sky-300">Panel klubu</span></span>
                 </a>
                 <a href="{{ route('home') }}" class="text-xs text-zinc-400 hover:text-white" target="_blank">Zobacz stronę ↗</a>

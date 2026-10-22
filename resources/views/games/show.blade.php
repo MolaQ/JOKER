@@ -4,7 +4,7 @@
     use App\Support\Media;
 
     [$homeName, $awayName] = $game->sidesNames();
-    $ourLogo = $game->team?->logo_path;
+    $ourLogo = $game->team?->logoPath();
     $opponentLogo = $game->opponentTeam?->logoPath();
     $sides = $game->is_home
         ? [[$homeName, $ourLogo, true], [$awayName, $opponentLogo, false]]

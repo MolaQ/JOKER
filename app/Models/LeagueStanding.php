@@ -106,7 +106,7 @@ class LeagueStanding extends Model
 
     public function competitorLogoPath(): ?string
     {
-        return $this->competitor instanceof RivalTeam ? $this->competitor->logoPath() : $this->competitor?->logo_path;
+        return $this->competitor instanceof RivalTeam ? $this->competitor->logoPath() : $this->competitor?->logoPath();
     }
 
     public function isOwnTeam(): bool

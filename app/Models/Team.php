@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\CountsViews;
 use App\Models\Concerns\HasSlugRouteKey;
 use App\Models\Concerns\Likeable;
+use App\Support\SiteSettings;
 use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -33,6 +34,14 @@ class Team extends Model
         'trainer_id',
         'display_order',
     ];
+
+    /**
+     * Logo drużyny: własne z panelu, a bez niego herb klubu (z ustawień strony albo domyślny).
+     */
+    public function logoPath(): string
+    {
+        return $this->logo_path ?: (app(SiteSettings::class)->get('logo') ?: asset('img/logo-256.webp'));
+    }
 
     public function trainer(): BelongsTo
     {

@@ -113,6 +113,47 @@ class Competition extends Model
             ->all();
     }
 
+    /**
+     * Przenosi rozgrywki z poprzedniego sezonu do nowego: nazwy, poziomy, punktacja, drużyny z ich podpisami
+     * i adresy stron związku, w których rok sezonu (np. „26-27”, „2026/2027”) zmienia się na nowy.
+     * Rozgrywek, które w nowym sezonie już są (ta sama nazwa), nie dubluje.
+     *
+     * @return int liczba skopiowanych rozgrywek
+     */
+    public static function copyToSeason(Season $from, Season $to): int
+    {
+        $fromYear = (int) $from->start_date->format('Y');
+        $toYear = (int) $to->start_date->format('Y');
+        $years = [
+            $fromYear.'/'.($fromYear + 1) => $toYear.'/'.($toYear + 1),
+            $fromYear.'-'.($fromYear + 1) => $toYear.'-'.($toYear + 1),
+            substr((string) $fromYear, 2).'-'.substr((string) ($fromYear + 1), 2) => substr((string) $toYear, 2).'-'.substr((string) ($toYear + 1), 2),
+        ];
+        $existing = self::where('season_id', $to->id)->pluck('name');
+        $copied = 0;
+
+        foreach (self::with('teams')->where('season_id', $from->id)->orderBy('display_order')->get() as $competition) {
+            if ($existing->contains($competition->name)) {
+                continue;
+            }
+
+            $copy = $competition->replicate(['synced_at', 'sync_message']);
+            $copy->season_id = $to->id;
+            $copy->source_url = $competition->source_url ? strtr($competition->source_url, $years) : null;
+            $copy->description = $competition->description ? str_replace($from->name, $to->name, $competition->description) : null;
+            $copy->save();
+
+            $copy->teams()->sync($competition->teams->mapWithKeys(fn (Team $team) => [$team->id => [
+                'external_name' => $team->pivot->external_name,
+                'display_name' => $team->pivot->display_name,
+                'display_suffix' => $team->pivot->display_suffix,
+            ]])->all());
+            $copied++;
+        }
+
+        return $copied;
+    }
+
     public function games(): HasMany
     {
         return $this->hasMany(Game::class);

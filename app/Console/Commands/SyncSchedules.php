@@ -19,11 +19,14 @@ class SyncSchedules extends Command
     public function handle(ScheduleImporter $importer): int
     {
         // Najpierw rozgrywki z tabelą wyników WZPS - to one „zabierają” swoje mecze ze stron drużyn.
-        $competitions = Competition::whereNotNull('source_url')->where('source_url', '!=', '')->get()
+        // Tylko bieżący sezon: archiwalne rozgrywki już się nie zmieniają.
+        $competitions = Competition::whereNotNull('source_url')->where('source_url', '!=', '')
+            ->whereHas('season', fn ($season) => $season->where('is_current', true))
+            ->get()
             ->sortBy(fn (Competition $competition) => str_contains($competition->source_url, 'mode=12') ? 0 : 1);
 
         if ($competitions->isEmpty()) {
-            $this->info('Żadne rozgrywki nie mają adresu terminarza.');
+            $this->info('Żadne rozgrywki bieżącego sezonu nie mają adresu terminarza.');
 
             return self::SUCCESS;
         }

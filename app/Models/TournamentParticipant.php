@@ -56,7 +56,7 @@ class TournamentParticipant extends Model
 
     public function logoPath(): ?string
     {
-        return $this->competitor instanceof RivalTeam ? $this->competitor->logoPath() : $this->competitor?->logo_path;
+        return $this->competitor instanceof RivalTeam ? $this->competitor->logoPath() : $this->competitor?->logoPath();
     }
 
     /**

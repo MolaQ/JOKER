@@ -302,10 +302,11 @@ class ClubSeeder extends Seeder
     }
 
     /**
-     * Rozgrywki naszych drużyn. Terminarz, wyniki i tabele pobiera `php artisan joker:sync-schedules`.
+     * Rozgrywki naszych drużyn w bieżącym sezonie. Terminarz, wyniki i tabele pobiera `php artisan joker:sync-schedules`.
      * Przy drużynie zapisane są nazwy (oddzielone średnikiem), pod którymi występuje w danych rozgrywkach.
+     * Można uruchomić ponownie: istniejących rozgrywek (ta sama nazwa i sezon) nie dubluje ani nie zmienia.
      */
-    private function seedCompetitions(): void
+    public function seedCompetitions(): void
     {
         $season = Season::current()->first();
 
@@ -350,15 +351,17 @@ class ClubSeeder extends Seeder
         ];
 
         foreach ($competitions as $index => $data) {
-            $competition = Competition::create([
-                'name' => $data['name'],
+            $competition = Competition::firstOrCreate(['name' => $data['name'], 'season_id' => $season->id], [
                 'level' => $data['level'],
                 'level_id' => $levels->get($data['level'])?->id,
-                'season_id' => $season->id,
                 'description' => "Rozgrywki WZPS w sezonie {$season->name}.",
                 'display_order' => $index + 1,
                 'source_url' => implode("\n", $data['sources']),
             ]);
+
+            if (! $competition->wasRecentlyCreated) {
+                continue;
+            }
 
             foreach ($data['teams'] as $slug => $externalName) {
                 if ($team = $teams->get($slug)) {

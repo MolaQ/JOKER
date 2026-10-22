@@ -175,6 +175,11 @@
                                 <label class="block text-sm font-medium text-gray-700">Logo drużyny</label>
                                 @if($existingLogo && !$logo)
                                     <img src="{{ \App\Support\Media::url($existingLogo) }}" onerror="this.style.visibility='hidden'" class="h-16 w-16 object-cover rounded mb-2" alt="Logo">
+                                @elseif(! $logo)
+                                    <div class="mb-2 flex items-center gap-3">
+                                        <img src="{{ $site->image('logo', asset('img/logo-256.webp')) }}" class="h-16 w-16 rounded object-contain" alt="">
+                                        <span class="text-xs text-gray-500">Herb klubu (domyślnie). Wgraj plik, jeśli drużyna ma własne logo.</span>
+                                    </div>
                                 @endif
                                 @if($logo)
                                     <img src="{{ $logo->temporaryUrl() }}" class="h-16 w-16 object-cover rounded mb-2" alt="Podgląd">

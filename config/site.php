@@ -22,7 +22,7 @@ return [
             'fields' => [
                 'club_name' => ['type' => 'text', 'label' => 'Nazwa klubu', 'default' => 'Joker Piła'],
                 'club_tagline' => ['type' => 'text', 'label' => 'Podpis pod nazwą', 'default' => 'Klub siatkówki od 1992 roku'],
-                'logo' => ['type' => 'image', 'label' => 'Herb / logo', 'help' => 'Najlepiej kwadratowy PNG z przezroczystym tłem.', 'default' => null],
+                'logo' => ['type' => 'image', 'label' => 'Herb / logo', 'help' => 'Najlepiej kwadratowy PNG z przezroczystym tłem. Bez wgranego pliku używany jest herb klubu. Herb jest też domyślnym logo wszystkich drużyn Jokera.', 'default' => null, 'preview' => 'img/logo-256.webp'],
                 'site_title' => ['type' => 'text', 'label' => 'Tytuł strony (w karcie przeglądarki i Google)', 'default' => 'Joker Piła - Klub Siatkówki'],
                 'site_description' => ['type' => 'textarea', 'label' => 'Opis strony dla Google', 'default' => 'UKS SMS Joker Piła - klub siatkarski z Piły, jeden z czołowych ośrodków szkolenia siatkówki młodzieżowej w Polsce. Drużyny od minisiatkówki po II ligę, terminarz, wyniki i aktualności.'],
             ],

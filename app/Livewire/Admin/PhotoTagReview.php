@@ -18,6 +18,9 @@ class PhotoTagReview extends Component
 {
     use ShowsToasts;
 
+    /** Na stronie „Do zatwierdzenia” pokazuje też informację, że nic nie czeka. */
+    public bool $showEmpty = false;
+
     /**
      * @return Collection<int, PhotoTag>
      */
