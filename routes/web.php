@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\GameCalendarController;
@@ -86,9 +89,26 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+Route::middleware('guest')->group(function () {
+    Route::get('/rejestracja', [RegisterController::class, 'create'])->name('register');
+    Route::post('/rejestracja', [RegisterController::class, 'store'])->middleware('throttle:5,1');
+    Route::get('/haslo/przypomnij', [PasswordResetController::class, 'request'])->name('password.request');
+    Route::post('/haslo/przypomnij', [PasswordResetController::class, 'email'])->middleware('throttle:5,1')->name('password.email');
+    Route::get('/haslo/nowe/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
+    Route::post('/haslo/nowe', [PasswordResetController::class, 'update'])->name('password.update');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('/email/potwierdz/{id}/{hash}', [EmailVerificationController::class, 'verify'])->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+    Route::post('/email/wyslij-ponownie', [EmailVerificationController::class, 'send'])->middleware('throttle:3,1')->name('verification.send');
+    // Laravel kieruje tu osoby bez potwierdzonego adresu; status konta pokazuje "Mój profil".
+    Route::redirect('/email/potwierdz', '/moj-profil')->name('verification.notice');
+});
+
 Route::middleware('auth')->group(function () {
     Route::get('/moj-profil', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/moj-profil/prosba-o-zmiane', [ProfileController::class, 'requestChange'])->name('profile.request-change');
+    Route::put('/moj-profil/haslo', [ProfileController::class, 'updatePassword'])->name('profile.password');
 });
 
 /*

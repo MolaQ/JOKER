@@ -34,6 +34,10 @@ class GameController extends Controller
 
     public function storeComment(Request $request, Game $game): RedirectResponse
     {
+        if (! $request->user()->is_active) {
+            return back()->with('error', __('Komentować możesz po aktywacji konta.'));
+        }
+
         $validated = $request->validate([
             'content' => 'required|string|max:1000',
         ]);

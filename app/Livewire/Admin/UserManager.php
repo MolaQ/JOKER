@@ -28,6 +28,8 @@ class UserManager extends Component
     /** @var list<string> */
     public array $selectedRoles = [];
 
+    public bool $is_active = true;
+
     public ?string $birth_date = null;
 
     /** Jak pokazać urodziny w kalendarzu meczów: ukryte, sam torcik albo z wiekiem. */
@@ -48,6 +50,7 @@ class UserManager extends Component
                 Rule::unique('users', 'email')->ignore($this->editingId),
             ],
             'password' => $this->editingId ? 'nullable|string|min:8' : 'required|string|min:8',
+            'is_active' => 'boolean',
             'selectedRoles' => 'array',
             'selectedRoles.*' => Rule::in(array_map(fn (UserRole $role) => $role->value, $this->assignableRoles())),
             'birth_date' => 'nullable|date|before:today',
@@ -86,6 +89,7 @@ class UserManager extends Component
         $this->email = $user->email;
         $this->password = '';
         $this->selectedRoles = $user->roles()->map->value->all();
+        $this->is_active = $user->is_active;
         $this->birth_date = $user->birth_date?->format('Y-m-d');
         $this->birthday_display = $user->birthday_display?->value ?? 'age';
 
@@ -111,7 +115,14 @@ class UserManager extends Component
     {
         $validated = $this->validate();
         $roles = $validated['selectedRoles'] ?? [];
-        unset($validated['selectedRoles']);
+        $active = $validated['is_active'];
+        unset($validated['selectedRoles'], $validated['is_active']);
+
+        if ($this->editingId === Auth::id() && ! $active) {
+            $this->addError('is_active', 'Nie możesz wyłączyć własnego konta.');
+
+            return;
+        }
 
         if ($this->editingId === Auth::id() && Auth::user()->isAdmin() && ! in_array(UserRole::Admin->value, $roles, true)) {
             $this->addError('selectedRoles', 'Nie możesz odebrać sobie roli administratora.');
@@ -130,10 +141,16 @@ class UserManager extends Component
             abort_unless($this->mayEdit($user), 403);
             $user->update($validated);
             $user->syncRoles($roles);
+            $active ? $user->activate() : $user->deactivate('wyłączone w panelu');
             $this->toast('Użytkownik został zaktualizowany.');
         } else {
             $validated['email_verified_at'] = now();
-            User::create($validated)->syncRoles($roles);
+            $user = User::create($validated);
+            $user->syncRoles($roles);
+
+            if ($active) {
+                $user->activate();
+            }
             $this->toast('Użytkownik został dodany.');
         }
 
@@ -173,6 +190,7 @@ class UserManager extends Component
         $this->email = '';
         $this->password = '';
         $this->selectedRoles = [];
+        $this->is_active = true;
         $this->birth_date = null;
         $this->birthday_display = 'age';
         $this->resetErrorBag();

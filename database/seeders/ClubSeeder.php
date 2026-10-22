@@ -87,6 +87,7 @@ class ClubSeeder extends Seeder
             'email' => 'marcin.molak@gmail.com',
             'password' => Hash::make($adminPassword),
             'role' => UserRole::Admin,
+            'is_active' => true,
             'email_verified_at' => now(),
         ]);
 
@@ -101,6 +102,7 @@ class ClubSeeder extends Seeder
                 'password' => Hash::make(Str::random(32)),
                 'role' => $person['role'],
                 'additional_info' => '<p>'.$person['bio'].'</p>',
+                'is_active' => true,
                 'email_verified_at' => now(),
             ]);
         }

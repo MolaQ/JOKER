@@ -25,6 +25,16 @@ class Player extends Model
 
     use HasReadableRouteKey;
 
+    protected static function booted(): void
+    {
+        // Rodzic traci dostęp, gdy żadne jego dziecko nie jest już aktywne, i odzyskuje go po powrocie dziecka.
+        static::saved(function (Player $player) {
+            if ($player->wasChanged('is_active')) {
+                $player->guardians->each->syncParentActivity();
+            }
+        });
+    }
+
     protected $fillable = [
         'first_name',
         'last_name',
@@ -89,7 +99,7 @@ class Player extends Model
      */
     public function isEditableProposalBy(?User $user): bool
     {
-        if ($user === null) {
+        if ($user === null || ! $user->is_active) {
             return false;
         }
 

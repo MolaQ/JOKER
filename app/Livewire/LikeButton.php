@@ -60,7 +60,7 @@ class LikeButton extends Component
         $user = Auth::user();
         $model = $this->resolveModel();
 
-        if (! $user || ! $model) {
+        if (! $user?->is_active || ! $model) {
             return;
         }
 

@@ -50,6 +50,9 @@
                             @empty
                                 <span class="text-xs text-gray-400">bez roli</span>
                             @endforelse
+                            @unless($user->is_active)
+                                <span class="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20">nieaktywne</span>
+                            @endunless
                         </div>
                     </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
@@ -103,6 +106,12 @@
                                 <input type="password" wire:model="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 @error('password') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
+
+                            <label class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                <input type="checkbox" wire:model="is_active" class="rounded border-gray-300 text-blue-600">
+                                Konto aktywne (może się logować i korzystać z uprawnień)
+                            </label>
+                            @error('is_active') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
 
                             <fieldset>
                                 <legend class="block text-sm font-medium text-gray-700">Role (można zaznaczyć kilka)</legend>

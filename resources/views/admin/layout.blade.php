@@ -33,6 +33,7 @@
                 ['label' => 'Zmiany od zawodników', 'route' => 'admin.player-change-requests.index', 'icon' => '📸', 'can' => 'proposals.review', 'badge' => fn () => \App\Models\PlayerChangeRequest::pending()->reviewableBy(auth()->user())->count()],
                 ['label' => 'Sponsorzy', 'route' => 'admin.sponsors.index', 'icon' => '🤝', 'can' => 'sponsors.manage'],
                 ['label' => 'Dokumenty', 'route' => 'admin.documents.index', 'icon' => '📄', 'can' => 'documents.manage'],
+                ['label' => 'Konta do aktywacji', 'route' => 'admin.accounts.index', 'icon' => '✅', 'can' => 'users.activate', 'badge' => fn () => \App\Livewire\Admin\AccountActivation::pendingFor(auth()->user())->count()],
                 ['label' => 'Użytkownicy', 'route' => 'admin.users.index', 'icon' => '🔑', 'can' => 'users.manage'],
                 ['label' => 'Role i uprawnienia', 'route' => 'admin.roles.index', 'icon' => '🛡️', 'can' => 'roles.manage'],
                 ['label' => 'Import z plików', 'route' => 'admin.import.index', 'icon' => '📥', 'can' => 'import.run'],

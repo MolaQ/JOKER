@@ -24,6 +24,7 @@ class MakeAdmin extends Command
 
         if ($user) {
             $user->assignRole(UserRole::Admin);
+            $user->forceFill(['is_active' => true, 'activated_at' => $user->activated_at ?? now()])->save();
             $this->info("{$email} jest teraz administratorem.");
 
             return self::SUCCESS;
@@ -36,6 +37,8 @@ class MakeAdmin extends Command
             'email' => $email,
             'password' => $password,
             'role' => UserRole::Admin,
+            'is_active' => true,
+            'activated_at' => now(),
             'email_verified_at' => now(),
         ]);
 

@@ -75,13 +75,9 @@
                     {{ __('Zaloguj się') }}
                 </button>
 
-                <!-- Info -->
-                <div class="bg-sky-club/10 border border-blue-200 rounded-lg p-4 mt-6">
-                    <p class="text-sm text-sky-club-dark">
-                        <strong>{{ __('Dane testowe') }}:</strong><br>
-                        Email: admin@jokerpila.pl<br>
-                        {{ __('Hasło') }}: password
-                    </p>
+                <div class="flex flex-wrap justify-between gap-2 text-sm">
+                    <a href="{{ route('password.request') }}" class="text-sky-club-dark hover:underline">{{ __('Nie pamiętasz hasła?') }}</a>
+                    <a href="{{ route('register') }}" class="font-semibold text-sky-club-dark hover:underline">{{ __('Załóż konto') }}</a>
                 </div>
             </form>
         </div>

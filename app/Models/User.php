@@ -5,21 +5,23 @@ namespace App\Models;
 use App\BirthdayDisplay;
 use App\Models\Concerns\CountsViews;
 use App\Models\Concerns\HasReadableRouteKey;
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Permission;
 use App\UserRole;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use CountsViews;
 
@@ -43,6 +45,12 @@ class User extends Authenticatable
         'additional_info',
         'birth_date',
         'birthday_display',
+        'is_active',
+        'requested_role',
+        'requested_team_id',
+        'registration_note',
+        'activated_at',
+        'activated_by',
     ];
 
     /**
@@ -67,6 +75,9 @@ class User extends Authenticatable
             'password' => 'hashed',
             'birth_date' => 'date',
             'birthday_display' => BirthdayDisplay::class,
+            'is_active' => 'boolean',
+            'requested_role' => UserRole::class,
+            'activated_at' => 'datetime',
         ];
     }
 
@@ -219,6 +230,10 @@ class User extends Authenticatable
             return $this->resolvedPermissions;
         }
 
+        if (! $this->is_active) {
+            return $this->resolvedPermissions = collect();
+        }
+
         if ($this->isAdmin()) {
             return $this->resolvedPermissions = collect(Permission::cases());
         }
@@ -270,6 +285,73 @@ class User extends Authenticatable
         $teamIds = $this->managedTeamIds();
 
         return $teamIds === null || ($teamId !== null && $teamIds->contains($teamId));
+    }
+
+    /**
+     * Drużyna wskazana przy rejestracji (pomaga trenerowi rozpoznać, kogo aktywuje).
+     */
+    public function requestedTeam(): BelongsTo
+    {
+        return $this->belongsTo(Team::class, 'requested_team_id');
+    }
+
+    public function activatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'activated_by');
+    }
+
+    /**
+     * Profil zawodnika powiązany z kontem.
+     */
+    public function playerProfile(): HasOne
+    {
+        return $this->hasOne(Player::class);
+    }
+
+    /**
+     * Aktywuje konto z podanymi rolami (dopisuje je do obecnych) i zapisuje to w dzienniku.
+     */
+    public function activate(UserRole ...$roles): void
+    {
+        foreach ($roles as $role) {
+            $this->assignRole($role);
+        }
+
+        if (! $this->is_active) {
+            $this->forceFill(['is_active' => true, 'activated_at' => now(), 'activated_by' => Auth::id()])->save();
+            $this->refreshPermissions();
+            AuditLog::record('account.activated', 'Aktywowano konto '.$this->name, $this, ['role' => array_map(fn (UserRole $role) => $role->label(), $roles)]);
+        }
+    }
+
+    public function deactivate(string $reason): void
+    {
+        if ($this->is_active) {
+            $this->forceFill(['is_active' => false])->save();
+            $this->refreshPermissions();
+            AuditLog::record('account.deactivated', 'Dezaktywowano konto '.$this->name.': '.$reason, $this);
+        }
+    }
+
+    /**
+     * Rodzic jest aktywny, dopóki aktywne jest choć jedno jego dziecko,
+     * chyba że ma w klubie inną rolę (np. jest też trenerem).
+     */
+    public function syncParentActivity(): void
+    {
+        if (! $this->hasRole(UserRole::Parent) || $this->roles()->contains(fn (UserRole $role) => ! in_array($role, [UserRole::Parent, UserRole::Fan], true))) {
+            return;
+        }
+
+        $hasActiveChild = $this->children()->where('players.is_active', true)->exists();
+
+        if ($hasActiveChild && ! $this->is_active) {
+            $this->forceFill(['is_active' => true, 'activated_at' => now()])->save();
+            $this->refreshPermissions();
+            AuditLog::record('account.activated', 'Konto rodzica '.$this->name.' wróciło, bo jego dziecko znów jest aktywne', $this);
+        } elseif (! $hasActiveChild) {
+            $this->deactivate('żadne dziecko nie jest już aktywnym zawodnikiem');
+        }
     }
 
     /**

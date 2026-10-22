@@ -42,6 +42,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     Route::view('/sponsors', 'admin.sponsors.index')->middleware('can:sponsors.manage')->name('sponsors.index');
     Route::view('/users', 'admin.users.index')->middleware('can:users.manage')->name('users.index');
     Route::view('/roles', 'admin.roles.index')->middleware('can:roles.manage')->name('roles.index');
+    Route::view('/konta-do-aktywacji', 'admin.accounts.index')->middleware('can:users.activate')->name('accounts.index');
 
     Route::middleware('can:site.manage')->group(function () {
         Route::view('/settings', 'admin.settings.index')->name('settings.index');

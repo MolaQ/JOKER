@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Player;
+use App\Models\PlayerChangeRequest;
 use App\Models\ProfileChangeRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -25,7 +27,34 @@ class ProfileController extends Controller
             ->orderBy('last_name')
             ->get();
 
-        return view('profile.edit', compact('user', 'latestRequest', 'players'));
+        // Ostatnie propozycje wysłane przez użytkownika i ich status.
+        $proposals = PlayerChangeRequest::with('player')
+            ->where('submitted_by', $user->id)
+            ->latest('id')
+            ->limit(10)
+            ->get();
+
+        return view('profile.edit', [
+            'user' => $user,
+            'latestRequest' => $latestRequest,
+            'players' => $players,
+            'proposals' => $proposals,
+            'teams' => $user->allCoachedTeams(),
+        ]);
+    }
+
+    public function updatePassword(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'current_password' => 'required|current_password',
+            'password' => ['required', 'confirmed', Password::min(8)],
+        ], [
+            'current_password.current_password' => __('Obecne hasło jest nieprawidłowe.'),
+        ]);
+
+        $request->user()->update(['password' => $validated['password']]);
+
+        return back()->with('success', __('Hasło zostało zmienione.'));
     }
 
     public function requestChange(Request $request): RedirectResponse

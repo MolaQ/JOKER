@@ -46,6 +46,10 @@ class ArticleController extends Controller
             return redirect()->back()->with('error', __('Musisz być zalogowany, aby komentować.'));
         }
 
+        if (! Auth::user()->is_active) {
+            return redirect()->back()->with('error', __('Komentować możesz po aktywacji konta.'));
+        }
+
         if (! $article->allow_comments) {
             return redirect()->back()->with('error', __('Komentarze są wyłączone dla tego artykułu.'));
         }

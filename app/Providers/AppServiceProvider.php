@@ -14,7 +14,10 @@ use App\Models\User;
 use App\Permission;
 use App\Support\SearchIndex;
 use App\Support\SiteSettings;
+use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
@@ -41,6 +44,22 @@ class AppServiceProvider extends ServiceProvider
         // Uprawnienia z App\Permission (np. can:teams.manage) liczone z ról konta i jego wyjątków.
         Gate::before(fn (User $user, string $ability) => ($permission = Permission::tryFrom($ability)) ? $user->hasPermission($permission) : null);
         Gate::define('panel', fn (User $user) => $user->canAccessPanel());
+
+        // Wiadomości o koncie po polsku.
+        VerifyEmail::toMailUsing(fn (User $user, string $url) => (new MailMessage)
+            ->subject('Potwierdź adres e-mail')
+            ->greeting('Cześć, '.$user->name.'!')
+            ->line('Kliknij przycisk, aby potwierdzić adres e-mail konta w serwisie '.config('app.name').'.')
+            ->action('Potwierdź adres', $url)
+            ->line('Jeśli to nie Ty zakładałeś konto, zignoruj tę wiadomość.')
+            ->salutation('Pozdrawiamy, '.config('app.name')));
+        ResetPassword::toMailUsing(fn (User $user, string $token) => (new MailMessage)
+            ->subject('Ustaw nowe hasło')
+            ->greeting('Cześć, '.$user->name.'!')
+            ->line('Ktoś (pewnie Ty) poprosił o zmianę hasła do konta.')
+            ->action('Ustaw nowe hasło', route('password.reset', ['token' => $token, 'email' => $user->email]))
+            ->line('Link jest ważny przez '.config('auth.passwords.users.expire').' minut. Jeśli to nie Ty, zignoruj tę wiadomość.')
+            ->salutation('Pozdrawiamy, '.config('app.name')));
 
         // Polskie nazwy dni i miesięcy w datach (np. "sob, 18 paź").
         Carbon::setLocale(config('app.locale'));
