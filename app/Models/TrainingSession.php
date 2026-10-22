@@ -8,12 +8,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
 
 /**
- * Stały, cotygodniowy trening drużyny: dzień, godziny i miejsce (siłownia albo jedno z trzech boisk).
+ * Stały, cotygodniowy trening drużyny: dzień, godziny i miejsce (główne boisko, siłownia albo jedno z trzech boisk).
  */
 class TrainingSession extends Model
 {
     /** @var array<string, string> */
     public const VENUES = [
+        'main' => 'Główne boisko',
         'gym' => 'Siłownia',
         'court1' => 'Boisko 1',
         'court2' => 'Boisko 2',

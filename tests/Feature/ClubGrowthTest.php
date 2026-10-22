@@ -140,3 +140,11 @@ test('the start seeder does not fail when another cadet already wears number 10'
 
     expect(Player::firstWhere('first_name', 'Marcel')->jersey_number)->toBe(11);
 });
+
+test('the main court can be chosen as a training venue', function () {
+    expect(TrainingSession::VENUES)->toHaveKey('main', 'Główne boisko');
+
+    $session = TrainingSession::create(['team_id' => Team::factory()->create()->id, 'weekday' => 2, 'starts_at' => '17:00:00', 'ends_at' => '18:30:00', 'venue' => 'main']);
+
+    expect($session->venueLabel())->toBe('Główne boisko');
+});

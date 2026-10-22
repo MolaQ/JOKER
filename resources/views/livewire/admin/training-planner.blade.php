@@ -47,7 +47,7 @@
                 <legend class="text-sm font-medium text-gray-700">Miejsce</legend>
                 <div class="mt-2 grid grid-cols-2 gap-1.5">
                     @foreach(TrainingSession::VENUES as $key => $label)
-                        <label class="flex cursor-pointer items-center justify-center rounded-md px-2 py-2 text-sm font-semibold ring-1 ring-gray-200 has-[:checked]:bg-sky-600 has-[:checked]:text-white has-[:checked]:ring-sky-600">
+                        <label @class(['flex cursor-pointer items-center justify-center rounded-md px-2 py-2 text-sm font-semibold ring-1 ring-gray-200 has-[:checked]:bg-sky-600 has-[:checked]:text-white has-[:checked]:ring-sky-600', 'col-span-2' => $key === 'main'])>
                             <input type="radio" wire:model.live="venue" value="{{ $key }}" class="sr-only"> {{ $label }}
                         </label>
                     @endforeach
