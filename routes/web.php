@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\LoginController;
@@ -126,6 +127,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/moj-profil/prosba-o-zmiane', [ProfileController::class, 'requestChange'])->name('profile.request-change');
     Route::put('/moj-profil/haslo', [ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::put('/moj-profil/zgoda-na-wizerunek/{player}', [ProfileController::class, 'updateConsent'])->name('profile.consent');
+
+    // Zgoda RODO i stan konta: ponowna prośba po odrzuceniu, wyłączenie, usunięcie, pobranie danych.
+    Route::get('/zgody', [AccountController::class, 'consent'])->name('account.consent');
+    Route::post('/zgody', [AccountController::class, 'storeConsent'])->name('account.consent.store');
+    Route::post('/moj-profil/ponowna-prosba', [AccountController::class, 'resubmit'])->name('account.resubmit');
+    Route::post('/moj-profil/wylacz', [AccountController::class, 'disable'])->name('account.disable');
+    Route::post('/moj-profil/wlacz', [AccountController::class, 'enable'])->name('account.enable');
+    Route::get('/moj-profil/moje-dane', [AccountController::class, 'export'])->name('account.export');
+    Route::delete('/moj-profil', [AccountController::class, 'destroy'])->name('account.destroy');
 });
 
 /*

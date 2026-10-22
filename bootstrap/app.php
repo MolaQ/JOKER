@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsurePrivacyConsent;
 use App\Http\Middleware\RedirectToCanonicalUrl;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\TrackPageView;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             RedirectToCanonicalUrl::class,
             SetLocale::class,
             TrackPageView::class,
+            EnsurePrivacyConsent::class,
         ]);
 
         // Skrypt statystyk wysyła dane przez sendBeacon (bez tokenu CSRF).

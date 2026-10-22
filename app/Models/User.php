@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\AccountStatus;
 use App\BirthdayDisplay;
 use App\Models\Concerns\CountsViews;
 use App\Models\Concerns\HasReadableRouteKey;
@@ -20,6 +21,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -51,6 +54,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'registration_note',
         'activated_at',
         'activated_by',
+        'privacy_consent_at',
     ];
 
     /**
@@ -78,6 +82,10 @@ class User extends Authenticatable implements MustVerifyEmail
             'is_active' => 'boolean',
             'requested_role' => UserRole::class,
             'activated_at' => 'datetime',
+            'privacy_consent_at' => 'datetime',
+            'rejected_at' => 'datetime',
+            'disabled_at' => 'datetime',
+            'anonymized_at' => 'datetime',
         ];
     }
 
@@ -331,6 +339,138 @@ class User extends Authenticatable implements MustVerifyEmail
             $this->refreshPermissions();
             AuditLog::record('account.activated', 'Aktywowano konto '.$this->name, $this, ['role' => array_map(fn (UserRole $role) => $role->label(), $roles)]);
         }
+    }
+
+    /**
+     * Konta w danym stanie (filtr w panelu), zgodnie z accountStatus().
+     */
+    public function scopeWithAccountStatus(Builder $query, AccountStatus $status): void
+    {
+        match ($status) {
+            AccountStatus::Deleted => $query->whereNotNull('anonymized_at'),
+            AccountStatus::Disabled => $query->whereNull('anonymized_at')->whereNotNull('disabled_at'),
+            AccountStatus::Active => $query->whereNull('anonymized_at')->whereNull('disabled_at')->where('is_active', true),
+            AccountStatus::Rejected => $query->whereNull('anonymized_at')->whereNull('disabled_at')->where('is_active', false)->whereNotNull('rejected_at'),
+            AccountStatus::Suspended => $query->whereNull('anonymized_at')->whereNull('disabled_at')->where('is_active', false)->whereNull('rejected_at')->whereNotNull('activated_at'),
+            AccountStatus::Pending => $query->whereNull('anonymized_at')->whereNull('disabled_at')->where('is_active', false)->whereNull('rejected_at')->whereNull('activated_at'),
+        };
+    }
+
+    /**
+     * Stan konta: czeka, odrzucone, aktywne, zawieszone przez klub, wyłączone przez użytkownika albo usunięte.
+     */
+    public function accountStatus(): AccountStatus
+    {
+        return match (true) {
+            $this->anonymized_at !== null => AccountStatus::Deleted,
+            $this->disabled_at !== null => AccountStatus::Disabled,
+            $this->is_active => AccountStatus::Active,
+            $this->rejected_at !== null => AccountStatus::Rejected,
+            $this->activated_at !== null => AccountStatus::Suspended,
+            default => AccountStatus::Pending,
+        };
+    }
+
+    /**
+     * Imię i nazwisko konta zatwierdzonego przez klub zmienia tylko klub.
+     */
+    public function nameIsLocked(): bool
+    {
+        return $this->activated_at !== null;
+    }
+
+    public function hasPrivacyConsent(): bool
+    {
+        return $this->privacy_consent_at !== null;
+    }
+
+    /**
+     * Klub odrzuca prośbę o aktywację z podanym powodem. Konto zostaje, a użytkownik może poprawić dane i poprosić ponownie.
+     */
+    public function rejectActivation(string $reason): void
+    {
+        $this->forceFill(['rejected_at' => now(), 'rejection_reason' => $reason, 'rejected_by' => Auth::id()])->save();
+        AuditLog::record('account.rejected', 'Odrzucono prośbę o aktywację konta '.$this->name.': '.$reason, $this);
+    }
+
+    /**
+     * Użytkownik poprawił dane po odrzuceniu i wysyła prośbę jeszcze raz.
+     *
+     * @param  array{name?: string, requested_role: UserRole, requested_team_id: ?int, registration_note: ?string}  $data
+     */
+    public function resubmitActivation(array $data): void
+    {
+        $this->forceFill($data + ['rejected_at' => null, 'rejection_reason' => null, 'rejected_by' => null])->save();
+        AuditLog::record('account.resubmitted', 'Ponowna prośba o aktywację konta '.$this->name, $this);
+    }
+
+    /**
+     * Użytkownik sam wyłącza konto: dane zostają, ale konto nic nie może, dopóki go nie włączy.
+     */
+    public function disableByUser(): void
+    {
+        $this->forceFill(['disabled_at' => now(), 'is_active' => false])->save();
+        $this->refreshPermissions();
+        AuditLog::record('account.disabled', 'Użytkownik wyłączył konto '.$this->name, $this);
+    }
+
+    /**
+     * Ponowne włączenie konta wyłączonego przez użytkownika. Konto zatwierdzone przez klub
+     * (albo kibica z potwierdzonym e-mailem) wraca do działania bez ponownej aktywacji.
+     */
+    public function enableByUser(): void
+    {
+        $wasApproved = $this->activated_at !== null && $this->rejected_at === null;
+
+        $this->forceFill(['disabled_at' => null, 'is_active' => $wasApproved])->save();
+        $this->refreshPermissions();
+        AuditLog::record('account.enabled', 'Użytkownik włączył ponownie konto '.$this->name, $this);
+
+        if ($wasApproved) {
+            $this->syncParentActivity();
+        }
+    }
+
+    /**
+     * Cofnięcie zgody albo prośba o usunięcie: konto przestaje działać, a dane osobowe są usuwane.
+     * Treści (komentarze, propozycje) zostają podpisane „Konto usunięte”, a powiązania z zawodnikami i drużynami znikają.
+     */
+    public function anonymize(string $reason): void
+    {
+        $name = $this->name;
+
+        Player::where('user_id', $this->id)->update(['user_id' => null]);
+        $this->children()->detach();
+        Team::where('trainer_id', $this->id)->update(['trainer_id' => null]);
+        $this->assistantTeams()->detach();
+        $this->roleAssignments()->delete();
+        $this->permissionOverrides()->delete();
+        $this->profileChangeRequests()->delete();
+        PushSubscription::where('user_id', $this->id)->delete();
+
+        if ($this->avatar_path) {
+            Storage::disk('public')->delete($this->avatar_path);
+        }
+
+        $this->forceFill([
+            'name' => 'Konto usunięte',
+            'email' => 'usuniete-'.$this->id.'-'.Str::lower(Str::random(6)).'@konto.invalid',
+            'password' => Str::random(40),
+            'remember_token' => null,
+            'avatar_path' => null,
+            'instagram' => null,
+            'additional_info' => null,
+            'birth_date' => null,
+            'registration_note' => null,
+            'requested_team_id' => null,
+            'rejection_reason' => null,
+            'is_active' => false,
+            'anonymized_at' => now(),
+            'closed_reason' => $reason,
+        ])->save();
+        $this->refreshPermissions();
+
+        AuditLog::record('account.anonymized', 'Usunięto dane konta #'.$this->id.' ('.($reason === 'consent_withdrawn' ? 'cofnięta zgoda' : 'prośba użytkownika').')', $this, ['dawna_nazwa' => mb_substr($name, 0, 1).'.']);
     }
 
     public function deactivate(string $reason): void

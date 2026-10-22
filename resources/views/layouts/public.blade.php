@@ -275,7 +275,7 @@
                     <p>&copy; {{ date('Y') }} {{ $site['club_name'] }}@if(filled($site['footer_note']) && $site['footer_note'] !== $site['club_name']) · {{ $site['footer_note'] }}@endif</p>
                     <livewire:visit-counter />
                 </div>
-                <p>{{ __('Zdjęcia tematyczne:') }} <a href="{{ route('credits') }}" class="underline hover:text-white">{{ __('Unsplash i ich autorzy') }}</a></p>
+                <p><a href="{{ route('pages.show', 'polityka-prywatnosci') }}" class="underline hover:text-white">{{ __('Polityka prywatności') }}</a> · {{ __('Zdjęcia tematyczne:') }} <a href="{{ route('credits') }}" class="underline hover:text-white">{{ __('Unsplash i ich autorzy') }}</a></p>
             </div>
         </div>
     </footer>

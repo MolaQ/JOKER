@@ -83,11 +83,16 @@
                     </div>
                 </div>
 
-                <label class="flex items-start gap-2 text-sm text-zinc-700">
-                    <input type="checkbox" name="privacy" value="1" class="mt-0.5 rounded border-zinc-300 text-sky-club-dark" @checked(old('privacy'))>
-                    <span>{{ __('Zgadzam się na przetwarzanie moich danych przez klub w celu prowadzenia konta.') }}</span>
-                </label>
-                @error('privacy')<p class="text-red-600 text-sm">{{ $message }}</p>@enderror
+                <div class="space-y-3 rounded-xl bg-zinc-50 p-4">
+                    @include('account.partials.consents')
+
+                    <label class="flex items-start gap-2 text-sm text-zinc-700" x-show="kind === 'player'" x-cloak>
+                        <input type="checkbox" name="age" value="1" class="mt-0.5 rounded border-zinc-300 text-sky-club-dark" @checked(old('age'))>
+                        <span>{{ __('Mam ukończone 16 lat albo mój rodzic (opiekun) zgadza się na założenie konta.') }} <span class="text-red-600">*</span></span>
+                    </label>
+                    @error('age')<p class="text-sm text-red-600">{{ $message }}</p>@enderror
+                    <p class="text-xs text-zinc-500">{{ __('Pola oznaczone * są warunkiem założenia konta.') }}</p>
+                </div>
 
                 <button type="submit" class="w-full bg-ink text-white py-3 rounded-lg hover:bg-graphite transition font-semibold">{{ __('Załóż konto') }}</button>
 

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\AccountStatus;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\User;
 use App\UserRole;
@@ -39,6 +40,8 @@ class UserManager extends Component
 
     public string $roleFilter = '';
 
+    public string $statusFilter = '';
+
     protected function rules(): array
     {
         return [
@@ -59,6 +62,11 @@ class UserManager extends Component
     }
 
     public function updatingSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatusFilter(): void
     {
         $this->resetPage();
     }
@@ -204,6 +212,7 @@ class UserManager extends Component
         ))
             ->when($this->roleFilter === 'none', fn ($q) => $q->doesntHave('roleAssignments'))
             ->when(UserRole::tryFrom($this->roleFilter), fn ($q, UserRole $role) => $q->withRole($role))
+            ->when(AccountStatus::tryFrom($this->statusFilter), fn ($q, AccountStatus $status) => $q->withAccountStatus($status))
             ->with('roleAssignments')
             ->orderBy('name')
             ->paginate(15);
@@ -211,6 +220,7 @@ class UserManager extends Component
         return view('livewire.admin.user-manager', [
             'users' => $users,
             'roleOptions' => UserRole::cases(),
+            'statusOptions' => AccountStatus::cases(),
             'assignableRoles' => $this->assignableRoles(),
         ]);
     }

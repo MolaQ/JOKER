@@ -7,6 +7,7 @@ use App\Models\ContentProposal;
 use App\Models\Player;
 use App\Models\PlayerChangeRequest;
 use App\Models\ProfileChangeRequest;
+use App\Models\Team;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
@@ -44,6 +45,7 @@ class ProfileController extends Controller
             'contentProposals' => ContentProposal::where('user_id', $user->id)->latest('id')->limit(10)->get(),
             'canPropose' => ContentProposal::typesFor($user) !== [],
             'teams' => $user->allCoachedTeams(),
+            'allTeams' => $user->rejected_at ? Team::orderBy('display_order')->get(['id', 'name']) : collect(),
         ]);
     }
 
@@ -83,11 +85,16 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => [$user->nameIsLocked() ? 'nullable' : 'required', 'string', 'max:255'],
             'email' => 'required|email|max:255',
             'instagram' => 'nullable|string|max:255',
             'additional_info' => 'nullable|string|max:2000',
         ]);
+
+        // Imię i nazwisko konta zatwierdzonego przez klub zmienia tylko klub.
+        if ($user->nameIsLocked()) {
+            $validated['name'] = $user->name;
+        }
 
         ProfileChangeRequest::create([
             'user_id' => $user->id,

@@ -19,11 +19,64 @@
                 </form>
             </div>
         @endif
-        @if($user->is_active)
+        @php $status = $user->accountStatus(); @endphp
+        @if($status === \App\AccountStatus::Active)
             <p class="mt-3 text-sm text-green-700">✓ {{ __('Konto aktywne') }}</p>
+        @elseif($status === \App\AccountStatus::Disabled)
+            <div class="mt-3 rounded-lg bg-zinc-50 p-4 text-sm text-zinc-700">
+                <p class="font-semibold text-zinc-900">{{ __('Konto wyłączone przez Ciebie') }} ({{ $user->disabled_at->format('d.m.Y') }})</p>
+                <p class="mt-1">{{ __('Dane są zachowane, ale konto nic nie może: nie komentuje, nie widzi dokumentów dla członków i nie ma dostępu do panelu.') }}</p>
+                <form method="POST" action="{{ route('account.enable') }}" class="mt-3">
+                    @csrf
+                    <button type="submit" class="rounded-lg bg-ink px-4 py-2 font-semibold text-white hover:bg-graphite">{{ __('Włącz konto ponownie') }}</button>
+                </form>
+            </div>
+        @elseif($status === \App\AccountStatus::Rejected)
+            <div class="mt-3 rounded-lg bg-red-50 p-4 text-sm text-red-900">
+                <p class="font-semibold">{{ __('Klub odrzucił prośbę o aktywację konta') }} ({{ $user->rejected_at->format('d.m.Y') }})</p>
+                @if($user->rejection_reason)
+                    <p class="mt-1">{{ __('Powód') }}: „{{ $user->rejection_reason }}”</p>
+                @endif
+                <p class="mt-2 text-red-800">{{ __('Popraw dane poniżej i wyślij prośbę jeszcze raz.') }}</p>
+            </div>
+            <form method="POST" action="{{ route('account.resubmit') }}" class="mt-4 space-y-4" x-data="{ kind: @js(old('kind', $user->requested_role?->value ?? 'fan')) }">
+                @csrf
+                <div>
+                    <label for="resubmit-name" class="block text-sm font-medium text-zinc-700">{{ __('Imię i nazwisko') }}</label>
+                    <input type="text" id="resubmit-name" name="name" value="{{ old('name', $user->name) }}" required class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2">
+                    @error('name')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label for="resubmit-kind" class="block text-sm font-medium text-zinc-700">{{ __('Kim jesteś?') }}</label>
+                    <select id="resubmit-kind" name="kind" x-model="kind" class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2">
+                        @foreach(['fan' => __('Kibicem'), 'parent' => __('Rodzicem zawodnika'), 'player' => __('Zawodnikiem'), 'trainer' => __('Trenerem lub w sztabie')] as $value => $label)
+                            <option value="{{ $value }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div x-show="kind !== 'fan'" x-cloak>
+                    <label for="resubmit-team" class="block text-sm font-medium text-zinc-700">{{ __('Drużyna') }}</label>
+                    <select id="resubmit-team" name="team_id" class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2">
+                        <option value="">{{ __('Wybierz drużynę') }}</option>
+                        @foreach($allTeams as $team)
+                            <option value="{{ $team->id }}" @selected(old('team_id', $user->requested_team_id) == $team->id)>{{ $team->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('team_id')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+                <div x-show="kind !== 'fan'" x-cloak>
+                    <label for="resubmit-note" class="block text-sm font-medium text-zinc-700">
+                        <span x-show="kind === 'parent'">{{ __('Imię i nazwisko dziecka (lub dzieci)') }}</span>
+                        <span x-show="kind !== 'parent'">{{ __('Wiadomość do klubu: coś, co pomoże nas przekonać') }}</span>
+                    </label>
+                    <textarea id="resubmit-note" name="note" rows="2" class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2">{{ old('note', $user->registration_note) }}</textarea>
+                    @error('note')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+                <button type="submit" class="rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white hover:bg-graphite">{{ __('Wyślij prośbę ponownie') }}</button>
+            </form>
         @else
             <p class="mt-3 rounded-lg bg-zinc-50 p-4 text-sm text-zinc-700">
-                @if($user->activated_at)
+                @if($status === \App\AccountStatus::Suspended)
                     {{ __('Konto jest nieaktywne. Jeśli to pomyłka, napisz do klubu.') }}
                 @elseif($user->requested_role === \App\UserRole::Fan)
                     {{ __('Konto kibica zacznie działać po potwierdzeniu adresu e-mail.') }}
@@ -147,7 +200,12 @@
 
             <div>
                 <label class="block text-sm font-medium text-zinc-700">{{ __('Imię i nazwisko') }}</label>
-                <input type="text" name="name" value="{{ old('name', $user->name) }}" class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                @if($user->nameIsLocked())
+                    <input type="text" value="{{ $user->name }}" disabled class="mt-1 block w-full cursor-not-allowed rounded-md border border-zinc-200 bg-zinc-100 px-3 py-2 text-zinc-600">
+                    <p class="mt-1 text-xs text-zinc-500">🔒 {{ __('Konto jest zatwierdzone przez klub, więc imię i nazwisko zmienia tylko klub. W razie błędu napisz do nas.') }}</p>
+                @else
+                    <input type="text" name="name" value="{{ old('name', $user->name) }}" class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                @endif
             </div>
 
             <div>
@@ -176,6 +234,39 @@
                 @endif
             </div>
         @endif
+    </div>
+
+    <div class="mt-6 rounded-xl bg-white p-6 shadow" id="prywatnosc">
+        <h2 class="text-lg font-semibold text-zinc-900">{{ __('Prywatność i konto') }}</h2>
+        <p class="mt-2 text-sm text-zinc-600">
+            @if($user->privacy_consent_at)
+                {{ __('Zgoda na przetwarzanie danych wyrażona :date.', ['date' => $user->privacy_consent_at->format('d.m.Y')]) }}
+            @endif
+            <a href="{{ route('pages.show', 'polityka-prywatnosci') }}" class="font-semibold text-sky-club-dark underline">{{ __('Polityka prywatności') }}</a>
+        </p>
+
+        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+            <a href="{{ route('account.export') }}" class="rounded-lg p-4 text-sm ring-1 ring-zinc-200 hover:bg-zinc-50">
+                <span class="font-semibold text-zinc-900">⬇️ {{ __('Pobierz moje dane') }}</span>
+                <span class="mt-1 block text-zinc-500">{{ __('Plik z danymi, które klub ma o Tobie w serwisie.') }}</span>
+            </a>
+            @if(! $user->disabled_at)
+                <details class="rounded-lg p-4 text-sm ring-1 ring-zinc-200">
+                    <summary class="cursor-pointer font-semibold text-zinc-900">⏸️ {{ __('Wyłącz konto na jakiś czas') }}</summary>
+                    <form method="POST" action="{{ route('account.disable') }}" class="mt-3 space-y-2">
+                        @csrf
+                        <p class="text-zinc-500">{{ __('Dane zostają, a konto przestaje działać. Włączysz je tutaj w każdej chwili, bez ponownej aktywacji.') }}</p>
+                        <input type="password" name="password" required autocomplete="current-password" placeholder="{{ __('Hasło') }}" class="block w-full rounded-md border border-zinc-300 px-3 py-2">
+                        <button type="submit" class="rounded-lg bg-zinc-800 px-3 py-1.5 font-semibold text-white hover:bg-zinc-700">{{ __('Wyłącz konto') }}</button>
+                    </form>
+                </details>
+            @endif
+        </div>
+
+        <details class="mt-3 rounded-lg p-4 text-sm ring-1 ring-red-200">
+            <summary class="cursor-pointer font-semibold text-red-700">🗑️ {{ __('Cofnij zgodę i usuń konto') }}</summary>
+            @include('account.partials.delete-form', ['reason' => 'consent_withdrawn'])
+        </details>
     </div>
 </div>
 @endsection

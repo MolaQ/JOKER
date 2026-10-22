@@ -48,6 +48,11 @@ class ProfileChangeRequestManager extends Component
             'additional_info' => 'nullable|string|max:2000',
         ])->validate();
 
+        // Konto zatwierdzone przez klub: imię i nazwisko zmienia się tylko w Użytkownikach.
+        if ($request->user->nameIsLocked()) {
+            $data['name'] = $request->user->name;
+        }
+
         $request->user->update($data);
 
         $request->update([

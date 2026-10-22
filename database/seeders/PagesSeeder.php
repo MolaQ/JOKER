@@ -167,6 +167,25 @@ class PagesSeeder extends Seeder
                     .'<h3>Jak często są treningi?</h3><p>W zależności od grupy od 5 do 7 zajęć w tygodniu.</p>'
                     .'<h3>Jak zostać partnerem klubu?</h3><p>Zobacz stronę Współpraca i sponsoring albo zadzwoń: +48 531 064 100.</p>',
             ],
+            [
+                'title' => 'Polityka prywatności',
+                'slug' => 'polityka-prywatnosci',
+                'lead' => 'Jak klub przetwarza dane osób korzystających z serwisu i kont użytkowników.',
+                'content' => '<p><em>Wzór do sprawdzenia przez zarząd klubu (najlepiej z prawnikiem lub inspektorem ochrony danych) i uzupełnienia w panelu (Podstrony).</em></p>'
+                    .'<h2>Administrator danych</h2><p>Administratorem danych jest UKS SMS Joker Piła, ul. Wincentego Pola 11, 64-920 Piła, tel. +48 531 064 100. W sprawach danych osobowych napisz przez <a href="/kontakt">formularz kontaktowy</a>.</p>'
+                    .'<h2>Jakie dane i po co</h2><ul>'
+                    .'<li><strong>Konto w serwisie</strong>: imię i nazwisko, e-mail, hasło (zaszyfrowane) i dane, które sam podasz w profilu. Podstawa: Twoja zgoda (art. 6 ust. 1 lit. a RODO). Zgoda jest warunkiem założenia konta.</li>'
+                    .'<li><strong>Profile zawodników</strong>: imię i nazwisko, drużyna, pozycja, zdjęcie i statystyki. Podstawa: zgoda zawodnika albo jego rodzica (opiekuna) oraz uzasadniony interes klubu w informowaniu o działalności sportowej.</li>'
+                    .'<li><strong>Oznaczenia na zdjęciach</strong>: tylko za zgodą na wizerunek, którą można wycofać w „Mój profil”.</li>'
+                    .'<li><strong>Formularz kontaktowy</strong>: dane z wiadomości, aby na nią odpowiedzieć.</li>'
+                    .'<li><strong>Statystyki odwiedzin</strong>: bez plików cookie śledzących; adresu IP nie zapisujemy wprost, tylko jako jednodniowy skrót (hash).</li><li><strong>Pliki cookie</strong>: tylko techniczne, potrzebne do logowania i działania formularzy.</li>'
+                    .'</ul>'
+                    .'<h2>Twoje prawa</h2><p>Masz prawo dostępu do danych, ich poprawienia, usunięcia, ograniczenia przetwarzania, przeniesienia oraz cofnięcia zgody w dowolnym momencie (nie wpływa to na zgodność z prawem wcześniejszego przetwarzania). Większość z nich zrobisz sam w „Mój profil”: pobierzesz swoje dane, wyłączysz konto albo cofniesz zgodę i usuniesz konto. Masz też prawo wnieść skargę do Prezesa Urzędu Ochrony Danych Osobowych.</p>'
+                    .'<h2>Co się dzieje po cofnięciu zgody</h2><p>Cofnięcie zgody oznacza usunięcie konta: kasujemy imię i nazwisko, e-mail, hasło i dane profilu oraz odłączamy konto od zawodników i drużyn. Komentarze zostają podpisane „Konto usunięte”. Jeśli chcesz tylko na jakiś czas przestać korzystać z konta, możesz je wyłączyć i później włączyć bez ponownej aktywacji.</p>'
+                    .'<h2>Dzieci</h2><p>Konto osoby poniżej 16 lat może powstać tylko za zgodą rodzica lub opiekuna. Dane dzieci-zawodników prowadzą rodzice przez swoje konta.</p>'
+                    .'<h2>Jak długo</h2><p>Dane konta przechowujemy do czasu cofnięcia zgody lub usunięcia konta. Dane z formularza kontaktowego przez czas potrzebny na odpowiedź.</p>'
+                    .'<h2>Odbiorcy</h2><p>Dane przechowuje firma hostingowa obsługująca serwis klubu. Nie sprzedajemy danych i nie przekazujemy ich poza Europejski Obszar Gospodarczy.</p>',
+            ],
         ];
     }
 }

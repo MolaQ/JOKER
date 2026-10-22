@@ -18,7 +18,7 @@ class EmailVerificationController extends Controller
         $request->fulfill();
         $user = $request->user();
 
-        if ($user->requested_role === UserRole::Fan && ! $user->is_active) {
+        if ($user->requested_role === UserRole::Fan && ! $user->is_active && ! $user->disabled_at && ! $user->rejected_at) {
             $user->activate(UserRole::Fan);
 
             return redirect()->route('profile.edit')->with('success', __('Adres potwierdzony. Konto kibica jest aktywne.'));

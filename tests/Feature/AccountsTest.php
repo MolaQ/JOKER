@@ -31,6 +31,7 @@ test('a parent registers and waits for activation', function () {
         'team_id' => $this->team->id,
         'note' => 'Jan Nowak',
         'privacy' => '1',
+        'policy' => '1',
     ])->assertRedirect(route('profile.edit'));
 
     $user = User::firstWhere('email', 'anna@example.com');

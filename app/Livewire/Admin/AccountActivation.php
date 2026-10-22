@@ -8,6 +8,7 @@ use App\Models\Player;
 use App\Models\Team;
 use App\Models\User;
 use App\Notifications\AccountActivated;
+use App\Notifications\AccountRejected;
 use App\UserRole;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -40,6 +41,10 @@ class AccountActivation extends Component
 
     public string $playerSearch = '';
 
+    public ?int $rejectingId = null;
+
+    public string $rejectionReason = '';
+
     /**
      * Konta, które jeszcze nigdy nie były aktywne, widoczne dla zalogowanej osoby.
      */
@@ -50,6 +55,9 @@ class AccountActivation extends Component
         return User::query()
             ->where('is_active', false)
             ->whereNull('activated_at')
+            ->whereNull('rejected_at')
+            ->whereNull('disabled_at')
+            ->whereNull('anonymized_at')
             ->when($teamIds !== null, fn ($query) => $query
                 ->whereIn('requested_team_id', $teamIds)
                 ->whereIn('requested_role', [UserRole::Parent->value, UserRole::Player->value]));
@@ -68,6 +76,7 @@ class AccountActivation extends Component
     public function start(int $id): void
     {
         $user = self::pendingFor(Auth::user())->findOrFail($id);
+        $this->rejectingId = null;
 
         $this->resetErrorBag();
         $this->activatingId = $user->id;
@@ -148,14 +157,49 @@ class AccountActivation extends Component
         return ($this->headCoach ? 'trener główny' : (trim($this->function) ?: 'sztab')).' drużyny '.$team->name;
     }
 
-    public function reject(int $id): void
+    public function startRejecting(int $id): void
+    {
+        $this->activatingId = null;
+        $this->rejectingId = self::pendingFor(Auth::user())->findOrFail($id)->id;
+        $this->rejectionReason = '';
+        $this->resetErrorBag();
+    }
+
+    public function cancelRejecting(): void
+    {
+        $this->rejectingId = null;
+    }
+
+    /**
+     * Odrzucenie z powodem: konto zostaje, użytkownik dostaje e-mail i może poprawić dane.
+     */
+    public function reject(): void
+    {
+        $user = self::pendingFor(Auth::user())->findOrFail($this->rejectingId);
+        $this->validate(['rejectionReason' => 'required|string|min:5|max:500'], [
+            'rejectionReason.required' => 'Napisz powód: zobaczy go osoba, która zakładała konto.',
+            'rejectionReason.min' => 'Napisz powód trochę dokładniej.',
+        ]);
+
+        $user->rejectActivation(trim($this->rejectionReason));
+        $user->notify(new AccountRejected);
+
+        $this->rejectingId = null;
+        $this->toast('Prośba odrzucona. '.$user->name.' dostał(a) e-mail z powodem i może poprawić dane.');
+    }
+
+    /**
+     * Konto założone przez robota albo dla żartu: usuwamy je całkiem.
+     */
+    public function deleteSpam(int $id): void
     {
         $user = self::pendingFor(Auth::user())->findOrFail($id);
 
-        AuditLog::record('account.rejected', 'Odrzucono konto '.$user->name.' ('.$user->email.')');
+        AuditLog::record('account.deleted', 'Usunięto konto (spam) '.$user->name.' ('.$user->email.')');
         $user->delete();
         $this->activatingId = null;
-        $this->toast('Konto odrzucone i usunięte.');
+        $this->rejectingId = null;
+        $this->toast('Konto usunięte.');
     }
 
     public function render()

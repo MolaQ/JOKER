@@ -1,22 +1,34 @@
 <div>
     <!-- Toolbar -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border-b border-gray-200">
-        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+    <div class="flex flex-col gap-3 border-b border-gray-200 bg-white p-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="grid w-full gap-2 sm:grid-cols-2 lg:flex lg:w-auto lg:flex-wrap">
             <input
-                type="text"
+                type="search"
                 wire:model.live.debounce.300ms="search"
                 placeholder="Szukaj przeciwnika..."
-                class="w-full sm:w-64 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                class="w-full lg:w-56 text-sm"
             >
-            <select wire:model.live="statusFilter" class="w-full sm:w-48 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+            <select wire:model.live="teamFilter" class="w-full lg:w-44 text-sm" aria-label="Drużyna">
+                <option value="">Wszystkie drużyny</option>
+                @foreach($teams as $team)
+                    <option value="{{ $team->id }}">{{ $team->name }}</option>
+                @endforeach
+            </select>
+            <select wire:model.live="statusFilter" class="w-full lg:w-40 text-sm" aria-label="Status">
                 <option value="">Wszystkie statusy</option>
                 <option value="scheduled">Zaplanowany</option>
                 <option value="live">Na żywo</option>
                 <option value="finished">Zakończony</option>
                 <option value="cancelled">Odwołany</option>
             </select>
+            <select wire:model.live="mediaFilter" class="w-full lg:w-48 text-sm" aria-label="Materiały">
+                <option value="">Wszystkie materiały</option>
+                @foreach(\App\Livewire\Admin\GameManager::MEDIA_FILTERS as $key => $label)
+                    <option value="{{ $key }}">{{ $label }}</option>
+                @endforeach
+            </select>
         </div>
-        <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+        <button type="button" wire:click="openCreateModal" class="inline-flex shrink-0 items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
             + Dodaj mecz
         </button>
     </div>
@@ -29,6 +41,7 @@
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Przeciwnik</th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Wynik</th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Materiały</th>
                 <th class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Akcje</span></th>
             </tr>
         </thead>
@@ -77,8 +90,23 @@
                             ];
                         @endphp
                         <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $statusColors[$game->status] ?? '' }}">
-                            {{ $game->status }}
+                            {{ ['scheduled' => 'Zaplanowany', 'live' => 'Na żywo', 'finished' => 'Zakończony', 'cancelled' => 'Odwołany'][$game->status] ?? $game->status }}
                         </span>
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm">
+                        @php
+                            $materials = array_filter([
+                                ['📰', 'Wiadomość', $game->articles_count > 0],
+                                ['🎥', 'Wideo', $game->hasStreams()],
+                                ['📷', 'Galeria', $game->galleries_count > 0],
+                                ['✍️', 'Relacja', filled($game->match_report)],
+                            ], fn (array $material) => $material[2]);
+                        @endphp
+                        @forelse($materials as [$icon, $label])
+                            <span class="mr-1 inline-flex items-center rounded-md bg-gray-100 px-1.5 py-0.5 text-sm" title="{{ $label }}" aria-label="{{ $label }}">{{ $icon }}</span>
+                        @empty
+                            <span class="text-xs text-gray-400">brak</span>
+                        @endforelse
                     </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <button type="button" wire:click="openEditModal({{ $game->id }})" class="text-blue-600 hover:text-blue-900 mr-4">Edytuj</button>
@@ -87,7 +115,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="px-3 py-4 text-sm text-gray-500 text-center">Brak meczów do wyświetlenia</td>
+                    <td colspan="7" class="px-3 py-4 text-sm text-gray-500 text-center">Brak meczów do wyświetlenia</td>
                 </tr>
             @endforelse
         </tbody>

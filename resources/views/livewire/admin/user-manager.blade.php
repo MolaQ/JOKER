@@ -15,6 +15,12 @@
                     <option value="{{ $r->value }}">{{ $r->label() }}</option>
                 @endforeach
             </select>
+            <select wire:model.live="statusFilter" class="w-full sm:w-52 text-sm" aria-label="Stan konta">
+                <option value="">Każdy stan konta</option>
+                @foreach($statusOptions as $statusOption)
+                    <option value="{{ $statusOption->value }}">{{ $statusOption->label() }}</option>
+                @endforeach
+            </select>
         </div>
         <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
             + Dodaj użytkownika
@@ -50,9 +56,10 @@
                             @empty
                                 <span class="text-xs text-gray-400">bez roli</span>
                             @endforelse
-                            @unless($user->is_active)
-                                <span class="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20">nieaktywne</span>
-                            @endunless
+                            @php $accountStatus = $user->accountStatus(); @endphp
+                            @if($accountStatus !== \App\AccountStatus::Active)
+                                <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $accountStatus->badge() }}" @if($accountStatus === \App\AccountStatus::Rejected && $user->rejection_reason) title="Powód: {{ $user->rejection_reason }}" @endif>{{ $accountStatus->label() }}</span>
+                            @endif
                         </div>
                     </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">

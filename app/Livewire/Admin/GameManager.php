@@ -12,6 +12,7 @@ use App\Models\Team;
 use App\Models\Tournament;
 use App\Services\ScheduleImporter;
 use App\Services\StandingsCalculator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -72,6 +73,19 @@ class GameManager extends Component
 
     public string $statusFilter = '';
 
+    public string $mediaFilter = '';
+
+    public string $teamFilter = '';
+
+    /** Filtr materiałów meczu: wiadomość, wideo, galeria, relacja albo brak czegokolwiek. */
+    public const MEDIA_FILTERS = [
+        'wiadomosc' => 'Z wiadomością',
+        'wideo' => 'Z wideo',
+        'galeria' => 'Z galerią',
+        'relacja' => 'Z relacją',
+        'bez' => 'Bez żadnej wzmianki',
+    ];
+
     protected function rules(): array
     {
         return [
@@ -112,6 +126,41 @@ class GameManager extends Component
     public function updatingStatusFilter(): void
     {
         $this->resetPage();
+    }
+
+    public function updatingMediaFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingTeamFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    /**
+     * Mecze z wybranym rodzajem materiałów (albo bez żadnych: wiadomości, wideo, galerii i relacji).
+     */
+    private function applyMediaFilter(Builder $games): Builder
+    {
+        $hasVideo = fn (Builder $query) => $query->where(fn (Builder $video) => $video
+            ->where(fn (Builder $url) => $url->whereNotNull('video_url')->where('video_url', '!=', ''))
+            ->orWhereJsonLength('streams', '>', 0));
+        $hasReport = fn (Builder $query) => $query->whereNotNull('match_report')->where('match_report', '!=', '');
+
+        return match ($this->mediaFilter) {
+            'wiadomosc' => $games->whereHas('articles'),
+            'wideo' => $hasVideo($games),
+            'galeria' => $games->whereHas('galleries'),
+            'relacja' => $hasReport($games),
+            // Warunki wprost (nie przez NOT), bo puste pola NULL dałyby w SQL wynik nieokreślony.
+            'bez' => $games->whereDoesntHave('articles')
+                ->whereDoesntHave('galleries')
+                ->where(fn (Builder $url) => $url->whereNull('video_url')->orWhere('video_url', ''))
+                ->where(fn (Builder $streams) => $streams->whereNull('streams')->orWhereJsonLength('streams', 0))
+                ->where(fn (Builder $report) => $report->whereNull('match_report')->orWhere('match_report', '')),
+            default => $games,
+        };
     }
 
     public function openCreateModal(): void
@@ -354,9 +403,12 @@ class GameManager extends Component
 
     public function render()
     {
-        $games = $this->managedGames()->with(['team', 'opponentTeam'])
+        $games = $this->applyMediaFilter($this->managedGames())
+            ->with(['team', 'opponentTeam'])
+            ->withCount(['articles', 'galleries'])
             ->when($this->search, fn ($q) => $q->where('opponent', 'like', "%{$this->search}%"))
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
+            ->when($this->teamFilter, fn ($q) => $q->where('team_id', $this->teamFilter))
             ->orderBy('game_date', 'desc')
             ->paginate(12);
 

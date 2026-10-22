@@ -98,7 +98,10 @@ test('uploaded images are served even when the public/storage link is missing', 
 test('the admin panel lives under /panel and the old /admin address redirects there', function () {
     $admin = User::firstWhere('email', 'marcin.molak@gmail.com');
 
-    $this->actingAs($admin)->get('/panel')->assertOk();
+    // Konto z seedera nie ma jeszcze zgody RODO: pierwsze wejście prowadzi do zgody.
+    $this->actingAs($admin)->get('/panel')->assertRedirect(route('account.consent'));
+    $this->post(route('account.consent.store'), ['privacy' => '1', 'policy' => '1'])->assertRedirect('/panel');
+    $this->get('/panel')->assertOk();
     $this->get('/admin')->assertRedirect('/panel');
     $this->get('/admin/teams')->assertRedirect('/panel/teams');
 });

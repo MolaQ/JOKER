@@ -45,7 +45,12 @@ class RegisterController extends Controller
             'team_id' => ['nullable', 'required_unless:kind,fan', 'exists:teams,id'],
             'note' => 'nullable|required_if:kind,parent|string|max:1000',
             'privacy' => 'accepted',
+            'policy' => 'accepted',
+            'age' => 'accepted_if:kind,player',
         ], [
+            'privacy.accepted' => __('Bez tej zgody nie możemy prowadzić konta.'),
+            'policy.accepted' => __('Potwierdź, że znasz zasady przetwarzania danych.'),
+            'age.accepted_if' => __('Osoba poniżej 16 lat potrzebuje zgody rodzica lub opiekuna.'),
             'team_id.required_unless' => __('Wybierz drużynę, z którą jesteś związany.'),
             'note.required_if' => __('Napisz imię i nazwisko dziecka.'),
         ]);
@@ -58,6 +63,7 @@ class RegisterController extends Controller
             'requested_role' => UserRole::from($validated['kind']),
             'requested_team_id' => $validated['kind'] === 'fan' ? null : $validated['team_id'],
             'registration_note' => $validated['note'] ?? null,
+            'privacy_consent_at' => now(),
         ]);
 
         event(new Registered($user));
