@@ -8,6 +8,7 @@ use App\Support\SiteSettings;
 use App\View\Components\Toasts;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -42,7 +43,7 @@ class SiteSettingsManager extends Component
 
             $this->values[$key] = match ($field['type']) {
                 'toggle' => (bool) $value,
-                'links' => array_values((array) $value),
+                'links', 'platforms' => array_values((array) $value),
                 default => (string) $value,
             };
         }
@@ -70,6 +71,11 @@ class SiteSettingsManager extends Component
     public function addLink(string $key): void
     {
         $this->values[$key][] = ['label' => '', 'url' => ''];
+    }
+
+    public function addPlatform(string $key): void
+    {
+        $this->values[$key][] = ['key' => '', 'label' => '', 'icon' => 'website'];
     }
 
     public function removeLink(string $key, int $index): void
@@ -142,6 +148,7 @@ class SiteSettingsManager extends Component
                     ->filter(fn ($link) => $link['label'] !== '' || $link['url'] !== '')
                     ->values()
                     ->all(),
+                'platforms' => $this->cleanPlatforms((array) $value),
                 'color' => strtolower((string) $value),
                 default => trim((string) $value),
             };
@@ -153,6 +160,36 @@ class SiteSettingsManager extends Component
         $this->uploads = [];
         $this->values = array_merge($this->values, Arr::only($toStore, array_keys($fields)));
         $this->dispatch('toast-config', ...Toasts::appearance(app(SiteSettings::class)));
+    }
+
+    /**
+     * Serwisy z nazwą; nowy dostaje stały klucz z nazwy, żeby zmiana nazwy nie gubiła wpisanych linków.
+     *
+     * @param  array<int, mixed>  $platforms
+     * @return list<array{key: string, label: string, icon: string}>
+     */
+    private function cleanPlatforms(array $platforms): array
+    {
+        $result = [];
+
+        foreach ($platforms as $platform) {
+            $label = trim((string) ($platform['label'] ?? ''));
+
+            if ($label === '') {
+                continue;
+            }
+
+            $key = (string) ($platform['key'] ?? '') ?: (Str::slug($label, '_') ?: 'link');
+            $base = $key;
+
+            for ($i = 2; in_array($key, array_column($result, 'key'), true); $i++) {
+                $key = $base.'_'.$i;
+            }
+
+            $result[] = ['key' => $key, 'label' => $label, 'icon' => (string) ($platform['icon'] ?? 'website')];
+        }
+
+        return $result;
     }
 
     /**
@@ -176,6 +213,11 @@ class SiteSettingsManager extends Component
                     $rules[$path] = ['array', 'max:20'],
                     $rules[$path.'.*.label'] = ['nullable', 'string', 'max:60'],
                     $rules[$path.'.*.url'] = ['nullable', 'string', 'max:500', 'regex:/^(https?:\/\/|\/|#|mailto:|tel:)/i'],
+                ],
+                'platforms' => [
+                    $rules[$path] = ['array', 'max:20'],
+                    $rules[$path.'.*.label'] = ['nullable', 'string', 'max:40'],
+                    $rules[$path.'.*.icon'] = ['required', Rule::in(array_keys(SiteSettings::SOCIAL_ICONS))],
                 ],
                 default => $rules[$path] = ['nullable', 'string', 'max:255'],
             };
@@ -209,6 +251,7 @@ class SiteSettingsManager extends Component
                 'uploads.'.$key => $field['label'],
                 'values.'.$key.'.*.label' => 'tekst linku',
                 'values.'.$key.'.*.url' => 'adres linku',
+                'values.'.$key.'.*.icon' => 'ikona',
             ])
             ->all();
     }

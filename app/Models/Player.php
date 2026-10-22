@@ -8,6 +8,7 @@ use App\Models\Concerns\HasReadableRouteKey;
 use App\Models\Concerns\Likeable;
 use App\Permission;
 use App\PlayerPosition;
+use App\Support\SiteSettings;
 use Database\Factories\PlayerFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -51,6 +52,8 @@ class Player extends Model
         'spike_reach',
         'block_reach',
         'bio',
+        'interests',
+        'social_links',
         'photo_path',
         'team_id',
         'user_id',
@@ -69,6 +72,7 @@ class Player extends Model
             'birthday_display' => BirthdayDisplay::class,
             'position' => PlayerPosition::class,
             'extra_positions' => 'array',
+            'social_links' => 'array',
         ];
     }
 
@@ -176,6 +180,49 @@ class Player extends Model
         $positions = $this->positions();
 
         return $positions === [] ? null : collect($positions)->map(fn (PlayerPosition $position) => $position->label())->implode(' · ');
+    }
+
+    /**
+     * Linki do serwisów ustawionych w „Profile zawodników”, w kolejności z ustawień.
+     *
+     * @return list<array{key: string, label: string, icon: string, url: string}>
+     */
+    public function socialProfiles(): array
+    {
+        $links = (array) ($this->social_links ?? []);
+
+        return collect(app(SiteSettings::class)->playerSocialPlatforms())
+            ->map(fn (array $platform, string $key) => $platform + ['key' => $key, 'url' => (string) ($links[$key] ?? '')])
+            ->filter(fn (array $platform) => preg_match('#^https?://#i', $platform['url']))
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Czy jest kapitanem swojej drużyny w bieżącym sezonie.
+     */
+    public function isCaptain(): bool
+    {
+        $seasonId = Season::current()->value('id');
+
+        return $seasonId && $this->team_id
+            && $this->teams()->wherePivot('season_id', $seasonId)->where('teams.id', $this->team_id)->wherePivot('is_captain', true)->exists();
+    }
+
+    /**
+     * Wpis w kadrze macierzystej drużyny na bieżący sezon (numer i opaska kapitana), bez ruszania innych drużyn.
+     */
+    public function syncHomeRoster(?bool $captain = null): void
+    {
+        $seasonId = Season::current()->value('id');
+
+        if (! $seasonId || ! $this->team_id) {
+            return;
+        }
+
+        $captain ??= $this->isCaptain();
+        $this->teams()->wherePivot('season_id', $seasonId)->detach($this->team_id);
+        $this->teams()->attach($this->team_id, ['season_id' => $seasonId, 'jersey_number' => $this->jersey_number, 'is_captain' => $captain]);
     }
 
     public function age(): ?int

@@ -8,6 +8,11 @@
     </div>
 
     @auth
+        @if(! auth()->user()->is_active)
+            <p class="mt-6 rounded-2xl bg-zinc-100 p-5 text-sm text-zinc-600">{{ __('Komentować możesz po aktywacji konta.') }}</p>
+        @elseif(! auth()->user()->canComment())
+            <p class="mt-6 rounded-2xl bg-zinc-100 p-5 text-sm text-zinc-600">{{ __('Klub wyłączył Ci możliwość komentowania.') }}</p>
+        @else
         <form action="{{ $action }}" method="POST" class="card mt-6 p-6">
             @csrf
             <label for="comment" class="text-sm font-semibold">{{ __('Twój komentarz') }}</label>
@@ -15,6 +20,7 @@
             @error('content') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
             <div class="mt-4 flex justify-end"><button type="submit" class="btn-primary">{{ __('Wyślij') }}</button></div>
         </form>
+        @endif
 
         <div class="mt-8 space-y-4">
             @foreach($comments->whereNull('parent_id') as $comment)

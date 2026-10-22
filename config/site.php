@@ -117,6 +117,20 @@ return [
             ],
         ],
 
+        'zawodnicy' => [
+            'label' => 'Profile zawodników',
+            'icon' => 'user',
+            'fields' => [
+                'player_social_platforms' => ['type' => 'platforms', 'label' => 'Media społecznościowe w profilu zawodnika', 'help' => 'Te serwisy pojawią się w formularzu zawodnika (panel i propozycje od rodziców) i jako ikony w jego profilu. Ikonę wybierasz z listy.', 'default' => [
+                    ['key' => 'instagram', 'label' => 'Instagram', 'icon' => 'instagram'],
+                    ['key' => 'facebook', 'label' => 'Facebook', 'icon' => 'facebook'],
+                    ['key' => 'tiktok', 'label' => 'TikTok', 'icon' => 'tiktok'],
+                    ['key' => 'youtube', 'label' => 'YouTube', 'icon' => 'youtube'],
+                    ['key' => 'x', 'label' => 'X (Twitter)', 'icon' => 'x'],
+                ]],
+            ],
+        ],
+
         'pasek' => [
             'label' => 'Górny pasek',
             'icon' => 'window',

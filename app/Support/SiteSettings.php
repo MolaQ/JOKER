@@ -161,6 +161,39 @@ class SiteSettings implements ArrayAccess
             ->all();
     }
 
+    /**
+     * Ikony serwisów do wyboru w ustawieniach (rysuje je komponent x-social-icon).
+     */
+    public const SOCIAL_ICONS = [
+        'instagram' => 'Instagram',
+        'facebook' => 'Facebook',
+        'tiktok' => 'TikTok',
+        'youtube' => 'YouTube',
+        'x' => 'X (Twitter)',
+        'threads' => 'Threads',
+        'linkedin' => 'LinkedIn',
+        'twitch' => 'Twitch',
+        'strava' => 'Strava',
+        'spotify' => 'Spotify',
+        'website' => 'Strona WWW / inny link',
+    ];
+
+    /**
+     * Serwisy społecznościowe w profilu zawodnika: klucz => [label, icon].
+     *
+     * @return array<string, array{label: string, icon: string}>
+     */
+    public function playerSocialPlatforms(): array
+    {
+        return collect((array) $this->get('player_social_platforms', []))
+            ->filter(fn ($platform) => filled($platform['key'] ?? null) && filled($platform['label'] ?? null))
+            ->mapWithKeys(fn (array $platform) => [$platform['key'] => [
+                'label' => (string) $platform['label'],
+                'icon' => array_key_exists($platform['icon'] ?? '', self::SOCIAL_ICONS) ? $platform['icon'] : 'website',
+            ]])
+            ->all();
+    }
+
     public function offsetExists(mixed $offset): bool
     {
         return $this->get($offset) !== null;

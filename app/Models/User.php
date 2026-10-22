@@ -246,13 +246,36 @@ class User extends Authenticatable implements MustVerifyEmail
             return $this->resolvedPermissions = collect(Permission::cases());
         }
 
-        $map = RolePermission::map();
-        $granted = $this->roles()->flatMap(fn (UserRole $role) => $map[$role->value] ?? [])->unique();
+        $granted = $this->rolePermissionValues();
         $overrides = $this->permissionOverrides->mapWithKeys(fn (PermissionOverride $override) => [$override->permission->value => $override->allowed]);
 
         return $this->resolvedPermissions = collect(Permission::cases())
             ->filter(fn (Permission $permission) => $overrides[$permission->value] ?? $granted->contains($permission->value))
             ->values();
+    }
+
+    /**
+     * Uprawnienia z samych ról (bez wyjątków). Konto bez roli traktujemy jak kibica.
+     *
+     * @return Collection<int, string>
+     */
+    public function rolePermissionValues(): Collection
+    {
+        $map = RolePermission::map();
+        $roles = $this->roles();
+
+        return ($roles->isEmpty() ? collect([UserRole::Fan]) : $roles)
+            ->flatMap(fn (UserRole $role) => $map[$role->value] ?? [])
+            ->unique()
+            ->values();
+    }
+
+    /**
+     * Czy konto może pisać komentarze: aktywne i z uprawnieniem (można je odebrać jednej osobie).
+     */
+    public function canComment(): bool
+    {
+        return $this->hasPermission(Permission::WriteComments);
     }
 
     public function hasPermission(Permission $permission): bool
@@ -265,7 +288,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function canAccessPanel(): bool
     {
-        return $this->permissions()->contains(fn (Permission $permission) => $permission !== Permission::AllTeams);
+        return $this->permissions()->contains(fn (Permission $permission) => $permission !== Permission::AllTeams && ! $permission->isPublic());
     }
 
     public function canManageContent(): bool

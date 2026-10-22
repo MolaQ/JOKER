@@ -9,6 +9,8 @@ use App\Models\Season;
 use App\Models\Team;
 use App\Models\User;
 use App\PlayerPosition;
+use App\Support\ClubAccounts;
+use App\Support\SiteSettings;
 use App\UserRole;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -30,7 +32,20 @@ class PlayerManager extends Component
 
     public ?int $jersey_number = null;
 
-    public string $position = 'outside_hitter';
+    public string $position = '';
+
+    public bool $is_captain = false;
+
+    public string $interests = '';
+
+    /** @var array<string, string> Linki do mediów społecznościowych, klucz = serwis z ustawień */
+    public array $social_links = [];
+
+    /** E-mail, na który klub zakłada konto zawodnika (gdy nie wybrano istniejącego). */
+    public string $account_email = '';
+
+    /** @var array<int, array{email: string, name: string}> Rodzice dopisywani po e-mailu (konto zakłada się samo) */
+    public array $new_guardians = [];
 
     /** @var array<int, string> Dodatkowe pozycje (np. libero i przyjmujący) */
     public array $extra_positions = [];
@@ -82,8 +97,16 @@ class PlayerManager extends Component
         return [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'jersey_number' => 'required|integer|min:0|max:99',
-            'position' => 'required|in:setter,outside_hitter,opposite,middle_blocker,libero',
+            'jersey_number' => array_filter(['nullable', 'integer', 'min:0', 'max:99', $this->team_id ? Rule::unique('players', 'jersey_number')->where('team_id', $this->team_id)->ignore($this->editingId) : null]),
+            'position' => 'nullable|in:setter,outside_hitter,opposite,middle_blocker,libero',
+            'is_captain' => 'boolean',
+            'interests' => 'nullable|string|max:500',
+            'social_links' => 'array',
+            'social_links.*' => ['nullable', 'string', 'max:500', 'regex:#^https?://#i'],
+            'account_email' => ['nullable', 'email', 'max:255'],
+            'new_guardians' => 'array|max:6',
+            'new_guardians.*.email' => 'nullable|email|max:255',
+            'new_guardians.*.name' => 'nullable|string|max:255',
             'extra_positions' => 'array',
             'extra_positions.*' => 'in:setter,outside_hitter,opposite,middle_blocker,libero',
             'birth_date' => 'nullable|date',
@@ -100,13 +123,44 @@ class PlayerManager extends Component
             'achievements.*.season' => 'nullable|string|max:20',
             'achievements.*.title' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
-            'team_id' => ['required', Rule::in(Team::managedBy(Auth::user())->pluck('id'))],
+            // Bez drużyny zapisze tylko ktoś, kto widzi wszystkie drużyny (trener straciłby dostęp do zawodnika).
+            'team_id' => [Auth::user()->managedTeamIds() === null ? 'nullable' : 'required', Rule::in(Team::managedBy(Auth::user())->pluck('id'))],
             'extra_team_ids' => 'array',
             'extra_team_ids.*' => 'exists:teams,id',
             'is_active' => 'boolean',
             'image_consent' => 'boolean',
             'photo' => 'nullable|image|max:4096|dimensions:ratio=4/5',
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function validationAttributes(): array
+    {
+        return ['jersey_number' => 'numer', 'account_email' => 'e-mail zawodnika', 'social_links.*' => 'adres profilu', 'new_guardians.*.email' => 'e-mail rodzica', 'team_id' => 'drużyna'];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function messages(): array
+    {
+        return [
+            'jersey_number.unique' => 'Ten numer ma już inny zawodnik tej drużyny.',
+            'social_links.*.regex' => 'Adres profilu zacznij od https://',
+        ];
+    }
+
+    public function addGuardian(): void
+    {
+        $this->new_guardians[] = ['email' => '', 'name' => ''];
+    }
+
+    public function removeGuardian(int $index): void
+    {
+        unset($this->new_guardians[$index]);
+        $this->new_guardians = array_values($this->new_guardians);
     }
 
     public function updatingSearch(): void
@@ -133,7 +187,10 @@ class PlayerManager extends Component
         $this->first_name = $player->first_name;
         $this->last_name = $player->last_name;
         $this->jersey_number = $player->jersey_number;
-        $this->position = $player->position->value;
+        $this->position = $player->position?->value ?? '';
+        $this->is_captain = $player->isCaptain();
+        $this->interests = (string) $player->interests;
+        $this->social_links = array_map('strval', (array) ($player->social_links ?? []));
         $this->extra_positions = $player->extra_positions ?? [];
         $this->birth_date = $player->birth_date?->format('Y-m-d');
         $this->height = $player->height;
@@ -165,7 +222,13 @@ class PlayerManager extends Component
         $validated = $this->validate();
         $extraTeamIds = $validated['extra_team_ids'] ?? [];
         $guardianIds = $validated['guardian_ids'] ?? [];
-        unset($validated['extra_team_ids'], $validated['guardian_ids'], $validated['achievements'], $validated['photo']);
+        $captain = $validated['is_captain'];
+        $accountEmail = trim($validated['account_email'] ?? '');
+        $newGuardians = array_filter($validated['new_guardians'] ?? [], fn (array $row) => trim($row['email'] ?? '') !== '');
+        unset($validated['extra_team_ids'], $validated['guardian_ids'], $validated['achievements'], $validated['photo'], $validated['is_captain'], $validated['account_email'], $validated['new_guardians']);
+        $validated['position'] = $validated['position'] ?: null;
+        $validated['interests'] = trim($validated['interests'] ?? '') ?: null;
+        $validated['social_links'] = array_filter(array_map(fn ($url) => trim((string) $url), $validated['social_links'] ?? [])) ?: null;
         $validated['extra_positions'] = array_values(array_diff($this->extra_positions, [$this->position])) ?: null;
 
         if ($this->photo) {
@@ -182,6 +245,15 @@ class PlayerManager extends Component
         }
 
         $player->guardians()->sync($guardianIds);
+
+        if ($accountEmail !== '' && ! $player->user_id) {
+            ClubAccounts::connectPlayer($player, $accountEmail);
+            $this->toast('Zawodnik ma konto: '.$accountEmail.'. Wysłaliśmy mu link do ustawienia hasła.');
+        }
+
+        foreach ($newGuardians as $row) {
+            ClubAccounts::connectGuardian($player, $row['email'], trim($row['name'] ?? '') ?: null);
+        }
         $player->achievements()->delete();
 
         foreach (array_values(array_filter($this->achievements, fn (array $row) => trim($row['title'] ?? '') !== '')) as $order => $row) {
@@ -198,11 +270,13 @@ class PlayerManager extends Component
             // Zawsze zapewnij wpis w macierzystej drużynie na bieżący sezon.
             $player->teams()->wherePivot('season_id', $currentSeasonId)->detach();
 
-            $player->teams()->attach($player->team_id, [
-                'season_id' => $currentSeasonId,
-                'jersey_number' => $player->jersey_number,
-                'is_captain' => false,
-            ]);
+            if ($player->team_id) {
+                $player->teams()->attach($player->team_id, [
+                    'season_id' => $currentSeasonId,
+                    'jersey_number' => $player->jersey_number,
+                    'is_captain' => $captain,
+                ]);
+            }
 
             foreach ($extraTeamIds as $extraTeamId) {
                 if ((int) $extraTeamId === (int) $player->team_id) {
@@ -249,7 +323,12 @@ class PlayerManager extends Component
         $this->first_name = '';
         $this->last_name = '';
         $this->jersey_number = null;
-        $this->position = 'outside_hitter';
+        $this->position = '';
+        $this->is_captain = false;
+        $this->interests = '';
+        $this->social_links = [];
+        $this->account_email = '';
+        $this->new_guardians = [];
         $this->extra_positions = [];
         $this->birth_date = null;
         $this->height = null;
@@ -291,6 +370,8 @@ class PlayerManager extends Component
             'teams' => $teams,
             'positions' => $positions,
             'playerAccounts' => $this->showModal ? User::withRole(UserRole::Player)->orderBy('name')->get(['id', 'name', 'email']) : collect(),
+            'socialPlatforms' => app(SiteSettings::class)->playerSocialPlatforms(),
+            'linkedAccount' => $this->showModal && $this->user_id ? User::find($this->user_id) : null,
             'parentAccounts' => $this->showModal ? User::withRole(UserRole::Parent)->orderBy('name')->get(['id', 'name', 'email']) : collect(),
         ]);
     }

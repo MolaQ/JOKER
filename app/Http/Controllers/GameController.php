@@ -38,6 +38,10 @@ class GameController extends Controller
             return back()->with('error', __('Komentować możesz po aktywacji konta.'));
         }
 
+        if (! $request->user()->canComment()) {
+            return back()->with('error', __('Klub wyłączył Ci możliwość komentowania.'));
+        }
+
         $validated = $request->validate([
             'content' => 'required|string|max:1000',
         ]);

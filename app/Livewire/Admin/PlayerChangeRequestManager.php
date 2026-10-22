@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\PlayerChangeRequest;
+use App\Support\ClubAccounts;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -41,7 +42,12 @@ class PlayerChangeRequestManager extends Component
                 $data['bio'] = PlayerChangeRequest::bioAsHtml($data['bio']);
             }
 
+            $email = $data->pull('email');
             $request->player->update($data->all());
+
+            if ($email && ! $request->player->user_id) {
+                ClubAccounts::connectPlayer($request->player, $email);
+            }
         }
 
         $this->decide($request, PlayerChangeRequest::STATUS_APPROVED);

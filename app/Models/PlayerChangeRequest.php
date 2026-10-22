@@ -30,7 +30,29 @@ class PlayerChangeRequest extends Model
         'spike_reach' => 'Zasięg w ataku (cm)',
         'block_reach' => 'Zasięg w bloku (cm)',
         'bio' => 'O mnie',
+        'interests' => 'Zainteresowania',
+        'social_links' => 'Media społecznościowe',
+        'email' => 'E-mail zawodnika (konto na stronie)',
     ];
+
+    /**
+     * Pola liczbowe (w formularzu jako pola liczb).
+     *
+     * @var list<string>
+     */
+    public const NUMERIC_FIELDS = ['height', 'weight', 'reach', 'spike_reach', 'block_reach'];
+
+    /**
+     * Wartość pola do porównania i pokazania (bez propozycji = aktualny stan profilu).
+     */
+    public static function displayValue(string $field, mixed $value): string
+    {
+        if (is_array($value)) {
+            return collect($value)->filter()->map(fn ($url, $key) => $key.': '.$url)->implode("\n") ?: '—';
+        }
+
+        return $value === null || $value === '' ? '—' : (string) $value;
+    }
 
     protected $fillable = [
         'player_id',

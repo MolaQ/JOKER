@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\AccountStatus;
+use App\Livewire\Concerns\EditsPermissionOverrides;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\User;
 use App\UserRole;
@@ -14,9 +15,12 @@ use Livewire\WithPagination;
 
 class UserManager extends Component
 {
-    use ShowsToasts, WithPagination;
+    use EditsPermissionOverrides, ShowsToasts, WithPagination;
 
     public bool $showModal = false;
+
+    /** Zakładka okna edycji: dane konta albo uprawnienia. */
+    public string $modalTab = 'dane';
 
     public ?int $editingId = null;
 
@@ -165,6 +169,13 @@ class UserManager extends Component
         $this->closeModal();
     }
 
+    public function setOverride(string $permission, string $mode): void
+    {
+        $user = User::findOrFail($this->editingId);
+        abort_unless($this->mayEdit($user), 403);
+        $this->applyOverride($user, $permission, $mode);
+    }
+
     public function delete(int $id): void
     {
         if ($id === Auth::id()) {
@@ -194,6 +205,7 @@ class UserManager extends Component
     private function resetForm(): void
     {
         $this->editingId = null;
+        $this->modalTab = 'dane';
         $this->name = '';
         $this->email = '';
         $this->password = '';
@@ -217,7 +229,10 @@ class UserManager extends Component
             ->orderBy('name')
             ->paginate(15);
 
-        return view('livewire.admin.user-manager', [
+        $editing = $this->showModal && $this->editingId ? User::find($this->editingId) : null;
+
+        return view('livewire.admin.user-manager', $this->overrideViewData($editing) + [
+            'editingUser' => $editing,
             'users' => $users,
             'roleOptions' => UserRole::cases(),
             'statusOptions' => AccountStatus::cases(),

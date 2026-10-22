@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Player;
+use App\Models\Season;
 use App\Models\Team;
 use App\Models\User;
 use App\UserRole;
@@ -47,14 +48,19 @@ class DataImport
         'players' => [
             'first_name' => ['imie', true, 'Adam'],
             'last_name' => ['nazwisko', true, 'Nowak'],
-            'team' => ['druzyna', true, 'Kadeci'],
-            'jersey_number' => ['numer', true, '7'],
-            'position' => ['pozycja', true, 'przyjmujący'],
+            'team' => ['druzyna', false, 'Kadeci'],
+            'jersey_number' => ['numer', false, '7'],
+            'position' => ['pozycja', false, 'przyjmujący'],
+            'captain' => ['kapitan', false, 'nie'],
             'birth_date' => ['data_urodzenia', false, '2010-05-14'],
             'height' => ['wzrost', false, '188'],
             'weight' => ['waga', false, '75'],
             'spike_reach' => ['zasieg_atak', false, '320'],
             'block_reach' => ['zasieg_blok', false, '305'],
+            'email' => ['email', false, ''],
+            'guardians' => ['rodzice', false, 'Anna Nowak <anna.nowak@example.com>, piotr.nowak@example.com'],
+            'bio' => ['opis', false, 'Gra w siatkówkę od 8. roku życia.'],
+            'interests' => ['zainteresowania', false, 'gitara, góry, matematyka'],
         ],
     ];
 
@@ -72,6 +78,26 @@ class DataImport
         'middle_blocker' => ['middle_blocker', 'srodkowy', 'srodkowa', 's'],
         'libero' => ['libero', 'l'],
     ];
+
+    /**
+     * Rodzaj danych rozpoznany po nagłówkach (np. imie + nazwisko = zawodnicy), albo null.
+     */
+    public static function detectType(string $content): ?string
+    {
+        $first = strtok(self::toUtf8($content), "\r\n");
+
+        if ($first === false) {
+            return null;
+        }
+
+        $delimiter = collect([';', "\t", ','])->sortByDesc(fn (string $candidate) => substr_count($first, $candidate))->first();
+        $headers = array_map(fn (?string $header) => self::normalize((string) $header), str_getcsv($first, $delimiter, '"', ''));
+
+        return collect(self::COLUMNS)
+            ->filter(fn (array $columns) => collect($columns)->filter(fn (array $column) => $column[1])->every(fn (array $column) => in_array(self::normalize($column[0]), $headers, true)))
+            ->keys()
+            ->first();
+    }
 
     /**
      * Wzór pliku: nagłówki i przykładowy wiersz, z BOM, żeby Excel otworzył polskie znaki.
@@ -181,6 +207,20 @@ class DataImport
             }
             if ($number('jersey_number', 0, 99)) {
                 $errors[] = 'numer musi być liczbą 0-99';
+            } elseif ($data['jersey_number'] !== '' && ($team = self::team($data['team'])) && ($taken = Player::where('team_id', $team->id)->where('jersey_number', (int) $data['jersey_number'])->first())
+                && self::normalize($taken->first_name.' '.$taken->last_name) !== self::normalize($data['first_name'].' '.$data['last_name'])) {
+                $errors[] = 'numer '.$data['jersey_number'].' w drużynie '.$team->name.' ma już '.$taken->full_name;
+            }
+            if ($data['captain'] !== '' && self::flag($data['captain']) === null) {
+                $errors[] = 'kapitan: wpisz tak albo nie';
+            }
+            if ($data['email'] !== '' && ! filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+                $errors[] = 'błędny e-mail zawodnika';
+            }
+            foreach (ClubAccounts::parseContacts($data['guardians']) as $contact) {
+                if (! filter_var($contact['email'], FILTER_VALIDATE_EMAIL)) {
+                    $errors[] = 'błędny e-mail rodzica „'.$contact['email'].'”';
+                }
             }
             if ($data['birth_date'] !== '' && self::date($data['birth_date']) === null) {
                 $errors[] = 'data urodzenia w formacie 2010-05-14 albo 14.05.2010';
@@ -203,7 +243,7 @@ class DataImport
         $exists = match ($type) {
             'teams' => self::team($data['name']) !== null,
             'staff' => self::staffMember($data) !== null,
-            'players' => ($team = self::team($data['team'])) && self::player($team, $data) !== null,
+            'players' => self::player($data) !== null,
         };
 
         return $exists ? 'aktualizacja' : 'nowy';
@@ -276,27 +316,42 @@ class DataImport
     private static function importPlayer(array $data): void
     {
         $team = self::team($data['team']);
-        $values = [
-            'first_name' => $data['first_name'],
-            'last_name' => $data['last_name'],
-            'team_id' => $team->id,
-            'jersey_number' => (int) $data['jersey_number'],
+        // Puste pola nie kasują tego, co już jest w bazie: uzupełnisz je później w panelu.
+        $values = ['first_name' => $data['first_name'], 'last_name' => $data['last_name']] + array_filter([
+            'team_id' => $team?->id,
+            'jersey_number' => $data['jersey_number'] !== '' ? (int) $data['jersey_number'] : null,
             'position' => self::position($data['position']),
-        ] + array_filter([
             'birth_date' => self::date($data['birth_date']),
             'height' => $data['height'] !== '' ? (int) $data['height'] : null,
             'weight' => $data['weight'] !== '' ? (int) $data['weight'] : null,
             'spike_reach' => $data['spike_reach'] !== '' ? (int) $data['spike_reach'] : null,
             'block_reach' => $data['block_reach'] !== '' ? (int) $data['block_reach'] : null,
+            'bio' => $data['bio'] !== '' ? '<p>'.e($data['bio']).'</p>' : null,
+            'interests' => $data['interests'] ?: null,
         ], fn ($value) => $value !== null);
 
-        if ($player = self::player($team, $data)) {
-            $player->update($values);
+        $player = self::player($data);
+        $previousTeamId = $player?->team_id;
 
-            return;
+        if ($player) {
+            $player->update($values);
+        } else {
+            $player = Player::create($values + ['is_active' => true]);
         }
 
-        Player::create($values + ['is_active' => true]);
+        if ($previousTeamId && $previousTeamId !== $player->team_id && ($seasonId = Season::current()->value('id'))) {
+            $player->teams()->wherePivot('season_id', $seasonId)->detach($previousTeamId);
+        }
+
+        $player->syncHomeRoster($data['captain'] !== '' ? self::flag($data['captain']) : null);
+
+        if ($data['email'] !== '') {
+            ClubAccounts::connectPlayer($player, $data['email']);
+        }
+
+        foreach (ClubAccounts::parseContacts($data['guardians']) as $contact) {
+            ClubAccounts::connectGuardian($player, $contact['email'], $contact['name']);
+        }
     }
 
     private static function team(string $name): ?Team
@@ -309,10 +364,24 @@ class DataImport
     /**
      * @param  array<string, string>  $data
      */
-    private static function player(Team $team, array $data): ?Player
+    private static function player(array $data): ?Player
     {
-        return Player::where('team_id', $team->id)->get()
-            ->first(fn (Player $player) => self::normalize($player->first_name.' '.$player->last_name) === self::normalize($data['first_name'].' '.$data['last_name']));
+        $name = self::normalize($data['first_name'].' '.$data['last_name']);
+        $matches = Player::all()
+            ->filter(fn (Player $player) => self::normalize($player->first_name.' '.$player->last_name) === $name);
+        $team = self::team($data['team']);
+
+        // Ta sama osoba w podanej drużynie, a bez drużyny (albo przy przenosinach) - jedyna osoba o tym imieniu i nazwisku.
+        return ($team ? $matches->firstWhere('team_id', $team->id) : null) ?? ($matches->count() === 1 ? $matches->first() : null);
+    }
+
+    private static function flag(string $value): ?bool
+    {
+        return match (self::normalize($value)) {
+            'tak', 't', '1', 'x', 'kapitan', 'k', 'c' => true,
+            'nie', 'n', '0', '-' => false,
+            default => null,
+        };
     }
 
     /**

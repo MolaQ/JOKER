@@ -46,8 +46,8 @@
                                 @foreach($request->proposed_data ?? [] as $field => $value)
                                     <tr class="align-top">
                                         <td class="py-1 pr-3 text-gray-600">{{ $labels[$field] ?? $field }}</td>
-                                        <td class="py-1 pr-3 text-gray-400 line-through">{{ $field === 'bio' ? \Illuminate\Support\Str::limit(\App\Models\PlayerChangeRequest::bioAsText($request->player->bio), 120) : ($request->player->{$field} ?? '—') }}</td>
-                                        <td class="py-1 font-semibold whitespace-pre-line text-gray-900">{{ $value ?? '— (usuń)' }}</td>
+                                        <td class="py-1 pr-3 text-gray-400 line-through whitespace-pre-line">{{ match ($field) { 'bio' => \Illuminate\Support\Str::limit(\App\Models\PlayerChangeRequest::bioAsText($request->player->bio), 120), 'email' => $request->player->user?->email ?? '—', default => \App\Models\PlayerChangeRequest::displayValue($field, $request->player->{$field}) } }}</td>
+                                        <td class="py-1 font-semibold whitespace-pre-line text-gray-900">{{ $value === null ? '— (usuń)' : \App\Models\PlayerChangeRequest::displayValue($field, $value) }}{{ $field === 'email' ? ' (założymy konto)' : '' }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

@@ -39,6 +39,13 @@ class DataImporter extends Component
 
     public function preview(): void
     {
+        $detected = DataImport::detectType($this->text);
+
+        if ($detected && $detected !== $this->type) {
+            $this->type = $detected;
+            $this->toast('Rozpoznano plik: '.DataImport::TYPES[$detected].'.');
+        }
+
         $this->rows = DataImport::parse($this->type, $this->text);
 
         if ($this->rows === []) {
@@ -48,6 +55,7 @@ class DataImporter extends Component
 
     public function import(): void
     {
+        $this->type = DataImport::detectType($this->text) ?? $this->type;
         $this->rows = DataImport::parse($this->type, $this->text);
         $count = DataImport::import($this->type, $this->rows);
         $skipped = count($this->rows) - $count;

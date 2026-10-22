@@ -110,6 +110,29 @@
                                 </div>
                                 @break
 
+                            @case('platforms')
+                                <div class="space-y-2">
+                                    @foreach($values[$key] as $index => $platform)
+                                        <div class="flex flex-wrap items-center gap-2 rounded-lg bg-gray-50 p-2 sm:flex-nowrap" wire:key="{{ $key }}-{{ $index }}">
+                                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-gray-700 ring-1 ring-gray-200"><x-social-icon :network="$platform['icon'] ?? 'website'" class="h-4 w-4" /></span>
+                                            <input type="text" wire:model.blur="values.{{ $key }}.{{ $index }}.label" placeholder="Nazwa, np. Instagram" class="min-w-0 flex-1" aria-label="Nazwa serwisu {{ $index + 1 }}">
+                                            <select wire:model.live="values.{{ $key }}.{{ $index }}.icon" class="min-w-0 flex-1 sm:max-w-[14rem]" aria-label="Ikona serwisu {{ $index + 1 }}">
+                                                @foreach(\App\Support\SiteSettings::SOCIAL_ICONS as $iconKey => $iconLabel)
+                                                    <option value="{{ $iconKey }}">Ikona: {{ $iconLabel }}</option>
+                                                @endforeach
+                                            </select>
+                                            <div class="flex shrink-0 gap-1">
+                                                <button type="button" wire:click="moveLink('{{ $key }}', {{ $index }}, -1)" @disabled($loop->first) class="rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm disabled:opacity-30" title="Wyżej">↑</button>
+                                                <button type="button" wire:click="moveLink('{{ $key }}', {{ $index }}, 1)" @disabled($loop->last) class="rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm disabled:opacity-30" title="Niżej">↓</button>
+                                                <button type="button" wire:click="removeLink('{{ $key }}', {{ $index }})" class="rounded-md border border-red-200 bg-white px-2.5 py-2 text-sm text-red-600 hover:bg-red-50" title="Usuń">✕</button>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                    <button type="button" wire:click="addPlatform('{{ $key }}')" class="rounded-md border border-dashed border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">+ Dodaj serwis</button>
+                                    <p class="text-xs text-gray-500">Usunięcie serwisu ukrywa jego linki w profilach; po ponownym dodaniu z tą samą nazwą wrócą.</p>
+                                </div>
+                                @break
+
                             @default
                                 <input type="text" id="field-{{ $key }}" wire:model="values.{{ $key }}" class="block w-full" @if($field['type'] === 'url') placeholder="/kontakt albo https://..." @endif>
                         @endswitch

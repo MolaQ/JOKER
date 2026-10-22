@@ -85,15 +85,31 @@
             <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="closeModal"></div>
 
             <div class="flex min-h-full items-center justify-center p-4">
-                <div class="relative bg-white rounded-2xl shadow-2xl ring-1 ring-zinc-900/5 w-full max-w-lg" @click.stop>
+                <div class="relative bg-white rounded-2xl shadow-2xl ring-1 ring-zinc-900/5 w-full max-w-2xl" @click.stop>
                     <form wire:submit.prevent="save">
                         <div class="px-6 py-4 border-b border-gray-200">
                             <h3 class="text-lg font-semibold text-gray-900">
                                 {{ $editingId ? 'Edytuj użytkownika' : 'Dodaj użytkownika' }}
                             </h3>
+                            @if($editingUser)
+                                <nav class="-mb-4 mt-3 flex gap-1" aria-label="Zakładki">
+                                    @foreach(['dane' => ['Dane konta', 'user'], 'uprawnienia' => ['Uprawnienia', 'key']] as $tabKey => [$tabLabel, $tabIcon])
+                                        <button type="button" wire:click="$set('modalTab', '{{ $tabKey }}')" @class(['inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-semibold', 'border-sky-600 text-sky-700' => $modalTab === $tabKey, 'border-transparent text-gray-500 hover:text-gray-800' => $modalTab !== $tabKey])>
+                                            <x-admin-icon :name="$tabIcon" class="h-4 w-4" /> {{ $tabLabel }}
+                                        </button>
+                                    @endforeach
+                                </nav>
+                            @endif
                         </div>
 
-                        <div class="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                        @if($editingUser && $modalTab === 'uprawnienia')
+                            <div class="px-6 py-4 max-h-[70vh] overflow-y-auto">
+                                <p class="mb-3 text-sm text-gray-600">Role: <span class="font-semibold text-gray-900">{{ $editingUser->roles()->map->label()->join(', ') ?: 'bez roli (jak kibic)' }}</span>. Uprawnienia wynikają z ról; tutaj możesz odebrać albo nadać pojedyncze uprawnienie tylko temu kontu. Zmiana zapisuje się od razu.</p>
+                                @include('livewire.admin.partials.permission-overrides', ['user' => $editingUser, 'editable' => $this->mayEditUser($editingUser)])
+                            </div>
+                        @endif
+
+                        <div @class(['px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto', 'hidden' => $editingUser && $modalTab === 'uprawnienia'])>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Imię i nazwisko</label>
                                 <input type="text" wire:model="name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">

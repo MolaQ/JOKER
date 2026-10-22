@@ -6,6 +6,8 @@
         @endforeach
     </div>
 
+    <p class="text-xs text-gray-500">Rodzaj danych rozpoznajemy po nagłówkach pliku, więc po wgraniu zakładka przełączy się sama.</p>
+
     <div class="rounded-lg bg-gray-50 p-4 text-sm text-gray-700">
         <p class="font-semibold text-gray-900">Kolumny pliku (pierwszy wiersz to nagłówki, kolejność dowolna)</p>
         <ul class="mt-2 flex flex-wrap gap-2">
@@ -16,7 +18,8 @@
         <p class="mt-2 text-xs text-gray-500">
             @if($type === 'teams') Kategoria: seniorzy, juniorzy, juniorzy młodsi albo młodzicy.
             @elseif($type === 'staff') Rola: trener albo sztab. Funkcja „trener główny” ustawia trenera drużyny, inna (np. „asystent trenera”) dopisuje do sztabu. Kilka drużyn rozdziel przecinkiem. Bez e-maila osoba dostaje adres zastępczy.
-            @else Pozycja: rozgrywający, przyjmujący, atakujący, środkowy albo libero. Data urodzenia: 2010-05-14 albo 14.05.2010.
+            @else Wystarczą imię i nazwisko, resztę uzupełnisz później. Pozycja: rozgrywający, przyjmujący, atakujący, środkowy albo libero. Kapitan: tak albo nie. Data urodzenia: 2010-05-14 albo 14.05.2010.
+                E-mail zawodnika zakłada mu konto (dostanie link do ustawienia hasła). Rodzice: kilka adresów po przecinku, np. „Anna Nowak &lt;anna@example.com&gt;, piotr@example.com”; brakujące konta rodziców też zostaną założone.
             @endif
             Gwiazdka oznacza pole wymagane.
         </p>

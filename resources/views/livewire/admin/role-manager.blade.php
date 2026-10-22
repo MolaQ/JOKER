@@ -62,26 +62,9 @@
         @if($user)
             <div class="mt-5">
                 <p class="font-semibold text-gray-900">{{ $user->name }} <span class="font-normal text-gray-500">({{ $user->roles()->map->label()->join(', ') ?: 'bez roli' }})</span></p>
-                @if(! $this->mayEditUser($user))
-                    <p class="mt-2 rounded-md bg-amber-50 p-3 text-sm text-amber-800">{{ $user->isAdmin() ? 'Administrator ma zawsze wszystkie uprawnienia.' : 'Własnych uprawnień nie można sobie zmieniać.' }}</p>
-                @else
-                    <div class="mt-3 divide-y divide-gray-100 rounded-md border border-gray-200">
-                        @foreach($permissionGroups->flatten() as $permission)
-                            @php
-                                $fromRole = in_array($permission->value, $rolePermissions, true);
-                                $mode = array_key_exists($permission->value, $overrides) ? ($overrides[$permission->value] ? 'grant' : 'deny') : 'role';
-                            @endphp
-                            <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm" wire:key="override-{{ $user->id }}-{{ $permission->value }}">
-                                <span class="text-gray-900">{{ $permission->label() }}</span>
-                                <select wire:change="setOverride('{{ $permission->value }}', $event.target.value)" class="rounded-md border-gray-300 py-1 text-sm">
-                                    <option value="role" @selected($mode === 'role')>Jak w roli ({{ $fromRole ? 'tak' : 'nie' }})</option>
-                                    <option value="grant" @selected($mode === 'grant')>Nadaj</option>
-                                    <option value="deny" @selected($mode === 'deny')>Odbierz</option>
-                                </select>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
+                <div class="mt-3">
+                    @include('livewire.admin.partials.permission-overrides', ['editable' => $this->mayEditUser($user)])
+                </div>
             </div>
         @endif
     </section>

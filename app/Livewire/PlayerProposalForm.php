@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Player;
 use App\Models\PlayerChangeRequest;
+use App\Support\SiteSettings;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -45,6 +46,10 @@ class PlayerProposalForm extends Component
             'data.spike_reach' => 'nullable|integer|min:150|max:400',
             'data.block_reach' => 'nullable|integer|min:150|max:400',
             'data.bio' => 'nullable|string|max:3000',
+            'data.interests' => 'nullable|string|max:500',
+            'data.email' => 'nullable|email|max:255',
+            'data.social_links' => 'array',
+            'data.social_links.*' => ['nullable', 'string', 'max:500', 'regex:#^https?://#i'],
             'photo' => 'nullable|image|max:4096|dimensions:ratio=4/5',
         ];
     }
@@ -57,7 +62,16 @@ class PlayerProposalForm extends Component
         return collect(PlayerChangeRequest::EDITABLE_FIELDS)
             ->mapWithKeys(fn (string $label, string $field) => ['data.'.$field => mb_strtolower(__($label))])
             ->put('photo', __('zdjęcie'))
+            ->put('data.social_links.*', __('adres profilu'))
             ->all();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function messages(): array
+    {
+        return ['data.social_links.*.regex' => __('Adres profilu zacznij od https://')];
     }
 
     public function toggle(): void
@@ -114,21 +128,37 @@ class PlayerProposalForm extends Component
 
     private function currentValue(string $field): mixed
     {
-        return $field === 'bio' ? PlayerChangeRequest::bioAsText($this->player->bio) : $this->player->{$field};
+        return match ($field) {
+            'bio' => PlayerChangeRequest::bioAsText($this->player->bio),
+            // E-mail proponuje się tylko dla zawodnika bez konta; konto zakłada klub po zatwierdzeniu.
+            'email' => '',
+            'social_links' => (array) ($this->player->social_links ?? []),
+            default => $this->player->{$field},
+        };
     }
 
-    private function normalize(string $field, mixed $value): int|string|null
+    /**
+     * @return int|string|array<string, string>|null
+     */
+    private function normalize(string $field, mixed $value): int|string|array|null
     {
+        if ($field === 'social_links') {
+            $links = collect((array) $value)->map(fn ($url) => trim((string) $url))->filter()->sortKeys()->all();
+
+            return $links ?: null;
+        }
+
         if ($value === null || $value === '') {
             return null;
         }
 
-        return $field === 'bio' ? trim((string) $value) : (int) $value;
+        return in_array($field, PlayerChangeRequest::NUMERIC_FIELDS, true) ? (int) $value : trim((string) $value);
     }
 
     public function render(): View
     {
         return view('livewire.player-proposal-form', [
+            'socialPlatforms' => app(SiteSettings::class)->playerSocialPlatforms(),
             'canPropose' => $this->player->isEditableProposalBy(Auth::user()),
             'pending' => Auth::check()
                 ? $this->player->changeRequests()->pending()->where('submitted_by', Auth::id())->latest('id')->get()

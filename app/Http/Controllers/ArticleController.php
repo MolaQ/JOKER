@@ -50,6 +50,10 @@ class ArticleController extends Controller
             return redirect()->back()->with('error', __('Komentować możesz po aktywacji konta.'));
         }
 
+        if (! Auth::user()->canComment()) {
+            return redirect()->back()->with('error', __('Klub wyłączył Ci możliwość komentowania.'));
+        }
+
         if (! $article->allow_comments) {
             return redirect()->back()->with('error', __('Komentarze są wyłączone dla tego artykułu.'));
         }

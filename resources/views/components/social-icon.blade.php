@@ -16,4 +16,21 @@
     @case('x')
         <svg {{ $attributes }} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.9 1.2h3.7l-8 9.2 9.4 12.4h-7.4l-5.8-7.6-6.6 7.6H.5l8.6-9.8L0 1.2h7.6l5.2 6.9 6.1-6.9zm-1.3 19.4h2L6.5 3.2H4.3l13.3 17.4z"/></svg>
         @break
+    @case('threads')
+        <svg {{ $attributes }} fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.6 11.2c-.4-2.9-2.1-4.4-4.6-4.4-2.8 0-4.5 2.1-4.5 5.2s1.7 5.2 4.6 5.2c2.3 0 3.9-1.3 3.9-3.2 0-2.3-2.4-3.1-4.7-2.6-1.5.3-2.3 1.2-2.2 2.2.1 1.2 1.3 1.9 2.7 1.8 2.8-.2 3.8-2.8 3.3-6.6M19.6 7.4C18.1 4.5 15.5 3 12 3 6.8 3 4 6.6 4 12s2.8 9 8 9c3.5 0 6-1.5 7.3-4.3"/></svg>
+        @break
+    @case('linkedin')
+        <svg {{ $attributes }} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13ZM7.12 20.45H3.56V9h3.56v11.45Z"/></svg>
+        @break
+    @case('twitch')
+        <svg {{ $attributes }} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M11.64 5.93h1.43v4.28h-1.43m3.93-4.28H17v4.28h-1.43M7 2 3.43 5.57v12.86h4.28V22l3.58-3.57h2.85L20.57 12V2m-1.43 9.29-2.85 2.85h-2.86l-2.5 2.5v-2.5H7.71V3.43h11.43Z"/></svg>
+        @break
+    @case('strava')
+        <svg {{ $attributes }} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="m15.39 17.94-2.09-4.12h-3.07L15.39 24l5.15-10.18h-3.07M10.46 0 3.46 13.82h4.17l2.83-5.59 2.84 5.59h4.17L10.46 0Z"/></svg>
+        @break
+    @case('spotify')
+        <svg {{ $attributes }} fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M7 9.5c3.5-1 7.5-.6 10.5 1M7.5 12.8c2.9-.8 6.1-.4 8.5 1M8 15.9c2.3-.6 4.6-.3 6.5.8"/></svg>
+        @break
+    @default
+        <svg {{ $attributes }} fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c2.5-2.5 3.75-5.5 3.75-9S14.5 5.5 12 3m0 18c-2.5-2.5-3.75-5.5-3.75-9S9.5 5.5 12 3M3.5 9h17M3.5 15h17"/></svg>
 @endswitch

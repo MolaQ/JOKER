@@ -28,6 +28,7 @@ enum Permission: string
     case Site = 'site.manage';
     case Statistics = 'statistics.view';
     case Import = 'import.run';
+    case WriteComments = 'comments.write';
 
     public function label(): string
     {
@@ -52,6 +53,7 @@ enum Permission: string
             self::Site => 'Wygląd, ustawienia i podstrony',
             self::Statistics => 'Statystyki odwiedzin',
             self::Import => 'Import z plików',
+            self::WriteComments => 'Pisanie komentarzy',
         };
     }
 
@@ -62,8 +64,17 @@ enum Permission: string
             self::ActivateAccounts => 'Trener aktywuje tylko konta związane ze swoimi drużynami.',
             self::Trainings => 'Trener i członek sztabu układają plan tylko swoich drużyn.',
             self::Roles => 'Kto nie jest administratorem, nie nada roli administratora.',
+            self::WriteComments => 'Komentarze pod aktualnościami i meczami. Odbierz je, gdy ktoś łamie zasady.',
             default => null,
         };
+    }
+
+    /**
+     * Uprawnienie do korzystania ze strony publicznej, a nie do panelu klubu.
+     */
+    public function isPublic(): bool
+    {
+        return $this === self::WriteComments;
     }
 
     public function group(): string
@@ -72,6 +83,7 @@ enum Permission: string
             self::Articles, self::Media, self::Homepage, self::Comments, self::ContentProposals => 'Treści',
             self::Teams, self::AllTeams, self::Trainings, self::Games, self::Tournaments, self::Competitions, self::Proposals => 'Drużyny i rozgrywki',
             self::Documents, self::Sponsors => 'Klub',
+            self::WriteComments => 'Korzystanie ze strony',
             default => 'Konta i strona',
         };
     }

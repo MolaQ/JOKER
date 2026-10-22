@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\EditsPermissionOverrides;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\AuditLog;
-use App\Models\PermissionOverride;
 use App\Models\RolePermission;
 use App\Models\User;
 use App\Permission;
@@ -17,7 +17,7 @@ use Livewire\Component;
  */
 class RoleManager extends Component
 {
-    use ShowsToasts;
+    use EditsPermissionOverrides, ShowsToasts;
 
     public string $userSearch = '';
 
@@ -51,50 +51,23 @@ class RoleManager extends Component
         $this->userSearch = '';
     }
 
-    public function mayEditUser(User $user): bool
-    {
-        return ! $user->isAdmin() && $user->id !== Auth::id();
-    }
-
-    /**
-     * Ustawia wyjątek dla konta: "grant" nadaje, "deny" odbiera, "role" wraca do uprawnień z ról.
-     */
     public function setOverride(string $permission, string $mode): void
     {
-        $user = User::findOrFail($this->userId);
-        $permission = Permission::from($permission);
-        abort_unless($this->mayEditUser($user), 403);
-
-        if ($mode === 'role') {
-            PermissionOverride::where('user_id', $user->id)->where('permission', $permission)->delete();
-        } else {
-            PermissionOverride::updateOrCreate(['user_id' => $user->id, 'permission' => $permission], ['allowed' => $mode === 'grant']);
-        }
-
-        $label = ['grant' => 'nadano', 'deny' => 'odebrano', 'role' => 'przywrócono jak w roli'][$mode] ?? $mode;
-        AuditLog::record('permissions.user', "Kontu {$user->name} {$label}: ".$permission->label(), $user, ['uprawnienie' => $permission->value, 'tryb' => $mode]);
-        $this->toast('Zapisano wyjątek dla '.$user->name.'.');
+        $this->applyOverride(User::findOrFail($this->userId), $permission, $mode);
     }
 
     public function render()
     {
         $map = RolePermission::map();
-        $user = $this->userId ? User::with(['roleAssignments', 'permissionOverrides'])->find($this->userId) : null;
+        $user = $this->userId ? User::find($this->userId) : null;
 
-        $rolePermissions = $user
-            ? $user->roles()->flatMap(fn (UserRole $role) => $map[$role->value] ?? [])->unique()->all()
-            : [];
-
-        return view('livewire.admin.role-manager', [
+        return view('livewire.admin.role-manager', $this->overrideViewData($user) + [
             'roles' => UserRole::cases(),
-            'permissionGroups' => collect(Permission::cases())->groupBy(fn (Permission $permission) => $permission->group()),
             'map' => $map,
             'matches' => strlen(trim($this->userSearch)) >= 2
                 ? User::where(fn ($query) => $query->where('name', 'like', '%'.trim($this->userSearch).'%')->orWhere('email', 'like', '%'.trim($this->userSearch).'%'))->with('roleAssignments')->orderBy('name')->limit(8)->get()
                 : collect(),
             'user' => $user,
-            'rolePermissions' => $rolePermissions,
-            'overrides' => $user ? $user->permissionOverrides->mapWithKeys(fn (PermissionOverride $override) => [$override->permission->value => $override->allowed])->all() : [],
             'log' => AuditLog::with('actor')->latest('id')->limit(15)->get(),
         ]);
     }

@@ -28,9 +28,21 @@
     <div class="container-site grid items-end gap-10 pt-16 pb-14 lg:grid-cols-[auto_1fr] lg:pt-24">
         <x-avatar :photo="$player->photo_path" :name="$player->full_name" :label="$player->jersey_number" class="aspect-[4/5] w-48 rounded-3xl text-7xl ring-4 ring-sky-club/40 lg:w-64" />
         <div>
-            <a href="{{ route('teams.show', $player->team) }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ $player->team?->name }}</a>
+            @if($player->team)
+                <a href="{{ route('teams.show', $player->team) }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ $player->team->name }}</a>
+            @endif
             <p class="eyebrow mt-5">{{ $player->positionsLabel() }} @if($player->jersey_number) · #{{ $player->jersey_number }} @endif</p>
             <h1 class="heading-xl mt-3">{{ $player->first_name }}<br>{{ $player->last_name }}</h1>
+            @if($player->isCaptain())
+                <p class="mt-4 inline-flex items-center gap-2 rounded-full bg-sky-club px-3 py-1 text-sm font-bold text-white"><span class="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs text-sky-club-dark">C</span> {{ __('Kapitan drużyny') }}</p>
+            @endif
+            @if($socialProfiles = $player->socialProfiles())
+                <div class="mt-5 flex flex-wrap gap-2">
+                    @foreach($socialProfiles as $profile)
+                        <a href="{{ $profile['url'] }}" target="_blank" rel="noopener nofollow" class="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 transition hover:bg-sky-club" aria-label="{{ $profile['label'] }}" title="{{ $profile['label'] }}"><x-social-icon :network="$profile['icon']" class="h-4 w-4" /></a>
+                    @endforeach
+                </div>
+            @endif
 
             @if($stats)
                 <dl class="mt-8 grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/10 {{ [1 => 'sm:grid-cols-1', 2 => 'sm:grid-cols-2', 3 => 'sm:grid-cols-3', 4 => 'sm:grid-cols-4', 5 => 'sm:grid-cols-5'][count($stats)] }}">
@@ -168,10 +180,20 @@
             </div>
         @endif
 
-        @if($player->bio)
+        @if($player->bio || $player->interests)
             <div class="card p-8">
                 <h2 class="heading-md">{{ __('O zawodniku') }}</h2>
-                <div class="prose-club mt-5">{!! strip_tags($player->bio, '<p><br><strong><em><b><i><u><s><mark><blockquote><hr><ul><ol><li>') !!}</div>
+                @if($player->bio)
+                    <div class="prose-club mt-5">{!! strip_tags($player->bio, '<p><br><strong><em><b><i><u><s><mark><blockquote><hr><ul><ol><li>') !!}</div>
+                @endif
+                @if($player->interests)
+                    <h3 class="mt-6 text-xs font-semibold tracking-widest text-zinc-500 uppercase">{{ __('Zainteresowania') }}</h3>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        @foreach(array_filter(array_map('trim', explode(',', $player->interests))) as $interest)
+                            <span class="chip">{{ $interest }}</span>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         @endif
 
