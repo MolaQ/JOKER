@@ -494,3 +494,9 @@
     scrollbar-width: thin;
     scrollbar-color: rgb(255 255 255 / 0.12) transparent;
 }
+
+/* Kadr logo w kształcie koła (x-photo-cropper, kształt „Koło”) */
+.cropper-round .cropper-view-box,
+.cropper-round .cropper-face {
+    border-radius: 50%;
+}

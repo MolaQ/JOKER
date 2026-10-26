@@ -17,6 +17,8 @@ export function registerPhotoCropper() {
             original: null,
             tolerance: 40,
             backgroundRemoved: false,
+            // Kształt kadru logo przy dowolnych proporcjach: 'free', 'square' (1:1) albo 'circle' (koło, reszta przezroczysta).
+            shape: 'free',
 
             async choose(event) {
                 const file = event.target.files[0];
@@ -44,7 +46,7 @@ export function registerPhotoCropper() {
                 await this.$nextTick();
 
                 this.cropper = new Cropper(this.$refs.image, {
-                    aspectRatio: this.aspect > 0 ? this.aspect : NaN,
+                    aspectRatio: this.aspect > 0 ? this.aspect : (this.shape === 'free' ? NaN : 1),
                     viewMode: 1,
                     autoCropArea: 1,
                     dragMode: this.aspect > 0 ? 'move' : 'crop',
@@ -157,6 +159,11 @@ export function registerPhotoCropper() {
                 this.backgroundRemoved = false;
             },
 
+            setShape(shape) {
+                this.shape = shape;
+                this.cropper?.setAspectRatio(shape === 'free' ? NaN : 1);
+            },
+
             rotate(degrees) {
                 this.cropper?.rotate(degrees);
             },
@@ -175,9 +182,24 @@ export function registerPhotoCropper() {
                 const png = this.format === 'png';
                 const size = this.aspect > 0
                     ? { width: this.width, height: Math.round(this.width / this.aspect) }
-                    : { maxWidth: this.width, maxHeight: this.width };
+                    : (this.shape === 'free' ? { maxWidth: this.width, maxHeight: this.width } : { width: this.width, height: this.width });
 
-                this.cropper.getCroppedCanvas({ ...size, imageSmoothingQuality: 'high', ...(png ? {} : { fillColor: '#fff' }) }).toBlob((blob) => {
+                let canvas = this.cropper.getCroppedCanvas({ ...size, imageSmoothingQuality: 'high', ...(png ? {} : { fillColor: '#fff' }) });
+
+                if (this.shape === 'circle') {
+                    const round = document.createElement('canvas');
+                    round.width = canvas.width;
+                    round.height = canvas.height;
+                    const context = round.getContext('2d');
+                    context.beginPath();
+                    context.arc(round.width / 2, round.height / 2, Math.min(round.width, round.height) / 2, 0, Math.PI * 2);
+                    context.closePath();
+                    context.clip();
+                    context.drawImage(canvas, 0, 0);
+                    canvas = round;
+                }
+
+                canvas.toBlob((blob) => {
                     const file = new File([blob], png ? 'obrazek.png' : 'zdjecie.jpg', { type: png ? 'image/png' : 'image/jpeg' });
 
                     this.$wire.upload(property, file, () => {
@@ -200,6 +222,7 @@ export function registerPhotoCropper() {
                 this.original = null;
                 this.backgroundRemoved = false;
                 this.ready = false;
+                this.shape = 'free';
 
                 if (this.$refs.input) {
                     this.$refs.input.value = '';

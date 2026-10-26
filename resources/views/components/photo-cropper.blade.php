@@ -17,7 +17,9 @@
     [$ratioW, $ratioH] = $aspect === 'free' ? [0, 0] : array_map('floatval', explode('/', $aspect));
     $ratio = $ratioH > 0 ? $ratioW / $ratioH : 0;
     $hint ??= $aspect === 'free'
-        ? __('Po wybraniu pliku zaznacz fragment, który ma zostać (np. obetnij puste brzegi logo).')
+        ? ($format === 'png'
+            ? __('Po wybraniu pliku zaznacz fragment, który ma zostać. Logo możesz wyciąć jako kwadrat 1:1 albo koło.')
+            : __('Po wybraniu pliku zaznacz fragment, który ma zostać (np. obetnij puste brzegi logo).'))
         : __('Kadr :ratio. Po wybraniu zdjęcia przesuń i powiększ kadr, podgląd pokazuje efekt.', ['ratio' => str_replace('/', ':', $aspect)]);
     $boxStyle = 'aspect-ratio: '.($ratio > 0 ? $ratioW.' / '.$ratioH : '1 / 1');
     $boxWidth = $ratio >= 1.2 ? 'w-44' : 'w-28';
@@ -54,7 +56,7 @@
     </div>
 
     <div x-show="source" x-cloak class="space-y-2">
-        <div class="max-h-[60vh] overflow-hidden rounded-xl {{ $format === 'png' ? 'bg-[repeating-conic-gradient(#e4e4e7_0_25%,#fff_0_50%)] bg-[length:16px_16px]' : 'bg-zinc-900' }}">
+        <div :class="shape === 'circle' && 'cropper-round'" class="max-h-[60vh] overflow-hidden rounded-xl {{ $format === 'png' ? 'bg-[repeating-conic-gradient(#e4e4e7_0_25%,#fff_0_50%)] bg-[length:16px_16px]' : 'bg-zinc-900' }}">
             <img x-ref="image" :src="source" alt="{{ __('Kadrowanie') }}" class="block max-w-full">
         </div>
         <div class="flex flex-wrap gap-2 text-sm">
@@ -62,6 +64,16 @@
             <button type="button" @click="zoom(-0.1)" class="rounded-md bg-white px-3 py-1.5 ring-1 ring-zinc-300 hover:bg-zinc-50" aria-label="{{ __('Pomniejsz') }}">－</button>
             <button type="button" @click="rotate(90)" class="rounded-md bg-white px-3 py-1.5 ring-1 ring-zinc-300 hover:bg-zinc-50">{{ __('Obróć') }} ↻</button>
             <button type="button" @click="destroy()" class="rounded-md bg-white px-3 py-1.5 ring-1 ring-zinc-300 hover:bg-zinc-50">{{ __('Anuluj') }}</button>
+            @if($format === 'png' && $aspect === 'free')
+                <span class="inline-flex overflow-hidden rounded-md ring-1 ring-zinc-300" role="group" aria-label="{{ __('Kształt kadru') }}">
+                    @foreach(['free' => __('Dowolny'), 'square' => __('Kwadrat 1:1'), 'circle' => __('Koło')] as $shapeKey => $shapeLabel)
+                        <button type="button" @click="setShape(@js($shapeKey))" :aria-pressed="shape === @js($shapeKey)" :class="shape === @js($shapeKey) ? 'bg-blue-600 text-white' : 'bg-white text-zinc-700 hover:bg-zinc-50'" class="inline-flex items-center gap-1.5 px-3 py-1.5 not-first:border-l not-first:border-zinc-300">
+                            @if($shapeKey === 'square')<span class="h-3 w-3 rounded-[2px] border-2 border-current" aria-hidden="true"></span>@elseif($shapeKey === 'circle')<span class="h-3 w-3 rounded-full border-2 border-current" aria-hidden="true"></span>@endif
+                            {{ $shapeLabel }}
+                        </button>
+                    @endforeach
+                </span>
+            @endif
             @if($format === 'png')
                 <span class="flex flex-wrap items-center gap-2 rounded-md bg-zinc-50 px-2 py-1 ring-1 ring-zinc-200">
                     <button type="button" @click="removeBackground()" :disabled="! ready" class="rounded-md bg-white px-3 py-1 font-semibold text-zinc-800 ring-1 ring-zinc-300 hover:bg-zinc-100 disabled:opacity-50" title="{{ __('Usuwa jednolite tło (np. białe) od brzegów obrazka; napisy w środku logo zostają.') }}">{{ __('Usuń tło') }}</button>
