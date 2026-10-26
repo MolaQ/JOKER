@@ -5,14 +5,21 @@ rem Wczesniej wlacz Apache i MySQL w panelu XAMPP.
 chcp 65001 >nul
 setlocal EnableDelayedExpansion
 
-set "STRONA=%~dp0.."
-
-cd /d "%STRONA%"
-if not exist "artisan" (
-    echo Uruchom ten plik z folderu narzedzia wewnatrz skopiowanej strony.
+rem Strona: folder nad narzedzia, w ktorym jest ten plik; gdy go tam nie ma (np. plik pobrany osobno) - pytamy.
+for %%I in ("%~dp0..") do set "STRONA=%%~fI"
+if not exist "!STRONA!\artisan" if exist "%CD%\artisan" set "STRONA=%CD%"
+if not exist "!STRONA!\artisan" (
+    echo Nie znalazlem strony obok tego pliku ^(szukalem w !STRONA!^).
+    set "STRONA="
+    set /p "STRONA=Wpisz folder skopiowanej strony, np. D:\JOKER: "
+)
+for %%I in ("!STRONA!") do set "STRONA=%%~fI"
+if not exist "!STRONA!\artisan" (
+    echo W folderze !STRONA! nie ma strony ^(brak pliku artisan^).
     pause
     exit /b 1
 )
+pushd "!STRONA!"
 
 for /f "usebackq eol=# tokens=1,* delims==" %%A in (".env") do (
     if "%%A"=="DB_CONNECTION" set "DB_RODZAJ=%%~B"

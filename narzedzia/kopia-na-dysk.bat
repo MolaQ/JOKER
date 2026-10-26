@@ -6,7 +6,20 @@ rem Uruchom dwuklikiem z folderu narzedzia strony. Domyslny dysk docelowy zmieni
 chcp 65001 >nul
 setlocal EnableDelayedExpansion
 
+rem Strona: folder nad narzedzia, w ktorym jest ten plik; gdy go tam nie ma (np. plik pobrany osobno) - pytamy.
 for %%I in ("%~dp0..") do set "ZRODLO=%%~fI"
+if not exist "!ZRODLO!\artisan" if exist "%CD%\artisan" set "ZRODLO=%CD%"
+if not exist "!ZRODLO!\artisan" (
+    echo Nie znalazlem strony obok tego pliku ^(szukalem w !ZRODLO!^).
+    set "ZRODLO="
+    set /p "ZRODLO=Wpisz folder strony do skopiowania, np. C:\xampp\www\molak\JOKER: "
+)
+for %%I in ("!ZRODLO!") do set "ZRODLO=%%~fI"
+if not exist "!ZRODLO!\artisan" (
+    echo W folderze !ZRODLO! nie ma strony ^(brak pliku artisan^).
+    pause
+    exit /b 1
+)
 set "CEL_DOMYSLNY=D:\JOKER"
 set "CEL="
 set /p "CEL=Dokad skopiowac strone? [Enter = %CEL_DOMYSLNY%]: "
@@ -20,11 +33,6 @@ if /i "%CEL%"=="%ZRODLO%" (
 rem Sciezke do mysqldump.exe skrypt znajdzie sam; mozesz ja tez wpisac tutaj:
 set "MYSQLDUMP_RECZNIE="
 
-if not exist "%ZRODLO%\artisan" (
-    echo Nie znaleziono strony w %ZRODLO%. Uruchom ten plik z folderu narzedzia strony.
-    pause
-    exit /b 1
-)
 
 echo [1/2] Kopiuje pliki z %ZRODLO% do %CEL% ...
 rem /E podfoldery, /XJ pomija dowiazania (public\storage), /R:1 /W:1 nie czeka na zablokowane pliki

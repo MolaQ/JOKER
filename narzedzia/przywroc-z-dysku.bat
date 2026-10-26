@@ -6,20 +6,28 @@ rem Wczesniej wlacz MySQL w panelu XAMPP. Plik .env tej strony zostaje bez zmian
 chcp 65001 >nul
 setlocal EnableDelayedExpansion
 
+rem Strona: folder nad narzedzia, w ktorym jest ten plik; gdy go tam nie ma (np. plik pobrany osobno) - pytamy.
 for %%I in ("%~dp0..") do set "STRONA=%%~fI"
-cd /d "%STRONA%"
-if not exist "artisan" (
-    echo Uruchom ten plik z folderu narzedzia wewnatrz strony.
+if not exist "!STRONA!\artisan" if exist "%CD%\artisan" set "STRONA=%CD%"
+if not exist "!STRONA!\artisan" (
+    echo Nie znalazlem strony obok tego pliku ^(szukalem w !STRONA!^).
+    set "STRONA="
+    set /p "STRONA=Wpisz folder strony, DO KTOREJ przywracasz, np. C:\xampp\www\molak\JOKER: "
+)
+for %%I in ("!STRONA!") do set "STRONA=%%~fI"
+if not exist "!STRONA!\artisan" (
+    echo W folderze !STRONA! nie ma strony ^(brak pliku artisan^).
     pause
     exit /b 1
 )
+pushd "!STRONA!"
 
 set "ZRODLO_DOMYSLNE=D:\JOKER"
 set "ZRODLO="
 set /p "ZRODLO=Skad przywrocic strone? [Enter = %ZRODLO_DOMYSLNE%]: "
 if not defined ZRODLO set "ZRODLO=%ZRODLO_DOMYSLNE%"
 for %%I in ("%ZRODLO%") do set "ZRODLO=%%~fI"
-if /i "%ZRODLO%"=="%STRONA%" (
+if /i "%ZRODLO%"=="!STRONA!" (
     echo To jest ta sama strona - podaj folder z kopia ^(np. pendrive^).
     pause
     exit /b 1
