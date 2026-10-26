@@ -78,7 +78,7 @@
         @forelse($months as $month)
             @php
                 $finished = $month['games']->filter(fn ($game) => $game->isFinished());
-                $wins = $finished->filter(fn ($game) => ($result = $game->ourSetsResult()) && $result[0] > $result[1])->count();
+                $wins = $finished->filter(fn ($game) => in_array($game->outcome(), ['win', 'derby'], true))->count();
                 $count = $month['games']->count();
             @endphp
             <article class="mt-14 first:mt-4" wire:key="month-{{ $month['key'] }}" aria-label="{{ $month['month']->translatedFormat('F Y') }}">
@@ -129,13 +129,15 @@
                                             {{-- Telefon i tablet: znaczniki (granat = u siebie, szary = wyjazd, V/X = wynik), dotknięcie przewija do meczu na liście --}}
                                             <div class="mt-1 flex flex-wrap gap-1 lg:hidden">
                                                 @foreach($day['games'] as $game)
-                                                    @php $result = $game->ourSetsResult(); $won = $game->isFinished() && $result ? $result[0] > $result[1] : null; @endphp
+                                                    @php $outcome = $game->outcome(); $won = $outcome === 'derby' ? null : ($outcome ? $outcome === 'win' : null); @endphp
                                                     <a href="#mecz-{{ $game->id }}" @class([
                                                         'inline-flex h-4 w-4 items-center justify-center rounded sm:h-5 sm:w-5',
                                                         'bg-(--cal-home-bg) ring-1 ring-(--cal-home-border)' => $game->is_home,
                                                         'bg-(--cal-away-bg) ring-1 ring-(--cal-away-border)' => ! $game->is_home,
                                                     ]) aria-label="{{ $game->is_home ? __('U siebie') : __('Wyjazd') }}: {{ $game->team?->name }} - {{ $game->opponentShortName() }}">
-                                                        @if($won === true)
+                                                        @if($outcome === 'derby')
+                                                            <x-derby-heart class="h-3 w-3 text-sky-club-light" />
+                                                        @elseif($won === true)
                                                             <svg class="h-3 w-3 text-emerald-400" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7"/></svg>
                                                         @elseif($won === false)
                                                             <svg class="h-3 w-3 text-red-500" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
@@ -164,7 +166,8 @@
                                                 @foreach($day['games'] as $game)
                                                     @php
                                                         $result = $game->ourSetsResult();
-                                                        $won = $game->isFinished() && $result ? $result[0] > $result[1] : null;
+                                                        $outcome = $game->outcome();
+                                                        $won = $outcome && $outcome !== 'derby' ? $outcome === 'win' : null;
                                                         $hasTime = $game->game_date->format('H:i') !== '00:00';
                                                         $article = $game->latestArticle();
                                                         $tag = 'a';
@@ -179,7 +182,9 @@
                                                             <span class="flex items-start justify-between gap-1">
                                                                 <x-team-label :label="$game->ourLabel()" class="min-w-0 font-semibold break-words" />
                                                                 <span class="flex shrink-0 items-center gap-0.5 font-bold tabular-nums">
-                                                                    @if($won === true)
+                                                                    @if($outcome === 'derby')
+                                                                        <x-derby-heart class="h-3.5 w-3.5 {{ $game->is_home ? 'text-sky-club-light' : 'text-sky-club' }}" />
+                                                                    @elseif($won === true)
                                                                         <svg class="h-3.5 w-3.5 {{ $game->is_home ? 'text-emerald-300' : 'text-emerald-600' }}" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-label="{{ __('Wygrana') }}"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7"/></svg>
                                                                     @elseif($won === false)
                                                                         <svg class="h-3.5 w-3.5 {{ $game->is_home ? 'text-red-300' : 'text-red-600' }}" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-label="{{ __('Porażka') }}"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
@@ -219,7 +224,8 @@
                 @foreach($month['games'] as $game)
                     @php
                         $result = $game->ourSetsResult();
-                        $won = $game->isFinished() && $result ? $result[0] > $result[1] : null;
+                        $outcome = $game->outcome();
+                        $won = $outcome && $outcome !== 'derby' ? $outcome === 'win' : null;
                         $ourLabel = $game->ourLabel();
                         $opponentName = $game->opponentShortName();
                         $article = $game->latestArticle();
@@ -264,7 +270,12 @@
                         </div>
 
                         <div class="col-span-2 flex items-center justify-between gap-3 sm:col-span-1 sm:flex-col sm:items-end">
-                            @if($won !== null)
+                            @if($outcome === 'derby')
+                                <span class="inline-flex items-center gap-1 rounded-full bg-sky-club/15 px-3 py-1 text-xs font-bold text-sky-club-dark">
+                                    <x-derby-heart class="h-3.5 w-3.5 text-sky-club" />
+                                    {{ __('Wygrała pilska siatkówka') }} {{ $result[0] }}:{{ $result[1] }}
+                                </span>
+                            @elseif($won !== null)
                                 <span @class(['inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold', 'bg-emerald-500/15 text-emerald-700' => $won, 'bg-red-500/10 text-red-600' => ! $won])>
                                     @if($won)
                                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7"/></svg>

@@ -7,7 +7,8 @@
     $away = $game->is_home ? $opponent : $ourName;
     $sets = $game->isFinished() ? [$game->home_score, $game->away_score] : null;
     $result = $game->ourSetsResult();
-    $won = $result ? $result[0] > $result[1] : null;
+    $outcome = $game->outcome();
+    $won = $outcome && $outcome !== 'derby' ? $outcome === 'win' : null;
 @endphp
 
 <article {{ $attributes->merge(['class' => ($dark ? 'bg-white/5 text-white ring-white/10' : 'bg-white text-zinc-900 ring-zinc-200/70').' relative flex flex-col rounded-3xl p-6 ring-1 transition duration-300 hover:-translate-y-1']) }}>
@@ -15,7 +16,9 @@
         <span class="font-semibold tracking-wider uppercase {{ $dark ? 'text-sky-club-light' : 'text-sky-club-dark' }}">
             {{ $game->isFinished() && $game->game_date?->format('H:i') === '00:00' ? $game->game_date->translatedFormat('D, d M') : $game->kickoffLabel() }}
         </span>
-        @if($won !== null)
+        @if($outcome === 'derby')
+            <span class="inline-flex items-center gap-1 rounded-full bg-sky-club/15 px-2.5 py-0.5 font-bold {{ $dark ? 'text-sky-club-light' : 'text-sky-club-dark' }}"><x-derby-heart class="h-3.5 w-3.5 {{ $dark ? 'text-sky-club-light' : 'text-sky-club' }}" /> {{ __('Pilska siatkówka') }}</span>
+        @elseif($won !== null)
             <span @class(['rounded-full px-2.5 py-0.5 font-bold', 'bg-emerald-500/15 text-emerald-500' => $won, 'bg-red-500/15 text-red-500' => ! $won])>{{ $won ? __('Wygrana') : __('Porażka') }}</span>
         @else
             <span class="rounded-full px-2.5 py-0.5 font-semibold {{ $dark ? 'bg-white/10' : 'bg-zinc-100' }}">{{ $game->is_home ? __('U siebie') : __('Wyjazd') }}</span>

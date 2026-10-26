@@ -4,12 +4,14 @@ namespace App\Models;
 
 use App\Models\Concerns\HasMatchMedia;
 use App\Models\Concerns\Likeable;
+use App\Services\ScheduleImporter;
 use Database\Factories\GameFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Game extends Model
 {
@@ -26,6 +28,9 @@ class Game extends Model
     public const KIND_FRIENDLY = 'friendly';
 
     public const KIND_TOURNAMENT = 'tournament';
+
+    /** Fragmenty nazw (po ScheduleImporter::key) drużyn z Piły z naszymi zawodnikami: mecz z nimi zawsze wygrywa pilska siatkówka. */
+    public const CLUB_NAME_KEYS = ['joker', 'asblpila'];
 
     /** @var array<string, string> */
     public const KINDS = [self::KIND_LEAGUE => 'Ligowy', self::KIND_FRIENDLY => 'Sparing', self::KIND_TOURNAMENT => 'Turniejowy'];
@@ -116,6 +121,34 @@ class Game extends Model
         return $this->is_home
             ? [$this->home_score, $this->away_score]
             : [$this->away_score, $this->home_score];
+    }
+
+    /**
+     * Mecz dwóch drużyn z naszymi zawodnikami (np. KS ASBL Piła - LOMS Joker Piła).
+     */
+    public function isClubDerby(): bool
+    {
+        return collect([$this->opponentTeam?->full_name, $this->opponent])
+            ->filter()
+            ->contains(fn (string $name): bool => Str::contains(ScheduleImporter::key($name), self::CLUB_NAME_KEYS));
+    }
+
+    /**
+     * Wynik zakończonego meczu z naszej strony: 'win', 'loss' albo 'derby' (wygrała pilska siatkówka).
+     */
+    public function outcome(): ?string
+    {
+        $result = $this->ourSetsResult();
+
+        if (! $result || ! $this->isFinished()) {
+            return null;
+        }
+
+        return match (true) {
+            $this->isClubDerby() => 'derby',
+            $result[0] > $result[1] => 'win',
+            default => 'loss',
+        };
     }
 
     /**

@@ -69,7 +69,11 @@ class PushNotifier
 
         [$home, $away] = $game->sidesNames();
         $score = $game->is_home ? "{$result[0]}:{$result[1]}" : "{$result[1]}:{$result[0]}";
-        $title = ($result[0] > $result[1] ? __('Wygrana!') : __('Wynik meczu')).' '.$game->team?->name;
+        $title = match ($game->outcome()) {
+            'derby' => __('Wygrała pilska siatkówka!'),
+            'win' => __('Wygrana!'),
+            default => __('Wynik meczu'),
+        }.' '.$game->team?->name;
 
         $this->send(trim($title), "{$home} {$score} {$away}", route('games.show', $game), 'game-'.$game->id);
     }

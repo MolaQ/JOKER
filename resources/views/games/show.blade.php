@@ -10,7 +10,8 @@
         ? [[$homeName, $ourLogo, true], [$awayName, $opponentLogo, false]]
         : [[$homeName, $opponentLogo, false], [$awayName, $ourLogo, true]];
     $result = $game->ourSetsResult();
-    $won = $game->isFinished() && $result ? $result[0] > $result[1] : null;
+    $outcome = $game->outcome();
+    $won = $outcome && $outcome !== 'derby' ? $outcome === 'win' : null;
     $streams = $game->normalizedStreams();
     $galleries = $game->publishedGalleries->filter(fn ($gallery) => $gallery->photos->isNotEmpty());
     $competition = $game->competitionLabel();
@@ -47,7 +48,9 @@
                     <div class="order-2 text-center">
                         @if($game->isFinished() && $game->home_score !== null)
                             <p class="font-display text-5xl font-bold tabular-nums sm:text-7xl">{{ $game->home_score }}<span class="mx-2 opacity-40">:</span>{{ $game->away_score }}</p>
-                            @if($won !== null)
+                            @if($outcome === 'derby')
+                                <p class="mt-2 inline-flex items-center gap-1 rounded-full bg-sky-club/25 px-3 py-0.5 text-xs font-bold text-sky-club-light"><x-derby-heart class="h-3.5 w-3.5 text-sky-club-light" /> {{ __('Wygrała pilska siatkówka') }}</p>
+                            @elseif($won !== null)
                                 <p @class(['mt-2 inline-block rounded-full px-3 py-0.5 text-xs font-bold', 'bg-emerald-500/20 text-emerald-300' => $won, 'bg-red-500/20 text-red-300' => ! $won])>{{ $won ? __('Wygrana') : __('Porażka') }}</p>
                             @endif
                         @else

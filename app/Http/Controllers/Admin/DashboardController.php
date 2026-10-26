@@ -26,8 +26,9 @@ class DashboardController extends Controller
     {
         $season = Season::current()->first();
         $seasonGames = $season ? Game::where('season_id', $season->id)->get() : collect();
-        $results = $seasonGames->filter->isFinished()->map->ourSetsResult()->filter();
-        $wins = $results->filter(fn (array $sets) => $sets[0] > $sets[1])->count();
+        // Derby dwóch pilskich drużyn liczymy jako wygraną: wygrała pilska siatkówka.
+        $results = $seasonGames->map->outcome()->filter();
+        $wins = $results->filter(fn (string $outcome) => $outcome !== 'loss')->count();
         $views = PageView::where('kind', PageView::KIND_PAGE);
 
         // Kafelki: [ikona (x-admin-icon), podpis, liczba, dopisek, trasa, uprawnienie]

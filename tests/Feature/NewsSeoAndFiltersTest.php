@@ -3,7 +3,9 @@
 use App\Livewire\Admin\PlayerManager;
 use App\Livewire\Admin\SeoManager;
 use App\Models\Article;
+use App\Models\Game;
 use App\Models\Player;
+use App\Models\Season;
 use App\Models\Team;
 use App\Models\User;
 use App\Support\Sitemap;
@@ -54,4 +56,17 @@ test('sitemap is rebuilt from the panel and refreshed after content changes', fu
 
 test('missing pages show the club 404 page', function () {
     $this->get('/nie-ma-takiej-strony')->assertNotFound()->assertSee('Aut! Tej strony nie ma');
+});
+
+test('mecz dwóch pilskich drużyn pokazuje niebieskie serduszko zamiast porażki', function () {
+    $season = Season::create(['name' => '2026/2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30', 'is_current' => true]);
+    $derby = Game::factory()->create(['team_id' => Team::factory(), 'season_id' => $season->id, 'opponent' => 'LOMS Joker Piła', 'opponent_team_id' => null, 'status' => 'finished', 'is_home' => false, 'home_score' => 3, 'away_score' => 2]);
+    $rival = Game::factory()->create(['team_id' => Team::factory(), 'season_id' => $season->id, 'opponent' => 'ENEA Energetyk Poznań', 'opponent_team_id' => null, 'status' => 'finished', 'is_home' => true, 'home_score' => 0, 'away_score' => 2]);
+    $asbl = Game::factory()->make(['opponent' => 'KS ASBL Piła (kadeci II)', 'opponent_team_id' => null, 'status' => 'finished', 'home_score' => 3, 'away_score' => 0]);
+
+    expect($derby->outcome())->toBe('derby')
+        ->and($asbl->outcome())->toBe('derby')
+        ->and($rival->outcome())->toBe('loss');
+
+    $this->get(route('games.show', $derby))->assertOk()->assertSee('Wygrała pilska siatkówka');
 });

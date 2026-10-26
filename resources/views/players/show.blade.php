@@ -154,11 +154,14 @@
                     @foreach($recentGames as $game)
                         @php
                             $result = $game->ourSetsResult();
-                            $won = $result ? $result[0] > $result[1] : null;
+                            $outcome = $game->outcome();
+                            $won = $outcome && $outcome !== 'derby' ? $outcome === 'win' : null;
                             $article = $game->latestArticle();
                         @endphp
                         <li class="flex items-center gap-3 py-3 text-sm">
-                            @if($won === true)
+                            @if($outcome === 'derby')
+                                <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-club/15"><x-derby-heart class="h-4 w-4 text-sky-club" /></span>
+                            @elseif($won === true)
                                 <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600" aria-label="{{ __('Wygrana') }}"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7"/></svg></span>
                             @elseif($won === false)
                                 <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-600" aria-label="{{ __('Porażka') }}"><svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg></span>
