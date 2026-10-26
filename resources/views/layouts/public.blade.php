@@ -227,6 +227,12 @@
                             <p class="text-sm">{{ __($site['footer_text']) }}</p>
                         </div>
                     </div>
+                    @foreach(array_filter(array_map('trim', preg_split('/\R/', (string) $site['seo_awards']))) as $award)
+                        <p class="mt-5 flex w-fit items-center gap-2 rounded-full bg-amber-400/10 px-3 py-1.5 text-sm font-semibold text-amber-300 ring-1 ring-amber-400/30">
+                            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 21h8m-4-4v4M7 4h10v5a5 5 0 0 1-10 0V4Zm0 2H4v1a3 3 0 0 0 3 3m10-4h3v1a3 3 0 0 1-3 3"/></svg>
+                            {{ __($award) }}
+                        </p>
+                    @endforeach
                     @if(filled($site['footer_button_label']) && filled($site['footer_button_url']))
                         <a href="{{ $site->href((string) $site['footer_button_url']) }}" class="btn-primary mt-8">{{ __($site['footer_button_label']) }}</a>
                     @endif

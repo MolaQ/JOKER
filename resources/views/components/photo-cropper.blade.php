@@ -62,6 +62,15 @@
             <button type="button" @click="zoom(-0.1)" class="rounded-md bg-white px-3 py-1.5 ring-1 ring-zinc-300 hover:bg-zinc-50" aria-label="{{ __('Pomniejsz') }}">－</button>
             <button type="button" @click="rotate(90)" class="rounded-md bg-white px-3 py-1.5 ring-1 ring-zinc-300 hover:bg-zinc-50">{{ __('Obróć') }} ↻</button>
             <button type="button" @click="destroy()" class="rounded-md bg-white px-3 py-1.5 ring-1 ring-zinc-300 hover:bg-zinc-50">{{ __('Anuluj') }}</button>
+            @if($format === 'png')
+                <span class="flex flex-wrap items-center gap-2 rounded-md bg-zinc-50 px-2 py-1 ring-1 ring-zinc-200">
+                    <button type="button" @click="removeBackground()" :disabled="! ready" class="rounded-md bg-white px-3 py-1 font-semibold text-zinc-800 ring-1 ring-zinc-300 hover:bg-zinc-100 disabled:opacity-50" title="{{ __('Usuwa jednolite tło (np. białe) od brzegów obrazka; napisy w środku logo zostają.') }}">{{ __('Usuń tło') }}</button>
+                    <label class="flex items-center gap-1.5 text-xs text-zinc-600">{{ __('czułość') }}
+                        <input type="range" min="5" max="120" step="5" x-model="tolerance" @change="backgroundRemoved && removeBackground()" class="w-24 accent-blue-600">
+                    </label>
+                    <button type="button" x-show="backgroundRemoved" @click="restoreBackground()" class="text-xs font-semibold text-zinc-500 underline hover:text-zinc-800">{{ __('przywróć') }}</button>
+                </span>
+            @endif
             <button type="button" @click="confirm()" :disabled="! ready || uploading" class="ml-auto rounded-md bg-blue-600 px-4 py-1.5 font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
                 <span x-show="! uploading">{{ __('Użyj tego kadru') }}</span><span x-show="uploading">{{ __('Wysyłanie…') }}</span>
             </button>

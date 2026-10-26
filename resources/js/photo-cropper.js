@@ -14,6 +14,9 @@ export function registerPhotoCropper() {
             uploading: false,
             ready: false,
             error: null,
+            original: null,
+            tolerance: 40,
+            backgroundRemoved: false,
 
             async choose(event) {
                 const file = event.target.files[0];
@@ -49,6 +52,109 @@ export function registerPhotoCropper() {
                     preview: this.$refs.preview || '',
                     ready: () => { this.ready = true; },
                 });
+            },
+
+            /**
+             * Usuwa jednolite tło logo (np. białe): zalewa od brzegów obrazka piksele podobne do koloru w rogach,
+             * więc białe napisy w środku logo zostają. Krawędź dostaje miękkie przejście zamiast „schodków”.
+             */
+            async removeBackground() {
+                if (! this.cropper) {
+                    return;
+                }
+
+                this.original ??= this.source;
+                const image = await new Promise((resolve, reject) => {
+                    const element = new Image();
+                    element.onload = () => resolve(element);
+                    element.onerror = reject;
+                    element.src = this.original;
+                });
+
+                const canvas = document.createElement('canvas');
+                canvas.width = image.naturalWidth;
+                canvas.height = image.naturalHeight;
+                const context = canvas.getContext('2d', { willReadFrequently: true });
+                context.drawImage(image, 0, 0);
+
+                const { width, height } = canvas;
+                const pixels = context.getImageData(0, 0, width, height);
+                const data = pixels.data;
+                const corners = [0, width - 1, (height - 1) * width, height * width - 1];
+                const reference = [0, 1, 2].map((channel) => corners.reduce((sum, index) => sum + data[index * 4 + channel], 0) / corners.length);
+                const tolerance = Number(this.tolerance);
+                const distance = (index) => Math.max(
+                    Math.abs(data[index * 4] - reference[0]),
+                    Math.abs(data[index * 4 + 1] - reference[1]),
+                    Math.abs(data[index * 4 + 2] - reference[2]),
+                );
+
+                const visited = new Uint8Array(width * height);
+                const queue = new Int32Array(width * height);
+                let head = 0;
+                let tail = 0;
+                const push = (index) => {
+                    if (! visited[index]) {
+                        visited[index] = 1;
+                        queue[tail++] = index;
+                    }
+                };
+
+                for (let x = 0; x < width; x++) {
+                    push(x);
+                    push((height - 1) * width + x);
+                }
+                for (let y = 0; y < height; y++) {
+                    push(y * width);
+                    push(y * width + width - 1);
+                }
+
+                while (head < tail) {
+                    const index = queue[head++];
+                    const d = distance(index);
+
+                    if (d > tolerance * 2 || data[index * 4 + 3] === 0) {
+                        continue;
+                    }
+
+                    // Blisko koloru tła: przezroczyste; na granicy: częściowo, żeby krawędź była gładka.
+                    data[index * 4 + 3] = d <= tolerance ? 0 : Math.min(data[index * 4 + 3], Math.round(((d - tolerance) / tolerance) * 255));
+
+                    if (d > tolerance) {
+                        continue;
+                    }
+
+                    const x = index % width;
+                    if (x > 0) push(index - 1);
+                    if (x < width - 1) push(index + 1);
+                    if (index >= width) push(index - width);
+                    if (index < width * (height - 1)) push(index + width);
+                }
+
+                context.putImageData(pixels, 0, 0);
+                const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+
+                if (this.source && this.source !== this.original) {
+                    URL.revokeObjectURL(this.source);
+                }
+
+                this.source = URL.createObjectURL(blob);
+                this.ready = false;
+                this.cropper.replace(this.source);
+                this.backgroundRemoved = true;
+            },
+
+            restoreBackground() {
+                if (! this.original || ! this.cropper) {
+                    return;
+                }
+
+                URL.revokeObjectURL(this.source);
+                this.source = this.original;
+                this.original = null;
+                this.ready = false;
+                this.cropper.replace(this.source);
+                this.backgroundRemoved = false;
             },
 
             rotate(degrees) {
@@ -88,11 +194,11 @@ export function registerPhotoCropper() {
                 this.cropper?.destroy();
                 this.cropper = null;
 
-                if (this.source) {
-                    URL.revokeObjectURL(this.source);
-                }
+                [this.source, this.original].filter(Boolean).forEach((url) => URL.revokeObjectURL(url));
 
                 this.source = null;
+                this.original = null;
+                this.backgroundRemoved = false;
                 this.ready = false;
 
                 if (this.$refs.input) {
