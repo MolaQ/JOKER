@@ -18,6 +18,6 @@
     @if($inClub)
         <button type="button" wire:click="detachFromClub({{ $team->id }})" class="hidden text-sm text-gray-500 hover:text-gray-800 sm:inline">Wyłącz z klubu</button>
     @endif
-    <button type="button" wire:click="openEditModal({{ $team->id }})" class="text-sm text-blue-600 hover:text-blue-900">Edytuj</button>
-    <button type="button" wire:click="delete({{ $team->id }})" wire:confirm="Czy na pewno chcesz usunąć tę drużynę rywali?" class="text-sm text-red-600 hover:text-red-900">Usuń</button>
+    <button type="button" wire:click="openEditModal({{ $team->id }})" class="admin-action">Edytuj</button>
+    <button type="button" wire:click="delete({{ $team->id }})" wire:confirm="Czy na pewno chcesz usunąć tę drużynę rywali?" class="admin-action admin-action-danger">Usuń</button>
 </li>

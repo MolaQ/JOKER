@@ -61,8 +61,8 @@
                         <p class="font-semibold text-gray-900">{{ $package->name }} @if($package->is_highlighted)<span class="text-amber-500">★</span>@endif</p>
                         <p class="text-sm text-gray-500">{{ $package->price ?: 'cena do ustalenia' }} · {{ count($package->benefitList()) }} korzyści</p>
                     </div>
-                    <button type="button" wire:click="editPackage({{ $package->id }})" class="text-sm font-semibold text-sky-700 hover:text-sky-900">Edytuj</button>
-                    <button type="button" wire:click="deletePackage({{ $package->id }})" wire:confirm="Usunąć pakiet {{ $package->name }}?" class="text-sm font-semibold text-red-600 hover:text-red-800">Usuń</button>
+                    <button type="button" wire:click="editPackage({{ $package->id }})" class="admin-action">Edytuj</button>
+                    <button type="button" wire:click="deletePackage({{ $package->id }})" wire:confirm="Usunąć pakiet {{ $package->name }}?" class="admin-action admin-action-danger">Usuń</button>
                 </li>
             @empty
                 <li class="p-6 text-sm text-gray-500">Brak pakietów. Bez nich sekcja jest ukryta na stronie.</li>
@@ -87,8 +87,8 @@
                         <p class="font-semibold text-gray-900">{{ $product->name }} @unless($product->is_available)<span class="text-xs font-normal text-gray-400">(niedostępny)</span>@endunless</p>
                         <p class="text-sm text-gray-500">{{ $product->priceLabel() ?? 'bez ceny' }}@if($product->sizes) · {{ $product->sizes }}@endif</p>
                     </div>
-                    <button type="button" wire:click="editProduct({{ $product->id }})" class="text-sm font-semibold text-sky-700 hover:text-sky-900">Edytuj</button>
-                    <button type="button" wire:click="deleteProduct({{ $product->id }})" wire:confirm="Usunąć {{ $product->name }}?" class="text-sm font-semibold text-red-600 hover:text-red-800">Usuń</button>
+                    <button type="button" wire:click="editProduct({{ $product->id }})" class="admin-action">Edytuj</button>
+                    <button type="button" wire:click="deleteProduct({{ $product->id }})" wire:confirm="Usunąć {{ $product->name }}?" class="admin-action admin-action-danger">Usuń</button>
                 </li>
             @empty
                 <li class="p-6 text-sm text-gray-500">Brak gadżetów. Bez nich sekcja jest ukryta na stronie.</li>

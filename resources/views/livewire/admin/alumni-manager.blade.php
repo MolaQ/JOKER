@@ -1,5 +1,6 @@
 <div class="space-y-6">
-    <div class="flex justify-end">
+    <div class="flex items-center justify-between">
+        <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900"><x-admin-icon name="star" class="text-zinc-400" /> Lista wychowanków <span class="text-sm font-normal text-zinc-500">({{ $alumni->count() }})</span></h2>
         <button type="button" wire:click="create" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">+ Dodaj wychowanka</button>
     </div>
 
@@ -83,8 +84,8 @@
                         <p class="font-semibold text-gray-900">{{ $alumnus->name }} @if($alumnus->is_featured)<span class="text-amber-500">★</span>@endif @unless($alumnus->is_published)<span class="text-xs font-normal text-gray-400">(ukryty)</span>@endunless</p>
                         <p class="text-sm text-gray-500">{{ collect([$alumnus->level, $alumnus->current_club, $alumnus->years_in_club])->filter()->implode(' · ') ?: 'Uzupełnij dane' }}</p>
                     </div>
-                    <button type="button" wire:click="edit({{ $alumnus->id }})" class="text-sm font-semibold text-sky-700 hover:text-sky-900">Edytuj</button>
-                    <button type="button" wire:click="delete({{ $alumnus->id }})" wire:confirm="Usunąć {{ $alumnus->name }} z listy wychowanków?" class="text-sm font-semibold text-red-600 hover:text-red-800">Usuń</button>
+                    <button type="button" wire:click="edit({{ $alumnus->id }})" class="admin-action">Edytuj</button>
+                    <button type="button" wire:click="delete({{ $alumnus->id }})" wire:confirm="Usunąć {{ $alumnus->name }} z listy wychowanków?" class="admin-action admin-action-danger">Usuń</button>
                 </li>
             @empty
                 <li class="p-6 text-sm text-gray-500">Nie ma jeszcze wychowanków.</li>

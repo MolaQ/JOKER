@@ -116,7 +116,7 @@
                             <p class="font-semibold text-gray-900">{{ $item->title }} @unless($item->is_published)<span class="ml-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-normal text-gray-600">ukryta</span>@endunless</p>
                             <p class="text-gray-500">{{ $item->displayDate()?->format('d.m.Y') }} · {{ $item->photos_count }} zdj.@if($item->team) · {{ $item->team->name }}@endif @if($item->match) · mecz @endif</p>
                         </div>
-                        <button type="button" wire:click="edit({{ $item->id }})" class="font-semibold text-sky-700 hover:underline">Edytuj</button>
+                        <button type="button" wire:click="edit({{ $item->id }})" class="admin-action">Edytuj</button>
                     </li>
                 @empty
                     <li class="p-6 text-center text-gray-500">Brak galerii.</li>

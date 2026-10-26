@@ -40,7 +40,7 @@
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                            {{ $team->category }}{{ $team->birth_year ? ' '.$team->birth_year : '' }}
+                            {{ ['senior' => 'Seniorzy', 'junior' => 'Juniorzy', 'junior_mlodszy' => 'Juniorzy młodsi', 'mlodzik' => 'Młodzicy'][$team->category] ?? $team->category }}{{ $team->birth_year ? ' · '.$team->birth_year : '' }}
                         </span>
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">

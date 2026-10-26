@@ -100,8 +100,8 @@
                         <span class="truncate text-sm font-semibold text-gray-900">{{ $club->name }}</span>
                         <span class="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{{ $club->visibleTeams->count() }} {{ $club->visibleTeams->count() === 1 ? 'drużyna' : ($club->visibleTeams->count() < 5 && $club->visibleTeams->count() > 0 ? 'drużyny' : 'drużyn') }}</span>
                     </button>
-                    <button type="button" wire:click="openClubModal({{ $club->id }})" class="text-sm text-sky-700 hover:text-sky-900">Edytuj klub</button>
-                    <button type="button" wire:click="deleteClub({{ $club->id }})" wire:confirm="Usunąć klub {{ $club->name }}? Drużyny zostaną, tylko bez klubu." class="text-sm text-red-600 hover:text-red-900">Usuń</button>
+                    <button type="button" wire:click="openClubModal({{ $club->id }})" class="admin-action">Edytuj klub</button>
+                    <button type="button" wire:click="deleteClub({{ $club->id }})" wire:confirm="Usunąć klub {{ $club->name }}? Drużyny zostaną, tylko bez klubu." class="admin-action admin-action-danger">Usuń</button>
                 </div>
                 <ul x-show="open" x-cloak class="border-t border-gray-100 bg-gray-50/60">
                     @foreach($club->visibleTeams as $team)

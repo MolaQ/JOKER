@@ -51,7 +51,7 @@
                             @error('streams.'.$index.'.url') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                         <input type="text" wire:model="streams.{{ $index }}.label" placeholder="Opis (opcjonalnie)" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">
-                        <button type="button" wire:click="removeStream({{ $index }})" class="rounded-md px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50">Usuń</button>
+                        <button type="button" wire:click="removeStream({{ $index }})" class="admin-action admin-action-danger">Usuń</button>
                     </div>
                 @empty
                     <p class="rounded-md bg-gray-50 px-4 py-3 text-sm text-gray-500">Ten mecz nie ma jeszcze linków do transmisji.</p>
@@ -95,9 +95,9 @@
                                 @if($editingGalleryId === $gallery->id)
                                     <button type="button" wire:click="cancelEdit" class="font-semibold text-gray-600 hover:text-gray-900">Zwiń</button>
                                 @else
-                                    <button type="button" wire:click="editGallery({{ $gallery->id }})" class="font-semibold text-sky-700 hover:text-sky-900">Edytuj</button>
+                                    <button type="button" wire:click="editGallery({{ $gallery->id }})" class="admin-action">Edytuj</button>
                                 @endif
-                                <button type="button" wire:click="deleteGallery({{ $gallery->id }})" wire:confirm="Usunąć galerię „{{ $gallery->title }}” razem ze wszystkimi zdjęciami?" class="font-semibold text-red-600 hover:text-red-900">Usuń</button>
+                                <button type="button" wire:click="deleteGallery({{ $gallery->id }})" wire:confirm="Usunąć galerię „{{ $gallery->title }}” razem ze wszystkimi zdjęciami?" class="admin-action admin-action-danger">Usuń</button>
                             </div>
                         </div>
 
@@ -125,7 +125,7 @@
                                                     <div class="flex items-center gap-1 text-xs">
                                                         <button type="button" wire:click="movePhoto({{ $photo->id }}, -1)" @disabled($loop->first) class="rounded px-2 py-1 font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-30" title="Przesuń wcześniej">↑</button>
                                                         <button type="button" wire:click="movePhoto({{ $photo->id }}, 1)" @disabled($loop->last) class="rounded px-2 py-1 font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-30" title="Przesuń dalej">↓</button>
-                                                        <button type="button" wire:click="deletePhoto({{ $photo->id }})" wire:confirm="Usunąć to zdjęcie?" class="ml-auto rounded px-2 py-1 font-semibold text-red-600 hover:bg-red-50">Usuń</button>
+                                                        <button type="button" wire:click="deletePhoto({{ $photo->id }})" wire:confirm="Usunąć to zdjęcie?" class="admin-action admin-action-danger">Usuń</button>
                                                     </div>
                                                 </div>
                                             </li>

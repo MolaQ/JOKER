@@ -19,9 +19,9 @@
                     </p>
                     <a href="{{ route('pages.show', $page) }}" target="_blank" class="font-mono text-xs text-sky-700 hover:underline">/strona/{{ $page->slug }} ↗</a>
                 </div>
-                <div class="flex gap-4 text-sm font-medium">
-                    <button type="button" wire:click="openEditModal({{ $page->id }})" class="text-sky-700 hover:text-sky-900">Edytuj</button>
-                    <button type="button" wire:click="delete({{ $page->id }})" wire:confirm="Usunąć podstronę „{{ $page->title }}”? Linki do niej w menu przestaną działać." class="text-red-600 hover:text-red-800">Usuń</button>
+                <div class="flex gap-1.5">
+                    <button type="button" wire:click="openEditModal({{ $page->id }})" class="admin-action">Edytuj</button>
+                    <button type="button" wire:click="delete({{ $page->id }})" wire:confirm="Usunąć podstronę „{{ $page->title }}”? Linki do niej w menu przestaną działać." class="admin-action admin-action-danger">Usuń</button>
                 </div>
             </li>
         @empty

@@ -63,7 +63,7 @@
                         <div class="flex justify-between items-start">
                             <div>
                                 <p class="text-sm font-medium text-gray-900">{{ $game->team->name }} vs {{ $game->opponent }}</p>
-                                <p class="text-sm text-gray-500">{{ $game->game_date->format('d.m.Y H:i') }}</p>
+                                <p class="text-sm text-gray-500">{{ $game->kickoffLabel('d.m.Y') }}</p>
                             </div>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-{{ $game->status === 'scheduled' ? 'blue' : ($game->status === 'finished' ? 'green' : 'gray') }}-100 text-{{ $game->status === 'scheduled' ? 'blue' : ($game->status === 'finished' ? 'green' : 'gray') }}-800">
                                 {{ ['scheduled' => 'zaplanowany', 'finished' => 'rozegrany', 'cancelled' => 'odwołany'][$game->status] ?? $game->status }}

@@ -148,3 +148,14 @@ test('the main court can be chosen as a training venue', function () {
 
     expect($session->venueLabel())->toBe('Główne boisko');
 });
+
+test('wychowanka z pustymi polami da się otworzyć do edycji', function () {
+    $this->actingAs(User::factory()->editor()->create());
+    $alumnus = Alumnus::create(['name' => 'Jan Kowalski', 'position' => null, 'level' => null, 'is_published' => true]);
+
+    Livewire::test(AlumniManager::class)
+        ->call('edit', $alumnus->id)
+        ->assertHasNoErrors()
+        ->assertSet('name', 'Jan Kowalski')
+        ->assertSet('position', '');
+});

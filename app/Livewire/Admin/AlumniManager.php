@@ -74,10 +74,10 @@ class AlumniManager extends Component
         $alumnus = Alumnus::findOrFail($id);
         $this->resetForm();
         $this->editingId = $alumnus->id;
-        $this->fill($alumnus->only(['name', 'position', 'years_in_club', 'current_club', 'level', 'achievements', 'profile_url', 'player_id', 'is_featured', 'is_published', 'display_order']));
-        foreach (['position', 'years_in_club', 'current_club', 'level', 'achievements', 'profile_url'] as $field) {
-            $this->{$field} = (string) $this->{$field};
-        }
+        // Puste pola tekstowe w bazie to null, a formularz trzyma je jako tekst.
+        $text = ['name', 'position', 'years_in_club', 'current_club', 'level', 'achievements', 'profile_url'];
+        $this->fill(collect($alumnus->only($text))->map(fn ($value) => (string) $value)->all());
+        $this->fill($alumnus->only(['player_id', 'is_featured', 'is_published', 'display_order']));
         $this->existingPhoto = $alumnus->photo_path;
         $this->showForm = true;
     }
