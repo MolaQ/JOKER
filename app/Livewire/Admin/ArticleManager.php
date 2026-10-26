@@ -239,7 +239,9 @@ class ArticleManager extends Component
 
     public function render()
     {
-        $articles = Article::with('author')
+        // Liczby do kolumny „Odbiór” i znaczniki transmisji/galerii z meczów, o których jest artykuł.
+        $articles = Article::with(['author', 'games' => fn ($query) => $query->withCount(['galleries' => fn ($galleries) => $galleries->where('is_published', true)])])
+            ->withCount(['likes', 'approvedComments', 'comments as pending_comments_count' => fn ($query) => $query->where('is_approved', false)])
             ->when($this->search, fn ($q) => $q->where('title', 'like', "%{$this->search}%"))
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
             ->orderBy('created_at', 'desc')

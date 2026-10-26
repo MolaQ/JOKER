@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Admin\ArticleManager;
 use App\Livewire\Admin\PlayerManager;
 use App\Livewire\Admin\SeoManager;
 use App\Models\Article;
@@ -69,4 +70,22 @@ test('mecz dwóch pilskich drużyn pokazuje niebieskie serduszko zamiast porażk
         ->and($rival->outcome())->toBe('loss');
 
     $this->get(route('games.show', $derby))->assertOk()->assertSee('Wygrała pilska siatkówka');
+});
+
+test('lista artykułów w panelu pokazuje polubienia, komentarze, film i galerię', function () {
+    $admin = User::factory()->admin()->create();
+    $season = Season::create(['name' => '2026/2027', 'start_date' => '2026-09-01', 'end_date' => '2027-06-30', 'is_current' => true]);
+    $game = Game::factory()->create(['team_id' => Team::factory(), 'season_id' => $season->id, 'streams' => [['url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'label' => '']]]);
+    $game->galleries()->create(['title' => 'Zdjęcia', 'is_published' => true]);
+    $article = Article::factory()->create(['author_id' => $admin->id, 'title' => 'Relacja z derbów', 'status' => 'published', 'views_count' => 1234]);
+    $article->games()->attach($game);
+    $article->likes()->create(['user_id' => $admin->id]);
+    $article->comments()->create(['user_id' => $admin->id, 'content' => 'Brawo!', 'is_approved' => false]);
+
+    Livewire::actingAs($admin)->test(ArticleManager::class)
+        ->assertSee('Relacja z derbów')
+        ->assertSee('1 234')
+        ->assertSee('+1')
+        ->assertSee('Film')
+        ->assertSee('Galeria');
 });

@@ -26,7 +26,8 @@
                 <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Tytuł</th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Autor</th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Wyświetlenia</th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Odbiór</th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Multimedia</th>
                 <th class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Akcje</span></th>
             </tr>
         </thead>
@@ -52,7 +53,46 @@
                         </span>
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ $article->views_count }}
+                        <span class="flex items-center gap-3 tabular-nums">
+                            <span class="inline-flex items-center gap-1" title="Wyświetlenia">
+                                <svg class="size-4 text-zinc-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.04 12.32a1 1 0 0 1 0-.64C3.42 7.51 7.36 4.5 12 4.5s8.57 3 9.96 7.18a1 1 0 0 1 0 .64C20.58 16.49 16.64 19.5 12 19.5s-8.57-3-9.96-7.18Z"/><circle cx="12" cy="12" r="3"/></svg>
+                                {{ number_format($article->views_count, 0, ',', ' ') }}<span class="sr-only"> wyświetleń</span>
+                            </span>
+                            <span @class(['inline-flex items-center gap-1', 'text-rose-600' => $article->likes_count > 0]) title="Polubienia">
+                                <svg class="size-4 {{ $article->likes_count > 0 ? 'text-rose-500' : 'text-zinc-400' }}" fill="{{ $article->likes_count > 0 ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linejoin="round" d="M12 20s-7.5-4.6-9.6-9.3C.9 7.2 3 3.5 6.6 3.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.6 0 5.7 3.7 4.2 7.2C19.5 15.4 12 20 12 20Z"/></svg>
+                                {{ $article->likes_count }}<span class="sr-only"> polubień</span>
+                            </span>
+                            <a href="{{ route('admin.comments.index') }}" class="inline-flex items-center gap-1 hover:text-zinc-900" title="Komentarze opublikowane{{ $article->pending_comments_count ? ' · czeka na akceptację: '.$article->pending_comments_count : '' }}">
+                                <svg class="size-4 text-zinc-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12M2.25 12.76c0 1.6 1.12 2.99 2.7 3.23 1.09.16 2.19.29 3.3.37v4.39l4.16-4.16a1.15 1.15 0 0 1 .78-.33 48.3 48.3 0 0 0 5.83-.5c1.58-.23 2.7-1.62 2.7-3.22V6.74c0-1.6-1.12-2.99-2.7-3.23A48.4 48.4 0 0 0 12 3c-2.4 0-4.76.18-7.05.51-1.58.23-2.7 1.62-2.7 3.22v6.02Z"/></svg>
+                                {{ $article->approved_comments_count }}<span class="sr-only"> komentarzy</span>
+                                @if($article->pending_comments_count)
+                                    <span class="rounded-full bg-amber-100 px-1.5 text-[11px] font-semibold text-amber-800">+{{ $article->pending_comments_count }}</span>
+                                @endif
+                            </a>
+                        </span>
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm">
+                        @php
+                            $hasVideo = $article->games->contains(fn ($game) => $game->hasStreams()) || preg_match('~youtu\.?be|facebook\.com/.+/videos|<iframe~i', (string) $article->content);
+                            $galleriesCount = $article->games->sum('galleries_count');
+                        @endphp
+                        <span class="flex flex-wrap items-center gap-1.5">
+                            @if($hasVideo)
+                                <span class="inline-flex items-center gap-1 rounded-md bg-red-50 px-1.5 py-0.5 text-xs font-medium text-red-700 ring-1 ring-red-600/15 ring-inset" title="Artykuł ma film: transmisję meczu albo film w treści">
+                                    <svg class="size-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5Z"/></svg> Film
+                                </span>
+                            @endif
+                            @if($galleriesCount)
+                                <span class="inline-flex items-center gap-1 rounded-md bg-sky-50 px-1.5 py-0.5 text-xs font-medium text-sky-700 ring-1 ring-sky-600/15 ring-inset" title="Galerie zdjęć z meczów, o których jest artykuł">
+                                    <svg class="size-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="m3 16 5-5 4 4 3-3 6 6"/></svg> {{ $galleriesCount > 1 ? $galleriesCount.' galerie' : 'Galeria' }}
+                                </span>
+                            @endif
+                            @if($article->games->isNotEmpty() && ! $hasVideo && ! $galleriesCount)
+                                <span class="text-xs text-zinc-400" title="Artykuł jest powiązany z meczem, ale mecz nie ma jeszcze transmisji ani galerii">mecz bez mediów</span>
+                            @elseif($article->games->isEmpty() && ! $hasVideo)
+                                <span class="text-xs text-zinc-300">—</span>
+                            @endif
+                        </span>
                     </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <button type="button" wire:click="openEditModal({{ $article->id }})" class="text-sky-700 hover:text-sky-900 mr-4">Edytuj</button>
@@ -61,7 +101,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" class="px-3 py-4 text-sm text-gray-500 text-center">Brak artykułów do wyświetlenia</td>
+                    <td colspan="6" class="px-3 py-4 text-sm text-gray-500 text-center">Brak artykułów do wyświetlenia</td>
                 </tr>
             @endforelse
         </tbody>
