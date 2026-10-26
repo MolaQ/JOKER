@@ -82,7 +82,8 @@
                                         <span class="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed text-xs text-gray-400">brak</span>
                                     @endif
                                     <div class="space-y-2">
-                                        <input type="file" id="field-{{ $key }}" wire:model="uploads.{{ $key }}" accept="image/*" class="block text-sm text-gray-700">
+                                        @php $crop = $field['crop'] ?? ['aspect' => 'free', 'format' => 'png', 'width' => 1600]; @endphp
+                                        <x-photo-cropper :model="'uploads.'.$key" :preview="false" :aspect="$crop['aspect']" :format="$crop['format'] ?? 'jpeg'" :width="$crop['width'] ?? 1600" />
                                         @if($values[$key])
                                             <button type="button" wire:click="removeImage('{{ $key }}')" class="text-xs font-semibold text-red-600 hover:text-red-800">Usuń obrazek (wróci domyślny)</button>
                                         @endif

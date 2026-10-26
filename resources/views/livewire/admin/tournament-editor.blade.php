@@ -58,7 +58,7 @@
                 @if($tournament->image_path)
                     <img src="{{ \App\Support\Media::url($tournament->image_path) }}" alt="" class="mb-2 h-24 rounded-md object-cover">
                 @endif
-                <input type="file" wire:model="image" accept="image/*" class="text-sm">
+                <x-photo-cropper model="image" :preview="false" aspect="16/9" :width="1920" />
                 @error('image') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
 
@@ -152,7 +152,7 @@
                 </div>
                 <div>
                     <label class="{{ $label }}">Logo</label>
-                    <input type="file" wire:model="newParticipantLogo" accept="image/*" class="text-sm w-48">
+                    <x-photo-cropper model="newParticipantLogo" :preview="false" aspect="free" format="png" :width="400" label="Wybierz logo" hint="" />
                 </div>
                 <button type="submit" class="{{ $primary }}">Dodaj</button>
                 @error('newParticipantName') <p class="text-sm text-red-600 sm:col-span-4">{{ $message }}</p> @enderror

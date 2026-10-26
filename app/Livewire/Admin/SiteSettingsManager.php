@@ -10,6 +10,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -20,6 +21,7 @@ class SiteSettingsManager extends Component
 {
     use ShowsToasts, WithFileUploads;
 
+    #[Url(as: 'zakladka')]
     public string $tab = 'ogolne';
 
     /** @var array<string, mixed> */

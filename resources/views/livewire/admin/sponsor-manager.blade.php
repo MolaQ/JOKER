@@ -114,7 +114,7 @@
                                 @if($logo)
                                     <img src="{{ $logo->temporaryUrl() }}" class="h-16 w-16 object-contain rounded mb-2" alt="Podgląd">
                                 @endif
-                                <input type="file" wire:model="logo" accept="image/*" class="mt-1 block w-full text-sm text-gray-700">
+                                <x-photo-cropper model="logo" class="mt-1" :preview="false" aspect="free" format="png" :width="800" label="Wybierz logo" />
                                 @error('logo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 

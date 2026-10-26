@@ -100,7 +100,7 @@
                                         <img src="{{ \App\Support\Media::url($existingImage) }}" onerror="this.style.visibility='hidden'" class="h-16 w-24 rounded object-cover" alt="">
                                         <button type="button" wire:click="removeImage" class="text-xs font-semibold text-red-600">Usuń zdjęcie</button>
                                     @endif
-                                    <input type="file" wire:model="image" accept="image/*" class="block text-sm text-gray-700">
+                                    <x-photo-cropper model="image" :preview="false" aspect="16/9" :width="1600" />
                                 </div>
                                 @error('image') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>

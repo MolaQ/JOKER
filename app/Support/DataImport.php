@@ -112,7 +112,7 @@ class DataImport
     /**
      * Wiersze pliku z polami po kluczach, opisem i listą błędów (wiersz z błędem nie zostanie zaimportowany).
      *
-     * @return list<array{line: int, data: array<string, string>, errors: list<string>, action: string}>
+     * @return list<array{line: int, data: array<string, string>, errors: list<string>, warnings: list<string>, action: string}>
      */
     public static function parse(string $type, string $content): array
     {
@@ -141,7 +141,7 @@ class DataImport
                 }
             }
 
-            $rows[] = ['line' => $number + 2, 'data' => $data, 'errors' => [...$errors, ...self::validate($type, $data)], 'action' => self::action($type, $data)];
+            $rows[] = ['line' => $number + 2, 'data' => $data, 'errors' => [...$errors, ...self::validate($type, $data)], 'warnings' => self::warnings($type, $data), 'action' => self::action($type, $data)];
         }
 
         return $rows;
@@ -207,9 +207,6 @@ class DataImport
             }
             if ($number('jersey_number', 0, 99)) {
                 $errors[] = 'numer musi być liczbą 0-99';
-            } elseif ($data['jersey_number'] !== '' && ($team = self::team($data['team'])) && ($taken = Player::where('team_id', $team->id)->where('jersey_number', (int) $data['jersey_number'])->first())
-                && self::normalize($taken->first_name.' '.$taken->last_name) !== self::normalize($data['first_name'].' '.$data['last_name'])) {
-                $errors[] = 'numer '.$data['jersey_number'].' w drużynie '.$team->name.' ma już '.$taken->full_name;
             }
             if ($data['captain'] !== '' && self::flag($data['captain']) === null) {
                 $errors[] = 'kapitan: wpisz tak albo nie';
@@ -233,6 +230,27 @@ class DataImport
         }
 
         return $errors;
+    }
+
+    /**
+     * Rzeczy do sprawdzenia, które nie blokują importu (np. powtórzony numer koszulki).
+     *
+     * @param  array<string, string>  $data
+     * @return list<string>
+     */
+    private static function warnings(string $type, array $data): array
+    {
+        if ($type !== 'players' || $data['jersey_number'] === '' || ! ctype_digit($data['jersey_number']) || ! ($team = self::team($data['team']))) {
+            return [];
+        }
+
+        $name = self::normalize($data['first_name'].' '.$data['last_name']);
+
+        return Player::where('team_id', $team->id)->where('jersey_number', (int) $data['jersey_number'])->get()
+            ->reject(fn (Player $player) => self::normalize($player->first_name.' '.$player->last_name) === $name)
+            ->map(fn (Player $player) => 'numer '.$data['jersey_number'].' w drużynie '.$team->name.' ma też '.$player->full_name)
+            ->values()
+            ->all();
     }
 
     /**

@@ -11,7 +11,7 @@ class ArticleController extends Controller
 {
     public function index()
     {
-        $articles = Article::published()
+        $articles = Article::forListing()
             ->withCount(['likes', 'approvedComments'])
             ->paginate(13);
 

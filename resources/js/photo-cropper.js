@@ -1,10 +1,14 @@
 /**
- * Przycinanie zdjęcia zawodnika do pionowego kadru 4:5 z podglądem na żywo.
- * Przycięty plik (800×1000 JPG) trafia do właściwości komponentu Livewire.
+ * Przycinanie obrazka przed wysłaniem (zdjęcia zawodników, slajdy, logo drużyn i sponsorów...).
+ * options: aspect (np. 0.8 dla 4:5, 0 = dowolny kadr), width (px), format ('jpeg' albo 'png' z przezroczystością).
+ * Przycięty plik trafia do właściwości komponentu Livewire.
  */
 export function registerPhotoCropper() {
     document.addEventListener('alpine:init', () => {
-        window.Alpine.data('photoCropper', (property) => ({
+        window.Alpine.data('photoCropper', (property, options = {}) => ({
+            aspect: options.aspect ?? 4 / 5,
+            width: options.width ?? 800,
+            format: options.format ?? 'jpeg',
             cropper: null,
             source: null,
             uploading: false,
@@ -37,12 +41,12 @@ export function registerPhotoCropper() {
                 await this.$nextTick();
 
                 this.cropper = new Cropper(this.$refs.image, {
-                    aspectRatio: 4 / 5,
+                    aspectRatio: this.aspect > 0 ? this.aspect : NaN,
                     viewMode: 1,
                     autoCropArea: 1,
-                    dragMode: 'move',
+                    dragMode: this.aspect > 0 ? 'move' : 'crop',
                     background: false,
-                    preview: this.$refs.preview,
+                    preview: this.$refs.preview || '',
                     ready: () => { this.ready = true; },
                 });
             },
@@ -62,8 +66,13 @@ export function registerPhotoCropper() {
 
                 this.uploading = true;
 
-                this.cropper.getCroppedCanvas({ width: 800, height: 1000, imageSmoothingQuality: 'high', fillColor: '#fff' }).toBlob((blob) => {
-                    const file = new File([blob], 'zdjecie.jpg', { type: 'image/jpeg' });
+                const png = this.format === 'png';
+                const size = this.aspect > 0
+                    ? { width: this.width, height: Math.round(this.width / this.aspect) }
+                    : { maxWidth: this.width, maxHeight: this.width };
+
+                this.cropper.getCroppedCanvas({ ...size, imageSmoothingQuality: 'high', ...(png ? {} : { fillColor: '#fff' }) }).toBlob((blob) => {
+                    const file = new File([blob], png ? 'obrazek.png' : 'zdjecie.jpg', { type: png ? 'image/png' : 'image/jpeg' });
 
                     this.$wire.upload(property, file, () => {
                         this.uploading = false;
@@ -72,7 +81,7 @@ export function registerPhotoCropper() {
                         this.uploading = false;
                         this.error = document.documentElement.lang === 'en' ? 'Could not upload the photo. Please try again.' : 'Nie udało się wysłać zdjęcia. Spróbuj ponownie.';
                     });
-                }, 'image/jpeg', 0.9);
+                }, png ? 'image/png' : 'image/jpeg', 0.9);
             },
 
             destroy() {

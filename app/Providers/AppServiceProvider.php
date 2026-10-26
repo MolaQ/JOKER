@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Permission;
 use App\Support\PushTriggers;
 use App\Support\SearchIndex;
+use App\Support\Sitemap;
 use App\Support\SiteSettings;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
@@ -39,6 +40,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Zmiana treści unieważnia mapę strony; następne wejście robota zbuduje ją od nowa.
+        foreach (Sitemap::WATCHED as $model) {
+            $model::saved(fn () => Sitemap::forget());
+            $model::deleted(fn () => Sitemap::forget());
+        }
+
         // Ustawienia z panelu dostępne w każdym widoku jako $site['klucz'].
         View::share('site', $this->app->make(SiteSettings::class));
 

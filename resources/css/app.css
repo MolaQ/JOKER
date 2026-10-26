@@ -451,6 +451,21 @@
 
     & table tbody td {
         @apply text-zinc-700;
+        padding-top: 0.7rem;
+        padding-bottom: 0.7rem;
+    }
+
+    /* Akcje w ostatniej kolumnie (Edytuj / Usuń...) jako małe przyciski zamiast gołych linków. */
+    & table tbody td:last-child > :is(a, button):not([class*='bg-']) {
+        @apply ml-1.5 mr-0 inline-flex items-center rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-zinc-700 ring-1 ring-zinc-200 transition ring-inset hover:bg-zinc-50 hover:text-zinc-900;
+    }
+
+    & table tbody td:last-child > :is(a, button):not([class*='bg-']):is(.text-red-600, .text-red-500, .text-red-700) {
+        @apply text-red-600 ring-red-200 hover:bg-red-50 hover:text-red-700;
+    }
+
+    & table tbody td:last-child > :is(a, button):not([class*='bg-']):is(.text-sky-700, .text-sky-600, .text-blue-600) {
+        @apply text-sky-700 ring-sky-200 hover:bg-sky-50;
     }
 
     & button.bg-sky-600,

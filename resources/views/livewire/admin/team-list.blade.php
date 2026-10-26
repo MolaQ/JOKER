@@ -160,7 +160,7 @@
                                 @if($photo)
                                     <img src="{{ $photo->temporaryUrl() }}" class="mt-2 h-24 w-40 object-cover rounded" alt="Podgląd">
                                 @endif
-                                <input type="file" wire:model="photo" accept="image/*" class="mt-2 block w-full text-sm text-gray-700">
+                                <x-photo-cropper model="photo" class="mt-2" :preview="false" aspect="4/3" :width="1600" hint="Kadr 4:3 jak na kafelkach drużyn; na stronie drużyny zdjęcie jest tłem nagłówka." />
                                 <div wire:loading wire:target="photo" class="text-xs text-gray-500 mt-1">Wczytywanie...</div>
                                 @error('photo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
@@ -184,7 +184,7 @@
                                 @if($logo)
                                     <img src="{{ $logo->temporaryUrl() }}" class="h-16 w-16 object-cover rounded mb-2" alt="Podgląd">
                                 @endif
-                                <input type="file" wire:model="logo" accept="image/*" class="mt-1 block w-full text-sm text-gray-700">
+                                <x-photo-cropper model="logo" class="mt-1" :preview="false" aspect="free" format="png" :width="600" label="Wybierz logo" />
                                 <div wire:loading wire:target="logo" class="text-xs text-gray-500 mt-1">Wczytywanie...</div>
                                 @error('logo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>

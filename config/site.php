@@ -22,9 +22,20 @@ return [
             'fields' => [
                 'club_name' => ['type' => 'text', 'label' => 'Nazwa klubu', 'default' => 'Joker Piła'],
                 'club_tagline' => ['type' => 'text', 'label' => 'Podpis pod nazwą', 'default' => 'Klub siatkówki od 1992 roku'],
-                'logo' => ['type' => 'image', 'label' => 'Herb / logo', 'help' => 'Najlepiej kwadratowy PNG z przezroczystym tłem. Bez wgranego pliku używany jest herb klubu. Herb jest też domyślnym logo wszystkich drużyn Jokera.', 'default' => null, 'preview' => 'img/logo-256.webp'],
+                'logo' => ['type' => 'image', 'crop' => ['aspect' => '1/1', 'format' => 'png', 'width' => 512], 'label' => 'Herb / logo', 'help' => 'Najlepiej kwadratowy PNG z przezroczystym tłem. Bez wgranego pliku używany jest herb klubu. Herb jest też domyślnym logo wszystkich drużyn Jokera.', 'default' => null, 'preview' => 'img/logo-256.webp'],
                 'site_title' => ['type' => 'text', 'label' => 'Tytuł strony (w karcie przeglądarki i Google)', 'default' => 'Joker Piła - Klub Siatkówki'],
                 'site_description' => ['type' => 'textarea', 'label' => 'Opis strony dla Google', 'default' => 'UKS SMS Joker Piła - klub siatkarski z Piły, jeden z czołowych ośrodków szkolenia siatkówki młodzieżowej w Polsce. Drużyny od minisiatkówki po II ligę, terminarz, wyniki i aktualności.'],
+            ],
+        ],
+
+        'seo' => [
+            'label' => 'Wyszukiwarki (SEO)',
+            'icon' => 'chart',
+            'fields' => [
+                'seo_awards' => ['type' => 'textarea', 'label' => 'Wyróżnienia i certyfikaty klubu (każde w nowej linii)', 'help' => 'Trafiają do danych dla Google o klubie, np. nazwa certyfikatu szkolenia i rok. Wpisz dokładnie tak, jak brzmi oficjalna nazwa.', 'default' => ''],
+                'seo_founding_year' => ['type' => 'text', 'label' => 'Rok założenia klubu', 'default' => '1992'],
+                'seo_google_verification' => ['type' => 'text', 'label' => 'Google Search Console: kod weryfikacji', 'help' => 'Z Search Console wybierz weryfikację „Tag HTML” i wklej tylko wartość content, np. AbC123...', 'default' => ''],
+                'seo_bing_verification' => ['type' => 'text', 'label' => 'Bing Webmaster Tools: kod weryfikacji', 'default' => ''],
             ],
         ],
 
@@ -177,7 +188,7 @@ return [
             'fields' => [
                 'hero_title' => ['type' => 'text', 'label' => 'Duży napis (gdy nie ma slajdów)', 'default' => 'Gramy razem. Wygrywamy razem.'],
                 'hero_subtitle' => ['type' => 'textarea', 'label' => 'Tekst pod dużym napisem', 'default' => 'Każdego dnia około 100 młodych ludzi z Piły i regionu rozwija u nas swoje siatkarskie pasje. Od minisiatkówki po II ligę.'],
-                'hero_image' => ['type' => 'image', 'label' => 'Zdjęcie w tle (gdy nie ma slajdów)', 'default' => null],
+                'hero_image' => ['type' => 'image', 'crop' => ['aspect' => '16/9', 'width' => 1920], 'label' => 'Zdjęcie w tle (gdy nie ma slajdów)', 'default' => null],
                 'hero_button_label' => ['type' => 'text', 'label' => 'Pierwszy przycisk: tekst (gdy nie ma slajdów)', 'default' => 'Poznaj drużyny'],
                 'hero_button_url' => ['type' => 'url', 'label' => 'Pierwszy przycisk: adres', 'default' => '/druzyny'],
                 'hero_second_button_label' => ['type' => 'text', 'label' => 'Drugi przycisk: tekst (puste = ukryty)', 'default' => 'Terminarz meczów'],
@@ -208,7 +219,7 @@ return [
                 'home_join_text' => ['type' => 'textarea', 'label' => 'Zaproszenie: tekst', 'default' => 'Zapraszamy chłopców od 7. roku życia. Szkolimy w każdej kategorii wiekowej: od minisiatkówki po seniorską II ligę.'],
                 'home_join_button_label' => ['type' => 'text', 'label' => 'Zaproszenie: przycisk', 'default' => 'Zobacz nabór'],
                 'home_join_button_url' => ['type' => 'url', 'label' => 'Zaproszenie: adres przycisku', 'default' => '/strona/nabor'],
-                'home_join_image' => ['type' => 'image', 'label' => 'Zaproszenie: zdjęcie w tle', 'default' => null],
+                'home_join_image' => ['type' => 'image', 'crop' => ['aspect' => '16/9', 'width' => 1920], 'label' => 'Zaproszenie: zdjęcie w tle', 'default' => null],
             ],
         ],
 

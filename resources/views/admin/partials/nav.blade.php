@@ -1,8 +1,20 @@
 @foreach($adminNavigation as $group => $items)
     @php $visibleItems = array_filter($items, fn (array $item) => ! isset($item['can']) || ($item['can'] instanceof \Closure ? ($item['can'])() : auth()->user()->can($item['can']))); @endphp
     @continue(empty($visibleItems))
-    <p class="mt-6 mb-1.5 px-3 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase first:mt-0">{{ $group }}</p>
-    <ul class="space-y-0.5">
+    @php
+        $groupActive = collect($visibleItems)->contains(fn (array $item) => request()->routeIs(...(array) ($item['active'] ?? (str_ends_with($item['route'], '.index') ? \Illuminate\Support\Str::beforeLast($item['route'], '.').'.*' : $item['route']))));
+        $groupKey = \Illuminate\Support\Str::slug($group);
+    @endphp
+    {{-- Grupa zwija się jak akordeon; otwarta zostaje grupa bieżącej strony i te, które ktoś sam rozwinął. --}}
+    <div x-data="{ key: 'admin-nav-{{ $groupKey }}', open: {{ $groupActive || $loop->first ? 'true' : 'false' }} }"
+         x-init="if (! {{ $groupActive ? 'true' : 'false' }}) { try { const saved = localStorage.getItem(key); if (saved !== null) open = saved === '1'; } catch (e) {} }"
+         class="mt-3 first:mt-0">
+    <button type="button" @click="open = ! open; try { localStorage.setItem(key, open ? '1' : '0') } catch (e) {}" :aria-expanded="open"
+        class="flex w-full items-center justify-between rounded-md px-3 py-1.5 text-[11px] font-semibold tracking-wider text-zinc-500 uppercase hover:text-zinc-300">
+        {{ $group }}
+        <x-admin-icon name="chevron" class="size-3.5 transition-transform" ::class="open ? 'rotate-90' : ''" />
+    </button>
+    <ul class="mt-1 space-y-0.5" x-show="open" x-collapse.duration.150ms>
         @foreach($visibleItems as $item)
             @php
                 $activePattern = $item['active'] ?? (str_ends_with($item['route'], '.index') ? \Illuminate\Support\Str::beforeLast($item['route'], '.').'.*' : $item['route']);
@@ -25,4 +37,5 @@
             </li>
         @endforeach
     </ul>
+    </div>
 @endforeach

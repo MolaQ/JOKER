@@ -169,7 +169,7 @@
                                 @if($logo)
                                     <img src="{{ $logo->temporaryUrl() }}" class="mt-2 h-16 w-16 rounded object-contain" alt="Podgląd">
                                 @endif
-                                <input type="file" wire:model="logo" accept="image/*" class="mt-2 block w-full text-sm text-gray-700">
+                                <x-photo-cropper model="logo" class="mt-2" :preview="false" aspect="free" format="png" :width="400" label="Wybierz logo" />
                                 @error('logo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
                             <div>
@@ -213,7 +213,7 @@
                                 @if($clubLogo)
                                     <img src="{{ $clubLogo->temporaryUrl() }}" class="mt-2 h-16 w-16 rounded object-contain" alt="Podgląd">
                                 @endif
-                                <input type="file" wire:model="clubLogo" accept="image/*" class="mt-2 block w-full text-sm text-gray-700">
+                                <x-photo-cropper model="clubLogo" class="mt-2" :preview="false" aspect="free" format="png" :width="400" label="Wybierz logo" />
                                 @error('clubLogo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
                         </div>

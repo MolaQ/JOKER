@@ -65,6 +65,7 @@
                                         <span class="text-red-700">{{ implode('; ', $row['errors']) }}</span>
                                     @else
                                         <span @class(['rounded-full px-2 py-0.5 text-xs font-semibold', 'bg-green-100 text-green-800' => $row['action'] === 'nowy', 'bg-amber-100 text-amber-800' => $row['action'] !== 'nowy'])>{{ $row['action'] }}</span>
+                                        @foreach($row['warnings'] ?? [] as $warning)<span class="mt-1 block text-xs text-amber-700">Uwaga: {{ $warning }}</span>@endforeach
                                     @endif
                                 </td>
                                 @foreach(array_keys($columns) as $key)<td class="px-3 py-2 text-gray-800">{{ $row['data'][$key] }}</td>@endforeach

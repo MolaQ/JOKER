@@ -37,6 +37,8 @@
     <meta property="og:image" content="{{ $ogImage }}">
     <meta name="twitter:card" content="{{ $ogImage === $logoUrl ? 'summary' : 'summary_large_image' }}">
     <link rel="sitemap" type="application/xml" href="{{ route('sitemap') }}">
+    @if($site['seo_google_verification'])<meta name="google-site-verification" content="{{ $site['seo_google_verification'] }}">@endif
+    @if($site['seo_bing_verification'])<meta name="msvalidate.01" content="{{ $site['seo_bing_verification'] }}">@endif
     {!! \App\Support\Seo::jsonLd(\App\Support\Seo::organization($site, $logoUrl)) !!}
     @stack('structured-data')
     <link rel="icon" type="image/png" sizes="32x32" href="{{ $site['logo'] ? $logoUrl : asset('img/logo-32.png') }}">

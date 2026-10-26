@@ -54,7 +54,7 @@
                     @elseif($existingPhoto)
                         <img src="{{ \App\Support\Media::url($existingPhoto) }}" alt="" class="mt-1 h-24 w-24 rounded object-cover">
                     @endif
-                    <input type="file" wire:model="photo" accept="image/*" class="mt-2 block text-sm">
+                    <x-photo-cropper model="photo" class="mt-2" :preview="false" aspect="4/5" :width="800" />
                     @error('photo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div class="space-y-2">

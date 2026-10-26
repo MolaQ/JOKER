@@ -51,6 +51,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     Route::middleware('can:site.manage')->group(function () {
         Route::view('/settings', 'admin.settings.index')->name('settings.index');
         Route::view('/pages', 'admin.pages.index')->name('pages.index');
+        Route::view('/seo', 'admin.seo.index')->name('seo.index');
     });
 
     Route::view('/statistics', 'admin.statistics.index')->middleware('can:statistics.view')->name('statistics.index');

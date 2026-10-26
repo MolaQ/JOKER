@@ -4,9 +4,9 @@ use App\Models\Article;
 use App\Models\Player;
 use App\Models\Team;
 use App\Models\User;
-use Illuminate\Support\Facades\Cache;
+use App\Support\Sitemap;
 
-beforeEach(fn () => Cache::forget('sitemap.xml'));
+beforeEach(fn () => Sitemap::forget());
 
 test('sitemap lists public pages, teams, players and articles', function () {
     $team = Team::create(['name' => 'Kadeci', 'slug' => 'kadeci', 'category' => 'cadet']);

@@ -441,5 +441,20 @@
     "np. adam.nowak@gmail.com": "e.g. adam.nowak@gmail.com",
     "Po zatwierdzeniu zawodnik dostanie własne konto i link do ustawienia hasła.": "Once approved, the player gets their own account and a link to set a password.",
     "Adres profilu zacznij od https://": "Start the profile address with https://",
-    "adres profilu": "profile address"
+    "adres profilu": "profile address",
+    "Nie ma takiej strony": "Page not found",
+    "Błąd 404": "Error 404",
+    "Aut! Tej strony nie ma": "Out! This page doesn't exist",
+    "Adres mógł się zmienić albo strona została usunięta. Spróbuj od jednej z sekcji poniżej.": "The address may have changed or the page was removed. Try one of the sections below.",
+    "Brak dostępu": "Access denied",
+    "Nie masz uprawnień do tej strony.": "You don't have permission to view this page.",
+    "Strona wygasła": "Page expired",
+    "Minęło za dużo czasu. Odśwież stronę i spróbuj jeszcze raz.": "Too much time has passed. Refresh the page and try again.",
+    "Za dużo prób": "Too many attempts",
+    "Odczekaj chwilę i spróbuj ponownie.": "Wait a moment and try again.",
+    "Coś poszło nie tak": "Something went wrong",
+    "Wystąpił błąd po naszej stronie. Spróbuj za chwilę, a jeśli to się powtarza, napisz do klubu.": "Something went wrong on our side. Try again shortly, and if it keeps happening, contact the club.",
+    "Przerwa techniczna": "Maintenance break",
+    "Strona jest właśnie aktualizowana. Zajrzyj za kilka minut.": "The site is being updated. Check back in a few minutes.",
+    "Strona główna": "Home"
 }

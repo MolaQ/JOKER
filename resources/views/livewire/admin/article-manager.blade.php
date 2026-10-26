@@ -46,15 +46,9 @@
                         {{ $article->author->name }}
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm">
-                        @php
-                            $statusColors = [
-                                'draft' => 'bg-gray-50 text-gray-600 ring-gray-500/10',
-                                'published' => 'bg-green-50 text-green-700 ring-green-600/20',
-                                'archived' => 'bg-yellow-50 text-yellow-800 ring-yellow-600/20',
-                            ];
-                        @endphp
-                        <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $statusColors[$article->status] ?? '' }}">
-                            {{ $article->status }}
+                        @php [$statusLabel, $statusClass] = $article->statusBadge(); @endphp
+                        <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $statusClass }}">
+                            {{ $statusLabel }}
                         </span>
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
@@ -148,6 +142,7 @@
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Data publikacji</label>
                                     <input type="datetime-local" wire:model="published_at" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                    <p class="mt-1 text-xs text-gray-500">Puste = od razu po zapisaniu. Data w przyszłości = artykuł pojawi się wtedy sam.</p>
                                 </div>
                             </div>
 
@@ -177,7 +172,7 @@
                                         <button type="button" class="mt-2 text-xs font-medium text-zinc-500 underline hover:text-zinc-800" @click="x = 50; y = 50">Środek zdjęcia</button>
                                     </div>
                                 @endif
-                                <input type="file" wire:model="featured_image" accept="image/*" class="mt-2 block w-full text-sm text-gray-700">
+                                <x-photo-cropper model="featured_image" class="mt-2" :preview="false" aspect="free" :width="2000" hint="Zaznacz fragment zdjęcia, który ma zostać (np. obetnij krzywy brzeg). Potem kliknij punkt, który zawsze ma być widoczny." />
                                 <p class="mt-1 text-xs text-gray-500">Najlepiej poziome zdjęcie, co najmniej 1600 px szerokości.</p>
                                 @error('featured_image') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
@@ -211,7 +206,7 @@
                             <div class="flex items-center space-x-6">
                                 <div class="flex items-center">
                                     <input type="checkbox" wire:model="is_featured" id="is_featured" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500">
-                                    <label for="is_featured" class="ml-2 text-sm text-gray-700">Wyróżniony</label>
+                                    <label for="is_featured" class="ml-2 text-sm text-gray-700">Wyróżniony (przypięty na górze aktualności i strony głównej)</label>
                                 </div>
                                 <div class="flex items-center">
                                     <input type="checkbox" wire:model="allow_comments" id="allow_comments" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500">

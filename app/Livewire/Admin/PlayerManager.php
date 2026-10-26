@@ -13,6 +13,7 @@ use App\Support\ClubAccounts;
 use App\Support\SiteSettings;
 use App\UserRole;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -92,12 +93,31 @@ class PlayerManager extends Component
 
     public string $teamFilter = '';
 
+    /** Filtr pozycji, np. sami atakujący; „brak” = bez pozycji. */
+    public string $positionFilter = '';
+
+    /**
+     * Inni zawodnicy tej drużyny z tym samym numerem (ostrzeżenie, nie blokada).
+     *
+     * @return list<string>
+     */
+    public function numberTakenBy(): array
+    {
+        if (! $this->team_id || $this->jersey_number === null) {
+            return [];
+        }
+
+        return Player::where('team_id', $this->team_id)->where('jersey_number', $this->jersey_number)
+            ->when($this->editingId, fn ($query) => $query->whereKeyNot($this->editingId))
+            ->get()->map->full_name->all();
+    }
+
     protected function rules(): array
     {
         return [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'jersey_number' => array_filter(['nullable', 'integer', 'min:0', 'max:99', $this->team_id ? Rule::unique('players', 'jersey_number')->where('team_id', $this->team_id)->ignore($this->editingId) : null]),
+            'jersey_number' => 'nullable|integer|min:0|max:99',
             'position' => 'nullable|in:setter,outside_hitter,opposite,middle_blocker,libero',
             'is_captain' => 'boolean',
             'interests' => 'nullable|string|max:500',
@@ -147,7 +167,6 @@ class PlayerManager extends Component
     protected function messages(): array
     {
         return [
-            'jersey_number.unique' => 'Ten numer ma już inny zawodnik tej drużyny.',
             'social_links.*.regex' => 'Adres profilu zacznij od https://',
         ];
     }
@@ -169,6 +188,11 @@ class PlayerManager extends Component
     }
 
     public function updatingTeamFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPositionFilter(): void
     {
         $this->resetPage();
     }
@@ -352,12 +376,20 @@ class PlayerManager extends Component
 
     public function render()
     {
-        $players = Player::managedBy(Auth::user())->with('team')
-            ->when($this->search, fn ($q) => $q->where(fn ($q2) => $q2
-                ->where('first_name', 'like', "%{$this->search}%")
-                ->orWhere('last_name', 'like', "%{$this->search}%")
-            ))
-            ->when($this->teamFilter, fn ($q) => $q->where('team_id', $this->teamFilter))
+        $search = trim($this->search);
+        $base = Player::managedBy(Auth::user())
+            ->when($search !== '', fn ($q) => $q->where(fn ($q2) => $q2
+                ->where('first_name', 'like', "%{$search}%")
+                ->orWhere('last_name', 'like', "%{$search}%")
+                ->orWhereRaw((DB::getDriverName() === 'sqlite' ? "first_name || ' ' || last_name" : "CONCAT(first_name, ' ', last_name)").' like ?', ["%{$search}%"])
+                ->when(preg_match('/^#?(\d{1,2})$/', $search, $number), fn ($q3) => $q3->orWhere('jersey_number', (int) $number[1]))
+            ));
+
+        $players = (clone $base)->with('team')
+            ->when($this->teamFilter === 'brak', fn ($q) => $q->whereNull('team_id'))
+            ->when(ctype_digit($this->teamFilter), fn ($q) => $q->where('team_id', $this->teamFilter))
+            ->when($this->positionFilter === 'brak', fn ($q) => $q->whereNull('position'))
+            ->when(PlayerPosition::tryFrom($this->positionFilter), fn ($q, PlayerPosition $position) => $q->where(fn ($q2) => $q2->where('position', $position)->orWhereJsonContains('extra_positions', $position->value)))
             ->orderBy('team_id')
             ->orderBy('jersey_number')
             ->paginate(12);
@@ -367,6 +399,10 @@ class PlayerManager extends Component
 
         return view('livewire.admin.player-manager', [
             'players' => $players,
+            // Liczniki przy przyciskach filtrów (z uwzględnieniem wyszukiwania).
+            'teamCounts' => (clone $base)->selectRaw('team_id, count(*) as total')->groupBy('team_id')->pluck('total', 'team_id'),
+            'positionCounts' => (clone $base)->selectRaw('position, count(*) as total')->groupBy('position')->pluck('total', 'position'),
+            'duplicateNumbers' => Player::whereNotNull('team_id')->whereNotNull('jersey_number')->selectRaw('team_id, jersey_number')->groupBy('team_id', 'jersey_number')->havingRaw('count(*) > 1')->get()->map(fn ($row) => $row->team_id.'-'.$row->jersey_number)->all(),
             'teams' => $teams,
             'positions' => $positions,
             'playerAccounts' => $this->showModal ? User::withRole(UserRole::Player)->orderBy('name')->get(['id', 'name', 'email']) : collect(),

@@ -54,6 +54,9 @@ class Seo
             'telephone' => $site['contact_phone'] ?: null,
             'address' => self::postalAddress((string) $site['contact_address']),
             'sameAs' => array_values($site->socials()) ?: null,
+            'foundingDate' => $site['seo_founding_year'] ?: null,
+            'award' => array_values(array_filter(array_map('trim', preg_split('/\R/', (string) $site['seo_awards'])))) ?: null,
+            'description' => $site['site_description'] ?: null,
         ]);
     }
 

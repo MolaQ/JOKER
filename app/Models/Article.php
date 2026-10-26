@@ -14,6 +14,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Article extends Model
 {
+    protected static function booted(): void
+    {
+        // Opublikowany bez daty byłby niewidoczny na stronie: pusta data = teraz.
+        static::saving(function (Article $article) {
+            if ($article->status === 'published' && $article->published_at === null) {
+                $article->published_at = now();
+            }
+        });
+    }
+
     use HasEnglishVersion, HasSlugRouteKey;
 
     /** @use HasFactory<ArticleFactory> */
@@ -75,6 +85,29 @@ class Article extends Model
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now())
             ->orderBy('published_at', 'desc');
+    }
+
+    /**
+     * Kolejność na stronie: najpierw wyróżnione (przypięte), potem najnowsze.
+     */
+    public function scopeForListing($query)
+    {
+        return $query->published()->reorder()->orderByDesc('is_featured')->orderByDesc('published_at')->orderByDesc('id');
+    }
+
+    /**
+     * Stan do pokazania w panelu: szkic, zaplanowany, opublikowany albo archiwum.
+     *
+     * @return array{0: string, 1: string}
+     */
+    public function statusBadge(): array
+    {
+        return match (true) {
+            $this->status === 'published' && $this->published_at?->isFuture() => ['Zaplanowany na '.$this->published_at->format('d.m H:i'), 'bg-sky-50 text-sky-700 ring-sky-600/20'],
+            $this->status === 'published' => ['Opublikowany', 'bg-green-50 text-green-700 ring-green-600/20'],
+            $this->status === 'archived' => ['Archiwum (ukryty)', 'bg-yellow-50 text-yellow-800 ring-yellow-600/20'],
+            default => ['Szkic (ukryty)', 'bg-gray-50 text-gray-600 ring-gray-500/10'],
+        };
     }
 
     public function scopeFeatured($query)

@@ -1,27 +1,43 @@
 <div>
     <!-- Toolbar -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border-b border-gray-200">
-        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+    <div class="space-y-3 border-b border-gray-200 bg-white p-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <input
-                type="text"
+                type="search"
                 wire:model.live.debounce.300ms="search"
-                placeholder="Szukaj zawodnika..."
-                class="w-full sm:w-64 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"
+                placeholder="Szukaj: nazwisko, imię albo numer (np. 7)"
+                class="w-full sm:w-80 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"
             >
-            <select wire:model.live="teamFilter" class="w-full sm:w-56 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
-                <option value="">Wszystkie drużyny</option>
-                @foreach($teams as $team)
-                    <option value="{{ $team->id }}">{{ $team->name }}</option>
-                @endforeach
-            </select>
+            <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center gap-1.5 rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
+                <x-admin-icon name="plus" class="h-4 w-4" /> Dodaj zawodnika
+            </button>
         </div>
-        <button
-            type="button"
-            wire:click="openCreateModal"
-            class="inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700"
-        >
-            + Dodaj zawodnika
-        </button>
+        @php
+            $chip = 'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ring-1 ring-inset transition';
+            $on = 'bg-sky-600 text-white ring-sky-600';
+            $off = 'bg-white text-gray-700 ring-gray-300 hover:bg-gray-50';
+            $count = fn ($n) => '<span class="rounded-full bg-black/10 px-1.5 text-xs tabular-nums">'.(int) $n.'</span>';
+        @endphp
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Drużyna">
+            <span class="w-16 text-xs font-semibold uppercase tracking-wide text-gray-500">Drużyna</span>
+            <button type="button" wire:click="$set('teamFilter', '')" class="{{ $chip }} {{ $teamFilter === '' ? $on : $off }}">Wszystkie {!! $count($teamCounts->sum()) !!}</button>
+            @foreach($teams as $team)
+                <button type="button" wire:key="team-chip-{{ $team->id }}" wire:click="$set('teamFilter', '{{ $team->id }}')" class="{{ $chip }} {{ $teamFilter === (string) $team->id ? $on : $off }}">{{ $team->name }} {!! $count($teamCounts[$team->id] ?? 0) !!}</button>
+            @endforeach
+            @if(($teamCounts[''] ?? 0) > 0)
+                <button type="button" wire:click="$set('teamFilter', 'brak')" class="{{ $chip }} {{ $teamFilter === 'brak' ? $on : $off }}">Bez drużyny {!! $count($teamCounts['']) !!}</button>
+            @endif
+        </div>
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Pozycja">
+            <span class="w-16 text-xs font-semibold uppercase tracking-wide text-gray-500">Pozycja</span>
+            <button type="button" wire:click="$set('positionFilter', '')" class="{{ $chip }} {{ $positionFilter === '' ? $on : $off }}">Wszystkie</button>
+            @foreach($positions as $pos)
+                <button type="button" wire:key="pos-chip-{{ $pos->value }}" wire:click="$set('positionFilter', '{{ $pos->value }}')" class="{{ $chip }} {{ $positionFilter === $pos->value ? $on : $off }}">{{ $pos->label() }} {!! $count($positionCounts[$pos->value] ?? 0) !!}</button>
+            @endforeach
+            @if(($positionCounts[''] ?? 0) > 0)
+                <button type="button" wire:click="$set('positionFilter', 'brak')" class="{{ $chip }} {{ $positionFilter === 'brak' ? $on : $off }}">Bez pozycji {!! $count($positionCounts['']) !!}</button>
+            @endif
+        </div>
     </div>
 
     <table class="min-w-full divide-y divide-gray-300">
@@ -40,6 +56,9 @@
                 <tr wire:key="player-{{ $player->id }}">
                     <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-bold text-gray-900 sm:pl-6">
                         {{ $player->jersey_number ?? '—' }}
+                        @if(in_array($player->team_id.'-'.$player->jersey_number, $duplicateNumbers, true))
+                            <span class="ml-1 inline-flex align-middle text-amber-500" title="Ten numer ma w drużynie jeszcze ktoś"><x-admin-icon name="flag" class="h-4 w-4" /></span>
+                        @endif
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                         {{ $player->full_name }}
@@ -111,8 +130,11 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Numer</label>
-                                    <input type="number" wire:model="jersey_number" min="0" max="99" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                    <input type="number" wire:model.blur="jersey_number" min="0" max="99" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     @error('jersey_number') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    @if($taken = $this->numberTakenBy())
+                                        <p class="mt-1 text-xs text-amber-700">Uwaga: ten numer w drużynie ma też {{ implode(', ', $taken) }}. Zapisać można, jeśli to celowe.</p>
+                                    @endif
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Pozycja główna</label>
@@ -141,7 +163,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Drużyna</label>
-                                <select wire:model="team_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                <select wire:model.live="team_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     <option value="">{{ auth()->user()->managedTeamIds() === null ? '— bez drużyny (uzupełnisz później) —' : 'Wybierz drużynę' }}</option>
                                     @foreach($teams as $team)
                                         <option value="{{ $team->id }}">{{ $team->name }}</option>

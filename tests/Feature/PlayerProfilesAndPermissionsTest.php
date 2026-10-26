@@ -66,7 +66,9 @@ test('only first and last name are required, accounts are created from emails', 
         ->and($adam->fresh()->team_id)->toBe($this->team->id)
         ->and($adam->fresh()->isCaptain())->toBeTrue();
 
-    expect(DataImport::parse('players', "imie;nazwisko;druzyna;numer\nJan;Zając;Kadeci;5\n")[0]['errors'])->toContain('numer 5 w drużynie Kadeci ma już Adam Nowak');
+    $duplicate = DataImport::parse('players', "imie;nazwisko;druzyna;numer\nJan;Zając;Kadeci;5\n")[0];
+    expect($duplicate['errors'])->toBe([])
+        ->and($duplicate['warnings'])->toContain('numer 5 w drużynie Kadeci ma też Adam Nowak');
 });
 
 test('admin sets captain, interests, social links and the player account in the editor', function () {

@@ -31,7 +31,7 @@ class HomeController extends Controller
             ->limit(4)
             ->get();
 
-        $articles = Article::published()
+        $articles = Article::forListing()
             ->limit(5)
             ->get();
 
