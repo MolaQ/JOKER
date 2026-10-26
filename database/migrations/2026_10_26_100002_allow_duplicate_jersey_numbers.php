@@ -1,31 +1,14 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
 /**
- * Numer koszulki zwykle jest unikalny w drużynie, ale zdarzają się wyjątki:
- * zamiast blokady panel ostrzega o powtórzonym numerze.
+ * Wycofane: numer koszulki zostaje unikalny w drużynie (patrz 2026_10_26_100003).
+ * Pusta migracja zostaje, żeby bazy, które ją już uruchomiły, miały spójną historię.
  */
 return new class extends Migration
 {
-    public function up(): void
-    {
-        Schema::table('players', function (Blueprint $table) {
-            // Klucz obcy drużyny potrzebuje własnego indeksu, zanim usuniemy wspólny.
-            $table->index('team_id');
-            $table->index(['team_id', 'jersey_number']);
-            $table->dropUnique(['team_id', 'jersey_number']);
-        });
-    }
+    public function up(): void {}
 
-    public function down(): void
-    {
-        Schema::table('players', function (Blueprint $table) {
-            $table->unique(['team_id', 'jersey_number']);
-            $table->dropIndex(['team_id', 'jersey_number']);
-            $table->dropIndex(['team_id']);
-        });
-    }
+    public function down(): void {}
 };

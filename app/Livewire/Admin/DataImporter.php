@@ -57,11 +57,17 @@ class DataImporter extends Component
     {
         $this->type = DataImport::detectType($this->text) ?? $this->type;
         $this->rows = DataImport::parse($this->type, $this->text);
-        $count = DataImport::import($this->type, $this->rows);
+        $count = DataImport::import($this->type, $this->rows, $failed);
         $skipped = count($this->rows) - $count;
 
-        $this->toast('Zaimportowano: '.$count.($skipped ? ', pominięto z błędami: '.$skipped : '').'.');
+        $this->toast('Zaimportowano: '.$count.($skipped ? ', pominięto z błędami: '.$skipped : '').'.', $count === 0 && $skipped ? 'error' : 'success');
         $this->rows = DataImport::parse($this->type, $this->text);
+
+        foreach ($this->rows as $index => $row) {
+            if (isset($failed[$row['line']])) {
+                $this->rows[$index]['errors'][] = $failed[$row['line']];
+            }
+        }
     }
 
     public function render(): View

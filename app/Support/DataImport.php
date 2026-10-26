@@ -8,6 +8,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\UserRole;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -141,10 +142,10 @@ class DataImport
                 }
             }
 
-            $rows[] = ['line' => $number + 2, 'data' => $data, 'errors' => [...$errors, ...self::validate($type, $data)], 'warnings' => self::warnings($type, $data), 'action' => self::action($type, $data)];
+            $rows[] = ['line' => $number + 2, 'data' => $data, 'errors' => [...$errors, ...self::validate($type, $data)], 'warnings' => [], 'action' => self::action($type, $data)];
         }
 
-        return $rows;
+        return $type === 'players' ? self::markDuplicateNumbers($rows) : $rows;
     }
 
     /**
@@ -152,21 +153,60 @@ class DataImport
      *
      * @param  list<array{line: int, data: array<string, string>, errors: list<string>, action: string}>  $rows
      */
-    public static function import(string $type, array $rows): int
+    public static function import(string $type, array $rows, ?array &$failed = null): int
     {
         $valid = array_values(array_filter($rows, fn (array $row) => $row['errors'] === []));
+        $failed = [];
+        $imported = 0;
 
-        DB::transaction(function () use ($type, $valid) {
-            foreach ($valid as $row) {
-                match ($type) {
+        // Każdy wiersz osobno: błąd bazy w jednym wierszu (np. zajęty numer) nie wywraca całego importu.
+        foreach ($valid as $row) {
+            try {
+                DB::transaction(fn () => match ($type) {
                     'teams' => self::importTeam($row['data']),
                     'staff' => self::importStaff($row['data']),
                     'players' => self::importPlayer($row['data']),
-                };
+                });
+                $imported++;
+            } catch (QueryException $exception) {
+                report($exception);
+                $failed[$row['line']] = str_contains($exception->getMessage(), 'jersey_number')
+                    ? 'ten numer ma już inny zawodnik tej drużyny'
+                    : 'nie udało się zapisać wiersza (błąd bazy danych)';
             }
-        });
+        }
 
-        return count($valid);
+        return $imported;
+    }
+
+    /**
+     * Ten sam numer dwa razy w jednej drużynie w pliku: drugi wiersz dostaje błąd.
+     *
+     * @param  list<array{line: int, data: array<string, string>, errors: list<string>, warnings: list<string>, action: string}>  $rows
+     * @return list<array{line: int, data: array<string, string>, errors: list<string>, warnings: list<string>, action: string}>
+     */
+    private static function markDuplicateNumbers(array $rows): array
+    {
+        $seen = [];
+
+        foreach ($rows as $index => $row) {
+            $data = $row['data'];
+
+            if ($data['jersey_number'] === '' || ! ($team = self::team($data['team']))) {
+                continue;
+            }
+
+            $key = $team->id.'-'.(int) $data['jersey_number'];
+            $name = self::normalize($data['first_name'].' '.$data['last_name']);
+
+            if (isset($seen[$key]) && $seen[$key]['name'] !== $name) {
+                $rows[$index]['errors'][] = 'numer '.$data['jersey_number'].' w drużynie '.$team->name.' jest już w wierszu '.$seen[$key]['line'];
+            } else {
+                $seen[$key] ??= ['name' => $name, 'line' => $row['line']];
+            }
+        }
+
+        return $rows;
     }
 
     /**
@@ -207,6 +247,8 @@ class DataImport
             }
             if ($number('jersey_number', 0, 99)) {
                 $errors[] = 'numer musi być liczbą 0-99';
+            } elseif ($data['jersey_number'] !== '' && ($taken = self::numberTakenBy($data))) {
+                $errors[] = 'numer '.$data['jersey_number'].' w drużynie '.$data['team'].' ma już '.$taken;
             }
             if ($data['captain'] !== '' && self::flag($data['captain']) === null) {
                 $errors[] = 'kapitan: wpisz tak albo nie';
@@ -233,24 +275,22 @@ class DataImport
     }
 
     /**
-     * Rzeczy do sprawdzenia, które nie blokują importu (np. powtórzony numer koszulki).
+     * Kto inny w tej drużynie nosi już ten numer (numer w drużynie musi być unikalny), albo null.
      *
      * @param  array<string, string>  $data
-     * @return list<string>
      */
-    private static function warnings(string $type, array $data): array
+    private static function numberTakenBy(array $data): ?string
     {
-        if ($type !== 'players' || $data['jersey_number'] === '' || ! ctype_digit($data['jersey_number']) || ! ($team = self::team($data['team']))) {
-            return [];
+        if (! ctype_digit($data['jersey_number']) || ! ($team = self::team($data['team']))) {
+            return null;
         }
 
         $name = self::normalize($data['first_name'].' '.$data['last_name']);
 
         return Player::where('team_id', $team->id)->where('jersey_number', (int) $data['jersey_number'])->get()
             ->reject(fn (Player $player) => self::normalize($player->first_name.' '.$player->last_name) === $name)
-            ->map(fn (Player $player) => 'numer '.$data['jersey_number'].' w drużynie '.$team->name.' ma też '.$player->full_name)
-            ->values()
-            ->all();
+            ->map->full_name
+            ->first();
     }
 
     /**

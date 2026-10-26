@@ -57,7 +57,7 @@
                     <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-bold text-gray-900 sm:pl-6">
                         {{ $player->jersey_number ?? '—' }}
                         @if(in_array($player->team_id.'-'.$player->jersey_number, $duplicateNumbers, true))
-                            <span class="ml-1 inline-flex align-middle text-amber-500" title="Ten numer ma w drużynie jeszcze ktoś"><x-admin-icon name="flag" class="h-4 w-4" /></span>
+                            <span class="ml-1 inline-flex align-middle text-amber-500" title="Ten numer ma w drużynie jeszcze ktoś: popraw jednego z zawodników"><x-admin-icon name="flag" class="h-4 w-4" /></span>
                         @endif
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
@@ -132,8 +132,8 @@
                                     <label class="block text-sm font-medium text-gray-700">Numer</label>
                                     <input type="number" wire:model.blur="jersey_number" min="0" max="99" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     @error('jersey_number') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                                    @if($taken = $this->numberTakenBy())
-                                        <p class="mt-1 text-xs text-amber-700">Uwaga: ten numer w drużynie ma też {{ implode(', ', $taken) }}. Zapisać można, jeśli to celowe.</p>
+                                    @if(! $errors->has('jersey_number') && ($taken = $this->numberTakenBy()))
+                                        <p class="mt-1 text-xs text-red-600">Ten numer w drużynie ma już {{ implode(', ', $taken) }}.</p>
                                     @endif
                                 </div>
                                 <div>

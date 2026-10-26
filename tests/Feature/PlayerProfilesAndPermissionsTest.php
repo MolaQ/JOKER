@@ -66,9 +66,13 @@ test('only first and last name are required, accounts are created from emails', 
         ->and($adam->fresh()->team_id)->toBe($this->team->id)
         ->and($adam->fresh()->isCaptain())->toBeTrue();
 
-    $duplicate = DataImport::parse('players', "imie;nazwisko;druzyna;numer\nJan;Zając;Kadeci;5\n")[0];
-    expect($duplicate['errors'])->toBe([])
-        ->and($duplicate['warnings'])->toContain('numer 5 w drużynie Kadeci ma też Adam Nowak');
+    // Numer w drużynie jest unikalny: wiersz z zajętym numerem (także drugi taki w pliku) nie wchodzi, reszta tak.
+    $rows = DataImport::parse('players', "imie;nazwisko;druzyna;numer\nJan;Zając;Kadeci;5\nPiotr;Lis;Kadeci;9\nOskar;Kos;Kadeci;9\n");
+    expect($rows[0]['errors'])->toContain('numer 5 w drużynie Kadeci ma już Adam Nowak')
+        ->and($rows[1]['errors'])->toBe([])
+        ->and($rows[2]['errors'])->toContain('numer 9 w drużynie Kadeci jest już w wierszu 3')
+        ->and(DataImport::import('players', $rows))->toBe(1)
+        ->and(Player::count())->toBe(3);
 });
 
 test('admin sets captain, interests, social links and the player account in the editor', function () {

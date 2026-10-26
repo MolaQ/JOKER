@@ -117,7 +117,7 @@ class PlayerManager extends Component
         return [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'jersey_number' => 'nullable|integer|min:0|max:99',
+            'jersey_number' => array_filter(['nullable', 'integer', 'min:0', 'max:99', $this->team_id ? Rule::unique('players', 'jersey_number')->where('team_id', $this->team_id)->ignore($this->editingId) : null]),
             'position' => 'nullable|in:setter,outside_hitter,opposite,middle_blocker,libero',
             'is_captain' => 'boolean',
             'interests' => 'nullable|string|max:500',
@@ -168,6 +168,7 @@ class PlayerManager extends Component
     {
         return [
             'social_links.*.regex' => 'Adres profilu zacznij od https://',
+            'jersey_number.unique' => 'Ten numer ma już inny zawodnik tej drużyny. Zmień numer albo najpierw popraw tamtego zawodnika.',
         ];
     }
 
