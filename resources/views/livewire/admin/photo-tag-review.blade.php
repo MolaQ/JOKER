@@ -5,7 +5,7 @@
             <ul class="divide-y divide-gray-200">
                 @foreach($tags as $tag)
                     <li class="flex flex-wrap items-center gap-4 p-4 text-sm" wire:key="tag-{{ $tag->id }}">
-                        <a href="{{ $tag->photo->url() }}" target="_blank" class="block h-16 w-24 flex-none overflow-hidden rounded bg-gray-100"><img src="{{ $tag->photo->url() }}" alt="" class="h-full w-full object-cover"></a>
+                        <a href="{{ $tag->photo->url() }}" target="_blank" class="block h-16 w-24 flex-none overflow-hidden rounded bg-gray-100"><img src="{{ $tag->photo->thumbUrl() }}" alt="" class="h-full w-full object-cover"></a>
                         <div class="min-w-0 flex-1">
                             <p><span class="font-semibold text-gray-900">{{ $tag->label() }}</span> na zdjęciu z galerii „{{ $tag->photo->gallery->title }}”</p>
                             <p class="text-gray-500">Proponuje: {{ $tag->proposer?->name }} · {{ $tag->created_at->format('d.m.Y H:i') }}@unless($tag->isVisible()) · <span class="text-red-700">brak zgody na wizerunek, oznaczenie nie będzie widoczne</span>@endunless</p>

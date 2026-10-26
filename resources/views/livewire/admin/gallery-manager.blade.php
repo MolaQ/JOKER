@@ -67,7 +67,7 @@
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 @foreach($gallery->photos as $photo)
                     <div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-zinc-200" wire:key="photo-{{ $photo->id }}">
-                        <img src="{{ $photo->url() }}" alt="" class="aspect-[4/3] w-full object-cover" loading="lazy">
+                        <img src="{{ $photo->thumbUrl() }}" alt="" class="aspect-[4/3] w-full object-cover" loading="lazy">
                         <div class="space-y-2 p-3 text-sm">
                             <input type="text" wire:model.blur.live="captions.{{ $photo->id }}" placeholder="Opis zdjęcia" class="block w-full rounded-md border-gray-300 text-sm">
                             <div class="flex flex-wrap gap-1">

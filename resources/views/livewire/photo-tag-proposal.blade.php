@@ -3,7 +3,7 @@
         <div class="fixed inset-0 z-[80] flex items-center justify-center bg-ink/70 p-4" role="dialog" aria-modal="true" wire:keydown.escape.window="close">
             <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
                 <div class="flex items-start gap-4">
-                    <img src="{{ $photo->url() }}" alt="" class="h-20 w-28 flex-none rounded-lg object-cover">
+                    <img src="{{ $photo->thumbUrl() }}" alt="" class="h-20 w-28 flex-none rounded-lg object-cover">
                     <div>
                         <h2 class="text-lg font-semibold text-zinc-900">{{ __('Kto jest na zdjęciu?') }}</h2>
                         <p class="text-sm text-zinc-500">{{ __('Oznaczenie pojawi się po zatwierdzeniu przez klub.') }}</p>

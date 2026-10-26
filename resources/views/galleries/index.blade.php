@@ -27,7 +27,7 @@
                 <a href="{{ route('galleries.show', $gallery) }}" class="card card-hover group overflow-hidden">
                     <div class="relative aspect-[4/3] overflow-hidden bg-zinc-100">
                         @if($cover)
-                            <img src="{{ $cover->url() }}" alt="{{ $gallery->title }}" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                            <img src="{{ $cover->thumbUrl() }}" alt="{{ $gallery->title }}" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105">
                         @endif
                         <span class="chip absolute top-4 left-4 bg-white/90">📷 {{ $gallery->photos_count }}</span>
                     </div>

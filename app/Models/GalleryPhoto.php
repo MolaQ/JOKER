@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ImageOptimizer;
 use App\Support\Media;
 use Database\Factories\GalleryPhotoFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 
 class GalleryPhoto extends Model
 {
@@ -22,6 +24,13 @@ class GalleryPhoto extends Model
         'display_order',
     ];
 
+    protected static function booted(): void
+    {
+        // Każde nowe zdjęcie galerii (panel, transmisje i galerie, propozycje rodziców) jest od razu zmniejszane.
+        static::created(fn (GalleryPhoto $photo) => ImageOptimizer::process($photo->path));
+        static::deleted(fn (GalleryPhoto $photo) => Storage::disk('public')->delete(ImageOptimizer::thumbPath($photo->path)));
+    }
+
     public function gallery(): BelongsTo
     {
         return $this->belongsTo(Gallery::class);
@@ -30,6 +39,16 @@ class GalleryPhoto extends Model
     public function url(): ?string
     {
         return Media::url($this->path);
+    }
+
+    /**
+     * Mała wersja do siatki galerii; starsze zdjęcia bez miniatury pokazują oryginał.
+     */
+    public function thumbUrl(): ?string
+    {
+        $thumb = ImageOptimizer::thumbPath((string) $this->path);
+
+        return Storage::disk('public')->exists($thumb) ? Media::url($thumb) : $this->url();
     }
 
     public function tags(): HasMany

@@ -77,7 +77,7 @@
                         <div class="flex flex-wrap items-center justify-between gap-3 p-4">
                             <div class="flex min-w-0 items-center gap-3">
                                 @if($gallery->photos->first())
-                                    <img src="{{ $gallery->photos->first()->url() }}" alt="" class="h-12 w-16 shrink-0 rounded object-cover" onerror="this.style.visibility='hidden'">
+                                    <img src="{{ $gallery->photos->first()->thumbUrl() }}" alt="" class="h-12 w-16 shrink-0 rounded object-cover" onerror="this.style.visibility='hidden'">
                                 @endif
                                 <div class="min-w-0">
                                     <p class="truncate font-semibold text-gray-900">{{ $gallery->title }}</p>
@@ -119,7 +119,7 @@
                                     <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                                         @foreach($gallery->photos as $photo)
                                             <li class="flex gap-3 rounded-md bg-white p-2 ring-1 ring-gray-200" wire:key="photo-{{ $photo->id }}">
-                                                <img src="{{ $photo->url() }}" alt="" class="h-20 w-24 shrink-0 rounded object-cover" onerror="this.style.visibility='hidden'">
+                                                <img src="{{ $photo->thumbUrl() }}" alt="" class="h-20 w-24 shrink-0 rounded object-cover" onerror="this.style.visibility='hidden'">
                                                 <div class="flex min-w-0 flex-1 flex-col gap-2">
                                                     <input type="text" wire:model="captions.{{ $photo->id }}" placeholder="Podpis (opcjonalnie)" class="block w-full rounded-md border-gray-300 text-xs shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                                     <div class="flex items-center gap-1 text-xs">

@@ -217,7 +217,7 @@
         <div class="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
             @foreach($photos as $photo)
                 <a href="{{ route('galleries.show', $photo->gallery) }}" class="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-zinc-100" title="{{ $photo->gallery->title }}">
-                    <img src="{{ $photo->url() }}" alt="{{ $photo->altText($player->full_name) }}" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                    <img src="{{ $photo->thumbUrl() }}" alt="{{ $photo->altText($player->full_name) }}" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105">
                 </a>
             @endforeach
         </div>

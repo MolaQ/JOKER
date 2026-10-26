@@ -8,6 +8,7 @@
         ->map(fn ($photo) => [
             'id' => $photo->id,
             'src' => $photo->url(),
+            'thumb' => $photo->thumbUrl(),
             'caption' => (string) $photo->caption,
             'alt' => $photo->altText($gallery->title),
             'tags' => $photo->visibleTags()->map(fn ($tag) => ['name' => $tag->label(), 'url' => $tag->url()])->values(),
@@ -45,7 +46,7 @@
         <div class="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
             @foreach($photos as $i => $photo)
                 <button type="button" x-on:click="show({{ $i }})" class="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-zinc-100" aria-label="{{ __('Powiększ zdjęcie :number', ['number' => $i + 1]) }}">
-                    <img src="{{ $photo['src'] }}" alt="{{ $photo['alt'] }}" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                    <img src="{{ $photo['thumb'] }}" alt="{{ $photo['alt'] }}" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105">
                 </button>
             @endforeach
         </div>
