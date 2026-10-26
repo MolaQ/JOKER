@@ -1,17 +1,27 @@
 @echo off
-rem Kopia strony Jokera na inny dysk (np. pendrive albo dysk D), zeby uruchomic ja w domu.
-rem Kopiuje pliki (bez dowiazania public\storage, cache i node_modules) oraz zrzut bazy MySQL.
-rem Uruchom dwuklikiem. Sciezki zmienisz w dwoch liniach ponizej.
+rem Kopia strony Jokera na inny dysk (np. pendrive albo dysk D) - w pracy przed wyjsciem do domu
+rem i w domu przed powrotem do pracy. Kopiuje strone, z ktorej uruchomiono ten plik
+rem (bez dowiazania public\storage, cache i node_modules) oraz zrzut bazy MySQL.
+rem Uruchom dwuklikiem z folderu narzedzia strony. Domyslny dysk docelowy zmienisz ponizej.
 chcp 65001 >nul
 setlocal EnableDelayedExpansion
 
-set "ZRODLO=C:\xampp\www\molak\JOKER"
-set "CEL=D:\JOKER"
+for %%I in ("%~dp0..") do set "ZRODLO=%%~fI"
+set "CEL_DOMYSLNY=D:\JOKER"
+set "CEL="
+set /p "CEL=Dokad skopiowac strone? [Enter = %CEL_DOMYSLNY%]: "
+if not defined CEL set "CEL=%CEL_DOMYSLNY%"
+for %%I in ("%CEL%") do set "CEL=%%~fI"
+if /i "%CEL%"=="%ZRODLO%" (
+    echo Strona juz jest w %CEL% - wybierz inny folder ^(np. E:\JOKER na pendrive^).
+    pause
+    exit /b 1
+)
 rem Sciezke do mysqldump.exe skrypt znajdzie sam; mozesz ja tez wpisac tutaj:
 set "MYSQLDUMP_RECZNIE="
 
 if not exist "%ZRODLO%\artisan" (
-    echo Nie znaleziono strony w %ZRODLO%. Popraw sciezke ZRODLO w tym pliku.
+    echo Nie znaleziono strony w %ZRODLO%. Uruchom ten plik z folderu narzedzia strony.
     pause
     exit /b 1
 )
@@ -81,5 +91,6 @@ echo Baza zapisana w %CEL%\_baza\joker.sql
 :koniec
 echo.
 echo Gotowe. Pliki sa w %CEL%, baza w %CEL%\_baza\joker.sql
-echo W domu uruchom narzedzia\przywroc-w-domu.bat z folderu, do ktorego skopiujesz strone.
+echo W domu: pierwszy raz uruchom narzedzia\przywroc-w-domu.bat w skopiowanej stronie.
+echo Powrot zmian do pracy: w pracy uruchom narzedzia\przywroc-z-dysku.bat ze strony w pracy.
 pause
