@@ -147,6 +147,7 @@ class SearchIndex
         // Najpierw nadchodzące mecze (od najbliższego), potem rozegrane (od najnowszego).
         $games = Game::with(['team', 'opponentTeam', 'competition'])
             ->where('game_date', '>=', now()->subMonths(6))
+            ->where('status', '!=', 'cancelled')
             ->get()
             ->sortBy(fn (Game $game) => $game->game_date >= now()
                 ? $game->game_date->timestamp

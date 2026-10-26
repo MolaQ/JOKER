@@ -123,6 +123,13 @@
                             </div>
 
                             <div>
+                                <label class="block text-sm font-semibold text-gray-900" for="competition-withdrawn">Drużyny wycofane z rozgrywek</label>
+                                <p class="mt-1 text-xs text-gray-600">Każda w osobnej linii, tak jak nazywa ją strona związku. Nierozegrane mecze z tymi drużynami są odwoływane i znikają z kalendarza; po usunięciu nazwy wracają. Dopisek „zespół wycofał się” ze strony wielkopolskasiatkowka.com.pl jest dopisywany tu automatycznie przy pobieraniu terminarza.</p>
+                                <textarea id="competition-withdrawn" wire:model="withdrawn_teams" rows="2" class="mt-2 block w-full rounded-md border-gray-300 text-sm shadow-sm" placeholder="np. KS Przykładowo"></textarea>
+                                @error('withdrawn_teams') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
                                 <label class="block text-sm font-medium text-gray-700">Opis</label>
                                 <x-rich-text-editor model="description" placeholder="Opis rozgrywek..." height="min-h-[130px]" />
                             </div>

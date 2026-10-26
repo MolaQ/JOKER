@@ -70,6 +70,9 @@ class CompetitionManager extends Component
 
     public string $source_url = '';
 
+    /** Drużyny wycofane z rozgrywek, każda w osobnej linii. */
+    public string $withdrawn_teams = '';
+
     public string $search = '';
 
     protected function rules(): array
@@ -96,6 +99,7 @@ class CompetitionManager extends Component
             'display_names.*' => 'nullable|string|max:255',
             'display_suffixes' => 'array',
             'display_suffixes.*' => 'nullable|string|max:60',
+            'withdrawn_teams' => ['nullable', 'string', 'max:2000'],
             'source_url' => ['nullable', 'string', 'max:2000', 'regex:/^(\s*https?:\/\/\S+\s*)*$/'],
         ];
     }
@@ -144,6 +148,7 @@ class CompetitionManager extends Component
         $this->display_names = $competition->teams->mapWithKeys(fn (Team $team) => [$team->id => (string) $team->pivot->display_name])->all();
         $this->display_suffixes = $competition->teams->mapWithKeys(fn (Team $team) => [$team->id => (string) $team->pivot->display_suffix])->all();
         $this->source_url = (string) $competition->source_url;
+        $this->withdrawn_teams = implode("\n", $competition->withdrawn_teams ?? []);
 
         $this->showModal = true;
     }
@@ -154,6 +159,7 @@ class CompetitionManager extends Component
         $teamIds = $validated['team_ids'] ?? [];
         unset($validated['team_ids'], $validated['external_names'], $validated['display_names'], $validated['display_suffixes']);
         $validated['source_url'] = trim($validated['source_url'] ?? '') ?: null;
+        $validated['withdrawn_teams'] = collect(preg_split('/\R/', (string) ($validated['withdrawn_teams'] ?? '')))->map(fn (string $name) => trim($name))->filter()->unique()->values()->all() ?: null;
         $validated['level'] = trim($validated['level'] ?? '') ?: null;
         $validated['level_id'] = $validated['level'] ? CompetitionLevel::where('name', $validated['level'])->value('id') : null;
 
@@ -173,6 +179,10 @@ class CompetitionManager extends Component
                 'display_suffix' => trim($this->display_suffixes[$teamId] ?? '') ?: null,
             ],
         ])->all());
+
+        if ($cancelled = $competition->applyWithdrawals()) {
+            $this->toast('Zmieniono mecze z wycofanymi drużynami: '.$cancelled.'.');
+        }
 
         if ($competition->source_url) {
             $this->syncCompetition($competition);
@@ -264,6 +274,7 @@ class CompetitionManager extends Component
         $this->display_names = [];
         $this->display_suffixes = [];
         $this->source_url = '';
+        $this->withdrawn_teams = '';
         $this->resetErrorBag();
     }
 

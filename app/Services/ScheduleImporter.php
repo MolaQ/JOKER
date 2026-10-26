@@ -52,6 +52,7 @@ class ScheduleImporter
                     $page = app(WielkopolskaSiatkowkaParser::class)->parse(WielkopolskaSiatkowkaParser::contentFrom($body));
                     $siteRows = $siteRows->merge($page['matches']);
                     $siteTables = $siteTables->merge($page['tables']);
+                    $this->rememberWithdrawals($competition, $page['withdrawn'] ?? []);
                 }
 
                 continue;
@@ -87,6 +88,7 @@ class ScheduleImporter
 
         $result = $this->import($competition, $rows, $siteRows, $listRows, recalculateStandings: ! $standingsImported);
         $this->importDetails($competition, $rows->merge($listRows), $errors);
+        $result['cancelled'] = $competition->applyWithdrawals();
 
         $result['errors'] = $errors;
         $result['tables'] = $standingsImported;
@@ -97,6 +99,20 @@ class ScheduleImporter
         ])->save();
 
         return $result;
+    }
+
+    /**
+     * Dopisuje do rozgrywek drużyny, które według strony związku się wycofały (wpisanych ręcznie nie usuwa).
+     *
+     * @param  array<int, string>  $names
+     */
+    private function rememberWithdrawals(Competition $competition, array $names): void
+    {
+        $new = collect($names)->reject(fn (string $name) => $competition->hasWithdrawn($name));
+
+        if ($new->isNotEmpty()) {
+            $competition->forceFill(['withdrawn_teams' => [...($competition->withdrawn_teams ?? []), ...$new->values()->all()]])->save();
+        }
     }
 
     /**
@@ -226,6 +242,11 @@ class ScheduleImporter
 
             $game = $this->findGame($competition, $row, $ourTeam->id, $siteKey);
             $wasNew = ! $game->exists;
+
+            // Rywal wycofał się z rozgrywek: nie dodajemy jego meczów (istniejące odwoła applyWithdrawals).
+            if ($wasNew && ($site['home_score'] ?? $row['home_score'] ?? null) === null && $competition->hasWithdrawn($opponentName)) {
+                continue;
+            }
             $wasFinished = $game->status === 'finished';
 
             $game->fill([
@@ -893,6 +914,10 @@ class ScheduleImporter
 
         if ($result['unmatched']) {
             $parts[] = 'Nieprzypisane nazwy: '.implode(', ', $result['unmatched']).'.';
+        }
+
+        if ($result['cancelled'] ?? 0) {
+            $parts[] = "Odwołane mecze z wycofanymi drużynami: {$result['cancelled']}.";
         }
 
         if ($result['tables'] ?? false) {

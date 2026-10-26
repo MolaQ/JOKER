@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasReadableRouteKey;
+use App\Services\ScheduleImporter;
 use Database\Factories\CompetitionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -32,6 +33,7 @@ class Competition extends Model
         'season_id',
         'description',
         'source_url',
+        'withdrawn_teams',
         'synced_at',
         'sync_message',
         'display_order',
@@ -48,8 +50,47 @@ class Competition extends Model
     {
         return [
             'standings_criteria' => 'array',
+            'withdrawn_teams' => 'array',
             'synced_at' => 'datetime',
         ];
+    }
+
+    /** Dopisek przy meczach odwołanych z powodu wycofania rywala (po nim poznajemy, co można przywrócić). */
+    public const WITHDRAWN_NOTE = 'rywal wycofał się z rozgrywek';
+
+    /**
+     * Czy drużyna o tej nazwie wycofała się z tych rozgrywek (porównanie bez wielkości liter i znaków).
+     */
+    public function hasWithdrawn(?string ...$names): bool
+    {
+        $withdrawn = collect($this->withdrawn_teams ?? [])->map(fn (string $name) => ScheduleImporter::key($name))->filter();
+
+        return collect($names)->filter()->contains(fn (string $name) => $withdrawn->contains(ScheduleImporter::key($name)));
+    }
+
+    /**
+     * Odwołuje nierozegrane mecze z wycofanymi drużynami, a mecze z drużynami skreślonymi z listy przywraca.
+     * Rozegranych meczów (także walkowerów z wynikiem) nie zmienia.
+     *
+     * @return int liczba zmienionych meczów
+     */
+    public function applyWithdrawals(): int
+    {
+        $changed = 0;
+
+        foreach ($this->games()->with('opponentTeam')->where('status', '!=', 'finished')->get() as $game) {
+            $withdrawn = $this->hasWithdrawn($game->opponent, $game->opponentTeam?->full_name, ...($game->opponentTeam?->aliases ?? []));
+
+            if ($withdrawn && $game->status !== 'cancelled') {
+                $game->update(['status' => 'cancelled', 'result_note' => self::WITHDRAWN_NOTE]);
+                $changed++;
+            } elseif (! $withdrawn && $game->status === 'cancelled' && $game->result_note === self::WITHDRAWN_NOTE) {
+                $game->update(['status' => 'scheduled', 'result_note' => null]);
+                $changed++;
+            }
+        }
+
+        return $changed;
     }
 
     public function season(): BelongsTo

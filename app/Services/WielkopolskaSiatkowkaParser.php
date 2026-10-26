@@ -58,9 +58,10 @@ class WielkopolskaSiatkowkaParser
     {
         $matches = collect();
         $tables = collect();
+        $withdrawn = [];
 
         if (trim($html) === '') {
-            return ['matches' => $matches, 'tables' => $tables];
+            return ['matches' => $matches, 'tables' => $tables, 'withdrawn' => []];
         }
 
         $document = new DOMDocument;
@@ -81,6 +82,10 @@ class WielkopolskaSiatkowkaParser
             /** @var DOMElement $block */
             if ($block->nodeName !== 'table') {
                 $text = self::clean($block->textContent);
+
+                if (($name = self::withdrawnTeam($text)) !== null) {
+                    $withdrawn[ScheduleImporter::key($name)] = $name;
+                }
 
                 if ($text === '' || mb_strlen($text) > 120) {
                     continue;
@@ -110,6 +115,10 @@ class WielkopolskaSiatkowkaParser
                 $cells = [];
                 foreach ($xpath->query('./td|./th', $tableRow) as $cell) {
                     $cells[] = self::clean($cell->textContent);
+
+                    if (($name = self::withdrawnTeam(end($cells))) !== null) {
+                        $withdrawn[ScheduleImporter::key($name)] = $name;
+                    }
                 }
                 $rows[] = $cells;
             }
@@ -161,7 +170,28 @@ class WielkopolskaSiatkowkaParser
             }
         }
 
-        return ['matches' => $matches, 'tables' => $tables];
+        return ['matches' => $matches, 'tables' => $tables, 'withdrawn' => array_values($withdrawn)];
+    }
+
+    /**
+     * Nazwa drużyny z dopisku o wycofaniu, np. „NKS Czarnków – zespół wycofał się”,
+     * „NKS Czarnków (wycofana)” albo „Drużyna NKS Czarnków wycofała się z rozgrywek”.
+     */
+    public static function withdrawnTeam(string $text): ?string
+    {
+        $patterns = [
+            '/^(.{3,80}?)\s*[–—-]\s*(?:zespół|drużyna|klub)?\s*(?:wycofał[a]?\s+się|wycofan[ya]|wycofanie)/iu',
+            '/^(.{3,80}?)\s*\(\s*(?:wycofał[a]?\s+się|wycofan[ya]|wycofanie)[^)]*\)/iu',
+            '/(?:zespół|drużyna)\s+(.{3,80}?)\s+wycofał[a]?\s+się/iu',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text, $m)) {
+                return trim($m[1], " \t\n\r\0\x0B.,:;\"„”");
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -80,6 +80,8 @@ class GamesBrowser extends Component
     {
         return Game::with(['team', 'competition.teams', 'opponentTeam', 'articles', 'tournament'])
             ->when($this->selectedSeason, fn ($query, Season $season) => $query->where('season_id', $season->id))
+            // Odwołane mecze (np. rywal wycofał się z rozgrywek) nie trafiają do kalendarza.
+            ->where('status', '!=', 'cancelled')
             ->orderBy('game_date')
             ->get();
     }
