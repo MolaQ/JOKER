@@ -159,7 +159,7 @@ class CompetitionManager extends Component
         $teamIds = $validated['team_ids'] ?? [];
         unset($validated['team_ids'], $validated['external_names'], $validated['display_names'], $validated['display_suffixes']);
         $validated['source_url'] = trim($validated['source_url'] ?? '') ?: null;
-        $validated['withdrawn_teams'] = collect(preg_split('/\R/', (string) ($validated['withdrawn_teams'] ?? '')))->map(fn (string $name) => trim($name))->filter()->unique()->values()->all() ?: null;
+        $validated['withdrawn_teams'] = collect(preg_split('/\R/u', (string) ($validated['withdrawn_teams'] ?? '')))->map(fn (string $name) => trim($name))->filter()->unique()->values()->all() ?: null;
         $validated['level'] = trim($validated['level'] ?? '') ?: null;
         $validated['level_id'] = $validated['level'] ? CompetitionLevel::where('name', $validated['level'])->value('id') : null;
 

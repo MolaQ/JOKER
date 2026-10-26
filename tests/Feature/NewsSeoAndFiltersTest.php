@@ -10,6 +10,7 @@ use App\Models\Season;
 use App\Models\Team;
 use App\Models\User;
 use App\Support\Sitemap;
+use App\Support\SiteSettings;
 use Livewire\Livewire;
 
 test('an article published without a date shows up at once and a featured one is pinned first', function () {
@@ -88,4 +89,16 @@ test('lista artykułów w panelu pokazuje polubienia, komentarze, film i galeri�
         ->assertSee('+1')
         ->assertSee('Film')
         ->assertSee('Galeria');
+});
+
+test('brązowe odznaki PZPS są w stopce i dopisują się do wyróżnień zapisanych w panelu', function () {
+    $this->get('/')->assertSee('Brązowy Ośrodek PZPS 2024/25, 2025/26 i 2026')->assertSee('Złoty certyfikat');
+
+    app(SiteSettings::class)->set(['seo_awards' => 'Nagroda prezydenta miasta (2025)']);
+    $migration = require database_path('migrations/2026_10_26_100005_add_pzps_bronze_award.php');
+    $migration->up();
+    $migration->up();
+
+    expect(substr_count((string) app(SiteSettings::class)->get('seo_awards'), 'Brązowy Ośrodek PZPS'))->toBe(1)
+        ->and(app(SiteSettings::class)->get('seo_awards'))->toStartWith('Nagroda prezydenta miasta (2025)');
 });

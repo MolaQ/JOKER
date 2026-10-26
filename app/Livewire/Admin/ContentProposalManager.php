@@ -82,7 +82,7 @@ class ContentProposalManager extends Component
 
     private function publishArticle(ContentProposal $proposal): string
     {
-        $paragraphs = collect(preg_split('/\R{2,}/', trim((string) $proposal->content)))
+        $paragraphs = collect(preg_split('/\R{2,}/u', trim((string) $proposal->content)))
             ->map(fn (string $paragraph) => '<p>'.nl2br(e(trim($paragraph)), false).'</p>')
             ->implode('');
         $image = collect($proposal->files ?? [])->first();

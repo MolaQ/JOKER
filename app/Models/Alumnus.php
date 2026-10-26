@@ -62,7 +62,7 @@ class Alumnus extends Model
      */
     public function achievementList(): array
     {
-        return array_values(array_filter(array_map('trim', preg_split('/\R/', (string) $this->achievements))));
+        return array_values(array_filter(array_map('trim', preg_split('/\R/u', (string) $this->achievements))));
     }
 
     public function link(): ?string

@@ -29,6 +29,6 @@ class SupportPackage extends Model
      */
     public function benefitList(): array
     {
-        return array_values(array_filter(array_map('trim', preg_split('/\R/', (string) $this->benefits))));
+        return array_values(array_filter(array_map('trim', preg_split('/\R/u', (string) $this->benefits))));
     }
 }

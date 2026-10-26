@@ -32,7 +32,7 @@ return [
             'label' => 'Wyszukiwarki (SEO)',
             'icon' => 'chart',
             'fields' => [
-                'seo_awards' => ['type' => 'textarea', 'label' => 'Wyróżnienia i certyfikaty klubu (każde w nowej linii)', 'help' => 'Trafiają do danych dla Google o klubie, np. nazwa certyfikatu szkolenia i rok. Wpisz dokładnie tak, jak brzmi oficjalna nazwa.', 'default' => 'Złoty certyfikat Programu Certyfikacji Akademii Siatkarskich (Fundacja Siatkarska Polska, 2026)'],
+                'seo_awards' => ['type' => 'textarea', 'label' => 'Wyróżnienia i certyfikaty klubu (każde w nowej linii)', 'help' => 'Trafiają do danych dla Google o klubie, np. nazwa certyfikatu szkolenia i rok. Wpisz dokładnie tak, jak brzmi oficjalna nazwa.', 'default' => "Złoty certyfikat Programu Certyfikacji Akademii Siatkarskich (Fundacja Siatkarska Polska, 2026)\nBrązowy Ośrodek PZPS 2024/25, 2025/26 i 2026 (Certyfikacja Młodzieżowych Ośrodków Siatkarskich PZPS)"],
                 'seo_founding_year' => ['type' => 'text', 'label' => 'Rok założenia klubu', 'default' => '1992'],
                 'seo_google_verification' => ['type' => 'text', 'label' => 'Google Search Console: kod weryfikacji', 'help' => 'Z Search Console wybierz weryfikację „Tag HTML” i wklej tylko wartość content, np. AbC123...', 'default' => ''],
                 'seo_bing_verification' => ['type' => 'text', 'label' => 'Bing Webmaster Tools: kod weryfikacji', 'default' => ''],
