@@ -64,7 +64,7 @@
 </section>
 
 <section class="container-site grid gap-8 py-14 lg:grid-cols-3">
-    <div class="card p-6 lg:sticky lg:top-28 lg:self-start">
+    <div class="card min-w-0 p-6 lg:sticky lg:top-28 lg:self-start">
         <h2 class="heading-md">{{ __('Informacje') }}</h2>
         <dl class="mt-5 divide-y divide-zinc-100 text-sm">
             @foreach([
@@ -94,7 +94,7 @@
         </div>
     </div>
 
-    <div class="space-y-8 lg:col-span-2">
+    <div class="min-w-0 space-y-8 lg:col-span-2">
         @livewire('player-proposal-form', ['player' => $player], key('player-proposal-'.$player->id))
 
         @if($career->isNotEmpty())

@@ -240,9 +240,10 @@
 
                 <div>
                     <p class="eyebrow mb-4">{{ __(filled($site['footer_links_title']) ? $site['footer_links_title'] : 'Na skróty') }}</p>
-                    <ul class="space-y-2 text-sm">
+                    {{-- Na telefonie dwie kolumny i wyższe linki, łatwiejsze do trafienia palcem --}}
+                    <ul class="grid grid-cols-2 gap-x-4 text-sm sm:block sm:space-y-2">
                         @foreach($site->links('footer_links') ?: [...$navItems, ...$topbarLeft] as $link)
-                            <li><a href="{{ $site->href($link['url']) }}" class="transition hover:text-white">{{ __($link['label']) }}</a></li>
+                            <li><a href="{{ $site->href($link['url']) }}" class="inline-block py-2 transition hover:text-white sm:py-0">{{ __($link['label']) }}</a></li>
                         @endforeach
                     </ul>
                 </div>
@@ -251,13 +252,13 @@
                     <p class="eyebrow mb-4">{{ __('Kontakt') }}</p>
                     <ul class="space-y-2 text-sm">
                         @if(filled($site['contact_email']))
-                            <li><a href="mailto:{{ $site['contact_email'] }}" class="transition hover:text-white">{{ $site['contact_email'] }}</a></li>
+                            <li><a href="mailto:{{ $site['contact_email'] }}" class="inline-block py-1 transition hover:text-white sm:py-0">{{ $site['contact_email'] }}</a></li>
                         @endif
                         @if(filled($site['contact_phone']))
-                            <li><a href="tel:{{ preg_replace('/[^0-9+]/', '', $site['contact_phone']) }}" class="transition hover:text-white">{{ $site['contact_phone'] }}</a> <span class="text-zinc-500">· {{ __('klub') }}</span></li>
+                            <li><a href="tel:{{ preg_replace('/[^0-9+]/', '', $site['contact_phone']) }}" class="inline-block py-1 transition hover:text-white sm:py-0">{{ $site['contact_phone'] }}</a> <span class="text-zinc-500">· {{ __('klub') }}</span></li>
                         @endif
                         @if(filled($site['contact_school_phone']))
-                            <li><a href="tel:{{ preg_replace('/[^0-9+]/', '', $site['contact_school_phone']) }}" class="transition hover:text-white">{{ $site['contact_school_phone'] }}</a> <span class="text-zinc-500">· {{ __('szkoła') }}</span></li>
+                            <li><a href="tel:{{ preg_replace('/[^0-9+]/', '', $site['contact_school_phone']) }}" class="inline-block py-1 transition hover:text-white sm:py-0">{{ $site['contact_school_phone'] }}</a> <span class="text-zinc-500">· {{ __('szkoła') }}</span></li>
                         @endif
                         @if(filled($site['contact_address']))
                             <li>{{ $site['contact_address'] }}</li>

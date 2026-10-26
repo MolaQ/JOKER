@@ -1,7 +1,7 @@
 @php $birthdayIcon = trim((string) $site['cal_birthday_icon']) ?: '🎂'; @endphp
 <div style="--cal-home-bg: {{ $site->color('cal_home_bg') }}; --cal-home-border: {{ $site->color('cal_home_border') }}; --cal-home-text: {{ $site->color('cal_home_text') }}; --cal-away-bg: {{ $site->color('cal_away_bg') }}; --cal-away-text: {{ $site->color('cal_away_text') }}; --cal-away-border: {{ $site->color('cal_away_border') }}; --cal-bday-bg: {{ $site->color('cal_birthday_bg') }}; --cal-bday-text: {{ $site->color('cal_birthday_text') }};">
-    {{-- Filtry: przyklejone pod menu, działają od razu, bez przeładowania strony --}}
-    <div class="sticky top-16 z-30 border-y border-zinc-200 bg-white/90 backdrop-blur-xl lg:top-20">
+    {{-- Filtry: działają od razu, bez przeładowania strony; na komputerze przyklejone pod menu (na telefonie zajęłyby pół ekranu) --}}
+    <div class="relative z-30 lg:sticky border-y border-zinc-200 bg-white/90 backdrop-blur-xl lg:top-20">
         <div class="container-site space-y-3 py-3">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
                 <label class="relative flex-1">
@@ -11,10 +11,10 @@
                         class="h-12 w-full rounded-full border-0 bg-zinc-100 pr-4 pl-12 text-base text-zinc-900 ring-1 ring-transparent transition outline-none placeholder:text-zinc-400 focus:bg-white focus:ring-sky-club">
                 </label>
 
-                <div class="grid grid-cols-3 rounded-full bg-zinc-100 p-1 text-sm font-semibold" role="tablist" aria-label="{{ __('Które mecze pokazać') }}">
+                <div class="grid grid-cols-3 rounded-full bg-zinc-100 p-1 text-[13px] font-semibold sm:text-sm" role="tablist" aria-label="{{ __('Które mecze pokazać') }}">
                     @foreach(\App\Livewire\GamesBrowser::PERIODS as $key => $label)
                         <button type="button" role="tab" aria-selected="{{ $period === $key ? 'true' : 'false' }}" wire:click="setPeriod('{{ $key }}')" @class([
-                            'flex items-center justify-center gap-1.5 rounded-full px-4 py-2 transition',
+                            'flex items-center justify-center gap-1 rounded-full px-2 py-2 transition sm:gap-1.5 sm:px-4',
                             'bg-ink text-white shadow' => $period === $key,
                             'text-zinc-600 hover:text-zinc-900' => $period !== $key,
                         ])>
@@ -231,7 +231,7 @@
                         $article = $game->latestArticle();
                         $hasTime = $game->game_date && $game->game_date->format('H:i') !== '00:00';
                     @endphp
-                    <li id="mecz-{{ $game->id }}" wire:key="game-{{ $game->id }}" class="card scroll-mt-48 grid grid-cols-[3.75rem_1fr] items-center gap-4 p-4 sm:grid-cols-[4.5rem_1fr_auto] sm:gap-6 sm:p-5">
+                    <li id="mecz-{{ $game->id }}" wire:key="game-{{ $game->id }}" class="card scroll-mt-24 lg:scroll-mt-48 grid grid-cols-[3.75rem_1fr] items-center gap-4 p-4 sm:grid-cols-[4.5rem_1fr_auto] sm:gap-6 sm:p-5">
                         <div @class(['rounded-2xl py-2 text-center leading-none', 'bg-(--cal-home-bg) text-(--cal-home-text) ring-1 ring-(--cal-home-border)' => $game->is_home, 'bg-(--cal-away-bg) text-(--cal-away-text) ring-1 ring-(--cal-away-border)' => ! $game->is_home])>
                             <p class="text-[11px] font-semibold uppercase opacity-70">{{ $game->game_date?->translatedFormat('D') }}</p>
                             <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ $game->game_date?->format('d') }}</p>
@@ -298,7 +298,7 @@
                     </li>
                 @endforeach
                 @foreach($month['tournaments'] as $tournament)
-                    <li id="turniej-{{ $tournament->id }}" wire:key="list-tournament-{{ $tournament->id }}" class="card scroll-mt-48 bg-amber-50 p-4 text-sm text-amber-950 ring-amber-200">
+                    <li id="turniej-{{ $tournament->id }}" wire:key="list-tournament-{{ $tournament->id }}" class="card scroll-mt-24 lg:scroll-mt-48 bg-amber-50 p-4 text-sm text-amber-950 ring-amber-200">
                         <p class="text-xs font-semibold tracking-wide text-amber-700 uppercase">{{ __('Turniej') }} · {{ $tournament->dateRangeLabel() }}{{ $tournament->is_organizer ? ' · '.__('organizujemy') : '' }}</p>
                         <p class="mt-1 font-display text-lg font-semibold uppercase">🏆 {{ $tournament->fullName() }}</p>
                         @if($tournament->has_page)
@@ -315,7 +315,7 @@
                     </li>
                 @endforeach
                 @if($month['birthdays']->isNotEmpty())
-                    <li id="urodziny-{{ $month['key'] }}" class="card scroll-mt-48 bg-(--cal-bday-bg) p-4 text-sm text-(--cal-bday-text) ring-(--cal-bday-text)/20">
+                    <li id="urodziny-{{ $month['key'] }}" class="card scroll-mt-24 lg:scroll-mt-48 bg-(--cal-bday-bg) p-4 text-sm text-(--cal-bday-text) ring-(--cal-bday-text)/20">
                         <p class="font-semibold">{{ $birthdayIcon }} {{ __('Urodziny w tym miesiącu') }}</p>
                         <ul class="mt-2 space-y-1">
                             @foreach($month['birthdays'] as $person)

@@ -63,16 +63,16 @@
                         @endif
 
                         <div class="card overflow-x-auto">
-                            <table class="w-full min-w-[40rem] text-sm tabular-nums">
+                            <table class="w-full text-sm tabular-nums sm:min-w-[40rem]">
                                 <thead class="border-b border-zinc-200 text-xs font-semibold tracking-wider text-zinc-500 uppercase">
                                     <tr>
-                                        <th class="sticky left-0 bg-white py-3 pr-2 pl-4 text-left" scope="col">#</th>
-                                        <th class="sticky left-10 bg-white px-2 py-3 text-left" scope="col">{{ __('Drużyna') }}</th>
-                                        <th class="px-3 py-3 text-center" scope="col" title="{{ __('Mecze') }}">{{ __('M') }}</th>
-                                        <th class="px-3 py-3 text-center" scope="col" title="{{ __('Wygrane') }}">{{ __('W') }}</th>
-                                        <th class="px-3 py-3 text-center" scope="col" title="{{ __('Przegrane') }}">{{ __('P') }}</th>
-                                        <th class="px-3 py-3 text-center" scope="col">{{ __('Sety') }}</th>
-                                        <th class="px-3 py-3 text-center" scope="col">{{ __('Małe pkt') }}</th>
+                                        <th class="bg-white py-3 pr-2 pl-4 text-left sm:sticky sm:left-0" scope="col">#</th>
+                                        <th class="bg-white px-2 py-3 text-left sm:sticky sm:left-10" scope="col">{{ __('Drużyna') }}</th>
+                                        <th class="px-1.5 py-3 text-center sm:px-3" scope="col" title="{{ __('Mecze') }}">{{ __('M') }}</th>
+                                        <th class="px-1.5 py-3 text-center sm:px-3" scope="col" title="{{ __('Wygrane') }}">{{ __('W') }}</th>
+                                        <th class="px-1.5 py-3 text-center sm:px-3" scope="col" title="{{ __('Przegrane') }}">{{ __('P') }}</th>
+                                        <th class="hidden px-3 py-3 text-center sm:table-cell" scope="col">{{ __('Sety') }}</th>
+                                        <th class="hidden px-3 py-3 text-center sm:table-cell" scope="col">{{ __('Małe pkt') }}</th>
                                         <th class="py-3 pr-4 pl-3 text-center" scope="col">{{ __('Pkt') }}</th>
                                     </tr>
                                 </thead>
@@ -80,10 +80,10 @@
                                     @foreach($group['rows'] as $standing)
                                         @php $isOurs = $standing->isOwnTeam(); @endphp
                                         <tr wire:key="standing-{{ $standing->id }}" @class(['bg-sky-club/10 font-semibold' => $isOurs])>
-                                            <td @class(['sticky left-0 py-3 pr-2 pl-4', 'bg-[color-mix(in_oklab,var(--color-sky-club)_10%,white)]' => $isOurs, 'bg-white' => ! $isOurs])>
+                                            <td @class(['py-3 pr-2 pl-4 sm:sticky sm:left-0', 'bg-[color-mix(in_oklab,var(--color-sky-club)_10%,white)]' => $isOurs, 'bg-white' => ! $isOurs])>
                                                 <span @class(['inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold', 'bg-ink text-white' => $standing->position <= 3, 'bg-zinc-100 text-zinc-600' => $standing->position > 3])>{{ $standing->position }}</span>
                                             </td>
-                                            <td @class(['sticky left-10 px-2 py-3 whitespace-nowrap', 'bg-[color-mix(in_oklab,var(--color-sky-club)_10%,white)]' => $isOurs, 'bg-white' => ! $isOurs])>
+                                            <td @class(['px-2 py-3 leading-snug sm:sticky sm:left-10 sm:whitespace-nowrap', 'bg-[color-mix(in_oklab,var(--color-sky-club)_10%,white)]' => $isOurs, 'bg-white' => ! $isOurs])>
                                                 @if($isOurs && $standing->competitor)
                                                     <a href="{{ route('teams.show', $standing->competitor) }}" class="text-zinc-900 hover:text-sky-club-dark"><x-team-label :label="$standing->competitorLabel()" /></a>
                                                     @if($standing->source_name && ! $standing->competition?->teams->firstWhere('id', $standing->competitor_id)?->pivot?->display_name)
@@ -93,11 +93,11 @@
                                                     <span class="text-zinc-800">{{ $standing->competitorName() }}</span>
                                                 @endif
                                             </td>
-                                            <td class="px-3 py-3 text-center text-zinc-600">{{ $standing->played }}</td>
-                                            <td class="px-3 py-3 text-center text-emerald-700">{{ $standing->won }}</td>
-                                            <td class="px-3 py-3 text-center text-red-600">{{ $standing->lost }}</td>
-                                            <td class="px-3 py-3 text-center text-zinc-600">{{ $standing->sets_won }}:{{ $standing->sets_lost }}</td>
-                                            <td class="px-3 py-3 text-center text-zinc-600">{{ $standing->points_for }}:{{ $standing->points_against }}</td>
+                                            <td class="px-1.5 py-3 text-center text-zinc-600 sm:px-3">{{ $standing->played }}</td>
+                                            <td class="px-1.5 py-3 text-center text-emerald-700 sm:px-3">{{ $standing->won }}</td>
+                                            <td class="px-1.5 py-3 text-center text-red-600 sm:px-3">{{ $standing->lost }}</td>
+                                            <td class="hidden px-3 py-3 text-center text-zinc-600 sm:table-cell">{{ $standing->sets_won }}:{{ $standing->sets_lost }}</td>
+                                            <td class="hidden px-3 py-3 text-center text-zinc-600 sm:table-cell">{{ $standing->points_for }}:{{ $standing->points_against }}</td>
                                             <td class="py-3 pr-4 pl-3 text-center font-display text-lg font-bold text-sky-club-dark">{{ $standing->points }}</td>
                                         </tr>
                                     @endforeach
@@ -107,7 +107,7 @@
                     </details>
                 @endforeach
             </div>
-            <p class="mt-4 text-xs text-zinc-500">{{ __('M - mecze, W - wygrane, P - przegrane, Pkt - punkty ligowe. Na telefonie tabelę przesuniesz palcem w bok.') }}</p>
+            <p class="mt-4 text-xs text-zinc-500">{{ __('M - mecze, W - wygrane, P - przegrane, Pkt - punkty ligowe. Sety i małe punkty są widoczne na większym ekranie.') }}</p>
         @else
             <div class="card p-12 text-center">
                 <p class="font-display text-2xl font-semibold text-zinc-900 uppercase">{{ __('Brak tabeli') }}</p>

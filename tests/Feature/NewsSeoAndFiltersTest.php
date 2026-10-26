@@ -15,7 +15,7 @@ use Livewire\Livewire;
 test('an article published without a date shows up at once and a featured one is pinned first', function () {
     $author = User::factory()->create();
     $old = Article::factory()->for($author, 'author')->create(['status' => 'published', 'published_at' => now()->subWeek(), 'is_featured' => true, 'title' => 'Stary wyróżniony']);
-    $today = Article::factory()->for($author, 'author')->create(['status' => 'published', 'published_at' => null, 'title' => 'Dzisiejszy news']);
+    $today = Article::factory()->for($author, 'author')->create(['status' => 'published', 'published_at' => null, 'is_featured' => false, 'title' => 'Dzisiejszy news']);
 
     expect($today->fresh()->published_at)->not->toBeNull()
         ->and(Article::forListing()->pluck('id')->all())->toBe([$old->id, $today->id]);
