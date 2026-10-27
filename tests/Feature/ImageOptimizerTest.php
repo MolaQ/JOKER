@@ -43,4 +43,7 @@ test('starsze zdjęcia dostają miniatury poleceniem, a do tego czasu pokazują 
 
     Storage::disk('public')->assertExists('galleries/2/thumbs/stare.jpg');
     expect($photo->thumbUrl())->toContain('thumbs/stare.jpg');
+
+    // Drugie uruchomienie pomija zdjęcia z miniaturą, żeby nie pogarszać jakości JPEG.
+    $this->artisan('joker:optimize-photos')->expectsOutputToContain('0 z 1')->assertSuccessful();
 });
