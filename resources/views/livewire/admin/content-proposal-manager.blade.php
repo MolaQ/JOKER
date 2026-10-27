@@ -39,14 +39,22 @@
                 <div class="text-sm">
                     @if($proposal->status === 'pending')
                         <textarea wire:model="notes.{{ $proposal->id }}" rows="2" placeholder="Notatka dla autora (opcjonalnie)" class="w-full rounded-md border-gray-300 text-sm"></textarea>
-                        <div class="mt-2 flex gap-2">
-                            <button type="button" wire:click="approve({{ $proposal->id }})" class="rounded-md bg-green-600 px-3 py-1.5 font-semibold text-white hover:bg-green-700">Zatwierdź i opublikuj</button>
+                        @if($this->canBecomeArticle($proposal))
+                            <p class="mt-2 rounded-md bg-amber-50 p-2 text-xs text-amber-800">Do zdjęć dołączono tekst relacji. „Zdjęcia i artykuł” doda zdjęcia do galerii meczu i opublikuje relację w aktualnościach.</p>
+                            <button type="button" wire:click="approveWithArticle({{ $proposal->id }})" class="mt-2 w-full rounded-md bg-green-600 px-3 py-1.5 font-semibold text-white hover:bg-green-700">Zatwierdź: zdjęcia i artykuł</button>
+                        @endif
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            <button type="button" wire:click="approve({{ $proposal->id }})" @class(['rounded-md px-3 py-1.5 font-semibold', 'bg-green-600 text-white hover:bg-green-700' => ! $this->canBecomeArticle($proposal), 'text-green-700 ring-1 ring-green-200 hover:bg-green-50' => $this->canBecomeArticle($proposal)])>{{ $this->canBecomeArticle($proposal) ? 'Tylko zdjęcia' : 'Zatwierdź i opublikuj' }}</button>
                             <button type="button" wire:click="reject({{ $proposal->id }})" wire:confirm="Odrzucić tę propozycję?" class="rounded-md px-3 py-1.5 font-semibold text-red-600 ring-1 ring-red-200 hover:bg-red-50">Odrzuć</button>
                         </div>
                     @else
                         <p @class(['font-semibold', 'text-green-700' => $proposal->status === 'approved', 'text-red-700' => $proposal->status === 'rejected'])>{{ $proposal->status === 'approved' ? 'Zatwierdzona' : 'Odrzucona' }}</p>
                         <p class="text-xs text-gray-500">{{ $proposal->reviewer?->name }} · {{ $proposal->reviewed_at?->format('d.m.Y H:i') }}</p>
                         @if($proposal->review_note)<p class="mt-1 text-gray-600">{{ $proposal->review_note }}</p>@endif
+                        @if($proposal->status === 'approved' && $this->canBecomeArticle($proposal) && ! $this->hasArticle($proposal))
+                            <p class="mt-2 text-xs text-amber-800">Zdjęcia są w galerii meczu, ale relacja nie została opublikowana.</p>
+                            <button type="button" wire:click="publishReport({{ $proposal->id }})" class="mt-1 rounded-md bg-green-600 px-3 py-1.5 font-semibold text-white hover:bg-green-700">Opublikuj relację jako artykuł</button>
+                        @endif
                     @endif
                 </div>
             </li>

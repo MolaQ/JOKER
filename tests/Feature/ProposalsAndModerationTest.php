@@ -115,3 +115,60 @@ test('a rejected proposal removes its photos', function () {
     $this->get('/panel/propozycje')->assertOk();
     $this->actingAs(User::factory()->trainer()->create())->get('/panel/propozycje')->assertForbidden();
 });
+
+test('zdjęcia z dopisaną relacją trafiają do galerii, a relacja do aktualności', function () {
+    $parent = User::factory()->parent()->create(['name' => 'Dawid Porębiak']);
+    $this->actingAs($parent);
+
+    // Rodzic zaczął od artykułu, potem przełączył na „Zdjęcia”: tekst jedzie razem ze zdjęciami.
+    Livewire::test(ContentProposalForm::class)
+        ->set('type', 'article')
+        ->set('title', 'Dreszczowiec z happy endem')
+        ->set('content', "Wygraliśmy 3:2!\n\nBrawo chłopaki.")
+        ->set('type', 'photos')
+        ->set('match', 'game:'.$this->game->id)
+        ->set('photos', [UploadedFile::fake()->image('a.jpg'), UploadedFile::fake()->image('b.jpg')])
+        ->call('submit')
+        ->assertHasNoErrors();
+
+    $proposal = ContentProposal::firstOrFail();
+    $this->actingAs(User::factory()->editor()->create());
+
+    Livewire::test(ContentProposalManager::class)
+        ->assertSee('Zatwierdź: zdjęcia i artykuł')
+        ->call('approveWithArticle', $proposal->id);
+
+    $article = Article::firstWhere('title', 'Dreszczowiec z happy endem');
+    expect($article->isPublished())->toBeTrue()
+        ->and($article->author_id)->toBe($parent->id)
+        ->and($article->games->pluck('id')->all())->toBe([$this->game->id])
+        ->and(Storage::disk('public')->exists($article->featured_image))->toBeTrue()
+        ->and($this->game->galleries()->first()->photos)->toHaveCount(2)
+        ->and($proposal->fresh()->status)->toBe('approved');
+});
+
+test('relację z wcześniej zatwierdzonych samych zdjęć można opublikować później', function () {
+    $parent = User::factory()->parent()->create();
+    $this->actingAs($parent);
+    Livewire::test(ContentProposalForm::class)
+        ->set('type', 'article')->set('title', 'Relacja z derbów')->set('content', 'Świetny mecz.')
+        ->set('type', 'photos')->set('match', 'game:'.$this->game->id)
+        ->set('photos', [UploadedFile::fake()->image('a.jpg')])
+        ->call('submit');
+    $proposal = ContentProposal::firstOrFail();
+
+    $this->actingAs(User::factory()->editor()->create());
+    Livewire::test(ContentProposalManager::class)->call('approve', $proposal->id);
+    expect(Article::where('title', 'Relacja z derbów')->exists())->toBeFalse();
+
+    Livewire::test(ContentProposalManager::class)
+        ->set('statusFilter', 'approved')
+        ->assertSee('Opublikuj relację jako artykuł')
+        ->call('publishReport', $proposal->id)
+        ->assertDontSee('Opublikuj relację jako artykuł');
+
+    $article = Article::firstWhere('title', 'Relacja z derbów');
+    expect($article->isPublished())->toBeTrue()
+        ->and($article->featured_image)->not->toBeNull()
+        ->and($article->games->pluck('id')->all())->toBe([$this->game->id]);
+});
