@@ -16,7 +16,7 @@ mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions st
 
 # PHP 8.2 lub nowszy: domyślne polecenie php bywa starsze niż wersja wybrana dla strony w panelu.
 PHPBIN=""
-for P in "$PHP" /usr/local/bin/php /opt/alt/php84/usr/bin/php /opt/alt/php83/usr/bin/php /opt/alt/php82/usr/bin/php \
+for P in "$PHP" /usr/local/bin/php84 /usr/local/bin/php83 /usr/local/bin/php82 /usr/local/bin/php /opt/alt/php84/usr/bin/php /opt/alt/php83/usr/bin/php /opt/alt/php82/usr/bin/php \
          /usr/local/php84/bin/php /usr/local/php83/bin/php /usr/local/php82/bin/php php; do
     [ -n "$P" ] && command -v "$P" >/dev/null 2>&1 || continue
     if "$P" -r 'exit(PHP_VERSION_ID >= 80200 ? 0 : 1);' 2>/dev/null; then
