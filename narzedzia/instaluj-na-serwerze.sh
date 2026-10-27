@@ -62,6 +62,10 @@ for KATALOG in public_html private_html; do
     echo "$KATALOG wskazuje teraz na $(basename "$APP")/public"
 done
 
+# Po rozpakowaniu w menedżerze plików foldery bywają 777; serwer (suPHP/LiteSpeed) odmawia wtedy uruchomienia strony (błąd 403/500).
+find "$APP" -path "$APP/storage/app/public" -prune -o -type d ! -perm 755 -exec chmod 755 {} +
+find "$APP" -path "$APP/storage/app/public" -prune -o -type f ! -perm 644 -exec chmod 644 {} +
+
 BLAD=0
 krok() {
     echo "--- $*"
