@@ -11,7 +11,9 @@ use App\Models\Team;
 use App\Models\User;
 use App\Support\Sitemap;
 use App\Support\SiteSettings;
+use Illuminate\Support\Facades\Password;
 use Livewire\Livewire;
+use Symfony\Component\Mailer\Exception\TransportException;
 
 test('an article published without a date shows up at once and a featured one is pinned first', function () {
     $author = User::factory()->create();
@@ -101,4 +103,15 @@ test('brązowe odznaki PZPS są w stopce i dopisują się do wyróżnień zapisa
 
     expect(substr_count((string) app(SiteSettings::class)->get('seo_awards'), 'Brązowy Ośrodek PZPS'))->toBe(1)
         ->and(app(SiteSettings::class)->get('seo_awards'))->toStartWith('Nagroda prezydenta miasta (2025)');
+});
+
+test('awaria serwera poczty przy przypomnieniu hasła wraca do formularza z komunikatem zamiast błędu 500', function () {
+    User::factory()->create(['email' => 'trener@example.com']);
+    Password::shouldReceive('sendResetLink')
+        ->andThrow(new TransportException('Connection refused'));
+
+    $this->from(route('password.request'))
+        ->post(route('password.email'), ['email' => 'trener@example.com'])
+        ->assertRedirect(route('password.request'))
+        ->assertSessionHas('error');
 });
