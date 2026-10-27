@@ -33,7 +33,7 @@
                 @foreach($current->participants->sortBy(fn ($participant) => ($participant->group?->name ?? 'zz').$participant->name()) as $participant)
                     <div wire:key="participant-{{ $participant->id }}" @class(['card p-5', 'ring-2 ring-sky-club' => $participant->isOwnTeam()])>
                         <div class="flex items-center gap-4">
-                            <x-avatar :photo="$participant->logoPath()" :name="$participant->name()" class="h-16 w-16 shrink-0 rounded-2xl text-xl" />
+                            <x-avatar logo :photo="$participant->logoPath()" :name="$participant->name()" class="h-16 w-16 shrink-0 rounded-2xl text-xl" />
                             <div class="min-w-0">
                                 <p class="font-display text-lg leading-tight font-semibold text-zinc-900 uppercase">{{ $participant->name() }}</p>
                                 @if($participant->group)<p class="mt-1 text-sm text-zinc-500">{{ $participant->group->name }}</p>@endif
@@ -80,7 +80,7 @@
                                             <td class="px-4 py-2.5 font-bold">{{ $row['position'] }}</td>
                                             <td class="px-2 py-2.5">
                                                 <span class="flex items-center gap-2">
-                                                    <x-avatar :photo="$row['participant']->logoPath()" :name="$row['participant']->name()" class="h-6 w-6 shrink-0 rounded-full text-[9px]" />
+                                                    <x-avatar logo :photo="$row['participant']->logoPath()" :name="$row['participant']->name()" class="h-6 w-6 shrink-0 rounded-full text-[9px]" />
                                                     <span class="truncate">{{ $row['participant']->name() }}</span>
                                                 </span>
                                             </td>

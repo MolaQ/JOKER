@@ -29,7 +29,7 @@
                 <span @class(['min-w-8 rounded-md px-1 text-center text-[11px] font-bold', 'bg-sky-club/15 text-sky-club-dark' => $info['state'] !== TournamentBracket::PENDING, 'bg-zinc-100 text-zinc-500' => $info['state'] === TournamentBracket::PENDING])>{{ $info['chip'] }}</span>
             @endif
             @if($info['state'] === TournamentBracket::CONFIRMED && $participant)
-                <x-avatar :photo="$participant->logoPath()" :name="$participant->name()" class="h-6 w-6 shrink-0 rounded-full text-[9px]" />
+                <x-avatar logo :photo="$participant->logoPath()" :name="$participant->name()" class="h-6 w-6 shrink-0 rounded-full text-[9px]" />
             @endif
             <span @class([
                 'min-w-0 flex-1 truncate',

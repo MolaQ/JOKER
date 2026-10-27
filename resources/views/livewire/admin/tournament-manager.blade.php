@@ -116,7 +116,7 @@
                             </div>
                         </div>
 
-                        <div class="flex justify-end space-x-3 rounded-b-lg bg-gray-50 px-6 py-4">
+                        <div class="sticky bottom-0 z-10 flex justify-end space-x-3 rounded-b-lg border-t border-gray-200 bg-gray-50 px-6 py-4">
                             <button type="button" wire:click="closeModal" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 ring-inset hover:bg-gray-50">Anuluj</button>
                             <button type="submit" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">Zapisz</button>
                         </div>

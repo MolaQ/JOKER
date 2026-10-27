@@ -420,7 +420,57 @@
  * sekcjach. Poza warstwami, żeby wygrywało ze starszymi klasami w widokach panelu.
  */
 .admin-card {
-    @apply overflow-x-auto rounded-xl bg-white shadow-sm ring-1 ring-zinc-200;
+    @apply relative overflow-x-auto rounded-xl bg-white shadow-sm ring-1 ring-zinc-200;
+}
+
+/*
+ * Tabele panelu na telefonie: każdy wiersz jako karta, a nazwa kolumny (data-label, dopisywana
+ * w resources/js/admin-tables.js) przed wartością, zamiast przewijania strony w poziomie.
+ * Tabela, która ma zostać tabelą (np. podgląd importu), dostaje data-scroll-table.
+ */
+@media (width < 40rem) {
+    .admin-panel main table:not([data-scroll-table]) {
+        &, & > tbody, & > tbody > tr, & > tbody > tr > td {
+            display: block;
+            width: 100%;
+        }
+
+        & > thead {
+            @apply sr-only;
+        }
+
+        & > tbody > tr {
+            @apply border-b border-zinc-200 px-4 py-2;
+        }
+
+        & > tbody > tr > td {
+            @apply max-w-none px-0! py-1.5! text-left whitespace-normal;
+            display: flow-root;
+            overflow-wrap: break-word;
+        }
+
+        /* Nazwa kolumny po lewej, treść komórki (tekst, odznaki, przyciski) w zwykłym układzie obok. */
+        & > tbody > tr > td[data-label]:not([data-label='']) {
+            @apply pl-28!;
+        }
+
+        & > tbody > tr > td[data-label]:not([data-label=''])::before {
+            content: attr(data-label);
+            @apply float-left -ml-28 w-26 pt-0.5 text-xs font-semibold tracking-wide break-words text-zinc-400 uppercase;
+        }
+
+        & > tbody > tr > td:empty {
+            display: none;
+        }
+
+        & > tbody > tr > td[colspan] {
+            @apply text-center;
+        }
+
+        & tbody td:last-child > :is(a, button):not([class*='bg-']) {
+            @apply mr-1.5 ml-0;
+        }
+    }
 }
 
 .admin-panel main {

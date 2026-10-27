@@ -50,6 +50,8 @@ export function registerPhotoCropper() {
                     viewMode: 1,
                     autoCropArea: 1,
                     dragMode: this.aspect > 0 ? 'move' : 'crop',
+                    // Kółko myszy przewija okno (np. formularz w oknie dialogowym); powiększanie przyciskami ＋ i －.
+                    zoomOnWheel: false,
                     background: false,
                     preview: this.$refs.preview || '',
                     ready: () => { this.ready = true; },

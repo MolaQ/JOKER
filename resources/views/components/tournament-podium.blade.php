@@ -14,7 +14,7 @@
                     @if($row)
                         @if($position === 1)<span class="text-2xl" aria-hidden="true">🏆</span>@endif
                         @if($row['participant'])
-                            <x-avatar :photo="$row['participant']->logoPath()" :name="$row['participant']->name()" class="mx-auto mb-1 h-10 w-10 rounded-full text-xs" />
+                            <x-avatar logo :photo="$row['participant']->logoPath()" :name="$row['participant']->name()" class="mx-auto mb-1 h-10 w-10 rounded-full text-xs" />
                         @endif
                         <p @class(['mb-2 text-sm leading-tight', 'font-bold text-zinc-900' => $row['participant'], 'italic text-zinc-400' => ! $row['participant'], 'text-sky-club-dark' => $row['participant']?->isOwnTeam()])>{{ $row['text'] }}</p>
                     @endif
@@ -29,7 +29,7 @@
                 <li class="flex items-center gap-3 py-2.5">
                     <span class="w-8 font-display text-xl font-bold tabular-nums">{{ $row['position'] }}.</span>
                     @if($row['participant'])
-                        <x-avatar :photo="$row['participant']->logoPath()" :name="$row['participant']->name()" class="h-7 w-7 shrink-0 rounded-full text-[10px]" />
+                        <x-avatar logo :photo="$row['participant']->logoPath()" :name="$row['participant']->name()" class="h-7 w-7 shrink-0 rounded-full text-[10px]" />
                     @endif
                     <span @class(['font-semibold text-zinc-900' => $row['participant'], 'italic text-zinc-400' => ! $row['participant']])>{{ $row['text'] }}</span>
                 </li>

@@ -125,7 +125,7 @@
                             </h3>
                         </div>
 
-                        <div class="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                        <div class="px-6 py-4 space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Tytuł</label>
                                 <input type="text" wire:model="title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
@@ -255,7 +255,7 @@
                             </div>
                         </div>
 
-                        <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3 rounded-b-lg">
+                        <div class="sticky bottom-0 z-10 px-6 py-4 bg-gray-50 flex justify-end space-x-3 rounded-b-lg border-t border-gray-200">
                             <button type="button" wire:click="closeModal" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                                 Anuluj
                             </button>

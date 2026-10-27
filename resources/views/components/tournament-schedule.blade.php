@@ -92,7 +92,7 @@
                             title="{{ $participant->name() }}"
                             class="inline-flex h-9 max-w-full items-center gap-2 rounded-full py-1 pr-4 pl-1 text-sm font-semibold ring-1 transition"
                             :class="team === @js((string) $participant->id) ? 'bg-sky-club text-white ring-sky-club' : 'bg-sky-club/10 text-sky-club-dark ring-sky-club/30 hover:ring-sky-club'">
-                            <x-avatar :photo="$participant->logoPath()" :name="$participant->name()" class="h-7 w-7 shrink-0 rounded-full text-[10px]" />
+                            <x-avatar logo :photo="$participant->logoPath()" :name="$participant->name()" class="h-7 w-7 shrink-0 rounded-full text-[10px]" />
                             <span class="truncate">{{ $ownTeams->count() === 1 ? 'Joker' : $participant->name() }}</span>
                         </button>
                     @endforeach
@@ -262,7 +262,7 @@
                                                     @if($pid) :class="team === @js($pid) && 'bg-amber-100/70!'" @endif>
                                                     @if($own)<span class="absolute inset-y-1 left-0 w-1 rounded-r bg-sky-club" aria-hidden="true"></span>@endif
                                                     @if($confirmed)
-                                                        <x-avatar :photo="$participant->logoPath()" :name="$participant->name()" class="h-7 w-7 shrink-0 rounded-full text-[10px] ring-1 ring-zinc-200" />
+                                                        <x-avatar logo :photo="$participant->logoPath()" :name="$participant->name()" class="h-7 w-7 shrink-0 rounded-full text-[10px] ring-1 ring-zinc-200" />
                                                     @else
                                                         <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-dashed border-zinc-300 text-[10px] font-bold text-zinc-400">{{ $info['chip'] ?? '?' }}</span>
                                                     @endif

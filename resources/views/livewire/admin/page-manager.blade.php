@@ -40,7 +40,7 @@
                             <h3 class="text-lg font-semibold text-gray-900">{{ $editingId ? 'Edytuj podstronę' : 'Nowa podstrona' }}</h3>
                         </div>
 
-                        <div class="max-h-[70vh] space-y-4 overflow-y-auto px-6 py-4">
+                        <div class="space-y-4 px-6 py-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700" for="page-title">Tytuł</label>
                                 <input type="text" id="page-title" wire:model="title" class="mt-1 block w-full">

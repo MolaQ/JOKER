@@ -48,7 +48,7 @@
                 @endif
             </div>
             <div class="overflow-x-auto rounded-lg ring-1 ring-gray-200">
-                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <table data-scroll-table class="min-w-full divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase">
                         <tr>
                             <th class="px-3 py-2">Wiersz</th>

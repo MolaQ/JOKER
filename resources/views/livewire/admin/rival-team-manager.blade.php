@@ -138,7 +138,7 @@
                             <h3 class="text-lg font-semibold text-gray-900">{{ $editingId ? 'Edytuj drużynę rywali' : 'Dodaj drużynę rywali' }}</h3>
                             <p class="text-xs text-gray-500">Drużyna jest wspólna dla wszystkich kategorii.</p>
                         </div>
-                        <div class="max-h-[70vh] space-y-4 overflow-y-auto px-6 py-4">
+                        <div class="space-y-4 px-6 py-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Pełna nazwa</label>
                                 <input type="text" wire:model="full_name" placeholder="np. UMKS MOS Wola Warszawa" class="mt-1 {{ $input }}">
@@ -150,12 +150,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Klub</label>
-                                <select wire:model="rival_club_id" class="mt-1 {{ $input }}">
-                                    <option value="">— bez klubu —</option>
-                                    @foreach($allClubs as $club)
-                                        <option value="{{ $club->id }}">{{ $club->name }}</option>
-                                    @endforeach
-                                </select>
+                                <x-search-select model="rival_club_id" class="mt-1" empty="— bez klubu —" placeholder="Szukaj klubu…" :options="$allClubs->map(fn ($club) => ['value' => (string) $club->id, 'label' => $club->name])->all()" />
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Własne logo</label>
@@ -178,7 +173,7 @@
                                 <p class="mt-1 text-xs text-gray-500">Import z tymi nazwami trafi do tej drużyny.</p>
                             </div>
                         </div>
-                        <div class="flex justify-end space-x-3 rounded-b-lg bg-gray-50 px-6 py-4">
+                        <div class="sticky bottom-0 z-10 flex justify-end space-x-3 rounded-b-lg border-t border-gray-200 bg-gray-50 px-6 py-4">
                             <button type="button" wire:click="closeModal" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Anuluj</button>
                             <button type="submit" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">Zapisz</button>
                         </div>
@@ -217,7 +212,7 @@
                                 @error('clubLogo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
                         </div>
-                        <div class="flex justify-end space-x-3 rounded-b-lg bg-gray-50 px-6 py-4">
+                        <div class="sticky bottom-0 z-10 flex justify-end space-x-3 rounded-b-lg border-t border-gray-200 bg-gray-50 px-6 py-4">
                             <button type="button" wire:click="$set('showClubModal', false)" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Anuluj</button>
                             <button type="submit" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">Zapisz</button>
                         </div>

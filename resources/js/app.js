@@ -1,3 +1,4 @@
+import { initAdminTables } from './admin-tables';
 import { registerConfirmModal } from './confirm-modal';
 import { initCountdowns } from './countdown';
 import { initPageStats } from './page-stats';
@@ -5,16 +6,19 @@ import { initPush } from './push';
 import { registerPhotoCropper } from './photo-cropper';
 import { registerRichEditor } from './rich-editor';
 import { initSearch } from './search';
+import { registerSearchSelect } from './search-select';
 import { registerToasts } from './toasts';
 
 registerPhotoCropper();
 registerRichEditor();
 registerToasts();
 registerConfirmModal();
+registerSearchSelect();
 
 initSearch();
 initPageStats();
 initPush();
+initAdminTables();
 
 // Pojawianie się sekcji przy przewijaniu.
 const revealObserver = 'IntersectionObserver' in window

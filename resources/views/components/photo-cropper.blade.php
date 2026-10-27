@@ -56,7 +56,7 @@
     </div>
 
     <div x-show="source" x-cloak class="space-y-2">
-        <div :class="shape === 'circle' && 'cropper-round'" class="max-h-[60vh] overflow-hidden rounded-xl {{ $format === 'png' ? 'bg-[repeating-conic-gradient(#e4e4e7_0_25%,#fff_0_50%)] bg-[length:16px_16px]' : 'bg-zinc-900' }}">
+        <div :class="shape === 'circle' && 'cropper-round'" class="max-h-[45vh] overflow-hidden rounded-xl sm:max-h-[60vh] {{ $format === 'png' ? 'bg-[repeating-conic-gradient(#e4e4e7_0_25%,#fff_0_50%)] bg-[length:16px_16px]' : 'bg-zinc-900' }}">
             <img x-ref="image" :src="source" alt="{{ __('Kadrowanie') }}" class="block max-w-full">
         </div>
         <div class="flex flex-wrap gap-2 text-sm">

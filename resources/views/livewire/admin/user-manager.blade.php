@@ -103,13 +103,13 @@
                         </div>
 
                         @if($editingUser && $modalTab === 'uprawnienia')
-                            <div class="px-6 py-4 max-h-[70vh] overflow-y-auto">
+                            <div class="px-6 py-4">
                                 <p class="mb-3 text-sm text-gray-600">Role: <span class="font-semibold text-gray-900">{{ $editingUser->roles()->map->label()->join(', ') ?: 'bez roli (jak kibic)' }}</span>. Uprawnienia wynikają z ról; tutaj możesz odebrać albo nadać pojedyncze uprawnienie tylko temu kontu. Zmiana zapisuje się od razu.</p>
                                 @include('livewire.admin.partials.permission-overrides', ['user' => $editingUser, 'editable' => $this->mayEditUser($editingUser)])
                             </div>
                         @endif
 
-                        <div @class(['px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto', 'hidden' => $editingUser && $modalTab === 'uprawnienia'])>
+                        <div @class(['px-6 py-4 space-y-4', 'hidden' => $editingUser && $modalTab === 'uprawnienia'])>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Imię i nazwisko</label>
                                 <input type="text" wire:model="name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
@@ -171,7 +171,7 @@
                             </div>
                         </div>
 
-                        <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3 rounded-b-lg">
+                        <div class="sticky bottom-0 z-10 px-6 py-4 bg-gray-50 flex justify-end space-x-3 rounded-b-lg border-t border-gray-200">
                             <button type="button" wire:click="closeModal" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                                 Anuluj
                             </button>

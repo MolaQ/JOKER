@@ -128,23 +128,8 @@
             <form wire:submit="addParticipant" class="grid gap-3 rounded-lg border border-dashed border-gray-300 p-4 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end">
                 <div>
                     <label class="{{ $label }}">Drużyna z listy</label>
-                    <select wire:model="newParticipant" class="{{ $input }}">
-                        <option value="">— nowa drużyna (wpisz nazwę) —</option>
-                        @if($teamOptions->isNotEmpty())
-                            <optgroup label="Nasze drużyny">
-                                @foreach($teamOptions as $team)
-                                    <option value="team:{{ $team->id }}">Joker: {{ $team->name }}</option>
-                                @endforeach
-                            </optgroup>
-                        @endif
-                        @foreach($rivalOptions->groupBy(fn ($rival) => $rival->club?->name ?? 'Rywale bez klubu')->sortKeys() as $clubName => $clubRivals)
-                            <optgroup label="{{ $clubName }}">
-                                @foreach($clubRivals as $rival)
-                                    <option value="rival:{{ $rival->id }}">{{ $rival->full_name }}</option>
-                                @endforeach
-                            </optgroup>
-                        @endforeach
-                    </select>
+                    <x-search-select model="newParticipant" empty="— nowa drużyna (wpisz nazwę obok) —" placeholder="Szukaj drużyny lub klubu…" :options="$teamOptions->map(fn ($team) => ['value' => 'team:'.$team->id, 'label' => 'Joker: '.$team->name, 'group' => 'Nasze drużyny'])
+                        ->concat($rivalOptions->sortBy(fn ($rival) => ($rival->club?->name ?? '~').' '.$rival->full_name)->map(fn ($rival) => ['value' => 'rival:'.$rival->id, 'label' => $rival->full_name, 'group' => $rival->club?->name ?? 'Rywale bez klubu']))->all()" />
                 </div>
                 <div>
                     <label class="{{ $label }}">albo nazwa nowej drużyny</label>

@@ -20,7 +20,7 @@
     @foreach($sides as [$participant, $name, $sets, $participantId])
         <div @class(['flex items-center gap-2 py-0.5', 'font-bold text-zinc-900' => $winnerId && $winnerId === $participantId, 'text-zinc-500' => $winnerId && $winnerId !== $participantId, 'text-zinc-800' => ! $winnerId])>
             @if($participant)
-                <x-avatar :photo="$participant->logoPath()" :name="$name" class="h-6 w-6 shrink-0 rounded-full text-[9px]" />
+                <x-avatar logo :photo="$participant->logoPath()" :name="$name" class="h-6 w-6 shrink-0 rounded-full text-[9px]" />
             @else
                 <span class="h-6 w-6 shrink-0 rounded-full bg-zinc-100"></span>
             @endif
