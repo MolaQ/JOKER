@@ -44,8 +44,8 @@ if exist "%ROBOCZY%" rmdir /s /q "%ROBOCZY%"
 
 echo [1/5] Buduje wyglad strony (npm run build) ...
 pushd "%ZRODLO%"
-rem Zawsze, bo nowe wersje strony moga dodac biblioteki (npm install nic nie robi, gdy wszystko jest aktualne).
-call npm install --no-audit --no-fund
+rem Zawsze, bo nowe wersje strony moga dodac biblioteki. npm ci instaluje dokladnie wersje z package-lock.json i go nie zmienia, wiec git pull nie bedzie blokowany.
+call npm ci --no-audit --no-fund
 call npm run build
 if errorlevel 1 (
     popd
