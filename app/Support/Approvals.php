@@ -6,6 +6,7 @@ use App\Livewire\Admin\AccountActivation;
 use App\Livewire\Admin\CommentModeration;
 use App\Livewire\Admin\ParentAssignment;
 use App\Livewire\Admin\PhotoTagReview;
+use App\Livewire\Admin\ReportedMessages;
 use App\Models\ContentProposal;
 use App\Models\PlayerChangeRequest;
 use App\Models\ProfileChangeRequest;
@@ -67,6 +68,15 @@ class Approvals
                 'component' => 'admin.comment-moderation',
                 'visible' => fn () => CommentModeration::canModerate($user),
                 'count' => fn () => CommentModeration::pendingCount($user),
+            ],
+            'wiadomosci' => [
+                'label' => 'Zgłoszone wiadomości',
+                'icon' => 'envelope',
+                'route' => 'admin.reported-messages.index',
+                'intro' => 'Wiadomości, które ktoś z rozmowy zgłosił jako niewłaściwe. Ukryta wiadomość znika u wszystkich. Gdy ktoś wysyła spam, odbierz mu w edycji konta uprawnienie „Pisanie wiadomości”.',
+                'component' => 'admin.reported-messages',
+                'visible' => fn () => $user->can('comments.moderate'),
+                'count' => fn () => ReportedMessages::pendingCount(),
             ],
             'oznaczenia' => [
                 'label' => 'Oznaczenia na zdjęciach',

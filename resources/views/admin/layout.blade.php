@@ -15,7 +15,7 @@
         $adminNavigation = [
             'Na co dzień' => [
                 ['label' => 'Pulpit', 'route' => 'admin.dashboard', 'icon' => 'home'],
-                ['label' => 'Do zatwierdzenia', 'route' => 'admin.approvals.index', 'icon' => 'inbox', 'can' => fn () => \App\Support\Approvals::sectionsFor(auth()->user())->isNotEmpty(), 'badge' => fn () => \App\Support\Approvals::pendingCountFor(auth()->user()), 'active' => ['admin.approvals.*', 'admin.parents.*', 'admin.accounts.*', 'admin.content-proposals.*', 'admin.comments.*', 'admin.photo-tags.*', 'admin.player-change-requests.*', 'admin.profile-change-requests.*']],
+                ['label' => 'Do zatwierdzenia', 'route' => 'admin.approvals.index', 'icon' => 'inbox', 'can' => fn () => \App\Support\Approvals::sectionsFor(auth()->user())->isNotEmpty(), 'badge' => fn () => \App\Support\Approvals::pendingCountFor(auth()->user()), 'active' => ['admin.approvals.*', 'admin.parents.*', 'admin.accounts.*', 'admin.content-proposals.*', 'admin.comments.*', 'admin.reported-messages.*', 'admin.photo-tags.*', 'admin.player-change-requests.*', 'admin.profile-change-requests.*']],
                 ['label' => 'Statystyki odwiedzin', 'route' => 'admin.statistics.index', 'icon' => 'chart', 'can' => 'statistics.view'],
                 ['label' => 'Aktualności', 'route' => 'admin.articles.index', 'icon' => 'newspaper', 'can' => 'articles.manage'],
                 ['label' => 'Plan treningów', 'route' => 'admin.trainings.index', 'icon' => 'clock', 'can' => 'trainings.manage'],
@@ -115,6 +115,7 @@
                             <span class="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-zinc-900">{{ $pendingApprovals }}</span>
                         </a>
                     @endif
+                    <x-messages-link :dark="false" class="h-9! w-9! rounded-md!" />
                     <a href="{{ route('home') }}" target="_blank" class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-zinc-600 ring-1 ring-zinc-200 transition hover:bg-zinc-50 hover:text-zinc-900">
                         <x-admin-icon name="external" class="size-4" />
                         <span class="hidden sm:inline">Zobacz stronę</span>

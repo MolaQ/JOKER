@@ -65,10 +65,10 @@ enum UserRole: string
             self::Admin, self::Boss => Permission::cases(),
             self::Editor => [Permission::Articles, Permission::Media, Permission::Homepage, Permission::Documents, Permission::Comments, Permission::ContentProposals],
             self::Trainer => [Permission::Teams, Permission::Trainings, Permission::Games, Permission::Tournaments, Permission::Media, Permission::Proposals, Permission::ActivateAccounts],
-            self::Moderator => [Permission::WriteComments, Permission::Comments, Permission::ContentProposals, Permission::Proposals, Permission::ActivateAccounts, Permission::AllTeams],
-            self::Photographer => [Permission::WriteComments, Permission::Media, Permission::PhotoTags],
+            self::Moderator => [Permission::WriteComments, Permission::WriteMessages, Permission::Comments, Permission::ContentProposals, Permission::Proposals, Permission::ActivateAccounts, Permission::AllTeams],
+            self::Photographer => [Permission::WriteComments, Permission::WriteMessages, Permission::Media, Permission::PhotoTags],
             self::Staff => [Permission::Trainings],
-            self::Coordinator => [Permission::WriteComments, Permission::Teams, Permission::ActivateAccounts, Permission::Proposals],
+            self::Coordinator => [Permission::WriteComments, Permission::WriteMessages, Permission::Teams, Permission::ActivateAccounts, Permission::Proposals],
             default => [],
         };
     }

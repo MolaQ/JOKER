@@ -153,6 +153,8 @@
                     </button>
                 @endif
 
+                <x-messages-link />
+
                 @auth
                     @if(auth()->user()->canManageContent())
                         <a href="{{ route('admin.dashboard') }}" class="hidden rounded-full bg-sky-club px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-club-dark sm:inline-flex">{{ __('Panel') }}</a>
@@ -198,6 +200,7 @@
                         @if(auth()->user()->canManageContent())
                             <a href="{{ route('admin.dashboard') }}" class="btn-primary">{{ __('Panel administracyjny') }}</a>
                         @endif
+                        <a href="{{ route('messages.index') }}" class="btn-ghost">{{ __('Wiadomości') }}@if(auth()->user()->unreadMessagesCount()) <span class="ml-1 rounded-full bg-red-600 px-1.5 text-xs font-bold text-white">{{ auth()->user()->unreadMessagesCount() }}</span>@endif</a>
                         <a href="{{ route('profile.edit') }}" class="btn-ghost">{{ __('Mój profil') }}</a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf

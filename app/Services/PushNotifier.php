@@ -88,11 +88,27 @@ class PushNotifier
     }
 
     /**
-     * Wysyła powiadomienie do wszystkich zapisanych przeglądarek. Zwraca liczbę wysłanych.
+     * Nowa wiadomość: powiadomienie tylko na urządzenia odbiorców, którzy włączyli powiadomienia będąc zalogowanymi.
+     *
+     * @param  iterable<int>  $userIds
      */
-    public function send(string $title, string $body, string $url, ?string $tag = null): int
+    public function newMessage(iterable $userIds, string $title, string $body, string $url, string $tag): int
     {
-        if (! $this->enabled() || PushSubscription::doesntExist()) {
+        $userIds = collect($userIds)->filter()->unique()->values()->all();
+
+        return $userIds === [] ? 0 : $this->send($title, $body, $url, $tag, $userIds);
+    }
+
+    /**
+     * Wysyła powiadomienie do zapisanych przeglądarek (wszystkich albo tylko wskazanych kont). Zwraca liczbę wysłanych.
+     *
+     * @param  list<int>|null  $userIds
+     */
+    public function send(string $title, string $body, string $url, ?string $tag = null, ?array $userIds = null): int
+    {
+        $subscriptions = PushSubscription::query()->when($userIds !== null, fn ($query) => $query->whereIn('user_id', $userIds));
+
+        if (! $this->enabled() || $subscriptions->doesntExist()) {
             return 0;
         }
 
@@ -113,7 +129,7 @@ class PushNotifier
                 'badge' => asset('img/logo-96.png'),
             ], JSON_UNESCAPED_UNICODE);
 
-            PushSubscription::query()->chunkById(200, function ($subscriptions) use ($webPush, $payload) {
+            $subscriptions->chunkById(200, function ($subscriptions) use ($webPush, $payload) {
                 foreach ($subscriptions as $subscription) {
                     $webPush->queueNotification(Subscription::create([
                         'endpoint' => $subscription->endpoint,

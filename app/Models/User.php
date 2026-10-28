@@ -82,6 +82,8 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'notify_approvals' => 'boolean',
             'approvals_notified_at' => 'datetime',
+            'notify_messages' => 'boolean',
+            'messages_emailed_at' => 'datetime',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'birth_date' => 'date',
@@ -598,6 +600,24 @@ class User extends Authenticatable implements MustVerifyEmail
     public function children(): BelongsToMany
     {
         return $this->belongsToMany(Player::class, 'player_guardian')->withTimestamps();
+    }
+
+    public function conversations(): BelongsToMany
+    {
+        return $this->belongsToMany(Conversation::class)->withPivot('last_read_message_id')->withTimestamps();
+    }
+
+    /**
+     * Czy konto może pisać wiadomości: aktywne i z uprawnieniem (można je odebrać jednej osobie, np. za spam).
+     */
+    public function canMessage(): bool
+    {
+        return $this->hasPermission(Permission::WriteMessages);
+    }
+
+    public function unreadMessagesCount(): int
+    {
+        return once(fn () => Message::unreadBy($this)->count());
     }
 
     public function likes(): HasMany

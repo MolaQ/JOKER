@@ -31,6 +31,7 @@ enum Permission: string
     case AuditLog = 'audit.view';
     case Import = 'import.run';
     case WriteComments = 'comments.write';
+    case WriteMessages = 'messages.write';
 
     public function label(): string
     {
@@ -38,7 +39,7 @@ enum Permission: string
             self::Articles => 'Aktualności',
             self::Media => 'Transmisje i galerie',
             self::Homepage => 'Slajdy na stronie głównej',
-            self::Comments => 'Moderacja komentarzy',
+            self::Comments => 'Moderacja komentarzy i zgłoszonych wiadomości',
             self::ContentProposals => 'Zatwierdzanie artykułów, zdjęć i transmisji od rodziców i zawodników',
             self::PhotoTags => 'Zatwierdzanie wszystkich oznaczeń na zdjęciach',
             self::Teams => 'Drużyny, sztab i zawodnicy',
@@ -58,6 +59,7 @@ enum Permission: string
             self::AuditLog => 'Dziennik zmian (kto, co i kiedy zmienił)',
             self::Import => 'Import z plików',
             self::WriteComments => 'Pisanie komentarzy',
+            self::WriteMessages => 'Pisanie wiadomości',
         };
     }
 
@@ -70,6 +72,7 @@ enum Permission: string
             self::PhotoTags => 'Bez tego trener zatwierdza tylko oznaczenia zawodników swoich drużyn.',
             self::Roles => 'Kto nie jest administratorem, nie nada roli administratora.',
             self::WriteComments => 'Komentarze pod aktualnościami i meczami. Odbierz je, gdy ktoś łamie zasady.',
+            self::WriteMessages => 'Wiadomości do innych osób i grup na stronie. Odbierz je, gdy ktoś wysyła spam albo łamie zasady.',
             default => null,
         };
     }
@@ -79,7 +82,7 @@ enum Permission: string
      */
     public function isPublic(): bool
     {
-        return $this === self::WriteComments;
+        return in_array($this, [self::WriteComments, self::WriteMessages], true);
     }
 
     public function group(): string
@@ -88,7 +91,7 @@ enum Permission: string
             self::Articles, self::Media, self::Homepage, self::Comments, self::ContentProposals, self::PhotoTags => 'Treści',
             self::Teams, self::AllTeams, self::Trainings, self::Games, self::Tournaments, self::Competitions, self::Proposals => 'Drużyny i rozgrywki',
             self::Documents, self::Sponsors => 'Klub',
-            self::WriteComments => 'Korzystanie ze strony',
+            self::WriteComments, self::WriteMessages => 'Korzystanie ze strony',
             default => 'Konta i strona',
         };
     }

@@ -72,6 +72,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     Route::get('/konta-do-aktywacji', ApprovalsController::class)->defaults('section', 'konta')->name('accounts.index');
     Route::get('/propozycje', ApprovalsController::class)->defaults('section', 'propozycje')->name('content-proposals.index');
     Route::get('/komentarze', ApprovalsController::class)->defaults('section', 'komentarze')->name('comments.index');
+    Route::get('/zgloszone-wiadomosci', ApprovalsController::class)->defaults('section', 'wiadomosci')->name('reported-messages.index');
     Route::get('/oznaczenia-zdjec', ApprovalsController::class)->defaults('section', 'oznaczenia')->name('photo-tags.index');
     Route::get('/player-change-requests', ApprovalsController::class)->defaults('section', 'zawodnicy')->name('player-change-requests.index');
     Route::get('/profile-change-requests', ApprovalsController::class)->defaults('section', 'profile')->name('profile-change-requests.index');
