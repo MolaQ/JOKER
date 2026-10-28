@@ -25,7 +25,7 @@
         <thead class="bg-gray-50">
             <tr>
                 <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Nazwa</th>
-                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Kategoria</th>
+                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Rocznik</th>
                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Trener</th>
                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Zawodnicy</th>
                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Odbiór</th>
@@ -41,9 +41,7 @@
                         {{ $team->name }}
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                            {{ ['senior' => 'Seniorzy', 'junior' => 'Juniorzy', 'junior_mlodszy' => 'Juniorzy młodsi', 'mlodzik' => 'Młodzicy'][$team->category] ?? $team->category }}{{ $team->birthYears() ? ' · '.$team->birthYears() : '' }}
-                        </span>
+                        {{ $team->birthYears() ?? '—' }}
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {{ $team->trainer?->name ?? 'Brak' }}
@@ -120,7 +118,7 @@
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Rocznik (puste dla Seniorów)</label>
+                                <label class="block text-sm font-medium text-gray-700">Rocznik (opcjonalnie)</label>
                                 <div class="mt-1 flex items-center gap-2">
                                     <input type="number" wire:model="birth_year" min="1990" max="2030" placeholder="np. 2010" aria-label="Rocznik (pierwszy)" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     <span class="text-gray-400">–</span>

@@ -41,7 +41,6 @@
                     <x-avatar :photo="$logo" :name="$name" class="h-20 w-20 rounded-full bg-white bg-none! text-2xl ring-4 ring-white/10 sm:h-28 sm:w-28 [&>img]:object-contain [&>img]:p-2" />
                     <p class="font-display text-lg leading-tight font-bold uppercase sm:text-3xl">
                         {{ $name }}
-                        @if($isOurs)<span class="mt-1 block text-xs font-semibold tracking-widest text-sky-club-light">JOKER</span>@endif
                     </p>
                 </div>
                 @if($index === 0)

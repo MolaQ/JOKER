@@ -16,7 +16,9 @@
             <a href="{{ route('teams.show', $team) }}" class="card card-hover group overflow-hidden" data-reveal>
                 <x-photo :src="\App\Support\Media::teamPhoto($team)" :alt="__('Drużyna').' '.$team->name" sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" class="aspect-[4/3] w-full">
                     <div class="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent"></div>
-                    <span class="chip absolute top-4 left-4 bg-white/90">{{ $team->birthYearsLabel() ?? __('Seniorzy') }}</span>
+                    @if($team->birthYearsLabel())
+                        <span class="chip absolute top-4 left-4 bg-white/90">{{ $team->birthYearsLabel() }}</span>
+                    @endif
                 </x-photo>
                 <div class="p-6">
                     <h2 class="font-display text-2xl font-bold uppercase group-hover:text-sky-club-dark">{{ $team->name }}</h2>
