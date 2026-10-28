@@ -190,8 +190,7 @@
         <div>
             <p class="eyebrow">{{ __('Codziennie nowy') }} · {{ $lineup->date->format('d.m.Y') }}</p>
             <h2 class="heading-lg mt-3">{{ __('Skład dnia') }}</h2>
-            <p class="mt-4 max-w-xl text-zinc-600">{{ __('Sześciu zawodników i trener ze wszystkich roczników, losowani codziennie. Każde serduszko na profilu zwiększa szansę na miejsce w składzie.') }}</p>
-            <ul class="mt-6 grid gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-3">
+            <ul class="mt-7 grid gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-3">
                 @foreach($lineupPeople as $person)
                     <li>
                         <a href="{{ $person['url'] }}" class="group flex items-center gap-3">
@@ -208,6 +207,7 @@
                 <button type="button" data-daily-lineup="download" data-file-name="{{ $lineupFile }}" data-busy-label="{{ __('Przygotowuję…') }}" data-error-message="{{ __('Nie udało się przygotować obrazka. Spróbuj ponownie.') }}" class="btn-primary">{{ __('Pobierz obrazek') }}</button>
                 <button type="button" data-daily-lineup="share" data-file-name="{{ $lineupFile }}" data-share-title="{{ __('Skład dnia') }}" data-busy-label="{{ __('Przygotowuję…') }}" data-error-message="{{ __('Nie udało się przygotować obrazka. Spróbuj ponownie.') }}" class="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-zinc-900 ring-1 ring-zinc-300 transition hover:bg-zinc-100">{{ __('Udostępnij') }}</button>
             </div>
+            <p class="mt-6 max-w-xl text-xs text-zinc-400 italic">{{ __('Sześciu zawodników i trener ze wszystkich roczników, losowani codziennie. Każde serduszko na profilu zwiększa szansę na miejsce w składzie.') }}</p>
         </div>
     </div>
 </section>
