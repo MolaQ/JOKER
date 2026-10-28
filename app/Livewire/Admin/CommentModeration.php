@@ -3,7 +3,6 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
-use App\Models\AuditLog;
 use App\Models\Comment;
 use App\Models\GameComment;
 use Illuminate\Contracts\View\View;
@@ -46,7 +45,6 @@ class CommentModeration extends Component
     public function delete(string $kind, int $id): void
     {
         $comment = $this->find($kind, $id);
-        AuditLog::record('comment.deleted', 'Usunięto komentarz '.$comment->user?->name.': „'.str($comment->content)->limit(80).'”');
         $comment->delete();
 
         $this->toast('Komentarz usunięty.');

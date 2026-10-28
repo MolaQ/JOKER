@@ -2,16 +2,31 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Dziennik zmian: kto, kiedy i komu zmienił role, uprawnienia albo aktywował konto.
+ * Dziennik zmian: kto, kiedy i co zmienił: role, uprawnienia, konta i treści strony (App\Support\ChangeLog).
+ * Wpisy starsze niż rok usuwa codzienne model:prune.
  */
 class AuditLog extends Model
 {
+    use Prunable;
+
+    public const RETENTION_DAYS = 366;
+
+    /** Grupy wpisów do filtra w panelu: nazwa i początki nazw akcji, np. „roles.” dla roles.changed. */
+    public const GROUPS = [
+        'role' => ['Role kont', ['roles']],
+        'uprawnienia' => ['Uprawnienia', ['permissions']],
+        'konta' => ['Aktywacja, blokada i zgody kont', ['account', 'consent']],
+        'zatwierdzenia' => ['Zatwierdzone zgłoszenia', ['proposal', 'tag']],
+    ];
+
     protected $fillable = ['actor_id', 'action', 'subject_type', 'subject_id', 'description', 'details'];
 
     protected function casts(): array
@@ -29,6 +44,21 @@ class AuditLog extends Model
             'description' => $description,
             'details' => $details ?: null,
         ]);
+    }
+
+    public function prunable(): Builder
+    {
+        return static::where('created_at', '<', now()->subDays(self::RETENTION_DAYS));
+    }
+
+    /**
+     * Zmienione pola jako ['pole' => [przed, po]].
+     *
+     * @return array<string, array{0: mixed, 1: mixed}>
+     */
+    public function changes(): array
+    {
+        return is_array($this->details['zmiany'] ?? null) ? $this->details['zmiany'] : [];
     }
 
     public function actor(): BelongsTo

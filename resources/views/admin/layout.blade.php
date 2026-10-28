@@ -39,6 +39,7 @@
                 ['label' => 'Dokumenty', 'route' => 'admin.documents.index', 'icon' => 'document', 'can' => 'documents.manage'],
                 ['label' => 'Użytkownicy', 'route' => 'admin.users.index', 'icon' => 'key', 'can' => 'users.manage'],
                 ['label' => 'Role i uprawnienia', 'route' => 'admin.roles.index', 'icon' => 'shield', 'can' => 'roles.manage'],
+                ['label' => 'Dziennik zmian', 'route' => 'admin.audit.index', 'icon' => 'list', 'can' => 'audit.view'],
                 ['label' => 'Import z plików', 'route' => 'admin.import.index', 'icon' => 'upload', 'can' => 'import.run'],
             ],
             'Ustawienia rozgrywek (rzadko)' => [

@@ -9,6 +9,7 @@ use App\Models\Concerns\HasReadableRouteKey;
 use App\Models\Concerns\Likeable;
 use App\Permission;
 use App\UserRole;
+use Carbon\CarbonInterface;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Builder;
@@ -21,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -29,11 +31,11 @@ use Illuminate\Support\Str;
 class User extends Authenticatable implements MustVerifyEmail
 {
     use CountsViews;
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     use HasReadableRouteKey;
-
     use Likeable;
 
     /**
@@ -118,14 +120,57 @@ class User extends Authenticatable implements MustVerifyEmail
         return $saved;
     }
 
+    /**
+     * Role, które jeszcze obowiązują (bezterminowe albo przed datą „ważne do”).
+     */
     public function roleAssignments(): HasMany
     {
-        return $this->hasMany(RoleAssignment::class);
+        return $this->hasMany(RoleAssignment::class)->active();
     }
 
+    /**
+     * Wyjątki w uprawnieniach, które jeszcze obowiązują.
+     */
     public function permissionOverrides(): HasMany
     {
-        return $this->hasMany(PermissionOverride::class);
+        return $this->hasMany(PermissionOverride::class)->active();
+    }
+
+    /**
+     * Daty „ważne do” ról konta, np. ['trainer' => Carbon]. Bez wpisu = bezterminowo.
+     *
+     * @return array<string, Carbon>
+     */
+    public function roleExpiries(): array
+    {
+        return $this->roleAssignments
+            ->filter(fn (RoleAssignment $assignment) => $assignment->expires_at !== null)
+            ->mapWithKeys(fn (RoleAssignment $assignment) => [$assignment->role->value => $assignment->expires_at])
+            ->all();
+    }
+
+    /**
+     * Ustawia datę „ważne do” jednej z ról konta (null = bezterminowo). Rola działa do końca podanego dnia.
+     */
+    public function setRoleExpiry(UserRole $role, ?CarbonInterface $until): void
+    {
+        $until = $until ? Carbon::instance($until)->endOfDay() : null;
+        $current = $this->roleExpiries()[$role->value] ?? null;
+
+        if (! $this->hasRole($role) || $current?->toDateString() === $until?->toDateString()) {
+            return;
+        }
+
+        RoleAssignment::where('user_id', $this->id)->where('role', $role)->update(['expires_at' => $until]);
+        $this->unsetRelation('roleAssignments');
+        $this->resolvedPermissions = null;
+
+        if (Auth::check()) {
+            AuditLog::record('roles.expiry', 'Rola '.$role->label().' konta '.$this->name.': '.($until ? 'ważna do '.$until->format('d.m.Y') : 'bezterminowo'), $this, [
+                'rola' => $role->value,
+                'zmiany' => ['ważne do' => [$current?->format('d.m.Y') ?? 'bezterminowo', $until?->format('d.m.Y') ?? 'bezterminowo']],
+            ]);
+        }
     }
 
     /**
@@ -177,6 +222,8 @@ class User extends Authenticatable implements MustVerifyEmail
             return;
         }
 
+        // Wygasłe role znikają, żeby można je było nadać od nowa.
+        RoleAssignment::where('user_id', $this->id)->expired()->delete();
         RoleAssignment::where('user_id', $this->id)->whereIn('role', $removed->map->value->all())->delete();
         $added->each(fn (UserRole $role) => RoleAssignment::create(['user_id' => $this->id, 'role' => $role]));
 

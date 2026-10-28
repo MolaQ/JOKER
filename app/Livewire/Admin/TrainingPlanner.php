@@ -3,7 +3,6 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
-use App\Models\AuditLog;
 use App\Models\Team;
 use App\Models\TrainingSession;
 use Illuminate\Support\Collection;
@@ -112,7 +111,6 @@ class TrainingPlanner extends Component
             $this->toast(count($data['weekdays']) > 1 ? 'Dodano treningi: '.count(array_unique($data['weekdays'])).'.' : 'Trening dodany.');
         }
 
-        AuditLog::record('training.saved', 'Plan treningów: '.Team::find($data['team_id'])?->name.', '.$data['starts_at'].'–'.$data['ends_at']);
         $this->resetForm();
     }
 
@@ -134,7 +132,6 @@ class TrainingPlanner extends Component
     {
         $session = $this->editable($id);
         $session->delete();
-        AuditLog::record('training.deleted', 'Usunięto trening: '.$session->team?->name.', '.$session->weekdayLabel().' '.$session->timeRange());
 
         if ($this->editingId === $id) {
             $this->resetForm();

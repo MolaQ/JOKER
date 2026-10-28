@@ -27,6 +27,7 @@ enum Permission: string
     case Roles = 'roles.manage';
     case Site = 'site.manage';
     case Statistics = 'statistics.view';
+    case AuditLog = 'audit.view';
     case Import = 'import.run';
     case WriteComments = 'comments.write';
 
@@ -52,6 +53,7 @@ enum Permission: string
             self::Roles => 'Role i uprawnienia',
             self::Site => 'Wygląd, ustawienia i podstrony',
             self::Statistics => 'Statystyki odwiedzin',
+            self::AuditLog => 'Dziennik zmian (kto, co i kiedy zmienił)',
             self::Import => 'Import z plików',
             self::WriteComments => 'Pisanie komentarzy',
         };

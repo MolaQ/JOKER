@@ -7,6 +7,7 @@ use App\Livewire\Concerns\EditsPermissionOverrides;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\User;
 use App\UserRole;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -32,6 +33,13 @@ class UserManager extends Component
 
     /** @var list<string> */
     public array $selectedRoles = [];
+
+    /**
+     * Daty „ważne do” zaznaczonych ról, np. ['trainer' => '2026-12-31']. Puste = bezterminowo.
+     *
+     * @var array<string, string|null>
+     */
+    public array $roleExpiries = [];
 
     public bool $is_active = true;
 
@@ -60,6 +68,8 @@ class UserManager extends Component
             'is_active' => 'boolean',
             'selectedRoles' => 'array',
             'selectedRoles.*' => Rule::in(array_map(fn (UserRole $role) => $role->value, $this->assignableRoles())),
+            'roleExpiries' => 'array',
+            'roleExpiries.*' => 'nullable|date|after_or_equal:today',
             'birth_date' => 'nullable|date|before:today',
             'birthday_display' => 'required|in:hidden,cake,age',
         ];
@@ -101,6 +111,7 @@ class UserManager extends Component
         $this->email = $user->email;
         $this->password = '';
         $this->selectedRoles = $user->roles()->map->value->all();
+        $this->roleExpiries = collect($user->roleExpiries())->map->toDateString()->all();
         $this->is_active = $user->is_active;
         $this->birth_date = $user->birth_date?->format('Y-m-d');
         $this->birthday_display = $user->birthday_display?->value ?? 'age';
@@ -127,8 +138,9 @@ class UserManager extends Component
     {
         $validated = $this->validate();
         $roles = $validated['selectedRoles'] ?? [];
+        $expiries = $validated['roleExpiries'] ?? [];
         $active = $validated['is_active'];
-        unset($validated['selectedRoles'], $validated['is_active']);
+        unset($validated['selectedRoles'], $validated['roleExpiries'], $validated['is_active']);
 
         if ($this->editingId === Auth::id() && ! $active) {
             $this->addError('is_active', 'Nie możesz wyłączyć własnego konta.');
@@ -153,12 +165,14 @@ class UserManager extends Component
             abort_unless($this->mayEdit($user), 403);
             $user->update($validated);
             $user->syncRoles($roles);
+            $this->saveRoleExpiries($user, $roles, $expiries);
             $active ? $user->activate() : $user->deactivate('wyłączone w panelu');
             $this->toast('Użytkownik został zaktualizowany.');
         } else {
             $validated['email_verified_at'] = now();
             $user = User::create($validated);
             $user->syncRoles($roles);
+            $this->saveRoleExpiries($user, $roles, $expiries);
 
             if ($active) {
                 $user->activate();
@@ -169,11 +183,29 @@ class UserManager extends Component
         $this->closeModal();
     }
 
+    /**
+     * @param  list<string>  $roles
+     * @param  array<string, string|null>  $expiries
+     */
+    private function saveRoleExpiries(User $user, array $roles, array $expiries): void
+    {
+        foreach ($roles as $role) {
+            $user->setRoleExpiry(UserRole::from($role), filled($expiries[$role] ?? null) ? Carbon::parse($expiries[$role]) : null);
+        }
+    }
+
     public function setOverride(string $permission, string $mode): void
     {
         $user = User::findOrFail($this->editingId);
         abort_unless($this->mayEdit($user), 403);
         $this->applyOverride($user, $permission, $mode);
+    }
+
+    public function setOverrideExpiry(string $permission, ?string $date): void
+    {
+        $user = User::findOrFail($this->editingId);
+        abort_unless($this->mayEdit($user), 403);
+        $this->applyOverrideExpiry($user, $permission, $date);
     }
 
     public function delete(int $id): void
@@ -210,6 +242,7 @@ class UserManager extends Component
         $this->email = '';
         $this->password = '';
         $this->selectedRoles = [];
+        $this->roleExpiries = [];
         $this->is_active = true;
         $this->birth_date = null;
         $this->birthday_display = 'age';

@@ -12,6 +12,7 @@ use App\Models\Team;
 use App\Models\TournamentMatch;
 use App\Models\User;
 use App\Permission;
+use App\Support\ChangeLog;
 use App\Support\PushTriggers;
 use App\Support\SearchIndex;
 use App\Support\Sitemap;
@@ -55,6 +56,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Powiadomienia push o nowych aktualnościach, wynikach i galeriach.
         PushTriggers::register();
+
+        // Dziennik zmian: kto, co i kiedy dodał, zmienił albo usunął (panel: Dziennik zmian).
+        ChangeLog::register();
 
         // Wiadomości o koncie po polsku.
         VerifyEmail::toMailUsing(fn (User $user, string $url) => (new MailMessage)

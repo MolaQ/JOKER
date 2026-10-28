@@ -1,4 +1,4 @@
-{{-- Uprawnienia jednego konta: wynik z ról i wyjątki. Zmienne: $user, $permissionGroups, $rolePermissions, $overrides, $editable --}}
+{{-- Uprawnienia jednego konta: wynik z ról i wyjątki. Zmienne: $user, $permissionGroups, $rolePermissions, $overrides, $overrideExpiries, $editable --}}
 @if($user->isAdmin())
     <p class="rounded-md bg-sky-50 p-3 text-sm text-sky-900">Administrator ma zawsze wszystkie uprawnienia.</p>
 @else
@@ -26,14 +26,23 @@
                             <span @class(['text-gray-900', 'line-through decoration-red-400' => $mode === 'deny'])>{{ $permission->label() }}</span>
                             @if($mode === 'deny')<span class="ml-1 rounded bg-red-50 px-1.5 py-0.5 text-[11px] font-semibold text-red-700">odebrane</span>@endif
                             @if($mode === 'grant')<span class="ml-1 rounded bg-emerald-50 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-700">nadane osobno</span>@endif
+                            @if($mode !== 'role' && isset($overrideExpiries[$permission->value]))<span class="ml-1 rounded bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">do {{ \Illuminate\Support\Carbon::parse($overrideExpiries[$permission->value])->format('d.m.Y') }}</span>@endif
                         </span>
                     </span>
                     @if($editable)
+                        <span class="flex flex-wrap items-center gap-2">
+                        @if($mode !== 'role')
+                            <label class="flex items-center gap-1 text-xs text-gray-500">
+                                ważne do
+                                <input type="date" min="{{ now()->toDateString() }}" value="{{ $overrideExpiries[$permission->value] ?? '' }}" wire:change="setOverrideExpiry('{{ $permission->value }}', $event.target.value)" class="rounded-md border-gray-300 py-1 text-sm" title="Puste = bezterminowo" aria-label="Ważne do: {{ $permission->label() }}">
+                            </label>
+                        @endif
                         <select wire:change="setOverride('{{ $permission->value }}', $event.target.value)" class="rounded-md border-gray-300 py-1 text-sm" aria-label="{{ $permission->label() }}">
                             <option value="role" @selected($mode === 'role')>Jak w roli ({{ $fromRole ? 'tak' : 'nie' }})</option>
                             <option value="grant" @selected($mode === 'grant')>Nadaj</option>
                             <option value="deny" @selected($mode === 'deny')>Odbierz</option>
                         </select>
+                        </span>
                     @else
                         <span class="text-xs text-gray-500">{{ ['role' => 'z roli', 'grant' => 'nadane', 'deny' => 'odebrane'][$mode] }}</span>
                     @endif

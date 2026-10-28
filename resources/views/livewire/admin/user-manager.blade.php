@@ -52,7 +52,7 @@
                                     'inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset',
                                     'bg-red-50 text-red-700 ring-red-700/10' => $userRole === \App\UserRole::Admin,
                                     'bg-blue-50 text-blue-700 ring-blue-700/10' => $userRole !== \App\UserRole::Admin,
-                                ])>{{ $userRole->label() }}</span>
+                                ])>{{ $userRole->label() }}@isset($user->roleExpiries()[$userRole->value])<span class="ml-1 font-normal opacity-75">do {{ $user->roleExpiries()[$userRole->value]->format('d.m.Y') }}</span>@endisset</span>
                             @empty
                                 <span class="text-xs text-gray-400">bez roli</span>
                             @endforelse
@@ -140,10 +140,20 @@
                                 <legend class="block text-sm font-medium text-gray-700">Role (można zaznaczyć kilka)</legend>
                                 <div class="mt-2 grid gap-2 sm:grid-cols-2">
                                     @foreach($assignableRoles as $r)
-                                        <label class="flex items-start gap-2 rounded-md border border-gray-200 p-2 text-sm hover:bg-gray-50">
-                                            <input type="checkbox" wire:model="selectedRoles" value="{{ $r->value }}" class="mt-0.5 rounded border-gray-300 text-sky-700">
-                                            <span><span class="font-medium text-gray-900">{{ $r->label() }}</span><span class="block text-xs text-gray-500">{{ $r->description() }}</span></span>
-                                        </label>
+                                        <div @class(['rounded-md border p-2 text-sm', 'border-sky-300 bg-sky-50/50' => in_array($r->value, $selectedRoles, true), 'border-gray-200 hover:bg-gray-50' => ! in_array($r->value, $selectedRoles, true)]) wire:key="role-option-{{ $r->value }}">
+                                            <label class="flex items-start gap-2">
+                                                <input type="checkbox" wire:model.live="selectedRoles" value="{{ $r->value }}" class="mt-0.5 rounded border-gray-300 text-sky-700">
+                                                <span><span class="font-medium text-gray-900">{{ $r->label() }}</span><span class="block text-xs text-gray-500">{{ $r->description() }}</span></span>
+                                            </label>
+                                            @if(in_array($r->value, $selectedRoles, true))
+                                                <label class="mt-2 flex flex-wrap items-center gap-2 pl-6 text-xs text-gray-600">
+                                                    Ważne do
+                                                    <input type="date" min="{{ now()->toDateString() }}" wire:model="roleExpiries.{{ $r->value }}" class="rounded-md border-gray-300 py-1 text-sm">
+                                                    <span class="text-gray-400">puste = bezterminowo</span>
+                                                </label>
+                                                @error('roleExpiries.'.$r->value) <p class="mt-1 pl-6 text-xs text-red-600">{{ $message }}</p> @enderror
+                                            @endif
+                                        </div>
                                     @endforeach
                                 </div>
                                 @can('roles.manage')

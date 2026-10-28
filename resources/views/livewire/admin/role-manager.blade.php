@@ -70,7 +70,10 @@
     </section>
 
     <section class="rounded-lg bg-white p-4 shadow ring-1 ring-zinc-200">
-        <h2 class="text-lg font-semibold text-gray-900">Ostatnie zmiany</h2>
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 class="text-lg font-semibold text-gray-900">Ostatnie zmiany ról i uprawnień</h2>
+            @can('audit.view')<a href="{{ route('admin.audit.index', ['co' => 'grupa:role']) }}" class="text-sm font-semibold text-sky-700 hover:text-sky-900">Cały dziennik zmian →</a>@endcan
+        </div>
         <ul class="mt-3 divide-y divide-gray-100 text-sm">
             @forelse($log as $entry)
                 <li class="py-2" wire:key="log-{{ $entry->id }}">

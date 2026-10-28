@@ -1,6 +1,8 @@
 <?php
 
+use App\Console\Commands\ExpireRoles;
 use App\Console\Commands\SyncSchedules;
+use App\Models\AuditLog;
 use App\Models\PageView;
 use Illuminate\Support\Facades\Schedule;
 
@@ -12,3 +14,9 @@ Schedule::command(SyncSchedules::class)->everyThreeHours()->withoutOverlapping()
 
 // Usuwanie statystyk odwiedzin starszych niż ok. 13 miesięcy.
 Schedule::command('model:prune', ['--model' => [PageView::class]])->daily();
+
+// Role i uprawnienia z datą „ważne do” po jej minięciu znikają z kont (wpis w dzienniku zmian).
+Schedule::command(ExpireRoles::class)->hourly();
+
+// Dziennik zmian trzyma wpisy z ostatniego roku.
+Schedule::command('model:prune', ['--model' => [AuditLog::class]])->daily();

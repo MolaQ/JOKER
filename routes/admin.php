@@ -55,6 +55,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     });
 
     Route::view('/statistics', 'admin.statistics.index')->middleware('can:statistics.view')->name('statistics.index');
+    Route::view('/dziennik-zmian', 'admin.audit.index')->middleware('can:audit.view')->name('audit.index');
 
     Route::middleware('can:import.run')->group(function () {
         Route::view('/import', 'admin.import.index')->name('import.index');

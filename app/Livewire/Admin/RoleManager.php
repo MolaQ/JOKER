@@ -56,6 +56,11 @@ class RoleManager extends Component
         $this->applyOverride(User::findOrFail($this->userId), $permission, $mode);
     }
 
+    public function setOverrideExpiry(string $permission, ?string $date): void
+    {
+        $this->applyOverrideExpiry(User::findOrFail($this->userId), $permission, $date);
+    }
+
     public function render()
     {
         $map = RolePermission::map();
@@ -68,7 +73,7 @@ class RoleManager extends Component
                 ? User::where(fn ($query) => $query->where('name', 'like', '%'.trim($this->userSearch).'%')->orWhere('email', 'like', '%'.trim($this->userSearch).'%'))->with('roleAssignments')->orderBy('name')->limit(8)->get()
                 : collect(),
             'user' => $user,
-            'log' => AuditLog::with('actor')->latest('id')->limit(15)->get(),
+            'log' => AuditLog::where(fn ($query) => $query->where('action', 'like', 'roles.%')->orWhere('action', 'like', 'permissions.%'))->with('actor')->latest('id')->limit(15)->get(),
         ]);
     }
 }
