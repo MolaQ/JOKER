@@ -22,10 +22,13 @@ if not exist "!ZRODLO!\artisan" (
     exit /b 1
 )
 
-set "CEL_DOMYSLNY=%USERPROFILE%\Desktop\joker-na-serwer"
+rem Prawdziwy pulpit (bywa przeniesiony do OneDrive\Pulpit), a nie zawsze %USERPROFILE%\Desktop.
+set "PULPIT=%USERPROFILE%\Desktop"
+for /f "usebackq delims=" %%D in (`powershell -NoProfile -Command "[Environment]::GetFolderPath('Desktop')"`) do if exist "%%D" set "PULPIT=%%D"
+set "CEL_DOMYSLNY=!PULPIT!\joker-na-serwer"
 set "CEL="
-set /p "CEL=Gdzie zapisac paczke? [Enter = %CEL_DOMYSLNY%]: "
-if not defined CEL set "CEL=%CEL_DOMYSLNY%"
+set /p "CEL=Gdzie zapisac paczke? [Enter = !CEL_DOMYSLNY!]: "
+if not defined CEL set "CEL=!CEL_DOMYSLNY!"
 for %%I in ("%CEL%") do set "CEL=%%~fI"
 if not exist "%CEL%" mkdir "%CEL%"
 rem Sciezke do mysqldump.exe skrypt znajdzie sam; mozesz ja tez wpisac tutaj:
@@ -110,22 +113,24 @@ if not defined MYSQLDUMP for /f "delims=" %%P in ('where mysqldump 2^>nul') do i
 if not defined MYSQLDUMP (
     echo Nie znalazlem mysqldump.exe. Wpisz jego sciezke w linii set "MYSQLDUMP_RECZNIE=..." na gorze pliku
     echo albo wyeksportuj baze !DB_NAZWA! w phpMyAdmin do pliku %CEL%\joker.sql.
-    pause
-    exit /b 1
+    echo Do zwyklej aktualizacji strony zrzut bazy NIE jest potrzebny - joker-kod.zip jest gotowy.
+    goto koniec
 )
 set "HASLO="
 if defined DB_HASLO set "HASLO=-p!DB_HASLO!"
 "!MYSQLDUMP!" -h 127.0.0.1 -P !DB_PORT! -u "!DB_UZYTKOWNIK!" !HASLO! --default-character-set=utf8mb4 --single-transaction --skip-lock-tables --result-file="%CEL%\joker.sql" "!DB_NAZWA!"
 if errorlevel 1 (
-    echo Zrzut bazy nie powiodl sie. Komunikat MySQL jest powyzej - wklej go Claude.
-    pause
-    exit /b 1
+    echo Zrzut bazy nie powiodl sie ^(komunikat MySQL powyzej^).
+    echo Do zwyklej aktualizacji strony zrzut bazy NIE jest potrzebny - joker-kod.zip jest gotowy.
+    goto koniec
 )
 rem Nowsze MariaDB dopisuja linie i porownania znakow, ktorych starszy MySQL/MariaDB na serwerze nie zna.
 powershell -NoProfile -Command "$p='%CEL%\joker.sql'; $t=[IO.File]::ReadAllText($p); $t=$t -replace '(?m)^/\*M!999999.*\r?\n','' -replace 'utf8mb4_uca1400_ai_ci','utf8mb4_unicode_ci'; [IO.File]::WriteAllText($p,$t,(New-Object Text.UTF8Encoding $false))"
 
+:koniec
 echo.
-echo Gotowe. W folderze %CEL% sa:
-echo   joker-kod.zip, joker-zdjecia.zip i joker.sql
-echo Dalsze kroki sa w instrukcji od Claude.
+echo Gotowe. Paczka jest w folderze:
+echo   %CEL%
+echo Do aktualizacji strony wgraj tylko joker-kod.zip. joker.sql NIE importuj na serwer przy aktualizacji.
+start "" explorer "%CEL%"
 pause
