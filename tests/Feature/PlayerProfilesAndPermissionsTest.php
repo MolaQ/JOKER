@@ -3,6 +3,7 @@
 use App\Livewire\Admin\DataImporter;
 use App\Livewire\Admin\PlayerChangeRequestManager;
 use App\Livewire\Admin\PlayerManager;
+use App\Livewire\Admin\TeamList;
 use App\Livewire\Admin\UserManager;
 use App\Livewire\PlayerProposalForm;
 use App\Models\Article;
@@ -142,4 +143,22 @@ test('commenting can be taken away from one account in the user editor', functio
     $this->post(route('articles.comments.store', $article), ['content' => 'Hej'])->assertSessionHas('error');
     expect($article->comments()->count())->toBe(0);
     $this->get(route('articles.show', $article))->assertSee('Klub wyłączył Ci możliwość komentowania.');
+});
+
+test('lista zawodników i drużyn w panelu pokazuje odbiór i sortuje według niego', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $popular = Player::factory()->create(['team_id' => $this->team->id, 'jersey_number' => 9, 'last_name' => 'Popularny', 'views_count' => 120]);
+    $liked = Player::factory()->create(['team_id' => $this->team->id, 'jersey_number' => 1, 'last_name' => 'Lubiany', 'views_count' => 5]);
+    User::factory()->count(2)->create()->each(fn (User $fan) => $liked->toggleLikeFor($fan));
+    $this->team->forceFill(['views_count' => 340])->save();
+
+    Livewire::test(PlayerManager::class)
+        ->assertSeeInOrder(['Lubiany', 'Popularny'])
+        ->set('sort', 'wyswietlenia')
+        ->assertSeeInOrder(['Popularny', 'Lubiany'])
+        ->set('sort', 'polubienia')
+        ->assertSeeInOrder(['Lubiany', 'Popularny'])
+        ->assertSee('120');
+
+    Livewire::test(TeamList::class)->set('sort', 'wyswietlenia')->assertSee('Odbiór')->assertSee('340');
 });

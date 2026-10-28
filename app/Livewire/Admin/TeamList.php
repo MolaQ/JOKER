@@ -9,6 +9,7 @@ use App\Support\SearchIndex;
 use App\Support\Slug;
 use App\UserRole;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -53,6 +54,10 @@ class TeamList extends Component
 
     public string $search = '';
 
+    /** Kolejność listy: '' (jak na stronie), 'wyswietlenia' albo 'polubienia'. */
+    #[Url(as: 'kolejnosc', except: '')]
+    public string $sort = '';
+
     protected function rules(): array
     {
         return [
@@ -69,6 +74,11 @@ class TeamList extends Component
             'logo' => 'nullable|image|max:2048',
             'photo' => 'nullable|image|max:5120',
         ];
+    }
+
+    public function updatingSort(): void
+    {
+        $this->resetPage();
     }
 
     public function updatingSearch(): void
@@ -181,9 +191,11 @@ class TeamList extends Component
 
     public function render()
     {
-        $teams = Team::managedBy(Auth::user())->withCount('players')
+        $teams = Team::managedBy(Auth::user())->withCount(['players', 'likes'])
             ->with(['trainer', 'assistantTrainers'])
             ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
+            ->when($this->sort === 'wyswietlenia', fn ($q) => $q->orderByDesc('views_count'))
+            ->when($this->sort === 'polubienia', fn ($q) => $q->orderByDesc('likes_count'))
             ->orderBy('display_order')
             ->paginate(10);
 

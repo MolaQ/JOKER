@@ -8,6 +8,7 @@
                 placeholder="Szukaj: nazwisko, imię albo numer (np. 7)"
                 class="w-full sm:w-80 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"
             >
+            <x-admin-reception-sort class="w-full sm:w-auto" />
             <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center gap-1.5 rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
                 <x-admin-icon name="plus" class="h-4 w-4" /> Dodaj zawodnika
             </button>
@@ -48,6 +49,7 @@
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Pozycja</th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Drużyna</th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Odbiór</th>
                 <th class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Akcje</span></th>
             </tr>
         </thead>
@@ -77,6 +79,9 @@
                             <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">Nieaktywny</span>
                         @endif
                     </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        <x-admin-reception :views="$player->views_count" :likes="$player->likes_count" />
+                    </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <button type="button" wire:click="openEditModal({{ $player->id }})" class="text-sky-700 hover:text-sky-900 mr-4">Edytuj</button>
                         <button
@@ -89,7 +94,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="px-3 py-4 text-sm text-gray-500 text-center">Brak zawodników do wyświetlenia</td>
+                    <td colspan="7" class="px-3 py-4 text-sm text-gray-500 text-center">Brak zawodników do wyświetlenia</td>
                 </tr>
             @endforelse
         </tbody>

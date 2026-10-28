@@ -1,13 +1,14 @@
 <div>
     <!-- Toolbar -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border-b border-gray-200">
-        <div class="w-full sm:w-72">
+        <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
             <input
                 type="text"
                 wire:model.live.debounce.300ms="search"
                 placeholder="Szukaj drużyny..."
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"
+                class="w-full sm:w-72 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"
             >
+            <x-admin-reception-sort class="w-full sm:w-auto" />
         </div>
         @can('teams.all')
             <button
@@ -27,6 +28,7 @@
                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Kategoria</th>
                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Trener</th>
                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Zawodnicy</th>
+                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Odbiór</th>
                 <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
                     <span class="sr-only">Akcje</span>
                 </th>
@@ -52,6 +54,9 @@
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {{ $team->players_count }}
                     </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        <x-admin-reception :views="$team->views_count" :likes="$team->likes_count" />
+                    </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <button type="button" wire:click="openEditModal({{ $team->id }})" class="text-sky-700 hover:text-sky-900 mr-4">Edytuj</button>
                         <button
@@ -64,7 +69,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" class="px-3 py-4 text-sm text-gray-500 text-center">
+                    <td colspan="6" class="px-3 py-4 text-sm text-gray-500 text-center">
                         Brak drużyn do wyświetlenia
                     </td>
                 </tr>

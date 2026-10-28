@@ -15,6 +15,7 @@ use App\UserRole;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -92,6 +93,10 @@ class PlayerManager extends Component
     public string $search = '';
 
     public string $teamFilter = '';
+
+    /** Kolejność listy: '' (drużyna i numer), 'wyswietlenia' albo 'polubienia'. */
+    #[Url(as: 'kolejnosc', except: '')]
+    public string $sort = '';
 
     /** Filtr pozycji, np. sami atakujący; „brak” = bez pozycji. */
     public string $positionFilter = '';
@@ -181,6 +186,11 @@ class PlayerManager extends Component
     {
         unset($this->new_guardians[$index]);
         $this->new_guardians = array_values($this->new_guardians);
+    }
+
+    public function updatingSort(): void
+    {
+        $this->resetPage();
     }
 
     public function updatingSearch(): void
@@ -386,11 +396,13 @@ class PlayerManager extends Component
                 ->when(preg_match('/^#?(\d{1,2})$/', $search, $number), fn ($q3) => $q3->orWhere('jersey_number', (int) $number[1]))
             ));
 
-        $players = (clone $base)->with('team')
+        $players = (clone $base)->with('team')->withCount('likes')
             ->when($this->teamFilter === 'brak', fn ($q) => $q->whereNull('team_id'))
             ->when(ctype_digit($this->teamFilter), fn ($q) => $q->where('team_id', $this->teamFilter))
             ->when($this->positionFilter === 'brak', fn ($q) => $q->whereNull('position'))
             ->when(PlayerPosition::tryFrom($this->positionFilter), fn ($q, PlayerPosition $position) => $q->where(fn ($q2) => $q2->where('position', $position)->orWhereJsonContains('extra_positions', $position->value)))
+            ->when($this->sort === 'wyswietlenia', fn ($q) => $q->orderByDesc('views_count'))
+            ->when($this->sort === 'polubienia', fn ($q) => $q->orderByDesc('likes_count'))
             ->orderBy('team_id')
             ->orderBy('jersey_number')
             ->paginate(12);

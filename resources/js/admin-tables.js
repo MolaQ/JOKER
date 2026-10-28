@@ -1,5 +1,5 @@
 // Tabele panelu na telefonie zamieniają się w karty (resources/css/app.css); każda komórka dostaje
-// nazwę swojej kolumny w data-label. Livewire podmienia wiersze, więc etykiety są dopisywane na bieżąco.
+// nazwę swojej kolumny w data-label. Livewire podmienia wiersze i zdejmuje etykiety, więc są dopisywane na bieżąco.
 const SELECTOR = '.admin-panel main table:not([data-scroll-table])';
 
 function labelTable(table) {
@@ -51,5 +51,5 @@ export function initAdminTables() {
                 labelAll();
             });
         }
-    }).observe(main, { childList: true, subtree: true });
+    }).observe(main, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-label'] });
 }
