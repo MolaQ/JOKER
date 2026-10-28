@@ -132,7 +132,7 @@
                 <x-photo :src="Media::teamPhoto($team)" :alt="$team->name" sizes="(min-width: 1024px) 50vw, 100vw" class="absolute inset-0 -z-10 h-full w-full transition duration-700 group-hover:scale-105" />
                 <div class="absolute inset-0 -z-10 bg-gradient-to-t from-ink via-ink/40 to-transparent"></div>
                 <span class="chip absolute top-5 left-5 bg-white/15 text-white backdrop-blur">{{ $team->active_players_count }} {{ __('zawodników') }}</span>
-                <p class="text-xs font-semibold tracking-widest text-sky-club-light uppercase">{{ $team->birth_year ? __('Rocznik :year', ['year' => $team->birth_year]) : __('Pierwsza drużyna') }}</p>
+                <p class="text-xs font-semibold tracking-widest text-sky-club-light uppercase">{{ $team->birthYearsLabel() ?? __('Pierwsza drużyna') }}</p>
                 <h3 @class(['mt-1 font-display font-bold uppercase', 'text-5xl' => $loop->first, 'text-2xl' => ! $loop->first])>{{ $team->name }}</h3>
                 <span class="mt-4 inline-flex items-center gap-2 text-sm font-semibold opacity-0 transition group-hover:opacity-100">{{ __('Skład i sztab') }} <span aria-hidden="true">→</span></span>
             </a>

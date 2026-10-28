@@ -21,7 +21,7 @@
 
     <div class="container-site pt-24 pb-14 lg:pt-36 lg:pb-20">
         <a href="{{ route('teams.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ __('Wszystkie drużyny') }}</a>
-        <p class="eyebrow mt-6">{{ $team->birth_year ? __('Rocznik :year', ['year' => $team->birth_year]) : __('Pierwsza drużyna') }}@if($currentSeason) · {{ __('Sezon') }} {{ $currentSeason->name }}@endif</p>
+        <p class="eyebrow mt-6">{{ $team->birthYearsLabel() ?? __('Pierwsza drużyna') }}@if($currentSeason) · {{ __('Sezon') }} {{ $currentSeason->name }}@endif</p>
         <h1 class="heading-xl mt-3">{{ $team->name }}</h1>
         <div class="mt-3 flex flex-wrap items-center gap-4">
             <x-view-count :model="$team" class="text-white/70" />

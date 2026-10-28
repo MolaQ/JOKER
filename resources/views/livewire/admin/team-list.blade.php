@@ -42,7 +42,7 @@
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                            {{ ['senior' => 'Seniorzy', 'junior' => 'Juniorzy', 'junior_mlodszy' => 'Juniorzy młodsi', 'mlodzik' => 'Młodzicy'][$team->category] ?? $team->category }}{{ $team->birth_year ? ' · '.$team->birth_year : '' }}
+                            {{ ['senior' => 'Seniorzy', 'junior' => 'Juniorzy', 'junior_mlodszy' => 'Juniorzy młodsi', 'mlodzik' => 'Młodzicy'][$team->category] ?? $team->category }}{{ $team->birthYears() ? ' · '.$team->birthYears() : '' }}
                         </span>
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
@@ -121,8 +121,14 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Rocznik (puste dla Seniorów)</label>
-                                <input type="number" wire:model="birth_year" min="1990" max="2020" placeholder="np. 2010" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                <div class="mt-1 flex items-center gap-2">
+                                    <input type="number" wire:model="birth_year" min="1990" max="2030" placeholder="np. 2010" aria-label="Rocznik (pierwszy)" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                    <span class="text-gray-400">–</span>
+                                    <input type="number" wire:model="birth_year_to" min="1990" max="2030" placeholder="np. 2011" aria-label="Rocznik (ostatni)" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Drugie pole wypełnij, gdy w drużynie gra kilka roczników.</p>
                                 @error('birth_year') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                @error('birth_year_to') <p class="mt-1 text-sm text-red-600">Ostatni rocznik nie może być wcześniejszy niż pierwszy.</p> @enderror
                             </div>
 
                             <div>

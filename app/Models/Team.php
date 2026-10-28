@@ -29,6 +29,7 @@ class Team extends Model
         'description',
         'category',
         'birth_year',
+        'birth_year_to',
         'logo_path',
         'photo_path',
         'trainer_id',
@@ -46,6 +47,30 @@ class Team extends Model
     public function trainer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'trainer_id');
+    }
+
+    /**
+     * Rocznik albo zakres roczników, np. „2010” lub „2010–2011”; null dla seniorów.
+     */
+    public function birthYears(): ?string
+    {
+        if (! $this->birth_year) {
+            return null;
+        }
+
+        return $this->birth_year_to && $this->birth_year_to !== $this->birth_year
+            ? min($this->birth_year, $this->birth_year_to).'–'.max($this->birth_year, $this->birth_year_to)
+            : (string) $this->birth_year;
+    }
+
+    /**
+     * „Rocznik 2010” albo „Roczniki 2010–2011”; null dla seniorów.
+     */
+    public function birthYearsLabel(): ?string
+    {
+        $years = $this->birthYears();
+
+        return $years === null ? null : (str_contains($years, '–') ? __('Roczniki :years', ['years' => $years]) : __('Rocznik :year', ['year' => $years]));
     }
 
     /**

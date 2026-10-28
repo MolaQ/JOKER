@@ -119,7 +119,7 @@ class SearchIndex
         }
 
         foreach (Team::with(['trainer'])->orderBy('display_order')->get() as $team) {
-            $add(__('Drużyna'), $team->name, $team->birth_year ? __('Rocznik :year', ['year' => $team->birth_year]) : __('Pierwsza drużyna'), route('teams.show', $team, false),
+            $add(__('Drużyna'), $team->name, $team->birthYearsLabel() ?? __('Pierwsza drużyna'), route('teams.show', $team, false),
                 $team->description.' '.$team->trainer?->name.' '.$team->category);
         }
 

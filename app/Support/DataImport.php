@@ -34,7 +34,7 @@ class DataImport
         'teams' => [
             'name' => ['nazwa', true, 'Kadeci'],
             'category' => ['kategoria', true, 'juniorzy młodsi'],
-            'birth_year' => ['rocznik', false, '2010'],
+            'birth_year' => ['rocznik', false, '2010-2011'],
             'description' => ['opis', false, 'Pierwsza drużyna kadetów.'],
             'display_order' => ['kolejnosc', false, '4'],
         ],
@@ -222,8 +222,8 @@ class DataImport
             if ($data['category'] !== '' && self::category($data['category']) === null) {
                 $errors[] = 'nieznana kategoria „'.$data['category'].'” (seniorzy, juniorzy, juniorzy młodsi, młodzicy)';
             }
-            if ($number('birth_year', 1990, 2030)) {
-                $errors[] = 'rocznik musi być liczbą, np. 2010';
+            if ($data['birth_year'] !== '' && self::birthYears($data['birth_year']) === null) {
+                $errors[] = 'rocznik musi być liczbą albo zakresem, np. 2010 lub 2010-2011';
             }
         }
 
@@ -308,13 +308,35 @@ class DataImport
     }
 
     /**
+     * „2010” albo „2010-2011” (także z półpauzą lub ukośnikiem) jako [od, do]; null, gdy to nie rocznik.
+     *
+     * @return array{0: int, 1: ?int}|null
+     */
+    private static function birthYears(string $value): ?array
+    {
+        if (! preg_match('/^\s*(\d{4})\s*(?:[-–—\/]\s*(\d{4}))?\s*$/u', $value, $match)) {
+            return null;
+        }
+
+        $from = (int) $match[1];
+        $to = isset($match[2]) ? (int) $match[2] : null;
+
+        if ($from < 1990 || $from > 2030 || ($to !== null && ($to < $from || $to > 2030))) {
+            return null;
+        }
+
+        return [$from, $to !== null && $to !== $from ? $to : null];
+    }
+
+    /**
      * @param  array<string, string>  $data
      */
     private static function importTeam(array $data): void
     {
         $values = array_filter([
             'category' => self::category($data['category']),
-            'birth_year' => $data['birth_year'] !== '' ? (int) $data['birth_year'] : null,
+            'birth_year' => self::birthYears($data['birth_year'])[0] ?? null,
+            'birth_year_to' => self::birthYears($data['birth_year'])[1] ?? null,
             'description' => $data['description'] ?: null,
             'display_order' => $data['display_order'] !== '' ? (int) $data['display_order'] : null,
         ], fn ($value) => $value !== null);

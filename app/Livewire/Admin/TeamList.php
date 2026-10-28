@@ -30,6 +30,9 @@ class TeamList extends Component
 
     public ?int $birth_year = null;
 
+    /** Ostatni rocznik, gdy drużyna łączy kilka (np. 2010–2011). */
+    public ?int $birth_year_to = null;
+
     public ?int $trainer_id = null;
 
     /** @var array<int, int> */
@@ -64,7 +67,8 @@ class TeamList extends Component
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'category' => 'required|in:senior,junior,junior_mlodszy,mlodzik',
-            'birth_year' => 'nullable|integer|min:1990|max:2020',
+            'birth_year' => 'nullable|integer|min:1990|max:2030',
+            'birth_year_to' => 'nullable|integer|min:1990|max:2030|gte:birth_year',
             'trainer_id' => 'nullable|exists:users,id',
             'assistant_trainer_ids' => 'array',
             'assistant_trainer_ids.*' => 'exists:users,id',
@@ -101,6 +105,7 @@ class TeamList extends Component
         $this->description = (string) $team->description;
         $this->category = $team->category;
         $this->birth_year = $team->birth_year;
+        $this->birth_year_to = $team->birth_year_to;
         $this->trainer_id = $team->trainer_id;
         $assistants = $team->assistantTrainers()->get();
         $this->assistant_trainer_ids = $assistants->pluck('id')->all();
@@ -178,6 +183,7 @@ class TeamList extends Component
         $this->description = '';
         $this->category = 'senior';
         $this->birth_year = null;
+        $this->birth_year_to = null;
         $this->trainer_id = null;
         $this->assistant_trainer_ids = [];
         $this->staff_roles = [];
