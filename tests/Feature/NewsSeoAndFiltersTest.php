@@ -1,16 +1,17 @@
 <?php
 
 use App\Livewire\Admin\ArticleManager;
+use App\Livewire\Admin\AwardManager;
 use App\Livewire\Admin\PlayerManager;
 use App\Livewire\Admin\SeoManager;
 use App\Models\Article;
+use App\Models\Award;
 use App\Models\Game;
 use App\Models\Player;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\User;
 use App\Support\Sitemap;
-use App\Support\SiteSettings;
 use Illuminate\Support\Facades\Password;
 use Livewire\Livewire;
 use Symfony\Component\Mailer\Exception\TransportException;
@@ -93,16 +94,24 @@ test('lista artykułów w panelu pokazuje polubienia, komentarze, film i galeri�
         ->assertSee('Galeria');
 });
 
-test('brązowe odznaki PZPS są w stopce i dopisują się do wyróżnień zapisanych w panelu', function () {
-    $this->get('/')->assertSee('Brązowy Ośrodek PZPS 2024/25, 2025/26 i 2026')->assertSee('Złoty certyfikat');
+test('wyróżnienia z logo są w stopce i w danych dla Google, a panel je dodaje', function () {
+    $this->get('/')->assertSee('Brązowy Ośrodek PZPS 2024/25, 2025/26 i 2026')->assertSee('Złoty certyfikat')
+        ->assertSee('/img/wyroznienia/brazowy-osrodek-pzps.png', false)
+        ->assertSee('Certyfikacja Młodzieżowych Ośrodków Siatkarskich PZPS)', false);
 
-    app(SiteSettings::class)->set(['seo_awards' => 'Nagroda prezydenta miasta (2025)']);
-    $migration = require database_path('migrations/2026_10_26_100005_add_pzps_bronze_award.php');
-    $migration->up();
-    $migration->up();
+    Livewire::actingAs(User::factory()->admin()->create())->test(AwardManager::class)
+        ->call('openCreateModal')
+        ->set('name', 'Nagroda prezydenta miasta')
+        ->set('note', '2025')
+        ->call('save')
+        ->assertHasNoErrors();
 
-    expect(substr_count((string) app(SiteSettings::class)->get('seo_awards'), 'Brązowy Ośrodek PZPS'))->toBe(1)
-        ->and(app(SiteSettings::class)->get('seo_awards'))->toStartWith('Nagroda prezydenta miasta (2025)');
+    expect(Award::latest('id')->first()->display_order)->toBe(3);
+    $this->get('/')->assertSee('Nagroda prezydenta miasta');
+
+    $last = Award::latest('id')->first();
+    Livewire::test(AwardManager::class)->call('move', $last->id, -1);
+    expect(Award::visible()->pluck('name')->all()[1])->toBe('Nagroda prezydenta miasta');
 });
 
 test('awaria serwera poczty przy przypomnieniu hasła wraca do formularza z komunikatem zamiast błędu 500', function () {

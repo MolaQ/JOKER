@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Alumnus;
 use App\Models\Article;
 use App\Models\AuditLog;
+use App\Models\Award;
 use App\Models\Comment;
 use App\Models\Competition;
 use App\Models\CompetitionLevel;
@@ -90,6 +91,7 @@ class ChangeLog
         PlayerChangeRequest::class => 'Zgłoszenie zmiany zawodnika',
         ProfileChangeRequest::class => 'Zgłoszenie zmiany profilu',
         Sponsor::class => 'Sponsor',
+        Award::class => 'Wyróżnienie',
         SupportPackage::class => 'Pakiet wsparcia',
         ShopProduct::class => 'Gadżet',
     ];

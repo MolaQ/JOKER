@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Article;
+use App\Models\Award;
 use App\Models\Gallery;
 use App\Models\GalleryPhoto;
 use App\Models\Game;
@@ -55,7 +56,7 @@ class Seo
             'address' => self::postalAddress((string) $site['contact_address']),
             'sameAs' => array_values($site->socials()) ?: null,
             'foundingDate' => $site['seo_founding_year'] ?: null,
-            'award' => array_values(array_filter(array_map('trim', preg_split('/\R/u', (string) $site['seo_awards'])))) ?: null,
+            'award' => Award::visible()->get()->map->fullName()->values()->all() ?: null,
             'description' => $site['site_description'] ?: null,
         ]);
     }

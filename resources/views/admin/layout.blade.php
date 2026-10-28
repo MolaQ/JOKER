@@ -29,6 +29,7 @@
                 ['label' => 'Wygląd i ustawienia', 'route' => 'admin.settings.index', 'icon' => 'cog', 'can' => 'site.manage'],
                 ['label' => 'Podstrony', 'route' => 'admin.pages.index', 'icon' => 'list', 'can' => 'site.manage'],
                 ['label' => 'Pozycjonowanie (SEO)', 'route' => 'admin.seo.index', 'icon' => 'chart', 'can' => 'site.manage'],
+                ['label' => 'Wyróżnienia i certyfikaty', 'route' => 'admin.awards.index', 'icon' => 'star', 'can' => 'site.manage'],
             ],
             'Klub' => [
                 ['label' => 'Drużyny i sztab', 'route' => 'admin.teams.index', 'icon' => 'users', 'can' => 'teams.manage'],

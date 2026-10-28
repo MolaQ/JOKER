@@ -227,21 +227,30 @@
                             <p class="text-sm">{{ __($site['footer_text']) }}</p>
                         </div>
                     </div>
-                    @php $awards = array_filter(array_map('trim', preg_split('/\R/u', (string) $site['seo_awards']))); @endphp
-                    @if($awards)
-                    <div class="mt-5 flex flex-wrap gap-2">
+                    @php $awards = \App\Models\Award::visible()->get(); @endphp
+                    @if($awards->isNotEmpty())
+                    <div class="mt-6 flex flex-wrap gap-3">
                     @foreach($awards as $award)
-                        {{-- Dopisek w nawiasie na końcu (kto przyznał, rok) idzie mniejszym pismem pod nazwą wyróżnienia --}}
-                        @php [$awardName, $awardNote] = preg_match('/^(.*\S)\s*\(([^()]*)\)\s*$/u', __($award), $awardParts) ? [$awardParts[1], $awardParts[2]] : [__($award), null]; @endphp
-                        <p class="flex w-fit items-center gap-3 rounded-2xl bg-amber-400/10 px-4 py-2 text-amber-300 ring-1 ring-amber-400/30">
-                            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 21h8m-4-4v4M7 4h10v5a5 5 0 0 1-10 0V4Zm0 2H4v1a3 3 0 0 0 3 3m10-4h3v1a3 3 0 0 1-3 3"/></svg>
-                            <span class="leading-snug">
-                                <span class="block text-sm font-semibold">{{ $awardName }}</span>
-                                @if($awardNote)
-                                    <span class="block text-xs font-normal text-amber-200/70">{{ $awardNote }}</span>
+                        <{{ $award->url ? 'a' : 'div' }} @if($award->url) href="{{ $award->url }}" target="_blank" rel="noopener" @endif @class([
+                            'flex w-fit max-w-full items-center gap-3 rounded-2xl bg-amber-400/10 py-2 pr-4 text-amber-300 ring-1 ring-amber-400/30',
+                            'pl-2' => $award->logo_path,
+                            'pl-4' => ! $award->logo_path,
+                            'transition hover:bg-amber-400/15' => $award->url,
+                        ])>
+                            @if($award->logo_path)
+                                <span class="flex h-16 shrink-0 items-center rounded-xl bg-white px-3 py-2">
+                                    <img src="{{ \App\Support\Media::url($award->logo_path) }}" alt="" loading="lazy" class="h-full w-auto max-w-36 object-contain">
+                                </span>
+                            @else
+                                <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 21h8m-4-4v4M7 4h10v5a5 5 0 0 1-10 0V4Zm0 2H4v1a3 3 0 0 0 3 3m10-4h3v1a3 3 0 0 1-3 3"/></svg>
+                            @endif
+                            <span class="min-w-0 leading-snug">
+                                <span class="block text-sm font-semibold">{{ __($award->name) }}</span>
+                                @if($award->note)
+                                    <span class="block text-xs font-normal text-amber-200/70">{{ __($award->note) }}</span>
                                 @endif
                             </span>
-                        </p>
+                        </{{ $award->url ? 'a' : 'div' }}>
                     @endforeach
                     </div>
                     @endif

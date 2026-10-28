@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Http\Controllers\SitemapController;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Article;
+use App\Models\Award;
 use App\Models\Gallery;
 use App\Models\Page;
 use App\Models\Player;
@@ -61,9 +62,9 @@ class SeoManager extends Component
             $site['seo_google_verification']
                 ? ['ok', 'Google Search Console', 'Kod weryfikacji jest na stronie. W Search Console dodaj mapę strony: '.route('sitemap'), 'https://search.google.com/search-console']
                 : ['warn', 'Google Search Console', 'Dodaj stronę w Search Console (weryfikacja „Tag HTML”) i wklej kod w Ustawieniach. Zobaczysz, na jakie frazy klub się wyświetla i czy są błędy.', route('admin.settings.index', ['zakladka' => 'seo'])],
-            filled($site['seo_awards'])
-                ? ['ok', 'Wyróżnienia klubu', 'Są w danych o klubie dla Google.', route('admin.settings.index', ['zakladka' => 'seo'])]
-                : ['warn', 'Wyróżnienia klubu', 'Wpisz oficjalne certyfikaty i nagrody (np. certyfikat ośrodka szkolenia); trafią do danych o klubie dla wyszukiwarek.', route('admin.settings.index', ['zakladka' => 'seo'])],
+            Award::where('is_active', true)->exists()
+                ? ['ok', 'Wyróżnienia klubu', 'Są w danych o klubie dla Google.', route('admin.awards.index')]
+                : ['warn', 'Wyróżnienia klubu', 'Dodaj oficjalne certyfikaty i nagrody (np. certyfikat ośrodka szkolenia); trafią do stopki i do danych o klubie dla wyszukiwarek.', route('admin.awards.index')],
             $noExcerpt
                 ? ['warn', 'Artykuły bez zajawki: '.$noExcerpt, 'Zajawka jest opisem w wynikach Google. Bez niej Google sam wytnie fragment tekstu.', route('admin.articles.index')]
                 : ['ok', 'Zajawki artykułów', 'Każdy opublikowany artykuł ma zajawkę.', null],
