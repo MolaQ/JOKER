@@ -12,6 +12,15 @@ DOMENA="$(dirname "$APP")"
 ZNACZNIK="$APP/storage/framework/instalacja-zrobiona"
 LOG="$APP/storage/logs/instalacja.log"
 
+# Paczka rozpakowana z uprawnieniami 777 (zip z Windows) daje błąd 403/500: serwer nie uruchamia plików,
+# które może zmieniać każdy. Foldery 755, pliki 644 (skrypty .sh zostają wykonywalne).
+if [ -n "$(find "$APP" -maxdepth 2 -perm -o+w ! -type l -print -quit 2>/dev/null)" ]; then
+    find "$APP" ! -type l -type d -exec chmod 755 {} + 2>/dev/null
+    find "$APP" ! -type l -type f -exec chmod 644 {} + 2>/dev/null
+    find "$APP/narzedzia" -name '*.sh' -exec chmod 755 {} + 2>/dev/null
+    echo "$(date '+%Y-%m-%d %H:%M:%S') Poprawiono uprawnienia plików (foldery 755, pliki 644)." >>"$APP/storage/logs/instalacja.log"
+fi
+
 mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views storage/app/public bootstrap/cache
 
 # PHP 8.2 lub nowszy: domyślne polecenie php bywa starsze niż wersja wybrana dla strony w panelu.
