@@ -31,8 +31,8 @@
                     <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
                         {{ $sponsor->name }}
                     </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 capitalize">
-                        {{ $sponsor->tier }}
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {{ \App\Models\Sponsor::TIERS[$sponsor->tier]['admin'] ?? $sponsor->tier }}
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm">
                         @if($sponsor->is_active)
@@ -94,10 +94,9 @@
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Poziom sponsoringu</label>
                                     <select wire:model="tier" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
-                                        <option value="platinum">Platynowy</option>
-                                        <option value="gold">Złoty</option>
-                                        <option value="silver">Srebrny</option>
-                                        <option value="bronze">Brązowy</option>
+                                        @foreach(\App\Models\Sponsor::TIERS as $value => $tierInfo)
+                                            <option value="{{ $value }}">{{ $tierInfo['admin'] }} ({{ mb_strtolower($tierInfo['label']) }} na stronie)</option>
+                                        @endforeach
                                     </select>
                                 </div>
                                 <div>

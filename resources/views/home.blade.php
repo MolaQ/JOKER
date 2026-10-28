@@ -216,15 +216,36 @@
 <section class="border-y border-zinc-200 bg-white py-14">
     <div class="container-site">
         <p class="eyebrow text-center text-zinc-400">{{ __($site['home_sponsors_title']) }}</p>
-        <div class="mt-8 flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
-            @foreach($sponsors as $sponsor)
-                <a href="{{ $sponsor->website_url ?: '#' }}" @if($sponsor->website_url) target="_blank" rel="noopener" @endif class="opacity-60 grayscale transition hover:opacity-100 hover:grayscale-0" title="{{ $sponsor->name }}">
-                    @if($sponsor->logo_path)
-                        <img src="{{ Media::url($sponsor->logo_path) }}" alt="{{ $sponsor->name }}" loading="lazy" decoding="async" height="48" class="h-12 w-auto object-contain">
-                    @else
-                        <span class="font-display text-xl font-bold tracking-wide text-zinc-700 uppercase">{{ $sponsor->name }}</span>
+        @php
+            // Wielkość logo według poziomu: najważniejszy sponsor największy i w kolorze, mniejsi szarzy do najechania.
+            $tierStyles = [
+                'platinum' => ['logo' => 'h-20 sm:h-28 max-w-[18rem] sm:max-w-[22rem]', 'text' => 'text-3xl sm:text-4xl', 'gap' => 'gap-x-10 gap-y-6 sm:gap-x-16', 'muted' => false],
+                'gold' => ['logo' => 'h-12 sm:h-16 max-w-[10rem] sm:max-w-[13rem]', 'text' => 'text-2xl', 'gap' => 'gap-x-8 gap-y-5 sm:gap-x-12', 'muted' => false],
+                'silver' => ['logo' => 'h-11 sm:h-12 max-w-[10rem]', 'text' => 'text-xl', 'gap' => 'gap-x-8 gap-y-4 sm:gap-x-10', 'muted' => true],
+                'bronze' => ['logo' => 'h-9 max-w-[8rem]', 'text' => 'text-base', 'gap' => 'gap-x-6 gap-y-4 sm:gap-x-8', 'muted' => true],
+            ];
+            $sponsorRows = $sponsors->groupBy(fn ($sponsor) => isset($tierStyles[$sponsor->tier]) ? $sponsor->tier : 'bronze')
+                ->sortBy(fn ($group, $tier) => array_search($tier, array_keys($tierStyles), true));
+        @endphp
+        <div class="mt-6 space-y-7">
+            @foreach($sponsorRows as $tier => $tierSponsors)
+                @php($style = $tierStyles[$tier])
+                <div @class(['border-t border-zinc-100 pt-7' => ! $loop->first])>
+                    @if($sponsorRows->count() > 1)
+                        <p class="mb-4 text-center text-xs font-semibold tracking-[0.2em] text-zinc-400 uppercase">{{ __($tier === 'platinum' && $tierSponsors->count() > 1 ? 'Sponsorzy główni' : \App\Models\Sponsor::TIERS[$tier]['label']) }}</p>
                     @endif
-                </a>
+                    <div class="flex flex-wrap items-center justify-center {{ $style['gap'] }}">
+                        @foreach($tierSponsors as $sponsor)
+                            <a href="{{ $sponsor->website_url ?: '#' }}" @if($sponsor->website_url) target="_blank" rel="noopener" @endif @class(['transition', 'opacity-60 grayscale hover:opacity-100 hover:grayscale-0' => $style['muted'], 'hover:opacity-80' => ! $style['muted']]) title="{{ $sponsor->name }}">
+                                @if($sponsor->logo_path)
+                                    <img src="{{ Media::url($sponsor->logo_path) }}" alt="{{ $sponsor->name }}" loading="lazy" decoding="async" class="{{ $style['logo'] }} w-auto object-contain">
+                                @else
+                                    <span class="font-display {{ $style['text'] }} font-bold tracking-wide text-zinc-700 uppercase">{{ $sponsor->name }}</span>
+                                @endif
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
             @endforeach
         </div>
     </div>
