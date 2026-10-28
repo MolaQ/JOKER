@@ -558,3 +558,291 @@
 .cropper-round .cropper-face {
     border-radius: 50%;
 }
+
+/*
+ * Skład dnia (x-daily-lineup-graphic): grafika 1080×1350 w stylu miniatury Joker TV, boisko w perspektywie.
+ * Na stronie skalowana przez resources/js/daily-lineup.js; te same style trafiają do pobieranego obrazka.
+ */
+.daily-lineup-frame {
+    position: relative;
+    aspect-ratio: 1080 / 1350;
+    overflow: hidden;
+}
+
+.daily-lineup {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1080px;
+    height: 1350px;
+    overflow: hidden;
+    transform-origin: 0 0;
+    background: #060b1d;
+    color: #fff;
+    font-family: var(--font-sans);
+
+    & .dl-bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 40% 12%;
+    }
+
+    & .dl-shade {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgb(4 8 24 / 0.25) 0%, rgb(4 8 24 / 0.6) 30%, rgb(4 8 24 / 0.85) 100%);
+    }
+
+    & .dl-header {
+        position: absolute;
+        top: 56px;
+        right: 0;
+        left: 0;
+        z-index: 5;
+        text-align: center;
+        text-shadow: 0 3px 18px rgb(0 0 0 / 0.6);
+    }
+
+    & .dl-logo {
+        position: absolute;
+        top: -8px;
+        left: 64px;
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+    }
+
+    & .dl-date {
+        position: absolute;
+        top: 14px;
+        right: 64px;
+        font-family: var(--font-display);
+        font-size: 30px;
+        font-weight: 600;
+        line-height: 1.1;
+        letter-spacing: 0.04em;
+        text-align: right;
+
+        & small {
+            display: block;
+            margin-top: 6px;
+            font-family: var(--font-sans);
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+    }
+
+    & .dl-title {
+        font-family: var(--font-display);
+        font-size: 92px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+    }
+
+    & .dl-sub {
+        margin-top: 10px;
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        opacity: 0.8;
+    }
+
+    & .dl-court {
+        position: absolute;
+        top: 335px;
+        left: 120px;
+        z-index: 1;
+        width: 840px;
+        height: 820px;
+
+        & svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+            transform: perspective(900px) rotateX(24deg);
+            transform-origin: 50% 0%;
+        }
+    }
+
+    & .dl-tile {
+        position: absolute;
+        z-index: 3;
+        width: 206px;
+        text-align: center;
+        transform: translateX(-50%);
+    }
+
+    & .dl-pic {
+        position: relative;
+        display: flex;
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+        align-items: center;
+        justify-content: center;
+        border-radius: 22px;
+        background: linear-gradient(145deg, #1d4ed8, #0b1638);
+        box-shadow: 0 0 0 3px #4aa8ff, 0 0 24px rgb(74 168 255 / 0.55);
+        color: #e0f0ff;
+        font-family: var(--font-display);
+        font-weight: 700;
+
+        & img {
+            width: 100%;
+            height: 100%;
+            border-radius: inherit;
+            object-fit: cover;
+        }
+    }
+
+    /* Libero: biały kafelek z niebieskim numerem, jak koszulka w innym kolorze. */
+    & .dl-pic-libero {
+        background: #fff;
+        box-shadow: 0 0 0 3px #4aa8ff, 0 0 24px rgb(255 255 255 / 0.45);
+        color: #1d4ed8;
+    }
+
+    & .dl-num {
+        font-size: 86px;
+        line-height: 1;
+    }
+
+    & .dl-ini {
+        font-size: 58px;
+        letter-spacing: 0.02em;
+    }
+
+    & .dl-cap {
+        position: absolute;
+        top: -12px;
+        right: -12px;
+        display: flex;
+        width: 44px;
+        height: 44px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: #facc15;
+        box-shadow: 0 4px 12px rgb(0 0 0 / 0.35);
+        color: #111827;
+        font-size: 26px;
+    }
+
+    & .dl-name {
+        margin-top: 12px;
+        font-family: var(--font-display);
+        line-height: 1.02;
+        text-shadow: 0 2px 12px rgb(0 0 0 / 0.95);
+        text-transform: uppercase;
+
+        & span {
+            display: block;
+            font-size: 20px;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            opacity: 0.85;
+        }
+
+        & strong {
+            display: block;
+            font-size: 31px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+    }
+
+    & .dl-meta {
+        margin-top: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-shadow: 0 1px 8px rgb(0 0 0 / 0.95);
+
+        & b {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: #1d4ed8;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-shadow: none;
+            text-transform: uppercase;
+        }
+
+        & span {
+            display: block;
+            margin-top: 5px;
+            font-size: 15px;
+        }
+    }
+
+    & .dl-coach {
+        position: absolute;
+        bottom: 92px;
+        left: 50%;
+        z-index: 3;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 14px 28px 14px 14px;
+        border-radius: 20px;
+        background: rgb(8 16 48 / 0.85);
+        box-shadow: 0 0 0 2px #4aa8ff, 0 0 30px rgb(74 168 255 / 0.35);
+        transform: translateX(-50%);
+        white-space: nowrap;
+
+        & .dl-pic {
+            width: 84px;
+            height: 84px;
+            margin: 0;
+            border-radius: 16px;
+        }
+
+        & .dl-ini {
+            font-size: 34px;
+        }
+    }
+
+    & .dl-coach-label {
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        opacity: 0.75;
+    }
+
+    & .dl-coach-name {
+        font-family: var(--font-display);
+        font-size: 34px;
+        font-weight: 700;
+        line-height: 1.05;
+        text-transform: uppercase;
+    }
+
+    & .dl-footer {
+        position: absolute;
+        right: 0;
+        bottom: 34px;
+        left: 0;
+        z-index: 3;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-align: center;
+        opacity: 0.75;
+
+        & strong {
+            font-weight: 800;
+        }
+    }
+}

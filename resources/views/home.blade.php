@@ -174,6 +174,45 @@
 </section>
 @endif
 
+{{-- SKŁAD DNIA --}}
+@if($lineup && collect($lineup->players)->pluck('player_id')->filter()->isNotEmpty())
+@php
+    $lineupPeople = collect($lineup->lineup())->filter(fn ($slot) => $slot['player'])
+        ->map(fn ($slot) => ['name' => $slot['player']->full_name, 'role' => $slot['position']->label().($slot['player']->team ? ' · '.$slot['player']->team->name : ''), 'url' => route('players.show', $slot['player']), 'badge' => $slot['player']->jersey_number ?? mb_substr($slot['player']->first_name, 0, 1).mb_substr((string) $slot['player']->last_name, 0, 1)]);
+    if ($lineup->coach) {
+        $lineupPeople->push(['name' => $lineup->coach->name, 'role' => __('Trener'), 'url' => route('trainers.show', $lineup->coach), 'badge' => collect(explode(' ', $lineup->coach->name))->map(fn ($part) => mb_substr($part, 0, 1))->take(2)->implode('')]);
+    }
+    $lineupFile = 'sklad-dnia-'.$lineup->date->toDateString().'.png';
+@endphp
+<section class="container-site py-16 lg:py-24" data-reveal>
+    <div class="grid items-center gap-10 lg:grid-cols-[minmax(0,26rem)_1fr]">
+        <x-daily-lineup-graphic :lineup="$lineup" class="rounded-3xl shadow-2xl shadow-ink/30 ring-1 ring-black/5" />
+        <div>
+            <p class="eyebrow">{{ __('Codziennie nowy') }} · {{ $lineup->date->format('d.m.Y') }}</p>
+            <h2 class="heading-lg mt-3">{{ __('Skład dnia') }}</h2>
+            <p class="mt-4 max-w-xl text-zinc-600">{{ __('Sześciu zawodników i trener ze wszystkich roczników, losowani codziennie. Każde serduszko na profilu zwiększa szansę na miejsce w składzie.') }}</p>
+            <ul class="mt-6 grid gap-x-6 gap-y-3 sm:grid-cols-2 xl:grid-cols-3">
+                @foreach($lineupPeople as $person)
+                    <li>
+                        <a href="{{ $person['url'] }}" class="group flex items-center gap-3">
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ink font-display text-sm font-bold text-sky-club">{{ $person['badge'] }}</span>
+                            <span class="min-w-0">
+                                <span class="block text-sm font-semibold group-hover:text-sky-club-dark">{{ $person['name'] }}</span>
+                                <span class="block truncate text-xs text-zinc-500">{{ $person['role'] }}</span>
+                            </span>
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+            <div class="mt-7 flex flex-wrap gap-3">
+                <button type="button" data-daily-lineup="download" data-file-name="{{ $lineupFile }}" data-busy-label="{{ __('Przygotowuję…') }}" data-error-message="{{ __('Nie udało się przygotować obrazka. Spróbuj ponownie.') }}" class="btn-primary">{{ __('Pobierz obrazek') }}</button>
+                <button type="button" data-daily-lineup="share" data-file-name="{{ $lineupFile }}" data-share-title="{{ __('Skład dnia') }}" data-busy-label="{{ __('Przygotowuję…') }}" data-error-message="{{ __('Nie udało się przygotować obrazka. Spróbuj ponownie.') }}" class="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-zinc-900 ring-1 ring-zinc-300 transition hover:bg-zinc-100">{{ __('Udostępnij') }}</button>
+            </div>
+        </div>
+    </div>
+</section>
+@endif
+
 {{-- AKTUALNOŚCI --}}
 @if($site['home_news_enabled'] && $articles->isNotEmpty())
 <section class="container-site py-20 lg:py-28" data-reveal>

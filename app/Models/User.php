@@ -6,6 +6,7 @@ use App\AccountStatus;
 use App\BirthdayDisplay;
 use App\Models\Concerns\CountsViews;
 use App\Models\Concerns\HasReadableRouteKey;
+use App\Models\Concerns\Likeable;
 use App\Permission;
 use App\UserRole;
 use Database\Factories\UserFactory;
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
@@ -27,11 +29,12 @@ use Illuminate\Support\Str;
 class User extends Authenticatable implements MustVerifyEmail
 {
     use CountsViews;
-
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     use HasReadableRouteKey;
+
+    use Likeable;
 
     /**
      * The attributes that are mass assignable.
@@ -467,6 +470,7 @@ class User extends Authenticatable implements MustVerifyEmail
         Team::where('trainer_id', $this->id)->update(['trainer_id' => null]);
         $this->assistantTeams()->detach();
         $this->roleAssignments()->delete();
+        $this->receivedLikes()->delete();
         $this->permissionOverrides()->delete();
         $this->profileChangeRequests()->delete();
         PushSubscription::where('user_id', $this->id)->delete();
@@ -547,6 +551,19 @@ class User extends Authenticatable implements MustVerifyEmail
     public function likes(): HasMany
     {
         return $this->hasMany(Like::class);
+    }
+
+    /**
+     * Serduszka otrzymane przez profil w sztabie (likes() to polubienia dane przez to konto).
+     */
+    public function receivedLikes(): MorphMany
+    {
+        return $this->morphMany(Like::class, 'likeable');
+    }
+
+    public function likesRelation(): MorphMany
+    {
+        return $this->receivedLikes();
     }
 
     public function profileChangeRequests(): HasMany

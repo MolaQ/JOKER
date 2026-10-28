@@ -24,6 +24,7 @@
         "@tiptap/starter-kit": "^3.32.0",
         "cropperjs": "^1.6.2",
         "emoji-picker-element": "^1.29.1",
-        "emoji-picker-element-data": "^1.8.0"
+        "emoji-picker-element-data": "^1.8.0",
+        "html-to-image": "^1.11.13"
     }
 }

@@ -207,6 +207,7 @@ return [
                 'home_games_enabled' => ['type' => 'toggle', 'label' => 'Sekcja: Terminarz i wyniki', 'default' => true],
                 'home_games_eyebrow' => ['type' => 'text', 'label' => 'Terminarz: mały napis', 'default' => 'Mecze'],
                 'home_games_title' => ['type' => 'text', 'label' => 'Terminarz: tytuł', 'default' => 'Terminarz i wyniki'],
+                'home_lineup_enabled' => ['type' => 'toggle', 'label' => 'Sekcja: Skład dnia (losowany codziennie, więcej serc = większa szansa)', 'default' => true],
                 'home_news_enabled' => ['type' => 'toggle', 'label' => 'Sekcja: Aktualności', 'default' => true],
                 'home_news_eyebrow' => ['type' => 'text', 'label' => 'Aktualności: mały napis', 'default' => 'Aktualności'],
                 'home_news_title' => ['type' => 'text', 'label' => 'Aktualności: tytuł', 'default' => 'Z życia klubu'],

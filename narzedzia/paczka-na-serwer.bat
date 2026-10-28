@@ -44,7 +44,8 @@ if exist "%ROBOCZY%" rmdir /s /q "%ROBOCZY%"
 
 echo [1/5] Buduje wyglad strony (npm run build) ...
 pushd "%ZRODLO%"
-if not exist node_modules call npm ci
+rem Zawsze, bo nowe wersje strony moga dodac biblioteki (npm install nic nie robi, gdy wszystko jest aktualne).
+call npm install --no-audit --no-fund
 call npm run build
 if errorlevel 1 (
     popd

@@ -13,7 +13,10 @@
             <a href="{{ route('teams.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ __('Drużyny') }}</a>
             <p class="eyebrow mt-5">{{ $roles->pluck('role')->unique()->implode(' · ') ?: __('Sztab klubu') }}</p>
             <h1 class="heading-xl mt-3">{{ $trainer->name }}</h1>
-            <x-view-count :model="$trainer" class="mt-3 text-white/70" />
+            <div class="mt-4 flex flex-wrap items-center gap-4">
+                <x-view-count :model="$trainer" class="text-white/70" />
+                @livewire('like-button', ['type' => 'trainer', 'id' => $trainer->id, 'dark' => true], key('trainer-like-'.$trainer->id))
+            </div>
         </div>
     </div>
 </section>

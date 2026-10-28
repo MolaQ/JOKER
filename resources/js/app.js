@@ -1,6 +1,7 @@
 import { initAdminTables } from './admin-tables';
 import { registerConfirmModal } from './confirm-modal';
 import { initCountdowns } from './countdown';
+import { initDailyLineup } from './daily-lineup';
 import { initPageStats } from './page-stats';
 import { initPush } from './push';
 import { registerPhotoCropper } from './photo-cropper';
@@ -19,6 +20,7 @@ initSearch();
 initPageStats();
 initPush();
 initAdminTables();
+initDailyLineup();
 
 // Pojawianie się sekcji przy przewijaniu.
 const revealObserver = 'IntersectionObserver' in window

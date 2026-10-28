@@ -10,6 +10,7 @@ use App\Models\Player;
 use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\TournamentMatch;
+use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
@@ -32,6 +33,7 @@ class LikeButton extends Component
         'tournament' => Tournament::class,
         'tournament_match' => TournamentMatch::class,
         'gallery' => Gallery::class,
+        'trainer' => User::class,
     ];
 
     #[Locked]
@@ -83,7 +85,7 @@ class LikeButton extends Component
     {
         $model = $this->resolveModel();
 
-        $this->likesCount = $model ? $model->likes()->count() : 0;
+        $this->likesCount = $model ? $model->likesRelation()->count() : 0;
         $this->liked = $model ? $model->isLikedBy(Auth::user()) : false;
     }
 
