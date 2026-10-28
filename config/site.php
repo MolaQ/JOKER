@@ -117,13 +117,15 @@ return [
         ],
 
         'turnieje' => [
-            'label' => 'Turnieje: drabinka',
+            'label' => 'Turnieje: drabinka i karty drużyn',
             'icon' => 'trophy',
             'fields' => [
                 'tm_bar_bg' => ['type' => 'color', 'label' => 'Belka meczu: tło', 'default' => '#0f2d6b'],
                 'tm_bar_text' => ['type' => 'color', 'label' => 'Belka meczu: tekst', 'default' => '#ffffff'],
                 'tm_number_bg' => ['type' => 'color', 'label' => 'Numer meczu: tło', 'default' => '#facc15'],
                 'tm_number_text' => ['type' => 'color', 'label' => 'Numer meczu: tekst', 'default' => '#0f172a'],
+                'tm_card_from' => ['type' => 'color', 'label' => 'Karty drużyn: kolor górny (gradient)', 'default' => '#1b3f86'],
+                'tm_card_to' => ['type' => 'color', 'label' => 'Karty drużyn: kolor dolny (gradient)', 'default' => '#12141a'],
             ],
         ],
 

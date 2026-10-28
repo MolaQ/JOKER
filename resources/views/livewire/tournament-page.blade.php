@@ -29,20 +29,24 @@
         {{-- DRUŻYNY --}}
         @if($currentTab === 'druzyny' && $current)
             <h2 class="heading-md">{{ __('Drużyny') }} <span class="text-zinc-400">· {{ $current->name }}</span></h2>
+            @php
+                $cardDark = $site->isDark('tm_card_from', 'tm_card_to');
+                $cardStyle = 'background-image: linear-gradient(150deg, '.$site->color('tm_card_from').', '.$site->color('tm_card_to').')';
+            @endphp
             <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach($current->participants->sortBy(fn ($participant) => ($participant->group?->name ?? 'zz').$participant->name()) as $participant)
-                    <div wire:key="participant-{{ $participant->id }}" @class(['card p-5', 'ring-2 ring-sky-club' => $participant->isOwnTeam()])>
+                    <div wire:key="participant-{{ $participant->id }}" style="{{ $cardStyle }}" @class(['card border-0 p-5 shadow-lg', 'ring-2 ring-sky-club' => $participant->isOwnTeam(), 'ring-1 ring-white/10' => $cardDark && ! $participant->isOwnTeam()])>
                         <div class="flex items-center gap-4">
-                            <x-avatar logo :photo="$participant->logoPath()" :name="$participant->name()" class="h-16 w-16 shrink-0 rounded-2xl text-xl" />
+                            <x-avatar logo :photo="$participant->logoPath()" :name="$participant->name()" @class(['h-16 w-16 shrink-0 rounded-2xl text-xl', 'bg-white/5 ring-1 ring-white/15' => $cardDark]) />
                             <div class="min-w-0">
-                                <p class="font-display text-lg leading-tight font-semibold text-zinc-900 uppercase">{{ $participant->name() }}</p>
-                                @if($participant->group)<p class="mt-1 text-sm text-zinc-500">{{ $participant->group->name }}</p>@endif
+                                <p @class(['font-display text-lg leading-tight font-semibold uppercase', 'text-white' => $cardDark, 'text-zinc-900' => ! $cardDark])>{{ $participant->name() }}</p>
+                                @if($participant->group)<p @class(['mt-1 text-sm', 'text-white/60' => $cardDark, 'text-zinc-500' => ! $cardDark])>{{ $participant->group->name }}</p>@endif
                             </div>
                         </div>
                         @if($participant->rosterLines())
                             <details class="group mt-4">
-                                <summary class="cursor-pointer list-none text-sm font-semibold text-sky-club-dark" data-track="{{ __('Skład') }}: {{ $participant->name() }}">{{ __('Skład') }} ({{ count($participant->rosterLines()) }}) <span class="inline-block transition group-open:rotate-180">▾</span></summary>
-                                <ul class="mt-2 columns-2 gap-4 text-sm text-zinc-700">
+                                <summary @class(['cursor-pointer list-none text-sm font-semibold', 'text-sky-club-light' => $cardDark, 'text-sky-club-dark' => ! $cardDark]) data-track="{{ __('Skład') }}: {{ $participant->name() }}">{{ __('Skład') }} ({{ count($participant->rosterLines()) }}) <span class="inline-block transition group-open:rotate-180">▾</span></summary>
+                                <ul @class(['mt-2 columns-2 gap-4 text-sm', 'text-white/80' => $cardDark, 'text-zinc-700' => ! $cardDark])>
                                     @foreach($participant->rosterLines() as $line)
                                         <li>{{ $line }}</li>
                                     @endforeach

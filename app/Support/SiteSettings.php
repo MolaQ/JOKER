@@ -71,6 +71,20 @@ class SiteSettings implements ArrayAccess
     }
 
     /**
+     * Czy kolor jest ciemny (wtedy kładziemy na nim jasny tekst).
+     */
+    public function isDark(string ...$keys): bool
+    {
+        $luminance = collect($keys)->avg(function (string $key) {
+            [$r, $g, $b] = sscanf($this->color($key), '#%02x%02x%02x');
+
+            return 0.2126 * $r + 0.7152 * $g + 0.0722 * $b;
+        });
+
+        return $luminance < 140;
+    }
+
+    /**
      * @return array<int, array{label: string, url: string}>
      */
     public function links(string $key): array
