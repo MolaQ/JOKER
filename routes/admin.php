@@ -67,6 +67,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
 
     // Do zatwierdzenia: jedna strona z zakładkami (App\Support\Approvals), każda zakładka pod własnym adresem
     Route::get('/do-zatwierdzenia', ApprovalsController::class)->name('approvals.index');
+    Route::get('/rodzice-do-przypisania', ApprovalsController::class)->defaults('section', 'rodzice')->name('parents.index');
     Route::get('/konta-do-aktywacji', ApprovalsController::class)->defaults('section', 'konta')->name('accounts.index');
     Route::get('/propozycje', ApprovalsController::class)->defaults('section', 'propozycje')->name('content-proposals.index');
     Route::get('/komentarze', ApprovalsController::class)->defaults('section', 'komentarze')->name('comments.index');

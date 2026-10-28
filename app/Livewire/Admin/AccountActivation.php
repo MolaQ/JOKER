@@ -16,9 +16,9 @@ use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 /**
- * Konta do aktywacji: nowe konto działa dopiero po powiązaniu z profilem zawodnika,
- * z dzieckiem (rodzic) albo z drużyną (trener, sztab). Trener widzi tylko konta
- * zgłoszone do swoich drużyn i aktywuje tylko rodziców i zawodników.
+ * Konta do aktywacji: nowe konto działa dopiero po powiązaniu z profilem zawodnika
+ * albo z drużyną (trener, sztab). Rodziców przypisuje się do dzieci w ParentAssignment.
+ * Trener widzi tylko konta zgłoszone do swoich drużyn i aktywuje tylko rodziców i zawodników.
  */
 class AccountActivation extends Component
 {
@@ -46,9 +46,19 @@ class AccountActivation extends Component
     public string $rejectionReason = '';
 
     /**
-     * Konta, które jeszcze nigdy nie były aktywne, widoczne dla zalogowanej osoby.
+     * Konta do aktywacji w tej zakładce. Rodzice mają własną stronę: „Rodzice do przypisania”.
      */
     public static function pendingFor(User $user): Builder
+    {
+        return self::awaitingFor($user)->where(fn (Builder $query) => $query
+            ->whereNull('requested_role')
+            ->orWhere('requested_role', '!=', UserRole::Parent->value));
+    }
+
+    /**
+     * Konta, które jeszcze nigdy nie były aktywne, widoczne dla zalogowanej osoby.
+     */
+    public static function awaitingFor(User $user): Builder
     {
         $teamIds = $user->managedTeamIds();
 

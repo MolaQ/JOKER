@@ -13,6 +13,7 @@ enum UserRole: string
     case Editor = 'editor';
     case Trainer = 'trainer';
     case Staff = 'staff';
+    case Coordinator = 'coordinator';
     case Parent = 'parent';
     case Player = 'player';
     case Fan = 'fan';
@@ -25,6 +26,7 @@ enum UserRole: string
             self::Editor => 'Redaktor',
             self::Trainer => 'Trener',
             self::Staff => 'Członek sztabu',
+            self::Coordinator => 'Koordynator drużyny',
             self::Parent => 'Rodzic',
             self::Player => 'Zawodnik',
             self::Fan => 'Kibic',
@@ -39,6 +41,7 @@ enum UserRole: string
             self::Editor => 'Pisze aktualności, dodaje zdjęcia i transmisje.',
             self::Trainer => 'Prowadzi swoje drużyny: zawodnicy, mecze, wyniki.',
             self::Staff => 'Kierownik, fizjoterapeuta, statystyk. Ma publiczny profil w sztabie.',
+            self::Coordinator => 'Dba o przepływ informacji w swojej drużynie: przyjmuje rodziców, przypisuje ich do dzieci, zatwierdza zgłoszenia drużyny. Nie jest w sztabie.',
             self::Parent => 'Opiekun konkretnego zawodnika lub kilku zawodników.',
             self::Player => 'Zawodnik z profilem w kadrze.',
             self::Fan => 'Konto bez funkcji w klubie: serduszka i komentarze.',
@@ -57,6 +60,7 @@ enum UserRole: string
             self::Editor => [Permission::Articles, Permission::Media, Permission::Homepage, Permission::Documents, Permission::Comments, Permission::ContentProposals],
             self::Trainer => [Permission::Teams, Permission::Trainings, Permission::Games, Permission::Tournaments, Permission::Media, Permission::Proposals, Permission::ActivateAccounts],
             self::Staff => [Permission::Trainings],
+            self::Coordinator => [Permission::Teams, Permission::ActivateAccounts, Permission::Proposals],
             default => [],
         };
     }

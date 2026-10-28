@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Admin\AccountActivation;
+use App\Livewire\Admin\ParentAssignment;
 use App\Livewire\LikeButton;
 use App\Models\Article;
 use App\Models\AuditLog;
@@ -73,15 +74,9 @@ test('a trainer activates a parent of own team and links the child', function ()
     $otherTeam = Team::create(['name' => 'Seniorzy', 'slug' => 'seniorzy', 'category' => 'senior']);
     $stranger = User::factory()->inactive()->create(['name' => 'Obca Osoba', 'requested_role' => UserRole::Parent, 'requested_team_id' => $otherTeam->id]);
 
-    $this->actingAs($trainer)->get('/panel/konta-do-aktywacji')->assertOk()->assertSee('Anna Nowak')->assertDontSee('Obca Osoba');
+    $this->actingAs($trainer)->get('/panel/rodzice-do-przypisania')->assertOk()->assertSee('Anna Nowak')->assertDontSee('Obca Osoba');
 
-    Livewire::test(AccountActivation::class)
-        ->call('start', $parent->id)
-        ->call('activate')
-        ->assertHasErrors('childIds')
-        ->set('childIds', [$child->id])
-        ->call('activate')
-        ->assertHasNoErrors();
+    Livewire::test(ParentAssignment::class)->call('assign', $parent->id, $child->id);
 
     $parent->refresh();
     expect($parent->is_active)->toBeTrue()
@@ -90,7 +85,7 @@ test('a trainer activates a parent of own team and links the child', function ()
         ->and(AuditLog::where('action', 'account.activated')->exists())->toBeTrue();
     Notification::assertSentTo($parent, AccountActivated::class);
 
-    expect(fn () => Livewire::test(AccountActivation::class)->call('start', $stranger->id))->toThrow(Exception::class);
+    expect(fn () => Livewire::test(ParentAssignment::class)->call('assign', $stranger->id, $child->id))->toThrow(Exception::class);
 });
 
 test('an administrator activates a player and links the player profile', function () {

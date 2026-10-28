@@ -5,6 +5,8 @@ namespace App\Livewire\Admin;
 use App\AccountStatus;
 use App\Livewire\Concerns\EditsPermissionOverrides;
 use App\Livewire\Concerns\ShowsToasts;
+use App\Models\AuditLog;
+use App\Models\Team;
 use App\Models\User;
 use App\UserRole;
 use Illuminate\Support\Carbon;
@@ -41,6 +43,13 @@ class UserManager extends Component
      */
     public array $roleExpiries = [];
 
+    /**
+     * Drużyny koordynowane przez konto z rolą Koordynator drużyny.
+     *
+     * @var list<int|string>
+     */
+    public array $coordinatedTeamIds = [];
+
     public bool $is_active = true;
 
     public ?string $birth_date = null;
@@ -70,6 +79,8 @@ class UserManager extends Component
             'selectedRoles.*' => Rule::in(array_map(fn (UserRole $role) => $role->value, $this->assignableRoles())),
             'roleExpiries' => 'array',
             'roleExpiries.*' => 'nullable|date|after_or_equal:today',
+            'coordinatedTeamIds' => ['array', Rule::requiredIf(in_array(UserRole::Coordinator->value, $this->selectedRoles, true))],
+            'coordinatedTeamIds.*' => 'integer|exists:teams,id',
             'birth_date' => 'nullable|date|before:today',
             'birthday_display' => 'required|in:hidden,cake,age',
         ];
@@ -112,6 +123,7 @@ class UserManager extends Component
         $this->password = '';
         $this->selectedRoles = $user->roles()->map->value->all();
         $this->roleExpiries = collect($user->roleExpiries())->map->toDateString()->all();
+        $this->coordinatedTeamIds = $user->coordinatedTeams()->pluck('teams.id')->all();
         $this->is_active = $user->is_active;
         $this->birth_date = $user->birth_date?->format('Y-m-d');
         $this->birthday_display = $user->birthday_display?->value ?? 'age';
@@ -139,8 +151,9 @@ class UserManager extends Component
         $validated = $this->validate();
         $roles = $validated['selectedRoles'] ?? [];
         $expiries = $validated['roleExpiries'] ?? [];
+        $coordinated = in_array(UserRole::Coordinator->value, $roles, true) ? array_map('intval', $validated['coordinatedTeamIds'] ?? []) : [];
         $active = $validated['is_active'];
-        unset($validated['selectedRoles'], $validated['roleExpiries'], $validated['is_active']);
+        unset($validated['selectedRoles'], $validated['roleExpiries'], $validated['coordinatedTeamIds'], $validated['is_active']);
 
         if ($this->editingId === Auth::id() && ! $active) {
             $this->addError('is_active', 'Nie możesz wyłączyć własnego konta.');
@@ -166,6 +179,7 @@ class UserManager extends Component
             $user->update($validated);
             $user->syncRoles($roles);
             $this->saveRoleExpiries($user, $roles, $expiries);
+            $this->saveCoordinatedTeams($user, $coordinated);
             $active ? $user->activate() : $user->deactivate('wyłączone w panelu');
             $this->toast('Użytkownik został zaktualizowany.');
         } else {
@@ -173,6 +187,7 @@ class UserManager extends Component
             $user = User::create($validated);
             $user->syncRoles($roles);
             $this->saveRoleExpiries($user, $roles, $expiries);
+            $this->saveCoordinatedTeams($user, $coordinated);
 
             if ($active) {
                 $user->activate();
@@ -191,6 +206,22 @@ class UserManager extends Component
     {
         foreach ($roles as $role) {
             $user->setRoleExpiry(UserRole::from($role), filled($expiries[$role] ?? null) ? Carbon::parse($expiries[$role]) : null);
+        }
+    }
+
+    /**
+     * @param  list<int>  $teamIds
+     */
+    private function saveCoordinatedTeams(User $user, array $teamIds): void
+    {
+        $changes = $user->coordinatedTeams()->sync($teamIds);
+
+        if ($changes['attached'] || $changes['detached']) {
+            $names = Team::pluck('name', 'id');
+            AuditLog::record('roles.coordinator', 'Drużyny koordynatora '.$user->name, $user, [
+                'dodane' => collect($changes['attached'])->map(fn ($id) => $names[$id] ?? '#'.$id)->values()->all(),
+                'odebrane' => collect($changes['detached'])->map(fn ($id) => $names[$id] ?? '#'.$id)->values()->all(),
+            ]);
         }
     }
 
@@ -243,6 +274,7 @@ class UserManager extends Component
         $this->password = '';
         $this->selectedRoles = [];
         $this->roleExpiries = [];
+        $this->coordinatedTeamIds = [];
         $this->is_active = true;
         $this->birth_date = null;
         $this->birthday_display = 'age';
@@ -270,6 +302,7 @@ class UserManager extends Component
             'roleOptions' => UserRole::cases(),
             'statusOptions' => AccountStatus::cases(),
             'assignableRoles' => $this->assignableRoles(),
+            'teams' => in_array(UserRole::Coordinator->value, $this->selectedRoles, true) ? Team::orderBy('display_order')->get(['id', 'name']) : collect(),
         ]);
     }
 }

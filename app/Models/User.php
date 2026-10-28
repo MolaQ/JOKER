@@ -367,7 +367,10 @@ class User extends Authenticatable implements MustVerifyEmail
             return null;
         }
 
-        return $this->allCoachedTeams()->pluck('id');
+        return $this->allCoachedTeams()->pluck('id')
+            ->merge($this->hasRole(UserRole::Coordinator) ? $this->coordinatedTeams->pluck('id') : [])
+            ->unique()
+            ->values();
     }
 
     public function managesTeam(?int $teamId): bool
@@ -632,6 +635,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function assistantTeams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class, 'team_trainers')->withPivot('role')->withTimestamps();
+    }
+
+    /**
+     * Drużyny, które koordynuje (rola Koordynator drużyny). Koordynator nie jest w sztabie.
+     */
+    public function coordinatedTeams(): BelongsToMany
+    {
+        return $this->belongsToMany(Team::class, 'team_coordinators')->withTimestamps();
     }
 
     /**

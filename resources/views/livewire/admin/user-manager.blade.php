@@ -140,7 +140,7 @@
                                 <legend class="block text-sm font-medium text-gray-700">Role (można zaznaczyć kilka)</legend>
                                 <div class="mt-2 grid gap-2 sm:grid-cols-2">
                                     @foreach($assignableRoles as $r)
-                                        <div @class(['rounded-md border p-2 text-sm', 'border-sky-300 bg-sky-50/50' => in_array($r->value, $selectedRoles, true), 'border-gray-200 hover:bg-gray-50' => ! in_array($r->value, $selectedRoles, true)]) wire:key="role-option-{{ $r->value }}">
+                                        <div @class(['rounded-md border p-2 text-sm', 'sm:col-span-2' => $r === \App\UserRole::Coordinator && in_array($r->value, $selectedRoles, true), 'border-sky-300 bg-sky-50/50' => in_array($r->value, $selectedRoles, true), 'border-gray-200 hover:bg-gray-50' => ! in_array($r->value, $selectedRoles, true)]) wire:key="role-option-{{ $r->value }}">
                                             <label class="flex items-start gap-2">
                                                 <input type="checkbox" wire:model.live="selectedRoles" value="{{ $r->value }}" class="mt-0.5 rounded border-gray-300 text-sky-700">
                                                 <span><span class="font-medium text-gray-900">{{ $r->label() }}</span><span class="block text-xs text-gray-500">{{ $r->description() }}</span></span>
@@ -152,6 +152,20 @@
                                                     <span class="text-gray-400">puste = bezterminowo</span>
                                                 </label>
                                                 @error('roleExpiries.'.$r->value) <p class="mt-1 pl-6 text-xs text-red-600">{{ $message }}</p> @enderror
+                                                @if($r === \App\UserRole::Coordinator)
+                                                    <div class="mt-2 pl-6">
+                                                        <p class="text-xs font-medium text-gray-700">Koordynuje drużyny:</p>
+                                                        <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                                                            @foreach($teams as $team)
+                                                                <label class="flex items-center gap-1.5 text-xs text-gray-700" wire:key="coord-team-{{ $team->id }}">
+                                                                    <input type="checkbox" wire:model="coordinatedTeamIds" value="{{ $team->id }}" class="rounded border-gray-300 text-sky-700">
+                                                                    {{ $team->name }}
+                                                                </label>
+                                                            @endforeach
+                                                        </div>
+                                                        @error('coordinatedTeamIds') <p class="mt-1 text-xs text-red-600">Zaznacz co najmniej jedną drużynę.</p> @enderror
+                                                    </div>
+                                                @endif
                                             @endif
                                         </div>
                                     @endforeach

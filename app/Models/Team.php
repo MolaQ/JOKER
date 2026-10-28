@@ -49,6 +49,14 @@ class Team extends Model
     }
 
     /**
+     * Koordynatorzy drużyny: przyjmują rodziców i zatwierdzają zgłoszenia drużyny.
+     */
+    public function coordinators(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'team_coordinators')->withTimestamps();
+    }
+
+    /**
      * Dodatkowi (pomocniczy) trenerzy drużyny, oprócz trenera głównego.
      */
     public function assistantTrainers(): BelongsToMany

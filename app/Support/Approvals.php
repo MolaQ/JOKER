@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Livewire\Admin\AccountActivation;
 use App\Livewire\Admin\CommentModeration;
+use App\Livewire\Admin\ParentAssignment;
 use App\Livewire\Admin\PhotoTagReview;
 use App\Models\ContentProposal;
 use App\Models\PlayerChangeRequest;
@@ -31,11 +32,20 @@ class Approvals
     private static function build(User $user): Collection
     {
         $sections = [
+            'rodzice' => [
+                'label' => 'Rodzice do przypisania',
+                'icon' => 'users',
+                'route' => 'admin.parents.index',
+                'intro' => 'Nowe konta rodziców i rodzice bez przypisanego dziecka. Przy każdym koncie podpowiadamy zawodnika, o którym pisał rodzic: jedno kliknięcie aktywuje konto i przypisuje dziecko. Rodzic dostaje e-mail, że konto działa.',
+                'component' => 'admin.parent-assignment',
+                'visible' => fn () => $user->can('users.activate'),
+                'count' => fn () => ParentAssignment::countFor($user),
+            ],
             'konta' => [
                 'label' => 'Konta do aktywacji',
                 'icon' => 'userplus',
                 'route' => 'admin.accounts.index',
-                'intro' => 'Nowe konto działa dopiero, gdy powiążesz je z profilem: zawodnika z jego profilem w kadrze, rodzica z dzieckiem, trenera z drużyną. Konto kibica aktywuje się samo po potwierdzeniu e-maila.',
+                'intro' => 'Nowe konto działa dopiero, gdy powiążesz je z profilem: zawodnika z jego profilem w kadrze, trenera z drużyną. Rodzice są w zakładce „Rodzice do przypisania”. Konto kibica aktywuje się samo po potwierdzeniu e-maila.',
                 'component' => 'admin.account-activation',
                 'visible' => fn () => $user->can('users.activate'),
                 'count' => fn () => AccountActivation::pendingFor($user)->count(),

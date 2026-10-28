@@ -1,9 +1,9 @@
 <?php
 
 use App\AccountStatus;
-use App\Livewire\Admin\AccountActivation;
 use App\Livewire\Admin\ArticleManager;
 use App\Livewire\Admin\GameManager;
+use App\Livewire\Admin\ParentAssignment;
 use App\Livewire\Admin\UserManager;
 use App\Models\Article;
 use App\Models\Gallery;
@@ -51,7 +51,7 @@ test('an account without consent must give it before using the site', function (
 test('the club rejects an account with a reason and the user resubmits corrected data', function () {
     $user = User::factory()->inactive()->create(['name' => 'Jan', 'requested_role' => UserRole::Parent, 'requested_team_id' => $this->team->id, 'registration_note' => 'syn']);
 
-    Livewire::actingAs($this->admin)->test(AccountActivation::class)
+    Livewire::actingAs($this->admin)->test(ParentAssignment::class)
         ->call('startRejecting', $user->id)
         ->call('reject')
         ->assertHasErrors('rejectionReason')
@@ -63,7 +63,7 @@ test('the club rejects an account with a reason and the user resubmits corrected
     expect($user->exists)->toBeTrue()
         ->and($user->accountStatus())->toBe(AccountStatus::Rejected)
         ->and($user->rejection_reason)->toBe('Podaj pełne imię i nazwisko dziecka.')
-        ->and(AccountActivation::pendingFor($this->admin)->whereKey($user->id)->exists())->toBeFalse();
+        ->and(ParentAssignment::pendingFor($this->admin)->whereKey($user->id)->exists())->toBeFalse();
     Notification::assertSentTo($user, AccountRejected::class);
 
     $this->actingAs($user)->get('/moj-profil')->assertSee('Podaj pełne imię i nazwisko dziecka.')->assertSee('Wyślij prośbę ponownie');
@@ -72,7 +72,7 @@ test('the club rejects an account with a reason and the user resubmits corrected
     $user->refresh();
     expect($user->name)->toBe('Jan Nowak')
         ->and($user->accountStatus())->toBe(AccountStatus::Pending)
-        ->and(AccountActivation::pendingFor($this->admin)->whereKey($user->id)->exists())->toBeTrue();
+        ->and(ParentAssignment::pendingFor($this->admin)->whereKey($user->id)->exists())->toBeTrue();
 });
 
 test('the name of an approved account cannot be changed by its owner', function () {
