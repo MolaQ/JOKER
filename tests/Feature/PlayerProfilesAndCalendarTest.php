@@ -313,3 +313,21 @@ test('admin adds a tournament with our teams and placements', function () {
 test('uploaded images use a host independent address', function () {
     expect(Media::url('sponsors/logo.png'))->toBe('/storage/sponsors/logo.png');
 });
+
+test('w karierze zawodnika rozgrywki wspólne dla dwóch jego drużyn są tylko przy drużynie głównej', function () {
+    $kadeci = Team::factory()->create(['name' => 'Kadeci X']);
+    $juniorzy = Team::factory()->create(['name' => 'Juniorzy X']);
+    $third = Competition::create(['name' => 'III Liga Testowa', 'season_id' => $this->season->id]);
+    $junior = Competition::create(['name' => 'Liga Juniorów Testowa', 'season_id' => $this->season->id]);
+    $third->teams()->attach([$kadeci->id, $juniorzy->id]);
+    $junior->teams()->attach($juniorzy->id);
+    $player = Player::factory()->create(['team_id' => $kadeci->id]);
+    $player->teams()->attach($kadeci->id, ['season_id' => $this->season->id, 'jersey_number' => 10]);
+    $player->teams()->attach($juniorzy->id, ['season_id' => $this->season->id]);
+
+    $this->get(route('players.show', $player))
+        ->assertOk()
+        ->assertSeeInOrder(['Kadeci X', 'III Liga Testowa', 'Juniorzy X', 'Liga Juniorów Testowa']);
+
+    expect(substr_count($this->get(route('players.show', $player))->getContent(), 'III Liga Testowa'))->toBe(1);
+});
