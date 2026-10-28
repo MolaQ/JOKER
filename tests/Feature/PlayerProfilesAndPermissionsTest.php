@@ -154,11 +154,11 @@ test('lista zawodników i drużyn w panelu pokazuje odbiór i sortuje według ni
 
     Livewire::test(PlayerManager::class)
         ->assertSeeInOrder(['Lubiany', 'Popularny'])
-        ->set('sort', 'wyswietlenia')
+        ->call('sortBy', 'wyswietlenia')
         ->assertSeeInOrder(['Popularny', 'Lubiany'])
-        ->set('sort', 'polubienia')
+        ->call('sortBy', 'polubienia')
         ->assertSeeInOrder(['Lubiany', 'Popularny'])
         ->assertSee('120');
 
-    Livewire::test(TeamList::class)->set('sort', 'wyswietlenia')->assertSee('Odbiór')->assertSee('340');
+    Livewire::test(TeamList::class)->call('sortBy', 'wyswietlenia')->assertSee('Odbiór')->assertSee('340');
 });

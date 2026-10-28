@@ -6,7 +6,7 @@ function labelTable(table) {
     const headers = [];
 
     table.querySelectorAll(':scope > thead > tr:last-child > th').forEach((th) => {
-        const label = th.querySelector('.sr-only') ? '' : th.textContent.trim().replace(/\s+/g, ' ');
+        const label = th.dataset.label ?? (th.querySelector('.sr-only') ? '' : th.textContent.trim().replace(/\s+/g, ' '));
 
         for (let i = 0; i < (th.colSpan || 1); i++) {
             headers.push(label);

@@ -435,8 +435,25 @@
             width: 100%;
         }
 
-        & > thead {
+        & > thead:not(:has([data-sort-button])) {
             @apply sr-only;
+        }
+
+        /* Nagłówki z sortowaniem zostają na telefonie jako rząd przycisków nad kartami. */
+        & > thead:has([data-sort-button]) {
+            display: block;
+
+            & > tr {
+                @apply flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2;
+            }
+
+            & th {
+                @apply block bg-transparent! p-0!;
+            }
+
+            & th:not(:has([data-sort-button])) {
+                display: none;
+            }
         }
 
         & > tbody > tr {
@@ -844,5 +861,32 @@
         & strong {
             font-weight: 800;
         }
+    }
+}
+
+/* Tabele sortowane w przeglądarce (resources/js/table-sort.js): nagłówek jako przycisk ze strzałką. */
+table[data-sortable] > thead th:not([data-nosort]) {
+    cursor: pointer;
+    user-select: none;
+
+    &::after {
+        content: '↕';
+        margin-left: 0.25rem;
+        font-size: 0.85em;
+        opacity: 0.3;
+    }
+
+    &[aria-sort='ascending']::after {
+        content: '▲';
+        opacity: 0.8;
+    }
+
+    &[aria-sort='descending']::after {
+        content: '▼';
+        opacity: 0.8;
+    }
+
+    &:hover::after {
+        opacity: 0.8;
     }
 }

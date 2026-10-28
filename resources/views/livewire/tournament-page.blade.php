@@ -61,7 +61,7 @@
                     <div wire:key="group-{{ $group->id }}" class="card overflow-hidden">
                         <h2 class="flex items-center justify-between gap-2 bg-gradient-to-r from-club-navy to-sky-club-dark px-5 py-3 font-display text-xl font-semibold text-white uppercase">{{ $group->name }} <x-tournament-group-status :progress="$bracket->groupProgress($group)" dark /></h2>
                         <div class="overflow-x-auto">
-                            <table class="w-full text-sm">
+                            <table data-sortable class="w-full text-sm">
                                 <thead class="bg-zinc-50 text-xs font-semibold text-zinc-500 uppercase">
                                     <tr>
                                         <th class="px-4 py-2 text-left">#</th>

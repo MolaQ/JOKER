@@ -7,8 +7,8 @@
     <table class="min-w-full divide-y divide-gray-300 bg-white">
         <thead class="bg-gray-50">
             <tr>
-                <th class="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-6">Termin</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Turniej</th>
+                <th class="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-6"><x-sort-button field="termin" :current="$sortField" :direction="$sortDirection">Termin</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="turniej" :current="$sortField" :direction="$sortDirection">Turniej</x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Nasze drużyny</th>
                 <th class="relative py-3.5 pr-4 pl-3 sm:pr-6"><span class="sr-only">Akcje</span></th>
             </tr>

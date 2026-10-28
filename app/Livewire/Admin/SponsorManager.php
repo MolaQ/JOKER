@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
+use App\Livewire\Concerns\SortsTable;
 use App\Models\Sponsor;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -10,7 +11,7 @@ use Livewire\WithPagination;
 
 class SponsorManager extends Component
 {
-    use ShowsToasts, WithFileUploads, WithPagination;
+    use ShowsToasts, SortsTable, WithFileUploads, WithPagination;
 
     public bool $showModal = false;
 
@@ -124,11 +125,25 @@ class SponsorManager extends Component
         $this->resetErrorBag();
     }
 
+    protected function sortableColumns(): array
+    {
+        return [
+            'nazwa' => 'name',
+            'poziom' => 'tier',
+            'status' => 'is_active',
+        ];
+    }
+
+    protected function sortDescendingFirst(): array
+    {
+        return [];
+    }
+
     public function render()
     {
-        $sponsors = Sponsor::when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
+        $sponsors = $this->applySort(Sponsor::when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
             ->orderBy('display_order')
-            ->paginate(10);
+        )->paginate(10);
 
         return view('livewire.admin.sponsor-manager', [
             'sponsors' => $sponsors,

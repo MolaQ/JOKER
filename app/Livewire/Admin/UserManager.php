@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\AccountStatus;
 use App\Livewire\Concerns\EditsPermissionOverrides;
 use App\Livewire\Concerns\ShowsToasts;
+use App\Livewire\Concerns\SortsTable;
 use App\Models\AuditLog;
 use App\Models\Team;
 use App\Models\User;
@@ -18,7 +19,7 @@ use Livewire\WithPagination;
 
 class UserManager extends Component
 {
-    use EditsPermissionOverrides, ShowsToasts, WithPagination;
+    use EditsPermissionOverrides, ShowsToasts, SortsTable, WithPagination;
 
     public bool $showModal = false;
 
@@ -281,9 +282,22 @@ class UserManager extends Component
         $this->resetErrorBag();
     }
 
+    protected function sortableColumns(): array
+    {
+        return [
+            'nazwa' => 'name',
+            'email' => 'email',
+        ];
+    }
+
+    protected function sortDescendingFirst(): array
+    {
+        return [];
+    }
+
     public function render()
     {
-        $users = User::when($this->search, fn ($q) => $q->where(fn ($q2) => $q2
+        $users = $this->applySort(User::when($this->search, fn ($q) => $q->where(fn ($q2) => $q2
             ->where('name', 'like', "%{$this->search}%")
             ->orWhere('email', 'like', "%{$this->search}%")
         ))
@@ -292,7 +306,7 @@ class UserManager extends Component
             ->when(AccountStatus::tryFrom($this->statusFilter), fn ($q, AccountStatus $status) => $q->withAccountStatus($status))
             ->with(['roleAssignments', 'activatedBy:id,name'])
             ->orderBy('name')
-            ->paginate(15);
+        )->paginate(15);
 
         $editing = $this->showModal && $this->editingId ? User::find($this->editingId) : null;
 

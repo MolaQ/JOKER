@@ -16,9 +16,9 @@
         <thead class="bg-gray-50">
             <tr>
                 <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Logo</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Nazwa</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Poziom</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="nazwa" :current="$sortField" :direction="$sortDirection">Nazwa</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="poziom" :current="$sortField" :direction="$sortDirection">Poziom</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="status" :current="$sortField" :direction="$sortDirection">Status</x-sort-button></th>
                 <th class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Akcje</span></th>
             </tr>
         </thead>

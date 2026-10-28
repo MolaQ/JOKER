@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
+use App\Livewire\Concerns\SortsTable;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\Tournament;
@@ -16,7 +17,7 @@ use Livewire\WithPagination;
  */
 class TournamentManager extends Component
 {
-    use ShowsToasts, WithPagination;
+    use ShowsToasts, SortsTable, WithPagination;
 
     public bool $showModal = false;
 
@@ -143,10 +144,23 @@ class TournamentManager extends Component
         $this->resetErrorBag();
     }
 
+    protected function sortableColumns(): array
+    {
+        return [
+            'termin' => 'start_date',
+            'turniej' => 'name',
+        ];
+    }
+
+    protected function sortDescendingFirst(): array
+    {
+        return ['termin'];
+    }
+
     public function render(): View
     {
         return view('livewire.admin.tournament-manager', [
-            'tournaments' => Tournament::with('teams')->withCount('games')->orderByDesc('start_date')->paginate(15),
+            'tournaments' => $this->applySort(Tournament::with('teams')->withCount('games')->orderByDesc('start_date'))->paginate(15),
             'teams' => Team::orderBy('display_order')->get(),
         ]);
     }

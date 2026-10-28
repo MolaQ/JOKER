@@ -36,12 +36,12 @@
     <table class="min-w-full divide-y divide-gray-300">
         <thead class="bg-gray-50">
             <tr>
-                <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Data</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Drużyna</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Przeciwnik</th>
+                <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"><x-sort-button field="data" :current="$sortField" :direction="$sortDirection">Data</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="druzyna" :current="$sortField" :direction="$sortDirection">Drużyna</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="przeciwnik" :current="$sortField" :direction="$sortDirection">Przeciwnik</x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Wynik</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Materiały</th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="status" :current="$sortField" :direction="$sortDirection">Status</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="materialy" :current="$sortField" :direction="$sortDirection">Materiały</x-sort-button></th>
                 <th class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Akcje</span></th>
             </tr>
         </thead>

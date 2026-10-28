@@ -8,7 +8,6 @@
                 placeholder="Szukaj drużyny..."
                 class="w-full sm:w-72 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"
             >
-            <x-admin-reception-sort class="w-full sm:w-auto" />
         </div>
         @can('teams.all')
             <button
@@ -24,11 +23,11 @@
     <table class="min-w-full divide-y divide-gray-300">
         <thead class="bg-gray-50">
             <tr>
-                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Nazwa</th>
-                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Rocznik</th>
-                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Trener</th>
-                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Zawodnicy</th>
-                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Odbiór</th>
+                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"><x-sort-button field="nazwa" :current="$sortField" :direction="$sortDirection">Nazwa</x-sort-button></th>
+                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="rocznik" :current="$sortField" :direction="$sortDirection">Rocznik</x-sort-button></th>
+                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="trener" :current="$sortField" :direction="$sortDirection">Trener</x-sort-button></th>
+                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="zawodnicy" :current="$sortField" :direction="$sortDirection">Zawodnicy</x-sort-button></th>
+                <th data-label="Odbiór" scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><span class="mr-1">Odbiór:</span><x-sort-button field="wyswietlenia" :current="$sortField" :direction="$sortDirection">wyśw.</x-sort-button> <x-sort-button field="polubienia" :current="$sortField" :direction="$sortDirection">polub.</x-sort-button></th>
                 <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
                     <span class="sr-only">Akcje</span>
                 </th>

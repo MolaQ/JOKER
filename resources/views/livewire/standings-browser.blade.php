@@ -63,7 +63,7 @@
                         @endif
 
                         <div class="card overflow-x-auto">
-                            <table class="w-full text-sm tabular-nums sm:min-w-[40rem]">
+                            <table data-sortable class="w-full text-sm tabular-nums sm:min-w-[40rem]">
                                 <thead class="border-b border-zinc-200 text-xs font-semibold tracking-wider text-zinc-500 uppercase">
                                     <tr>
                                         <th class="bg-white py-3 pr-2 pl-4 text-left sm:sticky sm:left-0" scope="col">#</th>

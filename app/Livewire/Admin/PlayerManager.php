@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
+use App\Livewire\Concerns\SortsTable;
 use App\Models\Player;
 use App\Models\PlayerAchievement;
 use App\Models\Season;
@@ -15,14 +16,13 @@ use App\UserRole;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 class PlayerManager extends Component
 {
-    use ShowsToasts, WithFileUploads, WithPagination;
+    use ShowsToasts, SortsTable, WithFileUploads, WithPagination;
 
     public bool $showModal = false;
 
@@ -93,10 +93,6 @@ class PlayerManager extends Component
     public string $search = '';
 
     public string $teamFilter = '';
-
-    /** Kolejność listy: '' (drużyna i numer), 'wyswietlenia' albo 'polubienia'. */
-    #[Url(as: 'kolejnosc', except: '')]
-    public string $sort = '';
 
     /** Filtr pozycji, np. sami atakujący; „brak” = bez pozycji. */
     public string $positionFilter = '';
@@ -385,6 +381,24 @@ class PlayerManager extends Component
         $this->resetErrorBag();
     }
 
+    protected function sortableColumns(): array
+    {
+        return [
+            'numer' => 'jersey_number',
+            'nazwisko' => fn ($q, $d) => $q->orderBy('last_name', $d)->orderBy('first_name', $d),
+            'pozycja' => 'position',
+            'druzyna' => fn ($q, $d) => $q->orderBy(Team::select('display_order')->whereColumn('teams.id', 'players.team_id'), $d),
+            'status' => 'is_active',
+            'wyswietlenia' => 'views_count',
+            'polubienia' => 'likes_count',
+        ];
+    }
+
+    protected function sortDescendingFirst(): array
+    {
+        return ['wyswietlenia', 'polubienia'];
+    }
+
     public function render()
     {
         $search = trim($this->search);
@@ -396,16 +410,14 @@ class PlayerManager extends Component
                 ->when(preg_match('/^#?(\d{1,2})$/', $search, $number), fn ($q3) => $q3->orWhere('jersey_number', (int) $number[1]))
             ));
 
-        $players = (clone $base)->with('team')->withCount('likes')
+        $players = $this->applySort((clone $base)->with('team')->withCount('likes')
             ->when($this->teamFilter === 'brak', fn ($q) => $q->whereNull('team_id'))
             ->when(ctype_digit($this->teamFilter), fn ($q) => $q->where('team_id', $this->teamFilter))
             ->when($this->positionFilter === 'brak', fn ($q) => $q->whereNull('position'))
             ->when(PlayerPosition::tryFrom($this->positionFilter), fn ($q, PlayerPosition $position) => $q->where(fn ($q2) => $q2->where('position', $position)->orWhereJsonContains('extra_positions', $position->value)))
-            ->when($this->sort === 'wyswietlenia', fn ($q) => $q->orderByDesc('views_count'))
-            ->when($this->sort === 'polubienia', fn ($q) => $q->orderByDesc('likes_count'))
             ->orderBy('team_id')
             ->orderBy('jersey_number')
-            ->paginate(12);
+        )->paginate(12);
 
         $teams = Team::managedBy(Auth::user())->orderBy('display_order')->get();
         $positions = PlayerPosition::cases();

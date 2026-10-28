@@ -41,7 +41,7 @@
     <div class="grid gap-6 lg:grid-cols-2">
         <div class="rounded-lg bg-white shadow ring-1 ring-zinc-200">
             <h2 class="border-b px-5 py-3 font-semibold text-gray-900">Najczęściej oglądane <span class="text-xs font-normal text-gray-500">— co przyciąga</span></h2>
-            <table data-scroll-table class="w-full text-sm">
+            <table data-sortable data-scroll-table class="w-full text-sm">
                 <thead class="text-left text-xs text-gray-500"><tr><th class="px-5 py-2 font-medium">Strona</th><th class="px-2 py-2 text-right font-medium">Wyśw.</th><th class="px-2 py-2 text-right font-medium">Osoby</th><th class="px-5 py-2 text-right font-medium">Czas</th></tr></thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse($popular as $row)
@@ -60,7 +60,7 @@
 
         <div class="rounded-lg bg-white shadow ring-1 ring-zinc-200">
             <h2 class="border-b px-5 py-3 font-semibold text-gray-900">Najdłużej czytane <span class="text-xs font-normal text-gray-500">— co skupia uwagę (min. 3 wyświetlenia)</span></h2>
-            <table data-scroll-table class="w-full text-sm">
+            <table data-sortable data-scroll-table class="w-full text-sm">
                 <thead class="text-left text-xs text-gray-500"><tr><th class="px-5 py-2 font-medium">Strona</th><th class="px-2 py-2 text-right font-medium">Czas</th><th class="px-2 py-2 text-right font-medium">Przewinięcie</th><th class="px-5 py-2 text-right font-medium">Wyśw.</th></tr></thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse($engaging as $row)

@@ -101,7 +101,7 @@
             <div class="card overflow-hidden">
                 <h2 class="heading-md px-6 pt-6">{{ __('Kariera klubowa') }}</h2>
                 <div class="mt-4 overflow-x-auto">
-                    <table class="w-full text-left text-sm">
+                    <table data-sortable class="w-full text-left text-sm">
                         <thead class="bg-zinc-50 text-xs font-semibold tracking-wider text-zinc-500 uppercase">
                             <tr>
                                 <th class="px-6 py-3">{{ __('Sezon') }}</th>

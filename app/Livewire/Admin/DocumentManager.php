@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
+use App\Livewire\Concerns\SortsTable;
 use App\Models\Document;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -11,7 +12,7 @@ use Livewire\WithPagination;
 
 class DocumentManager extends Component
 {
-    use ShowsToasts, WithFileUploads, WithPagination;
+    use ShowsToasts, SortsTable, WithFileUploads, WithPagination;
 
     public bool $showModal = false;
 
@@ -118,12 +119,28 @@ class DocumentManager extends Component
         $this->resetErrorBag();
     }
 
+    protected function sortableColumns(): array
+    {
+        return [
+            'tytul' => 'title',
+            'kategoria' => 'category',
+            'rozmiar' => 'file_size',
+            'widocznosc' => 'is_public',
+            'pobrania' => 'download_count',
+        ];
+    }
+
+    protected function sortDescendingFirst(): array
+    {
+        return ['rozmiar', 'pobrania'];
+    }
+
     public function render()
     {
-        $documents = Document::with('uploader')
+        $documents = $this->applySort(Document::with('uploader')
             ->when($this->search, fn ($q) => $q->where('title', 'like', "%{$this->search}%"))
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        )->paginate(10);
 
         return view('livewire.admin.document-manager', [
             'documents' => $documents,

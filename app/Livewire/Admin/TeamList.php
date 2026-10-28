@@ -3,20 +3,20 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
+use App\Livewire\Concerns\SortsTable;
 use App\Models\Team;
 use App\Models\User;
 use App\Support\SearchIndex;
 use App\Support\Slug;
 use App\UserRole;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 class TeamList extends Component
 {
-    use ShowsToasts, WithFileUploads, WithPagination;
+    use ShowsToasts, SortsTable, WithFileUploads, WithPagination;
 
     public bool $showModal = false;
 
@@ -56,10 +56,6 @@ class TeamList extends Component
     public ?string $existingPhoto = null;
 
     public string $search = '';
-
-    /** Kolejność listy: '' (jak na stronie), 'wyswietlenia' albo 'polubienia'. */
-    #[Url(as: 'kolejnosc', except: '')]
-    public string $sort = '';
 
     protected function rules(): array
     {
@@ -195,15 +191,30 @@ class TeamList extends Component
         $this->resetErrorBag();
     }
 
+    protected function sortableColumns(): array
+    {
+        return [
+            'nazwa' => 'name',
+            'rocznik' => 'birth_year',
+            'trener' => fn ($q, $d) => $q->orderBy(User::select('name')->whereColumn('users.id', 'teams.trainer_id'), $d),
+            'zawodnicy' => 'players_count',
+            'wyswietlenia' => 'views_count',
+            'polubienia' => 'likes_count',
+        ];
+    }
+
+    protected function sortDescendingFirst(): array
+    {
+        return ['zawodnicy', 'wyswietlenia', 'polubienia'];
+    }
+
     public function render()
     {
-        $teams = Team::managedBy(Auth::user())->withCount(['players', 'likes'])
+        $teams = $this->applySort(Team::managedBy(Auth::user())->withCount(['players', 'likes'])
             ->with(['trainer', 'assistantTrainers'])
             ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
-            ->when($this->sort === 'wyswietlenia', fn ($q) => $q->orderByDesc('views_count'))
-            ->when($this->sort === 'polubienia', fn ($q) => $q->orderByDesc('likes_count'))
             ->orderBy('display_order')
-            ->paginate(10);
+        )->paginate(10);
 
         $staffIds = User::withRole(UserRole::Trainer, UserRole::Staff, UserRole::Boss, UserRole::Admin)->pluck('id');
         // Osoby przypisane do drużyny, którym zabrano rolę sztabu (np. rodzic, który chwilowo uzupełniał skład),

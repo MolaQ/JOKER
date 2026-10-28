@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
+use App\Livewire\Concerns\SortsTable;
 use App\Models\AuditLog;
 use App\Models\Competition;
 use App\Models\Game;
@@ -22,7 +23,7 @@ use Throwable;
 
 class GameManager extends Component
 {
-    use ShowsToasts, WithPagination;
+    use ShowsToasts, SortsTable, WithPagination;
 
     public bool $showModal = false;
 
@@ -401,16 +402,32 @@ class GameManager extends Component
         return Game::query()->when($teamIds !== null, fn ($games) => $games->whereIn('team_id', $teamIds));
     }
 
+    protected function sortableColumns(): array
+    {
+        return [
+            'data' => 'game_date',
+            'druzyna' => fn ($q, $d) => $q->orderBy(Team::select('display_order')->whereColumn('teams.id', 'games.team_id'), $d),
+            'przeciwnik' => 'opponent',
+            'status' => 'status',
+            'materialy' => fn ($q, $d) => $q->orderByRaw('(articles_count + galleries_count) '.$d),
+        ];
+    }
+
+    protected function sortDescendingFirst(): array
+    {
+        return ['data', 'materialy'];
+    }
+
     public function render()
     {
-        $games = $this->applyMediaFilter($this->managedGames())
+        $games = $this->applySort($this->applyMediaFilter($this->managedGames())
             ->with(['team', 'opponentTeam'])
             ->withCount(['articles', 'galleries'])
             ->when($this->search, fn ($q) => $q->where('opponent', 'like', "%{$this->search}%"))
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
             ->when($this->teamFilter, fn ($q) => $q->where('team_id', $this->teamFilter))
             ->orderBy('game_date', 'desc')
-            ->paginate(12);
+        )->paginate(12);
 
         $teams = Team::managedBy(Auth::user())->orderBy('display_order')->get();
         $seasons = Season::orderBy('start_date', 'desc')->get();

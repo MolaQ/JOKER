@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
+use App\Livewire\Concerns\SortsTable;
 use App\Models\Competition;
 use App\Models\CompetitionLevel;
 use App\Models\Season;
@@ -13,7 +14,7 @@ use Livewire\WithPagination;
 
 class CompetitionManager extends Component
 {
-    use ShowsToasts, WithPagination;
+    use ShowsToasts, SortsTable, WithPagination;
 
     public bool $showModal = false;
 
@@ -278,13 +279,28 @@ class CompetitionManager extends Component
         $this->resetErrorBag();
     }
 
+    protected function sortableColumns(): array
+    {
+        return [
+            'nazwa' => 'name',
+            'poziom' => fn ($q, $d) => $q->orderBy(CompetitionLevel::select('display_order')->whereColumn('competition_levels.id', 'competitions.level_id'), $d),
+            'sezon' => fn ($q, $d) => $q->orderBy(Season::select('start_date')->whereColumn('seasons.id', 'competitions.season_id'), $d),
+            'druzyny' => fn ($q, $d) => $q->withCount('teams')->orderBy('teams_count', $d),
+        ];
+    }
+
+    protected function sortDescendingFirst(): array
+    {
+        return ['sezon', 'druzyny'];
+    }
+
     public function render()
     {
-        $competitions = Competition::with(['season', 'teams', 'competitionLevel'])
+        $competitions = $this->applySort(Competition::with(['season', 'teams', 'competitionLevel'])
             ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
             ->orderBy('season_id', 'desc')
             ->orderBy('display_order')
-            ->paginate(10);
+        )->paginate(10);
 
         $seasons = Season::orderBy('start_date', 'desc')->get();
         $teams = Team::orderBy('display_order')->get();

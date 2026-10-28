@@ -15,11 +15,11 @@
     <table class="min-w-full divide-y divide-gray-300">
         <thead class="bg-gray-50">
             <tr>
-                <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Tytuł</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Kategoria</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Rozmiar</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Widoczność</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Pobrania</th>
+                <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"><x-sort-button field="tytul" :current="$sortField" :direction="$sortDirection">Tytuł</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="kategoria" :current="$sortField" :direction="$sortDirection">Kategoria</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="rozmiar" :current="$sortField" :direction="$sortDirection">Rozmiar</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="widocznosc" :current="$sortField" :direction="$sortDirection">Widoczność</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="pobrania" :current="$sortField" :direction="$sortDirection">Pobrania</x-sort-button></th>
                 <th class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Akcje</span></th>
             </tr>
         </thead>

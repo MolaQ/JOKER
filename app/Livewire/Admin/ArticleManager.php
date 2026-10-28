@@ -3,8 +3,10 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
+use App\Livewire\Concerns\SortsTable;
 use App\Models\Article;
 use App\Models\Game;
+use App\Models\User;
 use App\Support\SearchIndex;
 use App\Support\Slug;
 use Illuminate\Support\Collection;
@@ -15,7 +17,7 @@ use Livewire\WithPagination;
 
 class ArticleManager extends Component
 {
-    use ShowsToasts, WithFileUploads, WithPagination;
+    use ShowsToasts, SortsTable, WithFileUploads, WithPagination;
 
     public bool $showModal = false;
 
@@ -237,15 +239,31 @@ class ArticleManager extends Component
         $this->resetErrorBag();
     }
 
+    protected function sortableColumns(): array
+    {
+        return [
+            'tytul' => 'title',
+            'autor' => fn ($q, $d) => $q->orderBy(User::select('name')->whereColumn('users.id', 'articles.author_id'), $d),
+            'status' => 'status',
+            'wyswietlenia' => 'views_count',
+            'polubienia' => 'likes_count',
+        ];
+    }
+
+    protected function sortDescendingFirst(): array
+    {
+        return ['wyswietlenia', 'polubienia'];
+    }
+
     public function render()
     {
         // Liczby do kolumny „Odbiór” i znaczniki transmisji/galerii z meczów, o których jest artykuł.
-        $articles = Article::with(['author', 'games' => fn ($query) => $query->withCount(['galleries' => fn ($galleries) => $galleries->where('is_published', true)])])
+        $articles = $this->applySort(Article::with(['author', 'games' => fn ($query) => $query->withCount(['galleries' => fn ($galleries) => $galleries->where('is_published', true)])])
             ->withCount(['likes', 'approvedComments', 'comments as pending_comments_count' => fn ($query) => $query->where('is_approved', false)])
             ->when($this->search, fn ($q) => $q->where('title', 'like', "%{$this->search}%"))
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        )->paginate(10);
 
         return view('livewire.admin.article-manager', [
             'articles' => $articles,

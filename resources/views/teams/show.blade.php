@@ -202,7 +202,7 @@
 
                 @if($entry['table']->isNotEmpty())
                     <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
+                        <table data-sortable class="w-full text-sm">
                             <thead class="bg-zinc-50 text-xs text-zinc-500 uppercase">
                                 <tr>
                                     <th class="px-6 py-3 text-left">{{ __('Drużyna') }}</th>

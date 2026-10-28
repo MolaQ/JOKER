@@ -8,6 +8,7 @@ import { registerPhotoCropper } from './photo-cropper';
 import { registerRichEditor } from './rich-editor';
 import { initSearch } from './search';
 import { registerSearchSelect } from './search-select';
+import { initTableSort } from './table-sort';
 import { registerToasts } from './toasts';
 
 registerPhotoCropper();
@@ -20,6 +21,7 @@ initSearch();
 initPageStats();
 initPush();
 initAdminTables();
+initTableSort();
 initDailyLineup();
 
 // Pojawianie się sekcji przy przewijaniu.
