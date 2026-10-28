@@ -2,6 +2,7 @@
 
 use App\Livewire\Admin\AuditLogViewer;
 use App\Livewire\Admin\RoleManager;
+use App\Livewire\Admin\SiteSettingsManager;
 use App\Livewire\Admin\UserManager;
 use App\Models\AuditLog;
 use App\Models\PermissionOverride;
@@ -149,4 +150,22 @@ test('dziennik widzi admin i prezes, inni nie; filtry działają', function () {
         ->assertSee('Hurtownia')->assertDontSee('Zmiana ról konta')
         ->set('from', now()->addDay()->toDateString())
         ->assertSee('Nic nie pasuje do filtrów.');
+});
+
+test('zmiana koloru w ustawieniach zapisuje się w dzienniku bez tekstu w kolumnie numeru rekordu', function () {
+    $admin = User::factory()->admin()->create();
+    $this->actingAs($admin);
+
+    Livewire::test(SiteSettingsManager::class)
+        ->set('values.color_accent', '#ff0000')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $log = AuditLog::where('description', 'like', '%color_accent%')->latest('id')->firstOrFail();
+
+    expect($log->subject_id)->toBeNull()
+        ->and($log->details['klucz'])->toBe('color_accent')
+        ->and($log->changes())->toHaveKey('value');
+
+    Livewire::test(AuditLogViewer::class)->assertOk();
 });

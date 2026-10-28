@@ -36,11 +36,20 @@ class AuditLog extends Model
 
     public static function record(string $action, string $description, ?Model $subject = null, array $details = []): self
     {
+        // Kolumna subject_id jest liczbowa; rekordy z kluczem tekstowym (np. ustawienia strony) zapisują go w szczegółach,
+        // bo MySQL odrzuca tekst w kolumnie liczbowej.
+        $key = $subject?->getKey();
+
+        if ($key !== null && ! is_int($key) && ! ctype_digit((string) $key)) {
+            $details = ['klucz' => (string) $key] + $details;
+            $key = null;
+        }
+
         return static::create([
             'actor_id' => Auth::id(),
             'action' => $action,
             'subject_type' => $subject?->getMorphClass(),
-            'subject_id' => $subject?->getKey(),
+            'subject_id' => $key,
             'description' => $description,
             'details' => $details ?: null,
         ]);
