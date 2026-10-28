@@ -62,6 +62,7 @@ test('calendar marks home and away games, results with V or X and opens the newe
         ->assertSee('Wygrana 3:1')
         ->assertSee('Porażka 0:3')
         ->assertSeeHtml('ring-current/20 text-zinc-700">'.e($this->team->name).'</span>')
+        ->assertSeeHtml('ring-current/20 ml-1">'.e($this->team->name).'</span>')
         ->assertDontSee('(kadeci)');
 });
 

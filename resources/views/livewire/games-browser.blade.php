@@ -180,7 +180,7 @@
                                                             'hover:ring-2 hover:ring-sky-club' => true,
                                                         ])>
                                                             <span class="flex items-start justify-between gap-1">
-                                                                <x-team-chip :name="$game->ourLabel()['badge'] ?? $game->ourLabel()['name']" class="min-w-0 truncate" />
+                                                                <x-team-label :label="$game->ourLabel()" class="min-w-0 font-semibold break-words" />
                                                                 <span class="flex shrink-0 items-center gap-0.5 font-bold tabular-nums">
                                                                     @if($outcome === 'derby')
                                                                         <x-derby-heart class="h-3.5 w-3.5 {{ $game->is_home ? 'text-sky-club-light' : 'text-sky-club' }}" />
