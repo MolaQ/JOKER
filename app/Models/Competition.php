@@ -111,25 +111,21 @@ class Competition extends Model
     }
 
     /**
-     * Jak podpisać naszą drużynę w tabelach i kalendarzu tych rozgrywek: nazwa ustawiona
-     * w panelu (np. „LOMS Joker Piła”) i opcjonalny dopisek kursywą (np. „(kadeci)”).
+     * Jak podpisać naszą drużynę w tabelach i kalendarzu tych rozgrywek: nazwa klubu ustawiona
+     * w panelu (np. „LOMS Joker Piła”, domyślnie „Joker Piła”) i plakietka z nazwą drużyny (np. „Kadeci II”).
      *
-     * @return array{name: string, suffix: ?string}
+     * @return array{name: string, badge: ?string}
      */
     public function teamLabel(?Team $team): array
     {
         $pivot = $team ? $this->teams->firstWhere('id', $team->id)?->pivot : null;
 
-        if (filled($pivot?->display_name)) {
-            return ['name' => $pivot->display_name, 'suffix' => filled($pivot->display_suffix) ? $pivot->display_suffix : null];
-        }
-
-        return ['name' => $team?->name ?? 'Joker Piła', 'suffix' => filled($pivot?->display_suffix) ? $pivot->display_suffix : null];
+        return ['name' => filled($pivot?->display_name) ? $pivot->display_name : 'Joker Piła', 'badge' => $team?->name];
     }
 
     /**
-     * Domyślny podpis drużyny w nowych rozgrywkach: seniorzy jako „LOMS Joker Piła”,
-     * młodzież z dopiskiem rocznika, np. „(kadeci II)”; drużyny ASBL jako „KS ASBL Piła”.
+     * Domyślny podpis drużyny w nowych rozgrywkach: „LOMS Joker Piła”, a drużyny ASBL „KS ASBL Piła”.
+     * Bez dopisku w nawiasie - którą drużynę widać, mówi plakietka.
      *
      * @return array{display_name: string, display_suffix: ?string}
      */
@@ -137,7 +133,7 @@ class Competition extends Model
     {
         return [
             'display_name' => str_contains(mb_strtoupper((string) $externalName), 'ASBL') ? 'KS ASBL Piła' : 'LOMS Joker Piła',
-            'display_suffix' => $teamSlug === 'seniorzy' ? null : '('.mb_strtolower(mb_substr($teamName, 0, 1)).mb_substr($teamName, 1).')',
+            'display_suffix' => null,
         ];
     }
 

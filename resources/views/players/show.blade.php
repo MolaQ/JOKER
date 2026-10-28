@@ -168,7 +168,7 @@
                             @endif
                             <span class="w-12 shrink-0 text-zinc-500 tabular-nums">{{ $game->game_date?->format('d.m') }}</span>
                             <span class="min-w-0 flex-1 truncate">
-                                <x-team-label :label="$game->ourLabel()" class="font-semibold text-zinc-900" />
+                                <x-team-label :label="$game->ourLabel()" :badge="false" class="font-semibold text-zinc-900" />
                                 <span class="text-zinc-500">{{ $game->is_home ? __('vs') : __('u') }} {{ $game->opponentShortName() }}</span>
                             </span>
                             @if($result)

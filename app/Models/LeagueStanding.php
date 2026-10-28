@@ -78,21 +78,22 @@ class LeagueStanding extends Model
     }
 
     /**
-     * Podpis wiersza: dla naszej drużyny nazwa i dopisek z ustawień rozgrywek.
+     * Podpis wiersza: dla naszej drużyny nazwa z ustawień rozgrywek. Plakietkę z nazwą drużyny
+     * pokazujemy tylko, gdy w jednej tabeli gra kilka naszych drużyn i trzeba je odróżnić.
      *
-     * @return array{name: string, suffix: ?string}
+     * @return array{name: string, badge: ?string}
      */
-    public function competitorLabel(): array
+    public function competitorLabel(bool $withBadge = false): array
     {
         if ($this->isOwnTeam() && $this->competition && $this->competitor instanceof Team) {
             $label = $this->competition->teamLabel($this->competitor);
 
             if ($this->competition->teams->firstWhere('id', $this->competitor->id)?->pivot?->display_name) {
-                return $label;
+                return ['name' => $label['name'], 'badge' => $withBadge ? $label['badge'] : null];
             }
         }
 
-        return ['name' => $this->competitorName(), 'suffix' => null];
+        return ['name' => $this->competitorName(), 'badge' => null];
     }
 
     public function competitorShortName(): string

@@ -180,7 +180,7 @@
                                                             'hover:ring-2 hover:ring-sky-club' => true,
                                                         ])>
                                                             <span class="flex items-start justify-between gap-1">
-                                                                <x-team-label :label="$game->ourLabel()" class="min-w-0 font-semibold break-words" />
+                                                                <x-team-chip :name="$game->ourLabel()['badge'] ?? $game->ourLabel()['name']" class="min-w-0 truncate" />
                                                                 <span class="flex shrink-0 items-center gap-0.5 font-bold tabular-nums">
                                                                     @if($outcome === 'derby')
                                                                         <x-derby-heart class="h-3.5 w-3.5 {{ $game->is_home ? 'text-sky-club-light' : 'text-sky-club' }}" />
@@ -239,12 +239,13 @@
                         </div>
 
                         <div class="min-w-0">
-                            <p class="truncate text-xs font-semibold tracking-wide text-zinc-500 uppercase">
-                                {{ $game->competitionLabel() }}@if($game->round_label) · {{ $game->round_label }}@endif
+                            <p class="flex min-w-0 items-center gap-2 text-xs font-semibold tracking-wide text-zinc-500 uppercase">
+                                @if($ourLabel['badge'])<x-team-chip :name="$ourLabel['badge']" class="text-zinc-700" />@endif
+                                <span class="truncate">{{ $game->competitionLabel() }}@if($game->round_label) · {{ $game->round_label }}@endif</span>
                             </p>
                             <div class="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1 font-display text-lg leading-tight font-semibold uppercase sm:text-xl">
                                 @if($game->is_home)
-                                    <x-team-label :label="$ourLabel" class="text-zinc-900" />
+                                    <x-team-label :label="$ourLabel" :badge="false" class="text-zinc-900" />
                                 @else
                                     <span class="text-zinc-500">{{ $opponentName }}</span>
                                 @endif
@@ -256,7 +257,7 @@
                                 @if($game->is_home)
                                     <span class="text-zinc-500">{{ $opponentName }}</span>
                                 @else
-                                    <x-team-label :label="$ourLabel" class="text-zinc-900" />
+                                    <x-team-label :label="$ourLabel" :badge="false" class="text-zinc-900" />
                                 @endif
                             </div>
                             @if($game->isFinished() && is_array($game->sets_score) && count($game->sets_score))

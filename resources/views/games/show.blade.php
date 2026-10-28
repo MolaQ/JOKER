@@ -32,7 +32,7 @@
     <div class="container-site max-w-5xl pt-24 pb-14 lg:pt-32 lg:pb-16">
         <a href="{{ route('schedule.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ __('Terminarz i wyniki') }}</a>
         <h1 class="sr-only">{{ $homeName }} – {{ $awayName }}</h1>
-        <p class="eyebrow mt-6">{{ collect([$game->team?->name, $competition, $game->round_label])->filter()->implode(' · ') }}</p>
+        <p class="eyebrow mt-6 flex flex-wrap items-center gap-2">@if($game->team)<x-team-chip :name="$game->team->name" />@endif<span>{{ collect([$competition, $game->round_label])->filter()->implode(' · ') }}</span></p>
         <p class="mt-2 text-sm text-zinc-300">{{ $game->kickoffLabel('l, d F Y') }}@if($game->venue) · {{ $game->venue }}@endif</p>
 
         <div class="mt-10 grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8">

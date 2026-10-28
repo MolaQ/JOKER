@@ -61,8 +61,8 @@ test('calendar marks home and away games, results with V or X and opens the newe
         ->assertDontSeeHtml('href="'.route('articles.show', $older).'"')
         ->assertSee('Wygrana 3:1')
         ->assertSee('Porażka 0:3')
-        ->assertSeeHtml('<em class="ml-1')
-        ->assertSee('(kadeci)');
+        ->assertSeeHtml('ring-current/20 text-zinc-700">'.e($this->team->name).'</span>')
+        ->assertDontSee('(kadeci)');
 });
 
 test('calendar shows birthdays of players and of staff who allowed it', function () {
@@ -90,7 +90,7 @@ test('calendar shows birthdays of players and of staff who allowed it', function
         ->and(GamesBrowser::yearsLabel(12))->toBe('12 lat');
 });
 
-test('standings use the team name and italic suffix set for the competition', function () {
+test('standings use the club name set for the competition and badges only for two of our teams', function () {
     LeagueStanding::create([
         'competition_id' => $this->competition->id,
         'season_id' => $this->season->id,
@@ -102,25 +102,36 @@ test('standings use the team name and italic suffix set for the competition', fu
     $this->get('/tabele')
         ->assertOk()
         ->assertSeeText('LOMS Joker Piła')
-        ->assertSeeHtml('(kadeci)</em>');
+        ->assertDontSeeText('(kadeci)')
+        ->assertDontSeeHtml('ml-1">'.$this->team->name.'</span>');
+
+    $second = Team::factory()->create(['name' => 'Kadeci II']);
+    $this->competition->teams()->attach($second->id, ['display_name' => 'LOMS Joker Piła']);
+    LeagueStanding::create([
+        'competition_id' => $this->competition->id,
+        'season_id' => $this->season->id,
+        'competitor_type' => 'team',
+        'competitor_id' => $second->id,
+        'position' => 2, 'points' => 6,
+    ]);
+
+    $this->get('/tabele')->assertOk()->assertSeeHtml('ml-1">Kadeci II</span>');
 
     expect(Competition::defaultTeamLabel('Seniorzy', 'seniorzy', 'LOMS Joker Piła'))->toBe(['display_name' => 'LOMS Joker Piła', 'display_suffix' => null])
-        ->and(Competition::defaultTeamLabel('Kadeci II', 'kadeci-ii', 'ASBL; KS ASBL Piła'))->toBe(['display_name' => 'KS ASBL Piła', 'display_suffix' => '(kadeci II)']);
+        ->and(Competition::defaultTeamLabel('Kadeci II', 'kadeci-ii', 'ASBL; KS ASBL Piła'))->toBe(['display_name' => 'KS ASBL Piła', 'display_suffix' => null]);
 });
 
-test('admin sets the table name and suffix of a team in a competition', function () {
+test('admin sets the table name of a team in a competition', function () {
     $this->actingAs(User::factory()->admin()->create());
 
     Livewire::test(CompetitionManager::class)
         ->call('openEditModal', $this->competition->id)
-        ->assertSet("display_suffixes.{$this->team->id}", '(kadeci)')
         ->set("display_names.{$this->team->id}", 'KS ASBL Piła')
-        ->set("display_suffixes.{$this->team->id}", '(kadet II)')
         ->call('save')
         ->assertHasNoErrors();
 
     $pivot = $this->competition->teams()->first()->pivot;
-    expect($pivot->display_name)->toBe('KS ASBL Piła')->and($pivot->display_suffix)->toBe('(kadet II)');
+    expect($pivot->display_name)->toBe('KS ASBL Piła');
 });
 
 test('articles can be linked to several matches', function () {

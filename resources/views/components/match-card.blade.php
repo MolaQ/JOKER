@@ -1,7 +1,8 @@
-@props(['game', 'dark' => false])
+@props(['game', 'dark' => false, 'badge' => true])
 
 @php
-    $ourName = 'Joker · '.($game->team?->name ?? 'Piła');
+    $ourLabel = $game->ourLabel();
+    $ourName = $ourLabel['name'];
     $opponent = $game->opponentShortName();
     $home = $game->is_home ? $ourName : $opponent;
     $away = $game->is_home ? $opponent : $ourName;
@@ -13,8 +14,11 @@
 
 <article {{ $attributes->merge(['class' => ($dark ? 'bg-white/5 text-white ring-white/10' : 'bg-white text-zinc-900 ring-zinc-200/70').' relative flex flex-col rounded-3xl p-6 ring-1 transition duration-300 hover:-translate-y-1']) }}>
     <div class="flex items-center justify-between gap-3 text-xs">
-        <span class="font-semibold tracking-wider uppercase {{ $dark ? 'text-sky-club-light' : 'text-sky-club-dark' }}">
-            {{ $game->isFinished() && $game->game_date?->format('H:i') === '00:00' ? $game->game_date->translatedFormat('D, d M') : $game->kickoffLabel() }}
+        <span class="flex min-w-0 flex-wrap items-center gap-2 font-semibold tracking-wider uppercase {{ $dark ? 'text-sky-club-light' : 'text-sky-club-dark' }}">
+            <span>{{ $game->isFinished() && $game->game_date?->format('H:i') === '00:00' ? $game->game_date->translatedFormat('D, d M') : $game->kickoffLabel() }}</span>
+            @if($badge && $ourLabel['badge'])
+                <x-team-chip :name="$ourLabel['badge']" class="{{ $dark ? 'text-white' : 'text-zinc-700' }}" />
+            @endif
         </span>
         @if($outcome === 'derby')
             <span class="inline-flex items-center gap-1 rounded-full bg-sky-club/15 px-2.5 py-0.5 font-bold {{ $dark ? 'text-sky-club-light' : 'text-sky-club-dark' }}"><x-derby-heart class="h-3.5 w-3.5 {{ $dark ? 'text-sky-club-light' : 'text-sky-club' }}" /> {{ __('Pilska siatkówka') }}</span>

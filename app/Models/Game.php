@@ -152,9 +152,9 @@ class Game extends Model
     }
 
     /**
-     * Podpis naszej drużyny ustawiony w rozgrywkach meczu (nazwa + dopisek).
+     * Podpis naszej drużyny ustawiony w rozgrywkach meczu (nazwa klubu + plakietka drużyny).
      *
-     * @return array{name: string, suffix: ?string}
+     * @return array{name: string, badge: ?string}
      */
     public function ourLabel(): array
     {
@@ -162,7 +162,7 @@ class Game extends Model
             return $this->competition->teamLabel($this->team);
         }
 
-        return ['name' => $this->team?->name ?? 'Joker Piła', 'suffix' => null];
+        return ['name' => 'Joker Piła', 'badge' => $this->team?->name];
     }
 
     public function articles(): BelongsToMany
@@ -253,8 +253,6 @@ class Game extends Model
     public function sidesNames(): array
     {
         $ours = $this->ourLabel()['name'];
-        // Bez nazwy z rozgrywek nazwa drużyny („Kadeci”) nie mówi, kto gra - wtedy „Joker Piła”.
-        $ours = $ours === $this->team?->name ? 'Joker Piła' : $ours;
         $opponent = (string) $this->opponentDisplayName();
 
         return $this->is_home ? [$ours, $opponent] : [$opponent, $ours];

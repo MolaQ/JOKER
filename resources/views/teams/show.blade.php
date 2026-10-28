@@ -144,7 +144,7 @@
     @if($upcoming_games->isNotEmpty())
         <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach($upcoming_games as $game)
-                <x-match-card :game="$game" />
+                <x-match-card :game="$game" :badge="false" />
             @endforeach
         </div>
     @else
@@ -155,7 +155,7 @@
         <h3 class="heading-md mt-14">{{ __('Ostatnie wyniki') }}</h3>
         <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach($recent_games as $game)
-                <x-match-card :game="$game" />
+                <x-match-card :game="$game" :badge="false" />
             @endforeach
         </div>
     @endif
@@ -215,12 +215,12 @@
                             </thead>
                             <tbody class="divide-y divide-zinc-100">
                                 @foreach($entry['table'] as $standing)
-                                    @php $ours = $standing->isOwnTeam() && $standing->competitor_id === $team->id; @endphp
+                                    @php $ours = $standing->isOwnTeam() && $standing->competitor_id === $team->id; $ownTeams = $entry['table']->filter(fn ($row) => $row->isOwnTeam())->count(); @endphp
                                     <tr @class(['bg-sky-club/10 font-semibold' => $ours])>
                                         <td class="px-6 py-3">
                                             <span class="mr-3 inline-flex h-7 w-7 items-center justify-center rounded-full {{ $ours ? 'bg-sky-club text-white' : 'bg-zinc-100' }} text-xs font-bold">{{ $standing->position }}</span>
                                             @if($standing->isOwnTeam() && $standing->competitor)
-                                                <a href="{{ route('teams.show', $standing->competitor) }}" class="hover:text-sky-club-dark"><x-team-label :label="$standing->competitorLabel()" /></a>
+                                                <a href="{{ route('teams.show', $standing->competitor) }}" class="hover:text-sky-club-dark"><x-team-label :label="$standing->competitorLabel($ownTeams > 1)" /></a>
                                             @else
                                                 {{ $standing->competitorName() }}
                                             @endif
