@@ -199,11 +199,16 @@ class TeamList extends Component
             ->orderBy('display_order')
             ->paginate(10);
 
-        $trainers = User::withRole(UserRole::Trainer, UserRole::Staff, UserRole::Boss, UserRole::Admin)->orderBy('name')->get();
+        $staffIds = User::withRole(UserRole::Trainer, UserRole::Staff, UserRole::Boss, UserRole::Admin)->pluck('id');
+        // Osoby przypisane do drużyny, którym zabrano rolę sztabu (np. rodzic, który chwilowo uzupełniał skład),
+        // zostają na liście, żeby dało się je odznaczyć.
+        $assigned = collect($this->assistant_trainer_ids)->push($this->trainer_id)->filter()->map(fn ($id) => (int) $id);
+        $trainers = User::whereIn('id', $staffIds->merge($assigned)->unique())->orderBy('name')->get();
 
         return view('livewire.admin.team-list', [
             'teams' => $teams,
             'trainers' => $trainers,
+            'staffIds' => $staffIds->all(),
         ]);
     }
 }

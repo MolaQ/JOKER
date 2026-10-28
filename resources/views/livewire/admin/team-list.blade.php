@@ -145,7 +145,12 @@
                                         <div class="flex items-center gap-2">
                                             <label class="flex w-1/2 items-center text-sm text-gray-700">
                                                 <input type="checkbox" wire:model.live="assistant_trainer_ids" value="{{ $trainer->id }}" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500 mr-2">
-                                                {{ $trainer->name }}
+                                                <span>
+                                                    {{ $trainer->name }}
+                                                    @unless(in_array($trainer->id, $staffIds, true))
+                                                        <span class="block text-xs text-amber-700">nie ma już roli w sztabie: odznacz, jeśli nie pomaga drużynie</span>
+                                                    @endunless
+                                                </span>
                                             </label>
                                             @if(in_array($trainer->id, array_map('intval', $assistant_trainer_ids)))
                                                 <input type="text" wire:model="staff_roles.{{ $trainer->id }}" placeholder="Funkcja" class="w-1/2 rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">

@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Admin\TeamList;
 use App\Livewire\LikeButton;
 use App\Models\DailyLineup;
 use App\Models\Player;
@@ -111,4 +112,20 @@ test('strona główna pokazuje skład dnia z linkami do profili, a w ustawieniac
 
     app(SiteSettings::class)->set(['home_lineup_enabled' => false]);
     $this->get('/')->assertOk()->assertDontSee('Pobierz obrazek');
+});
+
+test('osobę bez roli sztabu, ale wciąż przypisaną do drużyny, można odznaczyć w edycji drużyny', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $parent = User::factory()->create(['name' => 'Rodzic Pomocnik']);
+    $this->cadets->assistantTrainers()->attach($parent->id, ['role' => 'Trener tymczasowy']);
+
+    Livewire::test(TeamList::class)
+        ->call('openEditModal', $this->cadets->id)
+        ->assertSee('Rodzic Pomocnik')
+        ->assertSee('nie ma już roli w sztabie')
+        ->set('assistant_trainer_ids', [])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($this->cadets->assistantTrainers()->count())->toBe(0);
 });

@@ -178,7 +178,7 @@
 @if($lineup && collect($lineup->players)->pluck('player_id')->filter()->isNotEmpty())
 @php
     $lineupPeople = collect($lineup->lineup())->filter(fn ($slot) => $slot['player'])
-        ->map(fn ($slot) => ['name' => $slot['player']->full_name, 'role' => $slot['position']->label().($slot['player']->team ? ' · '.$slot['player']->team->name : ''), 'url' => route('players.show', $slot['player']), 'badge' => $slot['player']->jersey_number ?? mb_substr($slot['player']->first_name, 0, 1).mb_substr((string) $slot['player']->last_name, 0, 1)]);
+        ->map(fn ($slot) => ['name' => $slot['player']->full_name, 'role' => $slot['position']->label().($slot['player']->team ? ' · '.$slot['player']->team->name : ''), 'url' => route('players.show', $slot['player']), 'libero' => $slot['position'] === \App\PlayerPosition::Libero, 'badge' => $slot['player']->jersey_number ?? mb_substr($slot['player']->first_name, 0, 1).mb_substr((string) $slot['player']->last_name, 0, 1)]);
     if ($lineup->coach) {
         $lineupPeople->push(['name' => $lineup->coach->name, 'role' => __('Trener'), 'url' => route('trainers.show', $lineup->coach), 'badge' => collect(explode(' ', $lineup->coach->name))->map(fn ($part) => mb_substr($part, 0, 1))->take(2)->implode('')]);
     }
@@ -195,7 +195,7 @@
                 @foreach($lineupPeople as $person)
                     <li>
                         <a href="{{ $person['url'] }}" class="group flex items-center gap-3">
-                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ink font-display text-sm font-bold text-sky-club">{{ $person['badge'] }}</span>
+                            <span @class(['flex h-9 w-9 shrink-0 items-center justify-center rounded-lg font-display text-sm font-bold', 'bg-white text-blue-700 ring-2 ring-blue-500' => $person['libero'] ?? false, 'bg-ink text-sky-club' => ! ($person['libero'] ?? false)])>{{ $person['badge'] }}</span>
                             <span class="min-w-0">
                                 <span class="block text-sm font-semibold group-hover:text-sky-club-dark">{{ $person['name'] }}</span>
                                 <span class="block truncate text-xs text-zinc-500">{{ $person['role'] }}</span>
