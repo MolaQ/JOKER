@@ -11,6 +11,8 @@ enum UserRole: string
     case Admin = 'admin';
     case Boss = 'boss';
     case Editor = 'editor';
+    case Moderator = 'moderator';
+    case Photographer = 'photographer';
     case Trainer = 'trainer';
     case Staff = 'staff';
     case Coordinator = 'coordinator';
@@ -24,6 +26,8 @@ enum UserRole: string
             self::Admin => 'Administrator',
             self::Boss => 'Szef',
             self::Editor => 'Redaktor',
+            self::Moderator => 'Moderator',
+            self::Photographer => 'Fotograf',
             self::Trainer => 'Trener',
             self::Staff => 'Członek sztabu',
             self::Coordinator => 'Koordynator drużyny',
@@ -39,6 +43,8 @@ enum UserRole: string
             self::Admin => 'Wszystkie uprawnienia, nie da się ich odebrać.',
             self::Boss => 'Prawie wszystko. Nadaje role poza rolą administratora.',
             self::Editor => 'Pisze aktualności, dodaje zdjęcia i transmisje.',
+            self::Moderator => 'W całym klubie: akceptuje konta, komentarze i propozycje od rodziców i zawodników.',
+            self::Photographer => 'Dodaje galerie i zdjęcia meczów, zatwierdza oznaczenia na zdjęciach.',
             self::Trainer => 'Prowadzi swoje drużyny: zawodnicy, mecze, wyniki.',
             self::Staff => 'Kierownik, fizjoterapeuta, statystyk. Ma publiczny profil w sztabie.',
             self::Coordinator => 'Dba o przepływ informacji w swojej drużynie: przyjmuje rodziców, przypisuje ich do dzieci, zatwierdza zgłoszenia drużyny. Nie jest w sztabie.',
@@ -59,8 +65,10 @@ enum UserRole: string
             self::Admin, self::Boss => Permission::cases(),
             self::Editor => [Permission::Articles, Permission::Media, Permission::Homepage, Permission::Documents, Permission::Comments, Permission::ContentProposals],
             self::Trainer => [Permission::Teams, Permission::Trainings, Permission::Games, Permission::Tournaments, Permission::Media, Permission::Proposals, Permission::ActivateAccounts],
+            self::Moderator => [Permission::WriteComments, Permission::Comments, Permission::ContentProposals, Permission::Proposals, Permission::ActivateAccounts, Permission::AllTeams],
+            self::Photographer => [Permission::WriteComments, Permission::Media, Permission::PhotoTags],
             self::Staff => [Permission::Trainings],
-            self::Coordinator => [Permission::Teams, Permission::ActivateAccounts, Permission::Proposals],
+            self::Coordinator => [Permission::WriteComments, Permission::Teams, Permission::ActivateAccounts, Permission::Proposals],
             default => [],
         };
     }

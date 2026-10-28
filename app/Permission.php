@@ -13,6 +13,7 @@ enum Permission: string
     case Homepage = 'homepage.manage';
     case Comments = 'comments.moderate';
     case ContentProposals = 'proposals.content';
+    case PhotoTags = 'photos.tags';
     case Teams = 'teams.manage';
     case AllTeams = 'teams.all';
     case Trainings = 'trainings.manage';
@@ -39,6 +40,7 @@ enum Permission: string
             self::Homepage => 'Slajdy na stronie głównej',
             self::Comments => 'Moderacja komentarzy',
             self::ContentProposals => 'Zatwierdzanie artykułów, zdjęć i transmisji od rodziców i zawodników',
+            self::PhotoTags => 'Zatwierdzanie wszystkich oznaczeń na zdjęciach',
             self::Teams => 'Drużyny, sztab i zawodnicy',
             self::AllTeams => 'Wszystkie drużyny, nie tylko własne',
             self::Trainings => 'Plan treningów',
@@ -65,6 +67,7 @@ enum Permission: string
             self::AllTeams => 'Bez tego trener widzi tylko drużyny, które prowadzi, i ich zawodników.',
             self::ActivateAccounts => 'Trener aktywuje tylko konta związane ze swoimi drużynami.',
             self::Trainings => 'Trener i członek sztabu układają plan tylko swoich drużyn.',
+            self::PhotoTags => 'Bez tego trener zatwierdza tylko oznaczenia zawodników swoich drużyn.',
             self::Roles => 'Kto nie jest administratorem, nie nada roli administratora.',
             self::WriteComments => 'Komentarze pod aktualnościami i meczami. Odbierz je, gdy ktoś łamie zasady.',
             default => null,
@@ -82,7 +85,7 @@ enum Permission: string
     public function group(): string
     {
         return match ($this) {
-            self::Articles, self::Media, self::Homepage, self::Comments, self::ContentProposals => 'Treści',
+            self::Articles, self::Media, self::Homepage, self::Comments, self::ContentProposals, self::PhotoTags => 'Treści',
             self::Teams, self::AllTeams, self::Trainings, self::Games, self::Tournaments, self::Competitions, self::Proposals => 'Drużyny i rozgrywki',
             self::Documents, self::Sponsors => 'Klub',
             self::WriteComments => 'Korzystanie ze strony',

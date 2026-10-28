@@ -290,7 +290,7 @@ class UserManager extends Component
             ->when($this->roleFilter === 'none', fn ($q) => $q->doesntHave('roleAssignments'))
             ->when(UserRole::tryFrom($this->roleFilter), fn ($q, UserRole $role) => $q->withRole($role))
             ->when(AccountStatus::tryFrom($this->statusFilter), fn ($q, AccountStatus $status) => $q->withAccountStatus($status))
-            ->with('roleAssignments')
+            ->with(['roleAssignments', 'activatedBy:id,name'])
             ->orderBy('name')
             ->paginate(15);
 

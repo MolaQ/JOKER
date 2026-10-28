@@ -101,7 +101,7 @@ class ChangeLog
     ];
 
     /** Pola, których zmiana nic nie mówi (liczniki, znaczniki czasu) albo nie może trafić do dziennika. */
-    private const IGNORED = ['id', 'created_at', 'updated_at', 'remember_token', 'views_count', 'likes_count', 'two_factor_secret', 'two_factor_recovery_codes'];
+    private const IGNORED = ['id', 'created_at', 'updated_at', 'remember_token', 'views_count', 'likes_count', 'approvals_notified_count', 'approvals_notified_at', 'two_factor_secret', 'two_factor_recovery_codes'];
 
     private const SECRET = ['password'];
 

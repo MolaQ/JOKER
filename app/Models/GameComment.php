@@ -17,6 +17,7 @@ class GameComment extends Model
         'user_id',
         'content',
         'is_approved',
+        'approved_by',
     ];
 
     protected function casts(): array
@@ -39,5 +40,13 @@ class GameComment extends Model
     public function scopeApproved($query)
     {
         return $query->where('is_approved', true);
+    }
+
+    /**
+     * Kto opublikował komentarz czekający na akceptację.
+     */
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 }

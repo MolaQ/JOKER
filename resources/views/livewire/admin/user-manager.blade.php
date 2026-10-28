@@ -41,6 +41,9 @@
                 <tr wire:key="user-{{ $user->id }}">
                     <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                         {{ $user->name }}
+                        @if($user->activatedBy)
+                            <span class="block text-xs font-normal text-gray-400">aktywował(a): {{ $user->activatedBy->name }}</span>
+                        @endif
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {{ $user->email }}

@@ -21,7 +21,7 @@ return new class extends Migration
         });
 
         if (! DB::table('role_permissions')->where('role', 'coordinator')->exists()) {
-            foreach (['teams.manage', 'users.activate', 'proposals.review'] as $permission) {
+            foreach (['comments.write', 'teams.manage', 'users.activate', 'proposals.review'] as $permission) {
                 DB::table('role_permissions')->insert(['role' => 'coordinator', 'permission' => $permission]);
             }
         }

@@ -17,6 +17,9 @@
                         @if($row['url'])<a href="{{ $row['url'] }}" target="_blank" class="text-sky-700 hover:underline">{{ $row['where'] }}</a>@else{{ $row['where'] }}@endif
                     </p>
                     <p class="mt-1 whitespace-pre-line text-gray-800">{{ $comment->content }}</p>
+                    @if($comment->is_approved && $comment->approver)
+                        <p class="mt-1 text-xs text-gray-500">Opublikował(a): {{ $comment->approver->name }}</p>
+                    @endif
                 </div>
                 <div class="flex gap-2 text-sm">
                     @if($comment->is_approved)

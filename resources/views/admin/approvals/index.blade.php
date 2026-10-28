@@ -4,8 +4,13 @@
 
 @section('content')
 <div class="px-4 sm:px-6 lg:px-8">
-    <h1 class="text-3xl font-bold text-gray-900">Do zatwierdzenia</h1>
-    <p class="mt-1 text-sm text-gray-600">Konta, propozycje, komentarze i zmiany, które czekają na Twoją decyzję.</p>
+    <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Do zatwierdzenia</h1>
+            <p class="mt-1 text-sm text-gray-600">Konta, propozycje, komentarze i zmiany, które czekają na Twoją decyzję.</p>
+        </div>
+        @livewire('admin.approval-email-toggle')
+    </div>
 
     <nav class="mt-5 flex flex-wrap gap-2" aria-label="Sekcje">
         @foreach($sections as $key => $section)

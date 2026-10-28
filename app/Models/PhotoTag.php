@@ -79,7 +79,7 @@ class PhotoTag extends Model
      */
     public function isReviewableBy(User $user): bool
     {
-        if ($user->can('proposals.content')) {
+        if ($user->can('proposals.content') || $user->can('photos.tags')) {
             return true;
         }
 

@@ -80,6 +80,8 @@ class User extends Authenticatable implements MustVerifyEmail
     protected function casts(): array
     {
         return [
+            'notify_approvals' => 'boolean',
+            'approvals_notified_at' => 'datetime',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'birth_date' => 'date',
