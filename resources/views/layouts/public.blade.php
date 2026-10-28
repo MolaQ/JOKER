@@ -305,7 +305,16 @@
                     <p>&copy; {{ date('Y') }} {{ $site['club_name'] }}@if(filled($site['footer_note']) && $site['footer_note'] !== $site['club_name']) · {{ $site['footer_note'] }}@endif</p>
                     <livewire:visit-counter />
                 </div>
-                <p><a href="{{ route('pages.show', 'polityka-prywatnosci') }}" class="underline hover:text-white">{{ __('Polityka prywatności') }}</a> · {{ __('Zdjęcia tematyczne:') }} <a href="{{ route('credits') }}" class="underline hover:text-white">{{ __('Unsplash i ich autorzy') }}</a></p>
+                <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    @foreach($site->links('footer_bottom_links') as $link)
+                        @unless($loop->first)<span aria-hidden="true">·</span>@endunless
+                        <a href="{{ $site->href($link['url']) }}" class="underline hover:text-white">{{ __($link['label']) }}</a>
+                    @endforeach
+                    @if(filled($site['footer_author']))
+                        @if($site->links('footer_bottom_links'))<span aria-hidden="true">·</span>@endif
+                        <span>{{ __('Projekt i wykonanie') }}: @if(filled($site['footer_author_url']))<a href="{{ $site['footer_author_url'] }}" class="underline hover:text-white" rel="noopener" target="_blank">{{ $site['footer_author'] }}</a>@else{{ $site['footer_author'] }}@endif</span>
+                    @endif
+                </p>
             </div>
         </div>
     </footer>

@@ -254,6 +254,12 @@ return [
                     ['label' => 'Kontakt', 'url' => '/kontakt'],
                 ]],
                 'footer_note' => ['type' => 'text', 'label' => 'Stopka: dopisek na dole (np. nazwa stowarzyszenia, NIP)', 'default' => 'UKS SMS Joker Piła'],
+                'footer_bottom_links' => ['type' => 'links', 'label' => 'Stopka: linki w dolnym pasku', 'help' => 'Np. polityka prywatności. Gdy na stronie nie ma już zdjęć z Unsplash, usuń link do nich.', 'default' => [
+                    ['label' => 'Polityka prywatności', 'url' => '/strona/polityka-prywatnosci'],
+                    ['label' => 'Zdjęcia tematyczne: Unsplash i ich autorzy', 'url' => '/zdjecia'],
+                ]],
+                'footer_author' => ['type' => 'text', 'label' => 'Stopka: autor strony', 'help' => 'Pokazuje się na dole jako „Projekt i wykonanie: …”. Puste = bez podpisu.', 'default' => ''],
+                'footer_author_url' => ['type' => 'url', 'label' => 'Stopka: link do autora strony (opcjonalnie)', 'default' => ''],
                 'social_facebook' => ['type' => 'url', 'label' => 'Facebook (adres profilu)', 'default' => 'https://www.facebook.com/UKSSMSJOKERPILA'],
                 'social_instagram' => ['type' => 'url', 'label' => 'Instagram', 'default' => 'https://www.instagram.com/joker_pila'],
                 'social_youtube' => ['type' => 'url', 'label' => 'YouTube', 'default' => 'https://www.youtube.com/@JokerPila'],
