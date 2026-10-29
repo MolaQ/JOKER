@@ -62,7 +62,7 @@ Route::get('/zawodnicy/{player}', [PlayerController::class, 'show'])->name('play
 
 // Trainers
 Route::get('/sztab/{trainer}', [TrainerController::class, 'show'])->name('trainers.show');
-Route::get('/osoby/{user}', [PersonController::class, 'show'])->name('people.show');
+Route::get('/family/{user}', [PersonController::class, 'show'])->name('people.show');
 
 // Schedule & Standings
 Route::get('/mecze', [ScheduleController::class, 'index'])->name('schedule.index');

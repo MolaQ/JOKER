@@ -63,7 +63,8 @@ it('finds parents in search only for logged-in users, with their role', function
     expect(collect(SearchIndex::search('Prezes'))->pluck('title'))->toContain('Adam Prezes');
 });
 
-it('links @mentions of board members to their profile', function () {
-    expect(Mentions::link('<p>Gratulacje od @Adam Prezes.</p>'))->toContain('href="'.route('people.show', $this->admin, false).'" class="mention"')
-        ->and(Mentions::link('<p>@Ewa Rodzicka</p>'))->not->toContain('class="mention"');
+it('links @mentions of anyone in the community, e.g. who took the photos', function () {
+    expect(route('people.show', $this->parent, false))->toStartWith('/family/')
+        ->and(Mentions::link('<p>Gratulacje od @Adam Prezes.</p>'))->toContain('href="'.route('people.show', $this->admin, false).'" class="mention"')
+        ->and(Mentions::link('<p>Zdjęcia: @Ewa Rodzicka</p>'))->toContain('href="'.route('people.show', $this->parent, false).'" class="mention"');
 });

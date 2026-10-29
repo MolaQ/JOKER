@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\AccountStatus;
 use App\Models\Article;
 use App\Models\Player;
 use App\Models\User;
@@ -10,7 +11,8 @@ use Illuminate\Support\Collection;
 
 /**
  * Wzmianki w artykułach: „@Imię Nazwisko” zamienia się przy wyświetlaniu w link do profilu
- * zawodnika albo osoby z publicznym profilem (sztab, administracja klubu).
+ * zawodnika albo dowolnej osoby ze społeczności (np. kto robił zdjęcia, kto prowadził transmisję).
+ * Profile rodziców i innych osób spoza sztabu otworzą tylko zalogowani.
  */
 class Mentions
 {
@@ -18,7 +20,7 @@ class Mentions
     private static ?array $profiles = null;
 
     /**
-     * Osoby do podpowiedzi w edytorze (po wpisaniu @): zawodnicy i osoby z publicznym profilem.
+     * Osoby do podpowiedzi w edytorze (po wpisaniu @): zawodnicy i aktywne konta.
      *
      * @return list<array{name: string, team: string|null}>
      */
@@ -27,8 +29,8 @@ class Mentions
         $players = Player::query()->with('team:id,name')->get(['id', 'first_name', 'last_name', 'team_id', 'is_active'])
             ->toBase()->map(fn (Player $player) => ['name' => $player->full_name, 'team' => $player->is_active ? $player->team?->name : null]);
 
-        $people = User::withPublicProfile()->get(['id', 'name'])
-            ->map(fn (User $user) => ['name' => $user->name, 'team' => $user->rolesLabel() ?: __('Sztab')]);
+        $people = User::withAccountStatus(AccountStatus::Active)->with('roleAssignments')->get(['id', 'name'])
+            ->toBase()->map(fn (User $user) => ['name' => $user->name, 'team' => $user->rolesLabel() ?: null]);
 
         return $players->concat($people)->unique('name')->sortBy('name', SORT_LOCALE_STRING)->values()->all();
     }
@@ -100,7 +102,7 @@ class Mentions
         }
 
         // Przy tej samej nazwie wygrywa profil zawodnika.
-        $people = User::withPublicProfile()->get(['id', 'name'])->toBase()
+        $people = User::withAccountStatus(AccountStatus::Active)->get(['id', 'name'])->toBase()
             ->mapWithKeys(fn (User $user) => [mb_strtolower($user->name) => $user->profileUrl(false)]);
         $players = Player::query()->get(['id', 'first_name', 'last_name'])->toBase()
             ->mapWithKeys(fn (Player $player) => [mb_strtolower($player->full_name) => route('players.show', $player, false)]);

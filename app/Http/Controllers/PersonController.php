@@ -30,7 +30,7 @@ class PersonController extends Controller
 
         return view('people.show', [
             'person' => $user,
-            'mentions' => $user->hasPublicProfile() ? Mentions::articlesAbout($user->name) : collect(),
+            'mentions' => Mentions::articlesAbout($user->name),
         ]);
     }
 }
