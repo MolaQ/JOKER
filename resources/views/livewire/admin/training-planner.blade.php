@@ -47,7 +47,7 @@
             <fieldset class="md:col-span-2 xl:col-span-2">
                 <legend class="text-sm font-medium text-gray-700">Miejsce</legend>
                 <div class="mt-1 grid grid-cols-3 gap-1 sm:grid-cols-5">
-                    @foreach(TrainingSession::VENUES as $key => $label)
+                    @foreach(TrainingSession::venueNames() as $key => $label)
                         <label class="flex cursor-pointer items-center justify-center rounded-md px-2 py-2 text-center text-sm font-semibold ring-1 ring-gray-200 has-[:checked]:bg-sky-600 has-[:checked]:text-white has-[:checked]:ring-sky-600">
                             <input type="radio" wire:model.live="venue" value="{{ $key }}" class="sr-only"> {{ $label }}
                         </label>

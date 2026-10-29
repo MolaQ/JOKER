@@ -526,6 +526,8 @@ test('court is picked with the hall symbol and named courts get the symbol on th
     expect(TrainingSession::venueForCourt('Boisko 1'))->toBe('court1')
         ->and(TrainingSession::venueForCourt(' boisko 3 '))->toBe('court3')
         ->and(TrainingSession::venueForCourt('Główne boisko'))->toBe('main')
+        ->and(TrainingSession::venueForCourt('Sektor II'))->toBe('court2')
+        ->and(TrainingSession::courtLabel('Boisko 3'))->toBe('Sektor III')
         ->and(TrainingSession::venueForCourt('Hala Lotnisko'))->toBeNull();
 
     $this->actingAs(User::factory()->admin()->create());
@@ -534,7 +536,7 @@ test('court is picked with the hall symbol and named courts get the symbol on th
 
     Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
         ->assertSeeHtml('aria-label="Boisko"')
-        ->set("results.{$match->id}.court", 'Boisko 1');
+        ->set("results.{$match->id}.court", 'Sektor I');
 
-    expect($match->fresh()->court)->toBe('Boisko 1');
+    expect($match->fresh()->court)->toBe('Sektor I');
 });

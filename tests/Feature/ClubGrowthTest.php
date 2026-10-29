@@ -61,7 +61,7 @@ test('a trainer plans trainings of own teams on several days and sees busy court
 
     expect(TrainingSession::where('team_id', $own->id)->pluck('weekday')->sort()->values()->all())->toBe([1, 3]);
 
-    $this->get(route('trainings.index'))->assertOk()->assertSee('Kadeci')->assertSee('16:00–17:30')->assertSee('Boisko 1');
+    $this->get(route('trainings.index'))->assertOk()->assertSee('Kadeci')->assertSee('16:00–17:30')->assertSee('Sektor I');
     $this->get(route('teams.show', $own))->assertOk()->assertSee('Plan treningów')->assertSee('Środa');
 });
 
@@ -146,7 +146,12 @@ test('the main court can be chosen as a training venue', function () {
 
     $session = TrainingSession::create(['team_id' => Team::factory()->create()->id, 'weekday' => 2, 'starts_at' => '17:00:00', 'ends_at' => '18:30:00', 'venue' => 'main']);
 
-    expect($session->venueLabel())->toBe('Główne boisko');
+    expect($session->venueLabel())->toBe('Główne boisko')
+        ->and($session->forceFill(['venue' => 'court1'])->venueLabel())->toBe('Sektor I');
+
+    app(SiteSettings::class)->set(['venue_court1' => 'Boisko przy oknach']);
+    expect($session->venueLabel())->toBe('Boisko przy oknach')
+        ->and(TrainingSession::courtLabel('Boisko 1'))->toBe('Boisko przy oknach');
 });
 
 test('wychowanka z pustymi polami da się otworzyć do edycji', function () {

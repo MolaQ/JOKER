@@ -1,8 +1,8 @@
 @props(['model', 'value' => null, 'free' => true])
 @php
-    // Wybór boiska ikoną, ułożony jak w sali: Boisko 3 z lewej, 2 w środku, 1 z prawej, do tego całe (główne) boisko.
+    // Wybór boiska ikoną, ułożony jak w sali: część III z lewej, II w środku, I z prawej, do tego całe (główne) boisko.
     // Inną nazwę (np. hala w innym mieście) można wpisać w polu pod ikonami.
-    $venues = \App\Models\TrainingSession::VENUES;
+    $venues = \App\Models\TrainingSession::venueNames();
     $current = \App\Models\TrainingSession::venueForCourt($value);
 @endphp
 <div {{ $attributes->merge(['class' => 'space-y-1']) }}>

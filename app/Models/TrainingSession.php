@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\SiteSettings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -66,7 +67,29 @@ class TrainingSession extends Model
 
     public function venueLabel(): string
     {
-        return __(self::VENUES[$this->venue] ?? $this->venue);
+        return self::venueNames()[$this->venue] ?? $this->venue;
+    }
+
+    /**
+     * Nazwy miejsc z ustawień klubu (np. „Sektor I”), w tej samej kolejności co VENUES.
+     *
+     * @return array<string, string>
+     */
+    public static function venueNames(): array
+    {
+        $site = app(SiteSettings::class);
+
+        return collect(self::VENUES)->map(fn (string $default, string $venue) => trim((string) $site->get('venue_'.$venue)) ?: __($default))->all();
+    }
+
+    /**
+     * Boisko wpisane przy meczu pokazane nazwą z ustawień (stare „Boisko 1” → „Sektor I”); inne nazwy bez zmian.
+     */
+    public static function courtLabel(?string $court): ?string
+    {
+        $venue = self::venueForCourt($court);
+
+        return $venue ? self::venueNames()[$venue] : $court;
     }
 
     /**
@@ -76,9 +99,22 @@ class TrainingSession extends Model
     {
         $court = mb_strtolower(trim((string) $court));
 
+        if ($court === '') {
+            return null;
+        }
+
+        foreach (self::venueNames() as $venue => $name) {
+            if ($venue !== 'gym' && mb_strtolower($name) === $court) {
+                return $venue;
+            }
+        }
+
+        $roman = ['i' => 1, 'ii' => 2, 'iii' => 3];
+
         return match (true) {
-            (bool) preg_match('/^boisko\s*([123])$/u', $court, $found) => 'court'.$found[1],
-            in_array($court, ['główne boisko', 'boisko główne'], true) => 'main',
+            (bool) preg_match('/^(?:boisko|sektor)\s*([123])$/u', $court, $found) => 'court'.$found[1],
+            (bool) preg_match('/^(?:boisko|sektor)\s*(i{1,3})$/u', $court, $found) => 'court'.$roman[$found[1]],
+            in_array($court, ['główne boisko', 'boisko główne', 'cała sala'], true) => 'main',
             default => null,
         };
     }

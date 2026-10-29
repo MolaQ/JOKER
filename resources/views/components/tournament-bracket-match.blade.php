@@ -14,7 +14,7 @@
             <span class="inline-flex shrink-0 items-center gap-1 self-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white uppercase"><span class="size-1.5 animate-pulse rounded-full bg-white"></span>{{ __('Trwa') }}</span>
         @endif
         @if($match->starts_at || $match->court)
-            <span class="ml-auto shrink-0 text-xs whitespace-nowrap opacity-75">{{ $match->starts_at?->translatedFormat('D d.m, H:i') }}{{ $match->starts_at && $match->court ? ' · ' : '' }}{{ $match->court }}</span>
+            <span class="ml-auto shrink-0 text-xs whitespace-nowrap opacity-75">{{ $match->starts_at?->translatedFormat('D d.m, H:i') }}{{ $match->starts_at && $match->court ? ' · ' : '' }}{{ \App\Models\TrainingSession::courtLabel($match->court) }}</span>
         @endif
     </header>
     @foreach(['home', 'away'] as $side)
