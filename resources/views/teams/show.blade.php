@@ -123,14 +123,22 @@
 <section id="treningi" class="container-site scroll-mt-32 pt-16 lg:pt-20" data-reveal>
     <p class="eyebrow">{{ __('Treningi') }}</p>
     <h2 class="heading-lg mt-3">{{ __('Plan treningów') }}</h2>
-    <ul class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        @foreach($team->trainingSessions->groupBy('weekday') as $daySessions)
+    @php
+        $trainingDays = $team->trainingSessions->groupBy('weekday');
+        $dayColumns = match ($trainingDays->count()) { 5 => 'lg:grid-cols-5', 6 => 'lg:grid-cols-3 xl:grid-cols-6', 7 => 'lg:grid-cols-4 xl:grid-cols-7', default => 'lg:grid-cols-4' };
+    @endphp
+    {{-- Cały tydzień obok siebie; w dniu treningi jeden pod drugim z symbolem miejsca (która część sali albo siłownia) --}}
+    <ul class="mt-8 grid gap-3 sm:grid-cols-2 {{ $dayColumns }}">
+        @foreach($trainingDays as $daySessions)
             <li class="card p-4">
-                <p class="text-xs font-semibold tracking-widest text-sky-club-dark uppercase">{{ $daySessions->first()->weekdayLabel() }}</p>
+                <p class="border-b border-zinc-100 pb-2 text-xs font-semibold tracking-widest text-sky-club-dark uppercase">{{ $daySessions->first()->weekdayLabel() }}</p>
                 @foreach($daySessions as $session)
-                    <div @class(['mt-1', 'mt-3 border-t border-zinc-100 pt-3' => ! $loop->first])>
-                        <p class="text-lg font-semibold tabular-nums">{{ $session->timeRange() }}</p>
-                        <p class="text-sm text-zinc-600">{{ $session->venueLabel() }}@if($session->note) · {{ $session->note }}@endif</p>
+                    <div class="mt-3 flex items-center gap-3">
+                        <x-venue-icon :venue="$session->venue" />
+                        <div class="min-w-0">
+                            <p class="font-semibold tabular-nums">{{ $session->timeRange() }}</p>
+                            <p class="text-sm text-zinc-600">{{ $session->venueLabel() }}@if($session->note) · {{ $session->note }}@endif</p>
+                        </div>
                     </div>
                 @endforeach
             </li>

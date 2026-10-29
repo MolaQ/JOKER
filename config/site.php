@@ -84,6 +84,14 @@ return [
                 'color_countdown' => ['type' => 'color', 'label' => 'Cyfry zegara odliczającego do meczu', 'default' => '#ffd600'],
                 'color_club_navy' => ['type' => 'color', 'label' => 'Granat klubowy (kalendarz: belka miesiąca i mecze u siebie)', 'default' => '#0f2d6b'],
                 'color_like' => ['type' => 'color', 'label' => 'Serduszka (polubienia)', 'default' => '#45a0e0'],
+                'color_venue' => ['type' => 'color', 'label' => 'Plan treningów: zajęta część boiska', 'default' => '#45a0e0'],
+                'color_gym' => ['type' => 'color', 'label' => 'Plan treningów: siłownia', 'default' => '#10b981'],
+                'gym_icon' => ['type' => 'select', 'label' => 'Plan treningów: ikona siłowni', 'default' => 'dumbbell', 'options' => [
+                    'dumbbell' => 'Hantla',
+                    'kettlebell' => 'Kettlebell',
+                    'plate' => 'Talerz obciążenia',
+                    'lifter' => 'Sylwetka ze sztangą',
+                ]],
             ],
         ],
 
