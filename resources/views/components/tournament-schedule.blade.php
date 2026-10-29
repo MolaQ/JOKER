@@ -195,8 +195,9 @@
                                 'bg-club-navy' => ! $slotLive && $slotDone,
                                 'bg-white ring-2 ring-sky-club ring-inset' => ! $slotLive && ! $slotDone,
                             ])>@if($slotLive)<span class="absolute inset-0 animate-ping rounded-full bg-red-500/60"></span>@endif</span>
+                            {{-- grid-flow-row-dense: mecz z lewego sektora staje obok meczu z prawego, nawet gdy ma wyższy numer --}}
                             <div @class([
-                                'grid gap-3 sm:gap-4',
+                                'grid grid-flow-row-dense gap-3 sm:gap-4',
                                 'md:grid-cols-2' => $courtColumns->count() !== 3,
                                 'lg:grid-cols-3' => $courtColumns->count() === 3,
                                 'xl:grid-cols-3' => $courtColumns->isEmpty(),
