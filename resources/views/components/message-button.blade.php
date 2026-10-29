@@ -12,7 +12,7 @@
             $player !== null => $player->guardians,
             default => collect(),
         };
-        $recipients = $recipients->filter(fn ($user) => $user->accountStatus() === \App\AccountStatus::Active && $user->id !== $me->id);
+        $recipients = $recipients->filter(fn ($user) => $me->mayMessage($user));
     }
 @endphp
 @if($recipients->isNotEmpty())

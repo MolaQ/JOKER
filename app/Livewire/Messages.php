@@ -10,6 +10,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Permission;
 use App\Services\PushNotifier;
+use App\Support\SiteSettings;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -54,6 +55,8 @@ class Messages extends Component
 
     public function mount(): void
     {
+        abort_unless(app(SiteSettings::class)->get('messages_enabled'), 404);
+
         if ($this->conversationId && ! $this->conversation()) {
             $this->conversationId = null;
         }
@@ -82,7 +85,7 @@ class Messages extends Component
      */
     private function recipients(): Builder
     {
-        return User::query()->withAccountStatus(AccountStatus::Active)->whereKeyNot($this->user()->id);
+        return User::query()->withAccountStatus(AccountStatus::Active)->whereKeyNot($this->user()->id)->messageableBy($this->user());
     }
 
     /**
@@ -95,7 +98,7 @@ class Messages extends Component
     {
         $user = $this->user();
 
-        if (! $user->canMessage()) {
+        if (! $user->canMessage() || ! app(SiteSettings::class)->get('messages_team_groups')) {
             return collect();
         }
 

@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Support\SearchIndex;
 use App\Support\SiteSettings;
+use App\UserRole;
 use App\View\Components\Toasts;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Arr;
@@ -46,6 +47,7 @@ class SiteSettingsManager extends Component
             $this->values[$key] = match ($field['type']) {
                 'toggle' => (bool) $value,
                 'links', 'platforms' => array_values((array) $value),
+                'role_matrix' => $settings->messageRules(),
                 default => (string) $value,
             };
         }
@@ -111,7 +113,11 @@ class SiteSettingsManager extends Component
     public function restoreDefaults(): void
     {
         foreach ($this->groups()[$this->tab]['fields'] as $key => $field) {
-            $this->values[$key] = $field['type'] === 'toggle' ? (bool) $field['default'] : $field['default'] ?? '';
+            $this->values[$key] = match ($field['type']) {
+                'toggle' => (bool) $field['default'],
+                'role_matrix' => array_fill_keys(array_column(UserRole::cases(), 'value'), array_column(UserRole::cases(), 'value')),
+                default => $field['default'] ?? '',
+            };
             unset($this->uploads[$key]);
         }
 
@@ -151,6 +157,9 @@ class SiteSettingsManager extends Component
                     ->values()
                     ->all(),
                 'platforms' => $this->cleanPlatforms((array) $value),
+                'role_matrix' => collect(UserRole::cases())->mapWithKeys(fn (UserRole $role) => [
+                    $role->value => array_values(array_intersect(array_column(UserRole::cases(), 'value'), (array) ($value[$role->value] ?? []))),
+                ])->all(),
                 'color' => strtolower((string) $value),
                 default => trim((string) $value),
             };
@@ -216,6 +225,7 @@ class SiteSettingsManager extends Component
                     $rules[$path.'.*.label'] = ['nullable', 'string', 'max:60'],
                     $rules[$path.'.*.url'] = ['nullable', 'string', 'max:500', 'regex:/^(https?:\/\/|\/|#|mailto:|tel:)/i'],
                 ],
+                'role_matrix' => $rules[$path] = ['array'],
                 'platforms' => [
                     $rules[$path] = ['array', 'max:20'],
                     $rules[$path.'.*.label'] = ['nullable', 'string', 'max:40'],

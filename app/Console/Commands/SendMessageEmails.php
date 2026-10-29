@@ -7,6 +7,7 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use App\Notifications\MessagesWaiting;
+use App\Support\SiteSettings;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -26,6 +27,10 @@ class SendMessageEmails extends Command
 
     public function handle(): int
     {
+        if (! app(SiteSettings::class)->get('messages_enabled')) {
+            return self::SUCCESS;
+        }
+
         $cutoff = now()->subMinutes(self::DELAY_MINUTES);
 
         $userIds = DB::table('conversation_user as cu')

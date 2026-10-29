@@ -116,6 +116,16 @@ return [
             ],
         ],
 
+        'wiadomosci' => [
+            'label' => 'Wiadomości',
+            'icon' => 'chat',
+            'fields' => [
+                'messages_enabled' => ['type' => 'toggle', 'label' => 'Wiadomości między użytkownikami', 'help' => 'Wyłączone: znika ikona wiadomości, koperty przy nazwiskach i strona Wiadomości. Rozmowy zostają zapisane.', 'default' => true],
+                'messages_team_groups' => ['type' => 'toggle', 'label' => 'Wiadomości do całej drużyny', 'help' => 'Trener, sztab, koordynator i zarząd mogą napisać do wszystkich rodziców, zawodników albo sztabu drużyny naraz.', 'default' => true],
+                'messages_rules' => ['type' => 'role_matrix', 'label' => 'Kto do kogo może pisać', 'help' => 'Wiersz: kto pisze, kolumna: do kogo może zacząć rozmowę. Konto z kilkoma rolami łączy ich możliwości. Odpowiedzieć w istniejącej rozmowie można zawsze. Komu w ogóle wolno pisać (i odebranie tego jednej osobie, np. za spam), ustawiasz w „Role i uprawnienia”.', 'default' => 'all'],
+            ],
+        ],
+
         'turnieje' => [
             'label' => 'Turnieje: drabinka i karty drużyn',
             'icon' => 'trophy',

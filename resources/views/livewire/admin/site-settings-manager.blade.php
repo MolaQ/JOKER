@@ -111,6 +111,33 @@
                                 </div>
                                 @break
 
+                            @case('role_matrix')
+                                <div class="overflow-x-auto rounded-lg ring-1 ring-gray-200">
+                                    <table class="min-w-full text-xs">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="sticky left-0 bg-gray-50 px-3 py-2 text-left font-semibold text-gray-600">Pisze ↓ / do →</th>
+                                                @foreach(\App\UserRole::cases() as $to)
+                                                    <th class="px-1 py-2 text-center font-semibold text-gray-600"><span class="block w-16 leading-tight">{{ $to->label() }}</span></th>
+                                                @endforeach
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100">
+                                            @foreach(\App\UserRole::cases() as $from)
+                                                <tr wire:key="matrix-{{ $key }}-{{ $from->value }}">
+                                                    <th class="sticky left-0 bg-white px-3 py-2 text-left font-semibold whitespace-nowrap text-gray-800">{{ $from->label() }}</th>
+                                                    @foreach(\App\UserRole::cases() as $to)
+                                                        <td class="px-1 py-2 text-center">
+                                                            <input type="checkbox" wire:model="values.{{ $key }}.{{ $from->value }}" value="{{ $to->value }}" class="h-4 w-4 rounded text-sky-600" aria-label="{{ $from->label() }} pisze do: {{ $to->label() }}">
+                                                        </td>
+                                                    @endforeach
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                                @break
+
                             @case('platforms')
                                 <div class="space-y-2">
                                     @foreach($values[$key] as $index => $platform)

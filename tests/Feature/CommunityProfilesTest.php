@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Permission;
 use App\Support\Mentions;
 use App\Support\SearchIndex;
+use App\Support\SiteSettings;
 use App\UserRole;
 use Livewire\Livewire;
 
@@ -67,4 +68,23 @@ it('links @mentions of anyone in the community, e.g. who took the photos', funct
     expect(route('people.show', $this->parent, false))->toStartWith('/family/')
         ->and(Mentions::link('<p>Gratulacje od @Adam Prezes.</p>'))->toContain('href="'.route('people.show', $this->admin, false).'" class="mention"')
         ->and(Mentions::link('<p>Zdjęcia: @Ewa Rodzicka</p>'))->toContain('href="'.route('people.show', $this->parent, false).'" class="mention"');
+});
+
+it('follows the message rules from settings and can switch messages off', function () {
+    $coach = User::factory()->trainer()->create(['name' => 'Tomasz Trener']);
+    $rules = app(SiteSettings::class)->messageRules();
+    $rules['parent'] = ['trainer'];
+    app(SiteSettings::class)->set(['messages_rules' => $rules]);
+
+    expect($this->parent->mayMessage($coach))->toBeTrue()
+        ->and($this->parent->mayMessage($this->admin))->toBeFalse();
+
+    $this->actingAs($this->parent);
+    Livewire::test(Messages::class)->call('startComposing')->set('recipientSearch', 'Prezes')->assertDontSee('Adam Prezes')
+        ->set('recipientSearch', 'Trener')->assertSee('Tomasz Trener');
+
+    app(SiteSettings::class)->set(['messages_enabled' => false]);
+    expect($this->parent->fresh()->canMessage())->toBeFalse();
+    $this->get(route('messages.index'))->assertNotFound();
+    $this->get(route('home'))->assertDontSee(route('messages.index'), false);
 });

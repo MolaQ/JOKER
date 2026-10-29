@@ -8,6 +8,7 @@ use App\Models\Concerns\CountsViews;
 use App\Models\Concerns\HasReadableRouteKey;
 use App\Models\Concerns\Likeable;
 use App\Permission;
+use App\Support\SiteSettings;
 use App\UserRole;
 use Carbon\CarbonInterface;
 use Database\Factories\UserFactory;
@@ -619,11 +620,51 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Czy konto może pisać wiadomości: aktywne i z uprawnieniem (można je odebrać jednej osobie, np. za spam).
+     * Czy konto może pisać wiadomości: wiadomości włączone w Ustawieniach i uprawnienie
+     * (można je odebrać jednej osobie, np. za spam).
      */
     public function canMessage(): bool
     {
-        return $this->hasPermission(Permission::WriteMessages);
+        return (bool) app(SiteSettings::class)->get('messages_enabled') && $this->hasPermission(Permission::WriteMessages);
+    }
+
+    /**
+     * Role, do których ta osoba może zacząć rozmowę (Ustawienia → Wiadomości). Konto bez roli traktujemy jak kibica.
+     *
+     * @return list<string>
+     */
+    public function messageableRoles(): array
+    {
+        $rules = app(SiteSettings::class)->messageRules();
+        $roles = $this->roles()->map->value->whenEmpty(fn ($roles) => $roles->push(UserRole::Fan->value));
+
+        return $roles->flatMap(fn (string $role) => $rules[$role] ?? [])->unique()->values()->all();
+    }
+
+    /**
+     * Czy może zacząć rozmowę z tą osobą (koperta przy nazwisku, nowa wiadomość).
+     */
+    public function mayMessage(User $recipient): bool
+    {
+        if (! $this->canMessage() || $recipient->is($this) || $recipient->accountStatus() !== AccountStatus::Active) {
+            return false;
+        }
+
+        $roles = $recipient->roles()->map->value->whenEmpty(fn ($roles) => $roles->push(UserRole::Fan->value));
+
+        return $roles->intersect($this->messageableRoles())->isNotEmpty();
+    }
+
+    /**
+     * Konta, do których może zacząć rozmowę ta osoba.
+     */
+    public function scopeMessageableBy(Builder $query, User $sender): void
+    {
+        $allowed = $sender->messageableRoles();
+
+        $query->where(fn (Builder $query) => $query
+            ->whereHas('roleAssignments', fn ($assignments) => $assignments->whereIn('role', $allowed))
+            ->when(in_array(UserRole::Fan->value, $allowed, true), fn (Builder $query) => $query->orWhereDoesntHave('roleAssignments')));
     }
 
     public function unreadMessagesCount(): int

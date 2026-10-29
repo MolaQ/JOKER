@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Setting;
+use App\UserRole;
 use ArrayAccess;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
@@ -93,6 +94,25 @@ class SiteSettings implements ArrayAccess
             ->filter(fn ($link) => filled($link['label'] ?? null) && filled($link['url'] ?? null))
             ->values()
             ->all();
+    }
+
+    /**
+     * Zasady wiadomości: rola piszącego => role, do których może zacząć rozmowę. Domyślnie każdy do każdego.
+     *
+     * @return array<string, list<string>>
+     */
+    public function messageRules(): array
+    {
+        $all = array_column(UserRole::cases(), 'value');
+        $stored = $this->get('messages_rules');
+
+        if (! is_array($stored)) {
+            return array_fill_keys($all, $all);
+        }
+
+        return collect($all)->mapWithKeys(fn (string $role) => [
+            $role => array_values(array_intersect($all, (array) ($stored[$role] ?? []))),
+        ])->all();
     }
 
     /**

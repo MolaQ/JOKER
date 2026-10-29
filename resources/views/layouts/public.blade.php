@@ -200,7 +200,7 @@
                         @if(auth()->user()->canManageContent())
                             <a href="{{ route('admin.dashboard') }}" class="btn-primary">{{ __('Panel administracyjny') }}</a>
                         @endif
-                        <a href="{{ route('messages.index') }}" class="btn-ghost">{{ __('Wiadomości') }}@if(auth()->user()->unreadMessagesCount()) <span class="ml-1 rounded-full bg-red-600 px-1.5 text-xs font-bold text-white">{{ auth()->user()->unreadMessagesCount() }}</span>@endif</a>
+                        @if($site['messages_enabled'])<a href="{{ route('messages.index') }}" class="btn-ghost">{{ __('Wiadomości') }}@if(auth()->user()->unreadMessagesCount()) <span class="ml-1 rounded-full bg-red-600 px-1.5 text-xs font-bold text-white">{{ auth()->user()->unreadMessagesCount() }}</span>@endif</a>@endif
                         <a href="{{ route('profile.edit') }}" class="btn-ghost">{{ __('Mój profil') }}</a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
