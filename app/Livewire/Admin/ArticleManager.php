@@ -261,12 +261,13 @@ class ArticleManager extends Component
             'status' => 'status',
             'wyswietlenia' => 'views_count',
             'polubienia' => 'likes_count',
+            'komentarze' => 'approved_comments_count',
         ];
     }
 
     protected function sortDescendingFirst(): array
     {
-        return ['wyswietlenia', 'polubienia'];
+        return ['wyswietlenia', 'polubienia', 'komentarze'];
     }
 
     public function render()
