@@ -8,6 +8,7 @@ use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\TournamentMatch;
 use App\Models\TournamentParticipant;
+use App\Models\TrainingSession;
 use App\Models\User;
 use App\Support\TournamentBracket;
 use App\Support\TournamentTable;
@@ -519,4 +520,21 @@ test('organizer reorders group matches by dragging or arrows, and only that stag
     $editor->call('moveMatchBy', $c->id, 1);
 
     expect([$a->fresh()->number, $c->fresh()->number, $b->fresh()->number])->toBe([1, 2, 3]);
+});
+
+test('court is picked with the hall symbol and named courts get the symbol on the page', function () {
+    expect(TrainingSession::venueForCourt('Boisko 1'))->toBe('court1')
+        ->and(TrainingSession::venueForCourt(' boisko 3 '))->toBe('court3')
+        ->and(TrainingSession::venueForCourt('Główne boisko'))->toBe('main')
+        ->and(TrainingSession::venueForCourt('Hala Lotnisko'))->toBeNull();
+
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
+    $match = $joker->category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id]);
+
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
+        ->assertSeeHtml('aria-label="Boisko"')
+        ->set("results.{$match->id}.court", 'Boisko 1');
+
+    expect($match->fresh()->court)->toBe('Boisko 1');
 });

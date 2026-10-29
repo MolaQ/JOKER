@@ -395,7 +395,7 @@
                     </div>
                     <div>
                         <label class="{{ $label }}">Boisko / hala</label>
-                        <input type="text" wire:model="match.court" class="{{ $input }}" placeholder="np. Hala Lotnisko, boisko 2">
+                        <x-court-picker model="match.court" :value="$match['court'] ?? null" />
                     </div>
                     <div class="sm:col-span-2 flex items-end">
                         <button type="submit" class="{{ $primary }}">Dodaj mecz</button>
@@ -419,7 +419,7 @@
                         <h3 class="mb-2 font-semibold text-gray-900">{{ $stageName }} <span class="text-xs font-normal text-gray-500">· kolejność i numery zmieniasz, przeciągając mecz za uchwyt ⠿ albo strzałkami</span></h3>
                         <div class="space-y-2" wire:sort="moveMatch">
                             @foreach($stageMatches as $tournamentMatch)
-                                <div class="grid gap-2 rounded-lg border border-gray-200 bg-white p-3 lg:grid-cols-[minmax(0,2fr)_10rem_11rem_9rem_auto] lg:items-center" wire:key="match-{{ $tournamentMatch->id }}" wire:sort:item="{{ $tournamentMatch->id }}">
+                                <div class="grid gap-2 rounded-lg border border-gray-200 bg-white p-3 lg:grid-cols-[minmax(0,2fr)_10rem_11rem_10rem_auto] lg:items-center" wire:key="match-{{ $tournamentMatch->id }}" wire:sort:item="{{ $tournamentMatch->id }}">
                                     <div class="flex items-center gap-2 text-sm">
                                         <div class="flex shrink-0 flex-col items-center text-gray-400">
                                             <button type="button" wire:click="moveMatchBy({{ $tournamentMatch->id }}, -1)" @disabled($loop->first) class="leading-none hover:text-gray-900 disabled:opacity-30" aria-label="Przesuń wyżej">▲</button>
@@ -450,7 +450,7 @@
                                         @error("results.{$tournamentMatch->id}.sets") <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                                     </div>
                                     <input type="datetime-local" wire:model.blur.live="results.{{ $tournamentMatch->id }}.starts_at" class="{{ $input }}">
-                                    <input type="text" wire:model.blur.live="results.{{ $tournamentMatch->id }}.court" class="{{ $input }}" placeholder="boisko">
+                                    <x-court-picker model="results.{{ $tournamentMatch->id }}.court" :value="$results[$tournamentMatch->id]['court'] ?? null" :free="false" />
                                     <div class="flex items-center gap-3">
                                         <label @class(['inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold ring-1', 'bg-red-50 text-red-700 ring-red-200' => $results[$tournamentMatch->id]['live'] ?? false, 'text-gray-500 ring-gray-200' => ! ($results[$tournamentMatch->id]['live'] ?? false)]) title="Włącz, gdy mecz się zaczął; wyłącz po wpisaniu wyniku końcowego">
                                             <input type="checkbox" wire:model.live="results.{{ $tournamentMatch->id }}.live" class="size-3.5 rounded border-gray-300 text-red-600">

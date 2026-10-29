@@ -69,6 +69,20 @@ class TrainingSession extends Model
         return __(self::VENUES[$this->venue] ?? $this->venue);
     }
 
+    /**
+     * Symbol miejsca dla boiska wpisanego tekstem (np. w meczu turnieju): „Boisko 2” → court2, „Główne boisko” → main.
+     */
+    public static function venueForCourt(?string $court): ?string
+    {
+        $court = mb_strtolower(trim((string) $court));
+
+        return match (true) {
+            (bool) preg_match('/^boisko\s*([123])$/u', $court, $found) => 'court'.$found[1],
+            in_array($court, ['główne boisko', 'boisko główne'], true) => 'main',
+            default => null,
+        };
+    }
+
     public function timeRange(): string
     {
         return substr((string) $this->starts_at, 0, 5).'–'.substr((string) $this->ends_at, 0, 5);

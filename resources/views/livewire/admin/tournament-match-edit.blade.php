@@ -23,7 +23,7 @@
     </div>
     <div>
         <label class="{{ $label }}">Boisko / hala</label>
-        <input type="text" wire:model.blur.live="editMatch.court" class="{{ $input }}">
+        <x-court-picker model="editMatch.court" :value="$editMatch['court'] ?? null" />
     </div>
     @if($editMatch['stage'] === 'playoff')
         <div>

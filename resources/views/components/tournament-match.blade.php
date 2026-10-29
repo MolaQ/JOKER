@@ -14,7 +14,7 @@
             @if($match->number)<span class="rounded bg-zinc-100 px-1 text-zinc-600">#{{ $match->number }}</span>@endif
             @if($showTitle)<span class="text-sky-club-dark">{{ $match->title() }}</span>@endif
             @if($match->starts_at)<span class="tabular-nums">@if($showDate){{ $match->starts_at->translatedFormat('D d.m') }}, @endif{{ $match->starts_at->format('H:i') }}</span>@endif
-            @if($match->court)<span>· {{ $match->court }}</span>@endif
+            @if($match->court)<span class="inline-flex items-center gap-1">· @if($venue = \App\Models\TrainingSession::venueForCourt($match->court))<x-venue-icon :venue="$venue" small />@endif{{ $match->court }}</span>@endif
         </p>
     @endif
     @foreach($sides as [$participant, $name, $sets, $participantId])
