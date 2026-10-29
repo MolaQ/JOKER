@@ -133,12 +133,9 @@
             <li class="card p-4">
                 <p class="border-b border-zinc-100 pb-2 text-xs font-semibold tracking-widest text-sky-club-dark uppercase">{{ $daySessions->first()->weekdayLabel() }}</p>
                 @foreach($daySessions as $session)
-                    <div class="mt-3 flex items-center gap-3">
-                        <x-venue-icon :venue="$session->venue" />
-                        <div class="min-w-0">
-                            <p class="font-semibold tabular-nums">{{ $session->timeRange() }}</p>
-                            <p class="text-sm text-zinc-600">{{ $session->venueLabel() }}@if($session->note) · {{ $session->note }}@endif</p>
-                        </div>
+                    <div class="mt-3">
+                        <p class="font-semibold whitespace-nowrap tabular-nums">{{ $session->timeRange() }}</p>
+                        <p class="mt-1 flex items-center gap-2 text-sm text-zinc-600"><x-venue-icon :venue="$session->venue" small /><span class="min-w-0">{{ $session->venueLabel() }}@if($session->note) · {{ $session->note }}@endif</span></p>
                     </div>
                 @endforeach
             </li>

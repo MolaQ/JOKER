@@ -25,19 +25,17 @@
     @if($days->isEmpty())
         <p class="text-zinc-500">{{ __('Plan treningów jest w przygotowaniu. Zadzwoń, a podpowiemy, kiedy przyjść.') }}</p>
     @else
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div @class(['grid gap-3 sm:grid-cols-2', match ($days->count()) { 5 => 'lg:grid-cols-5', 6 => 'lg:grid-cols-3 xl:grid-cols-6', 7 => 'lg:grid-cols-4 xl:grid-cols-7', default => 'lg:grid-cols-4' }])>
             @foreach($days as $weekday => $sessions)
-                <div class="card p-5">
+                <div class="card p-4">
                     <h2 class="font-display text-xl font-bold uppercase">{{ __(TrainingSession::WEEKDAYS[$weekday]) }}</h2>
                     <ul class="mt-4 space-y-3">
                         @foreach($sessions as $session)
-                            <li class="flex items-start gap-3 rounded-xl bg-zinc-50 p-3 ring-1 ring-zinc-200/70">
-                                <x-venue-icon :venue="$session->venue" class="mt-0.5" />
-                                <div class="min-w-0">
-                                    <p class="font-semibold tabular-nums">{{ $session->timeRange() }}</p>
-                                    <p class="text-sm"><a href="{{ route('teams.show', $session->team) }}" class="font-medium text-sky-club-dark hover:underline">{{ $session->team->name }}</a> · {{ $session->venueLabel() }}</p>
-                                    @if($session->note)<p class="mt-1 text-xs text-zinc-500">{{ $session->note }}</p>@endif
-                                </div>
+                            <li class="rounded-xl bg-zinc-50 p-3 ring-1 ring-zinc-200/70">
+                                <p class="font-semibold whitespace-nowrap tabular-nums">{{ $session->timeRange() }}</p>
+                                <a href="{{ route('teams.show', $session->team) }}" class="text-sm font-medium text-sky-club-dark hover:underline">{{ $session->team->name }}</a>
+                                <p class="mt-1 flex items-center gap-2 text-sm text-zinc-600"><x-venue-icon :venue="$session->venue" small />{{ $session->venueLabel() }}</p>
+                                @if($session->note)<p class="mt-1 text-xs text-zinc-500">{{ $session->note }}</p>@endif
                             </li>
                         @endforeach
                     </ul>
