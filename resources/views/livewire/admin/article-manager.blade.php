@@ -140,7 +140,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Treść</label>
-                                <x-rich-text-editor model="content" placeholder="Pełna treść artykułu..." height="min-h-[220px]" />
+                                <x-rich-text-editor model="content" mentions placeholder="Pełna treść artykułu..." height="min-h-[220px]" />
                                 @error('content') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
@@ -164,7 +164,7 @@
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700">Treść (EN)</label>
-                                        <x-rich-text-editor model="content_en" placeholder="Full article content..." height="min-h-[220px]" />
+                                        <x-rich-text-editor model="content_en" mentions placeholder="Full article content..." height="min-h-[220px]" />
                                         @error('content_en') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                     </div>
                                 </div>

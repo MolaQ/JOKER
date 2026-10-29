@@ -31,7 +31,7 @@
             @if($player->team)
                 <a href="{{ route('teams.show', $player->team) }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ $player->team->name }}</a>
             @endif
-            <p class="eyebrow mt-5">{{ $player->positionsLabel() }} @if($player->jersey_number) · #{{ $player->jersey_number }} @endif</p>
+            <p class="eyebrow mt-5">@foreach($player->positions() as $playerPosition)<x-position-tip :position="$playerPosition" />@if(! $loop->last) · @endif @endforeach @if($player->jersey_number) · #{{ $player->jersey_number }} @endif</p>
             <h1 class="heading-xl mt-3">{{ $player->first_name }}<br>{{ $player->last_name }}</h1>
             @if($player->isCaptain())
                 <p class="mt-4 inline-flex items-center gap-2 rounded-full bg-sky-club px-3 py-1 text-sm font-bold text-white"><span class="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs text-sky-club-dark">C</span> {{ __('Kapitan drużyny') }}</p>
@@ -80,7 +80,13 @@
                 @if($value)
                     <div class="flex items-center justify-between py-3">
                         <dt class="text-zinc-500">{{ __($label) }}</dt>
-                        <dd class="font-semibold">{{ $value }}</dd>
+                        <dd class="font-semibold">
+                            @if(in_array($label, ['Pozycja', 'Pozycje'], true))
+                                @foreach($player->positions() as $playerPosition)<x-position-tip :position="$playerPosition" align="right" />@if(! $loop->last) · @endif @endforeach
+                            @else
+                                {{ $value }}
+                            @endif
+                        </dd>
                     </div>
                 @endif
             @endforeach
@@ -200,13 +206,23 @@
             </div>
         @endif
 
-        @foreach($player->positions() as $playerPosition)
-            <div @class(['relative overflow-hidden rounded-3xl p-8', 'bg-sky-club text-white' => $loop->first, 'bg-white text-zinc-900 ring-1 ring-sky-club/30' => ! $loop->first])>
-                <p class="font-display text-sm font-semibold tracking-[0.25em] uppercase opacity-80">{{ $loop->first ? __('Pozycja') : __('Gra też jako') }}</p>
-                <h2 class="mt-2 font-display text-3xl font-bold uppercase">{{ $playerPosition->label() }}</h2>
-                <p @class(['mt-3 max-w-xl', 'text-white/90' => $loop->first, 'text-zinc-600' => ! $loop->first])>{{ $playerPosition->description() }}</p>
+        @if($mentions->isNotEmpty())
+            <div class="card p-8">
+                <h2 class="heading-md">{{ __('Wzmianki') }}</h2>
+                <p class="mt-1 text-sm text-zinc-500">{{ __('Artykuły, w których pojawia się :name.', ['name' => $player->full_name]) }}</p>
+                <ul class="mt-5 divide-y divide-zinc-100">
+                    @foreach($mentions as $mentionArticle)
+                        <li>
+                            <a href="{{ route('articles.show', $mentionArticle) }}" class="group flex items-baseline gap-4 py-3">
+                                <span class="w-20 shrink-0 text-sm text-zinc-500 tabular-nums">{{ $mentionArticle->published_at?->format('d.m.Y') }}</span>
+                                <span class="min-w-0 flex-1 font-semibold text-zinc-900 transition group-hover:text-sky-club-dark">{{ $mentionArticle->localizedTitle() }}</span>
+                                <span class="text-sky-club transition group-hover:translate-x-1" aria-hidden="true">→</span>
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
             </div>
-        @endforeach
+        @endif
     </div>
 </section>
 

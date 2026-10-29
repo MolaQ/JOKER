@@ -141,6 +141,11 @@
         @apply font-semibold text-sky-club-dark underline;
     }
 
+    /* Wzmianka „@Imię Nazwisko” zamieniona w link do profilu zawodnika */
+    .prose-club a.mention {
+        @apply rounded-md bg-sky-club/10 px-1 no-underline transition hover:bg-sky-club hover:text-white;
+    }
+
     .prose-club blockquote {
         @apply mb-5 border-l-4 border-sky-club pl-4 text-zinc-600 italic;
     }

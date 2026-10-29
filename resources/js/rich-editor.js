@@ -8,12 +8,14 @@ export function registerRichEditor() {
         window.Alpine.data('richEditor', (config) => {
             let editor = null;
             let picker = null;
+            let mentionPeople = null;
 
             return {
                 content: config.content,
                 tick: 0,
                 ready: false,
                 emojiOpen: false,
+                mention: { open: false, items: [], index: 0, top: 0, left: 0, from: 0, to: 0 },
 
                 async init() {
                     const [{ Editor }, { default: StarterKit }, { default: TextAlign }, { default: Highlight }, { Placeholder }] = await Promise.all([
@@ -36,9 +38,19 @@ export function registerRichEditor() {
                             Highlight,
                             Placeholder.configure({ placeholder: config.placeholder || '' }),
                         ],
-                        editorProps: { attributes: { class: 'rich-editor-content focus:outline-none' } },
+                        editorProps: {
+                            attributes: { class: 'rich-editor-content focus:outline-none' },
+                            handleKeyDown: (view, event) => this.mentionKey(event),
+                        },
                         onUpdate: () => {
                             this.content = editor.isEmpty ? '' : editor.getHTML();
+                            this.findMention();
+                        },
+                        onSelectionUpdate: () => {
+                            this.findMention();
+                        },
+                        onBlur: () => {
+                            this.mention.open = false;
                         },
                         onTransaction: () => {
                             this.tick++;
@@ -81,6 +93,86 @@ export function registerRichEditor() {
 
                 run(command, ...args) {
                     editor?.chain().focus()[command](...args).run();
+                },
+
+                /**
+                 * Wzmianki: po wpisaniu „@” i początku imienia lub nazwiska pokazujemy listę zawodników.
+                 * Wybór wstawia „@Imię Nazwisko”, a strona przy wyświetlaniu zamienia to w link do profilu.
+                 */
+                async findMention() {
+                    if (! config.mentions || ! editor) {
+                        return;
+                    }
+
+                    const { from, empty } = editor.state.selection;
+                    const before = empty ? editor.state.doc.textBetween(Math.max(0, from - 40), from, '\n', '\0') : '';
+                    const match = before.match(/(?:^|[\s(„"])@([\p{L}'’-]{1,20}(?: [\p{L}'’-]{0,20})?)$/u);
+
+                    if (! match) {
+                        this.mention.open = false;
+
+                        return;
+                    }
+
+                    mentionPeople ??= fetch(config.mentions, { headers: { Accept: 'application/json' } }).then((response) => response.json()).catch(() => []);
+                    const people = await mentionPeople;
+                    const words = match[1].toLocaleLowerCase('pl').split(' ').filter(Boolean);
+                    const items = people.filter((person) => {
+                        const name = person.name.toLocaleLowerCase('pl');
+
+                        return words.every((word) => name.split(/[\s-]+/).some((part) => part.startsWith(word)));
+                    }).slice(0, 8);
+
+                    if (items.length === 0) {
+                        this.mention.open = false;
+
+                        return;
+                    }
+
+                    const coords = editor.view.coordsAtPos(from);
+                    const box = this.$el.getBoundingClientRect();
+                    this.mention = {
+                        open: true,
+                        items,
+                        index: 0,
+                        top: coords.bottom - box.top + 6,
+                        left: Math.max(0, Math.min(coords.left - box.left, box.width - 288)),
+                        from: from - match[1].length - 1,
+                        to: from,
+                    };
+                },
+
+                chooseMention(person) {
+                    editor.chain().focus().insertContentAt({ from: this.mention.from, to: this.mention.to }, '@' + person.name + ' ').run();
+                    this.mention.open = false;
+                },
+
+                mentionKey(event) {
+                    if (! this.mention.open) {
+                        return false;
+                    }
+
+                    const count = this.mention.items.length;
+
+                    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                        this.mention.index = (this.mention.index + (event.key === 'ArrowDown' ? 1 : count - 1)) % count;
+
+                        return true;
+                    }
+
+                    if (event.key === 'Enter' || event.key === 'Tab') {
+                        this.chooseMention(this.mention.items[this.mention.index]);
+
+                        return true;
+                    }
+
+                    if (event.key === 'Escape') {
+                        this.mention.open = false;
+
+                        return true;
+                    }
+
+                    return false;
                 },
 
                 setLink() {

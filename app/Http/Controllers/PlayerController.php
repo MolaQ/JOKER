@@ -7,6 +7,7 @@ use App\Models\Game;
 use App\Models\Player;
 use App\Models\Season;
 use App\Models\Team;
+use App\Support\Mentions;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 
@@ -42,6 +43,7 @@ class PlayerController extends Controller
             'career' => $this->career($player),
             'recentGames' => $recentGames,
             'photos' => $player->taggedPhotos(),
+            'mentions' => Mentions::articlesAbout($player),
         ]);
     }
 

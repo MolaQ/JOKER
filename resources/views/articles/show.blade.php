@@ -38,7 +38,7 @@
         @endif
 
         <div class="prose-club" @if(app()->getLocale() === 'en' && blank($article->content_en)) lang="pl" @endif>
-            {!! $article->localizedContent() !!}
+            {!! \App\Support\Mentions::link($article->localizedContent()) !!}
         </div>
 
         <div class="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-zinc-200 pt-6">

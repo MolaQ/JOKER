@@ -250,7 +250,7 @@ test('a player can play several positions', function () {
     $player = Player::factory()->create(['team_id' => $this->team->id, 'position' => 'libero', 'extra_positions' => ['outside_hitter', 'libero']]);
 
     expect($player->positionsLabel())->toBe('Libero · Przyjmujący');
-    $this->get(route('players.show', $player))->assertOk()->assertSee('Libero · Przyjmujący')->assertSee('Gra też jako');
+    $this->get(route('players.show', $player))->assertOk()->assertSee('Libero · Przyjmujący')->assertSee('aria-label="Przyjmujący"', false)->assertSee('aria-label="Libero"', false);
 });
 
 test('player, staff and team pages count views once per visitor', function () {

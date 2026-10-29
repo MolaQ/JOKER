@@ -4,12 +4,14 @@ use App\Http\Controllers\Admin\ApprovalsController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Models\Tournament;
 use App\Support\DataImport;
+use App\Support\Mentions;
 use Illuminate\Support\Facades\Route;
 
 // Każda sekcja panelu wymaga swojego uprawnienia (App\Permission). Uprawnienia ról
 // zmienia się w panelu: Role i uprawnienia.
 Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/wzmianki.json', fn () => response()->json(Mentions::suggestions()))->name('mentions');
 
     Route::middleware('can:teams.manage')->group(function () {
         Route::view('/teams', 'admin.teams.index')->name('teams.index');

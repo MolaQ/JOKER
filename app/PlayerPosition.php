@@ -2,6 +2,8 @@
 
 namespace App;
 
+use App\Support\SiteSettings;
+
 enum PlayerPosition: string
 {
     case Setter = 'setter';
@@ -21,14 +23,16 @@ enum PlayerPosition: string
         };
     }
 
+    /**
+     * Opis do dymka po kliknięciu pozycji (Ustawienia → Profile zawodników).
+     * Po angielsku zostaje tłumaczenie, dopóki klub nie zmieni domyślnego tekstu.
+     */
     public function description(): string
     {
-        return match ($this) {
-            self::Setter => __('Mózg zespołu. Rozgrywający ustawia piłkę do ataku i decyduje, kto skończy akcję.'),
-            self::OutsideHitter => __('Wszechstronny zawodnik pierwszej linii, kluczowy zarówno w przyjęciu zagrywki, jak i w ataku.'),
-            self::Opposite => __('Główny snajper zespołu. Atakujący przede wszystkim zdobywa punkty, także z drugiej linii.'),
-            self::MiddleBlocker => __('Specjalista od bloku i szybkich ataków ze środka siatki.'),
-            self::Libero => __('Lider obrony i przyjęcia. Gra w koszulce innego koloru i nie atakuje ponad siatką.'),
-        };
+        $key = 'position_'.$this->value;
+        $default = (string) SiteSettings::fields()[$key]['default'];
+        $custom = trim((string) app(SiteSettings::class)->get($key));
+
+        return $custom === '' || $custom === $default ? __($default) : $custom;
     }
 }

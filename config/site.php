@@ -140,6 +140,11 @@ return [
                     ['key' => 'youtube', 'label' => 'YouTube', 'icon' => 'youtube'],
                     ['key' => 'x', 'label' => 'X (Twitter)', 'icon' => 'x'],
                 ]],
+                'position_setter' => ['type' => 'textarea', 'label' => 'Dymek po kliknięciu pozycji: Rozgrywający', 'default' => 'Mózg zespołu. Rozgrywający ustawia piłkę do ataku i decyduje, kto skończy akcję.'],
+                'position_outside_hitter' => ['type' => 'textarea', 'label' => 'Dymek po kliknięciu pozycji: Przyjmujący', 'default' => 'Wszechstronny zawodnik pierwszej linii, kluczowy zarówno w przyjęciu zagrywki, jak i w ataku.'],
+                'position_opposite' => ['type' => 'textarea', 'label' => 'Dymek po kliknięciu pozycji: Atakujący', 'default' => 'Główny snajper zespołu. Atakujący przede wszystkim zdobywa punkty, także z drugiej linii.'],
+                'position_middle_blocker' => ['type' => 'textarea', 'label' => 'Dymek po kliknięciu pozycji: Środkowy', 'default' => 'Specjalista od bloku i szybkich ataków ze środka siatki.'],
+                'position_libero' => ['type' => 'textarea', 'label' => 'Dymek po kliknięciu pozycji: Libero', 'default' => 'Lider obrony i przyjęcia. Gra w koszulce innego koloru i nie atakuje ponad siatką.'],
             ],
         ],
 
