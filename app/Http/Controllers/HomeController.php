@@ -54,7 +54,7 @@ class HomeController extends Controller
 
         $lineup = $site['home_lineup_enabled'] ? DailyLineup::today() : null;
 
-        $alumni = $site['home_alumni_enabled'] ? Alumnus::published()->with('player')->limit(4)->get() : collect();
+        $alumni = $site['home_alumni_enabled'] && $site['module_alumni'] ? Alumnus::published()->with('player')->limit(4)->get() : collect();
 
         return view('home', compact('seasonName', 'heroSlides', 'upcoming_games', 'recent_results', 'articles', 'teams', 'sponsors', 'stats', 'countdownGame', 'alumni', 'lineup'));
     }

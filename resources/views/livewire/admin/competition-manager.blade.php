@@ -193,7 +193,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Drużyny biorące udział</label>
-                                <p class="text-xs text-gray-500 mb-2">Zaznacz nasze drużyny. Jeśli w tych rozgrywkach drużyna jest zgłoszona pod inną nazwą (np. „LOMS Joker Piła II”), wpisz ją obok dokładnie tak jak na stronie związku. „Nazwa w tabeli” to nazwa klubu w tabelach i wynikach, np. LOMS Joker Piła. Którą to naszą drużynę, strona pokazuje sama na plakietce (np. KADECI II).</p>
+                                <p class="text-xs text-gray-500 mb-2">Zaznacz nasze drużyny. Jeśli w tych rozgrywkach drużyna jest zgłoszona pod inną nazwą (np. „{{ $site['competition_club_name'] }} II”), wpisz ją obok dokładnie tak jak na stronie związku. „Nazwa w tabeli” to nazwa klubu w tabelach i wynikach, np. {{ $site['competition_club_name'] }}. Którą to naszą drużynę, strona pokazuje sama na plakietce (np. KADECI II).</p>
                                 <div class="max-h-72 space-y-1 overflow-y-auto rounded-md border border-gray-200 p-2">
                                     @foreach($teams as $team)
                                         <div class="flex flex-wrap items-center gap-2 rounded-md px-1 py-1 hover:bg-gray-50" wire:key="competition-team-{{ $team->id }}">
@@ -204,7 +204,7 @@
                                             @if(in_array($team->id, array_map('intval', $team_ids), true))
                                                 <input type="text" wire:model="external_names.{{ $team->id }}" placeholder="Nazwa w rozgrywkach, kilka oddziel średnikiem" class="w-full flex-1 rounded-md border-gray-300 text-sm sm:w-auto" aria-label="Nazwa drużyny {{ $team->name }} w tych rozgrywkach">
                                                 <div class="flex w-full gap-2 pl-6">
-                                                    <input type="text" wire:model="display_names.{{ $team->id }}" placeholder="Nazwa w tabeli, np. LOMS Joker Piła" class="min-w-0 flex-1 rounded-md border-gray-300 text-sm" aria-label="Nazwa drużyny {{ $team->name }} w tabeli i kalendarzu">
+                                                    <input type="text" wire:model="display_names.{{ $team->id }}" placeholder="Nazwa w tabeli, np. {{ $site['competition_club_name'] }}" class="min-w-0 flex-1 rounded-md border-gray-300 text-sm" aria-label="Nazwa drużyny {{ $team->name }} w tabeli i kalendarzu">
                                                 </div>
                                             @endif
                                         </div>

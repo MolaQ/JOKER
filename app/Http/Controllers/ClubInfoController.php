@@ -7,6 +7,7 @@ use App\Models\ShopProduct;
 use App\Models\SupportPackage;
 use App\Models\Team;
 use App\Models\TrainingSession;
+use App\Support\SiteSettings;
 use Illuminate\Http\Request;
 
 /**
@@ -16,6 +17,8 @@ class ClubInfoController extends Controller
 {
     public function alumni()
     {
+        abort_unless(app(SiteSettings::class)['module_alumni'], 404);
+
         return view('club.alumni', ['alumni' => Alumnus::published()->with('player')->get()]);
     }
 

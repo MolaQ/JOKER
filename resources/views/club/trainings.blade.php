@@ -45,7 +45,9 @@
 
     <div class="mt-10 flex flex-wrap gap-3">
         <a href="{{ route('contact.index', ['subject' => __('Trening próbny')]) }}" class="btn-primary">{{ __('Zapisz na trening próbny') }}</a>
-        <a href="{{ route('pages.show', 'spoza-pily') }}" class="btn-dark">{{ __('Jesteś spoza Piły?') }}</a>
+        @if($site['trainings_extra_label'] && $site['trainings_extra_url'])
+            <a href="{{ $site->href($site['trainings_extra_url']) }}" class="btn-dark">{{ $site['trainings_extra_label'] }}</a>
+        @endif
     </div>
 </section>
 @endsection

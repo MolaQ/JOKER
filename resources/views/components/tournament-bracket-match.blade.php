@@ -40,7 +40,7 @@
             @if($info['state'] === TournamentBracket::PROJECTED)
                 <span class="shrink-0 rounded-full border border-dashed border-zinc-300 px-1.5 text-[10px] text-zinc-400" title="{{ __('Grupa jeszcze trwa, kolejność może się zmienić') }}">{{ __('prognoza') }}</span>
             @endif
-            @if($participant?->isOwnTeam() && $info['state'] === TournamentBracket::CONFIRMED)<span class="rounded bg-sky-club px-1 text-[9px] font-bold text-white">JOKER</span>@endif
+            @if($participant?->isOwnTeam() && $info['state'] === TournamentBracket::CONFIRMED)<span class="rounded bg-sky-club px-1 text-[9px] font-bold text-white">{{ mb_strtoupper($site['club_short_name']) }}</span>@endif
             @if($sets !== null)<span class="w-5 text-right font-display text-lg tabular-nums">{{ $sets }}</span>@endif
         </div>
     @endforeach

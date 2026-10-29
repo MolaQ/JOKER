@@ -274,7 +274,7 @@
                             @if($outcome === 'derby')
                                 <span class="inline-flex items-center gap-1 rounded-full bg-sky-club/15 px-3 py-1 text-xs font-bold text-sky-club-dark">
                                     <x-derby-heart class="h-3.5 w-3.5 text-sky-club" />
-                                    {{ __('Wygrała pilska siatkówka') }} {{ $result[0] }}:{{ $result[1] }}
+                                    {{ $site['derby_winner'] }} {{ $result[0] }}:{{ $result[1] }}
                                 </span>
                             @elseif($won !== null)
                                 <span @class(['inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold', 'bg-emerald-500/15 text-emerald-700' => $won, 'bg-red-500/10 text-red-600' => ! $won])>

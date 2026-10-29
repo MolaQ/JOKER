@@ -30,9 +30,6 @@ class Game extends Model
 
     public const KIND_TOURNAMENT = 'tournament';
 
-    /** Fragmenty nazw (po ScheduleImporter::key) drużyn z Piły z naszymi zawodnikami: mecz z nimi zawsze wygrywa pilska siatkówka. */
-    public const CLUB_NAME_KEYS = ['joker', 'asblpila'];
-
     /** @var array<string, string> */
     public const KINDS = [self::KIND_LEAGUE => 'Ligowy', self::KIND_FRIENDLY => 'Sparing', self::KIND_TOURNAMENT => 'Turniejowy'];
 
@@ -129,9 +126,16 @@ class Game extends Model
      */
     public function isClubDerby(): bool
     {
+        $site = app(SiteSettings::class);
+        $keys = $site->clubNameKeys();
+
+        if (! $site['module_derby'] || $keys === []) {
+            return false;
+        }
+
         return collect([$this->opponentTeam?->full_name, $this->opponent])
             ->filter()
-            ->contains(fn (string $name): bool => Str::contains(ScheduleImporter::key($name), self::CLUB_NAME_KEYS));
+            ->contains(fn (string $name): bool => Str::contains(ScheduleImporter::key($name), $keys));
     }
 
     /**

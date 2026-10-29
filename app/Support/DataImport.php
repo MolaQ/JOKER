@@ -370,7 +370,7 @@ class DataImport
             $user = User::create($values + [
                 'name' => $data['name'],
                 // Bez e-maila osoba dostaje adres zastępczy; prawdziwy wpiszesz w panelu, gdy będzie potrzebne konto.
-                'email' => $data['email'] ?: Str::slug($data['name'], '.').'.'.Str::lower(Str::random(4)).'@brak-emaila.jokerpila.pl',
+                'email' => $data['email'] ?: ClubAccounts::placeholderEmail($data['name']),
                 'password' => Hash::make(Str::random(32)),
                 'role' => $role,
             ]);

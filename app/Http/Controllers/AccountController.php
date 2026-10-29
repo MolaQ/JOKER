@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Auth\RegisterController;
 use App\Models\AuditLog;
+use App\Support\SiteSettings;
 use App\UserRole;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -109,7 +111,7 @@ class AccountController extends Controller
         ];
 
         return response()->json($data, 200, [
-            'Content-Disposition' => 'attachment; filename="moje-dane-joker-pila.json"',
+            'Content-Disposition' => 'attachment; filename="moje-dane-'.Str::slug(app(SiteSettings::class)['club_name']).'.json"',
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     }
 

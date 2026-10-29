@@ -32,6 +32,33 @@ return [
             ],
         ],
 
+        'rozgrywki' => [
+            'label' => 'Nasze drużyny w rozgrywkach',
+            'icon' => 'trophy',
+            'fields' => [
+                'competition_club_name' => ['type' => 'text', 'label' => 'Nazwa naszych drużyn w rozgrywkach i turniejach', 'help' => 'Podpis domyślny, np. „LOMS Joker Piła”. W konkretnych rozgrywkach można go zmienić.', 'default' => 'LOMS Joker Piła'],
+                'competition_other_names' => ['type' => 'textarea', 'label' => 'Inne nazwy, pod którymi grają nasi zawodnicy', 'help' => 'Po jednej w linii: fragment nazwy z terminarza = podpis. Np. „ASBL = KS ASBL Piła”. Używane przy zakładaniu nowych rozgrywek.', 'default' => 'ASBL = KS ASBL Piła'],
+                'competition_name_keys' => ['type' => 'textarea', 'label' => 'Po czym rozpoznać nasze drużyny w terminarzach', 'help' => 'Fragmenty nazw, po jednym w linii (np. joker). Mecz dwóch takich drużyn to derby, a nieprzypisaną drużynę z takim fragmentem import terminarza zgłosi do sprawdzenia.', 'default' => "joker\nasbl pila"],
+            ],
+        ],
+
+        'moduly' => [
+            'label' => 'Moduły',
+            'icon' => 'window',
+            'fields' => [
+                'module_derby' => ['type' => 'toggle', 'label' => 'Derby', 'help' => 'Mecz dwóch naszych drużyn (np. Joker - ASBL) pokazujemy jako derby z serduszkiem, a nie jako wygraną albo porażkę.', 'default' => true],
+                'derby_short' => ['type' => 'text', 'label' => 'Derby: krótki napis przy wyniku', 'default' => 'Pilska siatkówka'],
+                'derby_winner' => ['type' => 'text', 'label' => 'Derby: napis o zwycięzcy', 'help' => 'W wynikach i w powiadomieniu na telefon.', 'default' => 'Wygrała pilska siatkówka'],
+                'featured_tournament_name' => ['type' => 'text', 'label' => 'Cykliczny turniej klubu', 'help' => 'Nazwa turnieju organizowanego co roku, np. „Memoriał im. Włodzimierza Winklera”. Adres /memorial otwiera jego najnowszą edycję. Puste pole wyłącza moduł.', 'default' => 'Memoriał im. Włodzimierza Winklera'],
+                'featured_tournament_eyebrow' => ['type' => 'text', 'label' => 'Cykliczny turniej: mały napis przed ogłoszeniem edycji', 'default' => 'Turniej młodzieżowy w Pile'],
+                'module_alumni' => ['type' => 'toggle', 'label' => 'Wychowankowie', 'help' => 'Strona /alumni i sekcja na stronie głównej.', 'default' => true],
+                'alumni_eyebrow' => ['type' => 'text', 'label' => 'Wychowankowie: mały napis', 'help' => 'Puste pole: „Od [nazwa klubu] do PlusLigi”.', 'default' => ''],
+                'alumni_intro' => ['type' => 'textarea', 'label' => 'Wychowankowie: wstęp', 'default' => 'Zaczynali w naszych grupach młodzieżowych, dziś grają na najwyższym poziomie. Każdy z nich przeszedł przez treningi w Pile.'],
+                'trainings_extra_label' => ['type' => 'text', 'label' => 'Plan treningów: dodatkowy przycisk', 'help' => 'Np. „Jesteś spoza Piły?”. Puste pole ukrywa przycisk.', 'default' => 'Jesteś spoza Piły?'],
+                'trainings_extra_url' => ['type' => 'url', 'label' => 'Plan treningów: adres dodatkowego przycisku', 'default' => '/page/spoza-pily'],
+            ],
+        ],
+
         'seo' => [
             'label' => 'Wyszukiwarki (SEO)',
             'icon' => 'chart',
@@ -234,7 +261,7 @@ return [
                 'home_news_title' => ['type' => 'text', 'label' => 'Aktualności: tytuł', 'default' => 'Z życia klubu'],
                 'home_sponsors_enabled' => ['type' => 'toggle', 'label' => 'Sekcja: Sponsorzy', 'default' => true],
                 'home_sponsors_title' => ['type' => 'text', 'label' => 'Sponsorzy: napis', 'default' => 'Wspierają nas'],
-                'home_alumni_enabled' => ['type' => 'toggle', 'label' => 'Sekcja: Wychowankowie (Od Jokera do PlusLigi)', 'default' => true],
+                'home_alumni_enabled' => ['type' => 'toggle', 'label' => 'Sekcja: Wychowankowie', 'default' => true],
                 'home_join_enabled' => ['type' => 'toggle', 'label' => 'Sekcja: Zaproszenie na trening', 'default' => true],
                 'home_join_eyebrow' => ['type' => 'text', 'label' => 'Zaproszenie: mały napis', 'default' => 'Nabór trwa cały rok'],
                 'home_join_title' => ['type' => 'text', 'label' => 'Zaproszenie: tytuł', 'default' => 'Dołącz do Jokera'],

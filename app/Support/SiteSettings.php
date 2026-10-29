@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Setting;
+use App\Services\ScheduleImporter;
 use App\UserRole;
 use ArrayAccess;
 use Illuminate\Support\Arr;
@@ -90,10 +91,66 @@ class SiteSettings implements ArrayAccess
      */
     public function links(string $key): array
     {
+        // Linki do wyłączonych modułów (System → Moduły) znikają z menu i stopki same.
+        $disabled = array_keys(array_filter([
+            '/memorial' => blank($this->get('featured_tournament_name')),
+            '/alumni' => ! $this->get('module_alumni'),
+        ]));
+
         return collect((array) $this->get($key, []))
             ->filter(fn ($link) => filled($link['label'] ?? null) && filled($link['url'] ?? null))
+            ->reject(fn ($link) => in_array(rtrim(LegacyUrls::translate((string) parse_url($link['url'], PHP_URL_PATH)), '/'), $disabled, true))
             ->values()
             ->all();
+    }
+
+    /**
+     * Niepuste linie pola tekstowego (np. lista fragmentów nazw).
+     *
+     * @return list<string>
+     */
+    public function lines(string $key): array
+    {
+        return collect(preg_split('/\R/u', (string) $this->get($key, '')))
+            ->map(fn (string $line) => trim($line))
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Fragmenty nazw naszych drużyn w terminarzach, w postaci ScheduleImporter::key (np. „joker”, „asblpila”).
+     *
+     * @return list<string>
+     */
+    public function clubNameKeys(): array
+    {
+        return collect($this->lines('competition_name_keys'))
+            ->map(fn (string $line) => ScheduleImporter::key($line))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Podpis naszej drużyny w nowych rozgrywkach: z listy „inne nazwy” (gdy nazwa z terminarza zawiera fragment)
+     * albo domyślna nazwa klubu w rozgrywkach.
+     */
+    public function competitionClubName(?string $externalName = null): string
+    {
+        $external = ScheduleImporter::key((string) $externalName);
+
+        foreach ($this->lines('competition_other_names') as $line) {
+            [$fragment, $label] = array_map('trim', array_pad(explode('=', $line, 2), 2, ''));
+            $fragment = ScheduleImporter::key($fragment);
+
+            if ($fragment !== '' && $label !== '' && $external !== '' && str_contains($external, $fragment)) {
+                return $label;
+            }
+        }
+
+        return (string) ($this->get('competition_club_name') ?: $this->get('club_name'));
     }
 
     /**

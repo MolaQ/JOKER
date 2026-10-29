@@ -70,7 +70,7 @@ class PushNotifier
         [$home, $away] = $game->sidesNames();
         $score = $game->is_home ? "{$result[0]}:{$result[1]}" : "{$result[1]}:{$result[0]}";
         $title = match ($game->outcome()) {
-            'derby' => __('Wygrała pilska siatkówka!'),
+            'derby' => app(SiteSettings::class)['derby_winner'].'!',
             'win' => __('Wygrana!'),
             default => __('Wynik meczu'),
         }.' '.$game->team?->name;

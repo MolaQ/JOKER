@@ -130,7 +130,8 @@ class Competition extends Model
     }
 
     /**
-     * Domyślny podpis drużyny w nowych rozgrywkach: „LOMS Joker Piła”, a drużyny ASBL „KS ASBL Piła”.
+     * Domyślny podpis drużyny w nowych rozgrywkach (System → Nasze drużyny w rozgrywkach), np. „LOMS Joker Piła”,
+     * a drużyny grającej pod inną nazwą (np. ASBL) „KS ASBL Piła”.
      * Bez dopisku w nawiasie - którą drużynę widać, mówi plakietka.
      *
      * @return array{display_name: string, display_suffix: ?string}
@@ -138,7 +139,7 @@ class Competition extends Model
     public static function defaultTeamLabel(string $teamName, string $teamSlug, ?string $externalName): array
     {
         return [
-            'display_name' => str_contains(mb_strtoupper((string) $externalName), 'ASBL') ? 'KS ASBL Piła' : 'LOMS Joker Piła',
+            'display_name' => app(SiteSettings::class)->competitionClubName($externalName),
             'display_suffix' => null,
         ];
     }

@@ -18,6 +18,21 @@ use Illuminate\Support\Str;
 class ClubAccounts
 {
     /**
+     * Adres zastępczy dla osoby bez e-maila, w domenie strony: jan.kowalski.ab12@brak-emaila.twojklub.pl.
+     */
+    public static function placeholderEmail(string $name): string
+    {
+        $host = preg_replace('/^www\./', '', (string) parse_url((string) config('app.url'), PHP_URL_HOST)) ?: 'example.com';
+
+        return Str::slug($name, '.').'.'.Str::lower(Str::random(4)).'@brak-emaila.'.$host;
+    }
+
+    public static function isPlaceholderEmail(string $email): bool
+    {
+        return str_contains($email, '@brak-emaila.');
+    }
+
+    /**
      * Łączy zawodnika z kontem o tym e-mailu; gdy konta nie ma, zakłada je z rolą „Zawodnik”.
      */
     public static function connectPlayer(Player $player, string $email): User
@@ -26,7 +41,7 @@ class ClubAccounts
         $current = $player->user;
 
         // Konto z adresem zastępczym (bez e-maila) dostaje prawdziwy adres zamiast nowego konta.
-        if ($current && $current->email !== $email && str_ends_with($current->email, '@brak-emaila.jokerpila.pl') && ! User::where('email', $email)->exists()) {
+        if ($current && $current->email !== $email && self::isPlaceholderEmail($current->email) && ! User::where('email', $email)->exists()) {
             $current->update(['email' => $email]);
             self::sendWelcome($current);
 

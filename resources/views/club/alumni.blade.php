@@ -5,9 +5,9 @@
 
 @section('content')
 <section class="container-site pt-14 pb-10 lg:pt-20">
-    <p class="eyebrow">{{ __('Od :club do PlusLigi', ['club' => $site['club_name_genitive']]) }}</p>
+    <p class="eyebrow">{{ $site['alumni_eyebrow'] ?: __('Od :club do PlusLigi', ['club' => $site['club_name_genitive']]) }}</p>
     <h1 class="heading-xl mt-4">{{ __('Wychowankowie') }}</h1>
-    <p class="mt-6 max-w-2xl text-lg text-zinc-600">{{ __('Zaczynali w naszych grupach młodzieżowych, dziś grają na najwyższym poziomie. Każdy z nich przeszedł przez treningi w Pile.') }}</p>
+    <p class="mt-6 max-w-2xl text-lg text-zinc-600">{{ $site['alumni_intro'] ?: __('Zaczynali w naszych grupach młodzieżowych, dziś grają na najwyższym poziomie.') }}</p>
 </section>
 
 <section class="container-site pb-16">

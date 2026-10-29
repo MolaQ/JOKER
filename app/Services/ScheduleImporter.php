@@ -8,6 +8,7 @@ use App\Models\LeagueStanding;
 use App\Models\RivalTeam;
 use App\Models\Team;
 use App\Support\SearchIndex;
+use App\Support\SiteSettings;
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
@@ -16,6 +17,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Throwable;
 
 /**
@@ -172,9 +174,10 @@ class ScheduleImporter
         $unmatched = [];
         $finishedChanged = false;
 
-        $resolve = function (array $row, bool $report = true) use ($ourTeams, &$unmatched): array {
+        $clubKeys = app(SiteSettings::class)->clubNameKeys();
+        $resolve = function (array $row, bool $report = true) use ($ourTeams, $clubKeys, &$unmatched): array {
             foreach ($report ? [$row['home'], $row['away']] : [] as $name) {
-                if (! isset($ourTeams[self::key($name)]) && str_contains(self::key($name), 'joker')) {
+                if (! isset($ourTeams[self::key($name)]) && Str::contains(self::key($name), $clubKeys)) {
                     $unmatched[$name] = $name;
                 }
             }

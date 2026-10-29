@@ -47,9 +47,11 @@
                     <label class="{{ $label }}">Cykl</label>
                     <select wire:model.live="series" class="{{ $input }}">
                         <option value="">— pojedynczy turniej —</option>
-                        <option value="{{ \App\Models\Tournament::SERIES_MEMORIAL }}">Memoriał im. Włodzimierza Winklera (zakładka „Memoriał” w menu)</option>
+                        @if($site['featured_tournament_name'] || $series === \App\Models\Tournament::SERIES_MEMORIAL)
+                            <option value="{{ \App\Models\Tournament::SERIES_MEMORIAL }}">{{ $site['featured_tournament_name'] ?: 'Cykliczny turniej klubu' }} (adres /memorial)</option>
+                        @endif
                     </select>
-                    <p class="mt-1 text-xs text-gray-500">Zakładka „Memoriał” otwiera najnowszą edycję z cyklu, starsze trafiają do archiwum.</p>
+                    <p class="mt-1 text-xs text-gray-500">Adres /memorial otwiera najnowszą edycję z cyklu, starsze trafiają do archiwum. Nazwę cyklu ustawisz w System → Moduły.</p>
                 </div>
             </div>
 

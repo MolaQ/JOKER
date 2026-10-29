@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\SiteSettings;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -49,7 +50,7 @@ class TournamentParticipant extends Model
 
         return match (true) {
             $this->competitor instanceof RivalTeam => $this->competitor->full_name,
-            $this->competitor instanceof Team => 'LOMS Joker Piła ('.mb_strtolower($this->competitor->name).')',
+            $this->competitor instanceof Team => app(SiteSettings::class)->competitionClubName().' ('.mb_strtolower($this->competitor->name).')',
             default => '—',
         };
     }

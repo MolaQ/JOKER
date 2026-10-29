@@ -52,7 +52,7 @@ class SeoManager extends Component
         return [
             str_starts_with($appUrl, 'https://') && ! str_contains($appUrl, 'localhost')
                 ? ['ok', 'Adres strony', 'APP_URL = '.$appUrl.'. Pod tym adresem są linki w mapie strony i adresy kanoniczne.', null]
-                : ['bad', 'Adres strony', 'W pliku .env APP_URL = '.$appUrl.'. Ustaw docelowy adres z https:// (np. https://jokerpila.pl), inaczej Google dostanie złe linki.', null],
+                : ['bad', 'Adres strony', 'W pliku .env APP_URL = '.$appUrl.'. Ustaw docelowy adres z https:// (np. https://twojklub.pl), inaczej Google dostanie złe linki.', null],
             config('app.debug')
                 ? ['bad', 'Tryb debugowania włączony', 'W .env ustaw APP_DEBUG=false na serwerze produkcyjnym: błędy nie pokażą wtedy szczegółów kodu i strony działają szybciej.', null]
                 : ['ok', 'Tryb produkcyjny', 'APP_DEBUG jest wyłączony.', null],
