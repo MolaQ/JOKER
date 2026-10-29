@@ -310,7 +310,7 @@ return [
                     ['label' => 'Dokumenty', 'url' => '/documents'],
                     ['label' => 'Kontakt', 'url' => '/contact'],
                 ]],
-                'footer_note' => ['type' => 'text', 'label' => 'Stopka: dopisek na dole (np. nazwa stowarzyszenia, NIP)', 'default' => 'UKS SMS Joker Piła'],
+                'footer_note' => ['type' => 'text', 'label' => 'Stopka: dopisek na dole (np. nazwa stowarzyszenia, NIP)', 'help' => 'Puste pole ukrywa dopisek.', 'default' => ''],
                 'footer_bottom_links' => ['type' => 'links', 'label' => 'Stopka: linki w dolnym pasku', 'help' => 'Np. polityka prywatności. Gdy na stronie nie ma już zdjęć z Unsplash, usuń link do nich.', 'default' => [
                     ['label' => 'Polityka prywatności', 'url' => '/page/polityka-prywatnosci'],
                     ['label' => 'Zdjęcia tematyczne: Unsplash i ich autorzy', 'url' => '/photo-credits'],

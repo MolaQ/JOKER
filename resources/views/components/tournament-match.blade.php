@@ -25,7 +25,6 @@
                 <span class="h-6 w-6 shrink-0 rounded-full bg-zinc-100"></span>
             @endif
             <span @class(['min-w-0 flex-1 truncate', 'italic text-zinc-400' => ! $participant])>{{ $name }}</span>
-            @if($participant?->isOwnTeam())<span class="rounded bg-sky-club px-1 text-[9px] font-bold text-white">{{ mb_strtoupper($site['club_short_name']) }}</span>@endif
             <span class="w-5 text-right font-display text-lg tabular-nums">{{ $sets ?? '' }}</span>
         </div>
     @endforeach
