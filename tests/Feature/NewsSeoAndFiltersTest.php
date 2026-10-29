@@ -172,3 +172,18 @@ test('the users list shows views, likes and last login', function () {
         ->assertSee('3 dni temu')
         ->assertDontSee('Odbiór');
 });
+
+test('a player account in the users list shows its player profile views and likes', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $account = User::factory()->create(['name' => 'Zawodnik Kontowy']);
+    $player = Player::factory()->create(['user_id' => $account->id]);
+    $player->forceFill(['views_count' => 4321])->save();
+    $player->toggleLikeFor(User::factory()->create());
+    $player->toggleLikeFor(User::factory()->create());
+
+    Livewire::test(UserManager::class)
+        ->call('sortBy', 'polubienia')
+        ->assertSeeInOrder(['Zawodnik Kontowy', '4 321'])
+        ->call('sortBy', 'wyswietlenia')
+        ->assertSee('4 321');
+});

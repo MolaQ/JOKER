@@ -68,7 +68,7 @@
                         </div>
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        <x-admin-reception :views="$user->views_count" :likes="$user->received_likes_count" />
+                        <x-admin-reception :views="$user->views_count + (int) $user->playerProfile?->views_count" :likes="$user->received_likes_count + (int) $user->playerProfile?->likes_count" />
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         @if($user->last_login_at)

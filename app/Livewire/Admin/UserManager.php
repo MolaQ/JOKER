@@ -7,6 +7,7 @@ use App\Livewire\Concerns\EditsPermissionOverrides;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Livewire\Concerns\SortsTable;
 use App\Models\AuditLog;
+use App\Models\Player;
 use App\Models\Team;
 use App\Models\User;
 use App\UserRole;
@@ -287,8 +288,10 @@ class UserManager extends Component
         return [
             'nazwa' => 'name',
             'email' => 'email',
-            'wyswietlenia' => 'views_count',
-            'polubienia' => 'received_likes_count',
+            // Konto zawodnika: liczymy też wyświetlenia i serduszka jego profilu zawodnika.
+            'wyswietlenia' => fn ($q, $d) => $q->orderByRaw('users.views_count + coalesce((select sum(players.views_count) from players where players.user_id = users.id), 0) '.($d === 'desc' ? 'desc' : 'asc')),
+            'polubienia' => fn ($q, $d) => $q->orderByRaw('(select count(*) from likes where likes.likeable_type = ? and likes.likeable_id = users.id)'
+                .' + (select count(*) from likes join players on players.id = likes.likeable_id and likes.likeable_type = ? where players.user_id = users.id) '.($d === 'desc' ? 'desc' : 'asc'), [User::class, Player::class]),
             'logowanie' => 'last_login_at',
         ];
     }
@@ -307,7 +310,7 @@ class UserManager extends Component
             ->when($this->roleFilter === 'none', fn ($q) => $q->doesntHave('roleAssignments'))
             ->when(UserRole::tryFrom($this->roleFilter), fn ($q, UserRole $role) => $q->withRole($role))
             ->when(AccountStatus::tryFrom($this->statusFilter), fn ($q, AccountStatus $status) => $q->withAccountStatus($status))
-            ->with(['roleAssignments', 'activatedBy:id,name'])->withCount('receivedLikes')
+            ->with(['roleAssignments', 'activatedBy:id,name', 'playerProfile' => fn ($q) => $q->select(['id', 'user_id', 'views_count'])->withCount('likes')])->withCount('receivedLikes')
             ->orderBy('name')
         )->paginate(15);
 
