@@ -94,3 +94,11 @@ test('kolor serduszek ustawia się w panelu', function () {
 
     $this->get(route('home'))->assertSee('--color-like: #e11d48', false);
 });
+
+test('strona zawodnika ma opis dla Google z pozycją, numerem i drużyną', function () {
+    $team = Team::factory()->create(['name' => 'Kadeci', 'category' => 'junior_mlodszy', 'birth_year' => 2010]);
+    $player = Player::factory()->create(['first_name' => 'Marcel', 'last_name' => 'Opisany', 'team_id' => $team->id, 'position' => 'opposite', 'extra_positions' => [], 'jersey_number' => 11, 'height' => 190, 'spike_reach' => null, 'bio' => '<p>Lubi zagrywkę.</p>']);
+
+    $this->get(route('players.show', $player))
+        ->assertSee('<meta name="description" content="Marcel Opisany - atakujący, #11, Kadeci (rocznik 2010) · Joker Piła. Wzrost 190 cm. Lubi zagrywkę.">', false);
+});

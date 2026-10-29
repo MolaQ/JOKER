@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class Player extends Model
 {
@@ -180,6 +181,30 @@ class Player extends Model
         $positions = $this->positions();
 
         return $positions === [] ? null : collect($positions)->map(fn (PlayerPosition $position) => $position->label())->implode(' · ');
+    }
+
+    /**
+     * Opis strony zawodnika dla Google (meta description, do ~160 znaków): pozycja, numer, drużyna,
+     * wzrost i zasięg, potem początek opisu. Bez konkretnego opisu Google bierze tekst ze stopki.
+     */
+    public function seoDescription(string $club): string
+    {
+        $intro = collect([
+            $this->positionsLabel() ? mb_strtolower($this->positionsLabel()) : null,
+            $this->jersey_number !== null ? '#'.$this->jersey_number : null,
+            $this->team ? trim($this->team->name.' '.($this->team->birthYearsLabel() ? '('.mb_strtolower($this->team->birthYearsLabel()).')' : '')) : null,
+        ])->filter()->implode(', ');
+
+        $stats = collect([
+            $this->height ? __('wzrost :value cm', ['value' => $this->height]) : null,
+            $this->spike_reach ? __('zasięg w ataku :value cm', ['value' => $this->spike_reach]) : null,
+        ])->filter()->implode(', ');
+
+        $text = $this->full_name.' - '.($intro !== '' ? $intro : __('zawodnik')).' · '.$club.'.'
+            .($stats !== '' ? ' '.Str::ucfirst($stats).'.' : '')
+            .' '.trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags(str_replace('<', ' <', (string) $this->bio)))));
+
+        return Str::limit(trim($text), 160);
     }
 
     /**

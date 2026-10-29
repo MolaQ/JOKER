@@ -475,5 +475,7 @@
     "Przygotowuję…": "Preparing…",
     "Nie udało się przygotować obrazka. Spróbuj ponownie.": "Could not prepare the image. Please try again.",
     ":club · wszystkie roczniki": ":club · all age groups",
-    "Od :club do PlusLigi": "From :club to the PlusLiga"
+    "Od :club do PlusLigi": "From :club to the PlusLiga",
+    "wzrost :value cm": "height :value cm",
+    "zasięg w ataku :value cm": "spike reach :value cm"
 }
