@@ -33,6 +33,8 @@
                 <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"><x-sort-button field="nazwa" :current="$sortField" :direction="$sortDirection">Imię i nazwisko</x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="email" :current="$sortField" :direction="$sortDirection">Email</x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Role</th>
+                <th data-label="Wyświetlenia i polubienia" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="wyswietlenia" :current="$sortField" :direction="$sortDirection">wyśw.</x-sort-button> <x-sort-button field="polubienia" :current="$sortField" :direction="$sortDirection">polub.</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="logowanie" :current="$sortField" :direction="$sortDirection">Ostatnie logowanie</x-sort-button></th>
                 <th class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Akcje</span></th>
             </tr>
         </thead>
@@ -65,6 +67,16 @@
                             @endif
                         </div>
                     </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        <x-admin-reception :views="$user->views_count" :likes="$user->received_likes_count" />
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        @if($user->last_login_at)
+                            <span title="{{ $user->last_login_at->format('d.m.Y H:i') }}">{{ $user->last_login_at->diffForHumans() }}</span>
+                        @else
+                            <span class="text-gray-400">jeszcze nie</span>
+                        @endif
+                    </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <button type="button" wire:click="openEditModal({{ $user->id }})" class="text-sky-700 hover:text-sky-900 mr-4">Edytuj</button>
                         <button type="button" wire:click="delete({{ $user->id }})" wire:confirm="Czy na pewno chcesz usunąć użytkownika {{ $user->name }}?" class="text-red-600 hover:text-red-900">Usuń</button>
@@ -72,7 +84,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="4" class="px-3 py-4 text-sm text-gray-500 text-center">Brak użytkowników do wyświetlenia</td>
+                    <td colspan="6" class="px-3 py-4 text-sm text-gray-500 text-center">Brak użytkowników do wyświetlenia</td>
                 </tr>
             @endforelse
         </tbody>

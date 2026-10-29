@@ -4,6 +4,7 @@ use App\Livewire\Admin\ArticleManager;
 use App\Livewire\Admin\AwardManager;
 use App\Livewire\Admin\PlayerManager;
 use App\Livewire\Admin\SeoManager;
+use App\Livewire\Admin\UserManager;
 use App\Models\Article;
 use App\Models\Award;
 use App\Models\Game;
@@ -155,4 +156,19 @@ test('the player list shows when a player with an account last logged in', funct
         ->assertSee('Ostatnie logowanie')
         ->assertDontSee('Odbiór')
         ->assertSee($account->fresh()->last_login_at->diffForHumans());
+});
+
+test('the users list shows views, likes and last login', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $parent = User::factory()->create(['name' => 'Rodzic Oglądany']);
+    $parent->forceFill(['views_count' => 77, 'last_login_at' => now()->subDays(3)])->save();
+    $parent->toggleLikeFor(User::factory()->create());
+
+    Livewire::test(UserManager::class)
+        ->call('sortBy', 'wyswietlenia')
+        ->assertSee('Rodzic Oglądany')
+        ->assertSee('77')
+        ->assertSee('Ostatnie logowanie')
+        ->assertSee('3 dni temu')
+        ->assertDontSee('Odbiór');
 });

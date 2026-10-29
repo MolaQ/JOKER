@@ -26,6 +26,7 @@ class PersonController extends Controller
             return redirect()->guest(route('login'));
         }
 
+        $user->registerView();
         $user->load(['children.team', 'coordinatedTeams']);
 
         return view('people.show', [

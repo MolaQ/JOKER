@@ -1,5 +1,5 @@
 @props(['views' => 0, 'likes' => 0])
-{{-- Kolumna „Odbiór” w panelu: wyświetlenia i polubienia (serduszka) profilu. --}}
+{{-- Kolumna w panelu: wyświetlenia i polubienia (serduszka) profilu. --}}
 <span {{ $attributes->merge(['class' => 'flex items-center gap-3 tabular-nums']) }}>
     <span class="inline-flex items-center gap-1" title="Wyświetlenia (jedno wejście na wizytę)">
         <svg class="size-4 text-zinc-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.04 12.32a1 1 0 0 1 0-.64C3.42 7.51 7.36 4.5 12 4.5s8.57 3 9.96 7.18a1 1 0 0 1 0 .64C20.58 16.49 16.64 19.5 12 19.5s-8.57-3-9.96-7.18Z"/><circle cx="12" cy="12" r="3"/></svg>

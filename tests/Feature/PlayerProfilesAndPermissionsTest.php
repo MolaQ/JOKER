@@ -161,5 +161,5 @@ test('lista drużyn w panelu pokazuje odbiór, a lista zawodników sortuje po os
         ->assertSeeInOrder(['Dawny', 'Niedawny'])
         ->assertSee('1 godzina temu');
 
-    Livewire::test(TeamList::class)->call('sortBy', 'wyswietlenia')->assertSee('Odbiór')->assertSee('340');
+    Livewire::test(TeamList::class)->call('sortBy', 'wyswietlenia')->assertDontSee('Odbiór')->assertSee('340');
 });

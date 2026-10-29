@@ -264,8 +264,15 @@ test('player, staff and team pages count views once per visitor', function () {
     $this->get(route('players.show', $player))->assertSee('2 wyświetlenia');
     $this->get(route('teams.show', $this->team))->assertSee('1 wyświetlenie');
 
+    // Profile osób (sztab, rodzice): liczby widzą tylko zalogowani.
     $trainer = User::factory()->trainer()->create();
-    $this->get(route('trainers.show', $trainer))->assertOk()->assertSee('1 wyświetlenie');
+    $this->get(route('trainers.show', $trainer))->assertOk()->assertDontSee('wyświetleni');
+    expect($trainer->fresh()->views_count)->toBe(1);
+
+    $parent = User::factory()->create();
+    $this->actingAs(User::factory()->create());
+    $this->get(route('trainers.show', $trainer))->assertSee('1 wyświetlenie');
+    $this->get(route('people.show', $parent))->assertOk()->assertSee('1 wyświetlenie');
 });
 
 test('tournaments and friendlies appear in the calendar and can be filtered', function () {

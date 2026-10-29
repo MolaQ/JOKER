@@ -389,13 +389,15 @@ class PlayerManager extends Component
             'pozycja' => 'position',
             'druzyna' => fn ($q, $d) => $q->orderBy(Team::select('display_order')->whereColumn('teams.id', 'players.team_id'), $d),
             'status' => 'is_active',
+            'wyswietlenia' => 'views_count',
+            'polubienia' => 'likes_count',
             'logowanie' => fn ($q, $d) => $q->orderBy(User::select('last_login_at')->whereColumn('users.id', 'players.user_id'), $d),
         ];
     }
 
     protected function sortDescendingFirst(): array
     {
-        return ['logowanie'];
+        return ['wyswietlenia', 'polubienia', 'logowanie'];
     }
 
     public function render()
@@ -412,7 +414,7 @@ class PlayerManager extends Component
         // Drużyna to drużyna macierzysta albo skład w bieżącym sezonie (np. junior grający też w seniorach).
         $seasonId = Season::current()->value('id');
 
-        $players = $this->applySort((clone $base)->with(['team', 'user:id,last_login_at', 'teams' => fn ($q) => $q->where('team_player_season.season_id', $seasonId)])
+        $players = $this->applySort((clone $base)->with(['team', 'user:id,last_login_at', 'teams' => fn ($q) => $q->where('team_player_season.season_id', $seasonId)])->withCount('likes')
             ->when($this->teamFilter === 'brak', fn ($q) => $q->whereNull('team_id'))
             ->when(ctype_digit($this->teamFilter), fn ($q) => $q->inTeam($this->teamFilter, $seasonId))
             ->when($this->positionFilter === 'brak', fn ($q) => $q->whereNull('position'))

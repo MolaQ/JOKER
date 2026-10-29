@@ -17,6 +17,13 @@
         <div>
             <p class="eyebrow">{{ $person->rolesLabel() ?: __('Społeczność klubu') }}</p>
             <h1 class="heading-xl mt-3 flex flex-wrap items-center gap-x-4">{{ $person->name }} <x-message-button :to="$person" /></h1>
+            {{-- Wyświetlenia i serduszka profili osób widzą tylko zalogowani. --}}
+            @auth
+                <div class="mt-4 flex flex-wrap items-center gap-4">
+                    <x-view-count :model="$person" class="text-white/70" />
+                    @livewire('like-button', ['type' => 'person', 'id' => $person->id, 'dark' => true], key('person-like-'.$person->id))
+                </div>
+            @endauth
         </div>
     </div>
 </section>
