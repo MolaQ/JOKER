@@ -84,7 +84,9 @@ popd
 
 echo [4/5] Pakuje do %CEL% ...
 del /q "%CEL%\joker-kod.zip" "%CEL%\joker-zdjecia.zip" 2>nul
-tar -a -c -f "%CEL%\joker-kod.zip" -C "%ROBOCZY%" joker
+rem Zip z uprawnieniami 755/644, zeby po rozpakowaniu w DirectAdminie strona od razu dzialala (bez 403).
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0zip-linux.ps1" -Root "%ROBOCZY%" -Folder joker -Out "%CEL%\joker-kod.zip"
+if errorlevel 1 tar -a -c -f "%CEL%\joker-kod.zip" -C "%ROBOCZY%" joker
 if errorlevel 1 (
     echo Pakowanie strony nie powiodlo sie.
     pause
