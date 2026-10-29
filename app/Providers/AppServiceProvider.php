@@ -18,11 +18,13 @@ use App\Support\SearchIndex;
 use App\Support\Sitemap;
 use App\Support\SiteSettings;
 use App\UserRole;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -42,6 +44,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Data ostatniego logowania (także z „zapamiętaj mnie”); bez ruszania updated_at.
+        Event::listen(Login::class, function (Login $event) {
+            if ($event->user instanceof User) {
+                User::whereKey($event->user->getKey())->toBase()->update(['last_login_at' => now()]);
+            }
+        });
+
         // Zmiana treści unieważnia mapę strony; następne wejście robota zbuduje ją od nowa.
         foreach (Sitemap::WATCHED as $model) {
             $model::saved(fn () => Sitemap::forget());

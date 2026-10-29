@@ -27,7 +27,7 @@
                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="rocznik" :current="$sortField" :direction="$sortDirection">Rocznik</x-sort-button></th>
                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="trener" :current="$sortField" :direction="$sortDirection">Trener</x-sort-button></th>
                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="zawodnicy" :current="$sortField" :direction="$sortDirection">Zawodnicy</x-sort-button></th>
-                <th data-label="Odbiór" scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><span class="mr-1">Odbiór:</span><x-sort-button field="wyswietlenia" :current="$sortField" :direction="$sortDirection">wyśw.</x-sort-button> <x-sort-button field="polubienia" :current="$sortField" :direction="$sortDirection">polub.</x-sort-button></th>
+                <th data-label="Wyświetlenia i polubienia" scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="wyswietlenia" :current="$sortField" :direction="$sortDirection">wyśw.</x-sort-button> <x-sort-button field="polubienia" :current="$sortField" :direction="$sortDirection">polub.</x-sort-button></th>
                 <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
                     <span class="sr-only">Akcje</span>
                 </th>
@@ -49,7 +49,7 @@
                         @endif
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ $team->players_count }}
+                        {{ $team->active_players_count }}
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         <x-admin-reception :views="$team->views_count" :likes="$team->likes_count" />

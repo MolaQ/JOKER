@@ -4,6 +4,7 @@ use App\Livewire\Admin\ArticleManager;
 use App\Livewire\Admin\AwardManager;
 use App\Livewire\Admin\PlayerManager;
 use App\Livewire\Admin\SeoManager;
+use App\Livewire\Admin\UserManager;
 use App\Models\Article;
 use App\Models\Award;
 use App\Models\Game;
@@ -123,4 +124,51 @@ test('awaria serwera poczty przy przypomnieniu hasła wraca do formularza z komu
         ->post(route('password.email'), ['email' => 'trener@example.com'])
         ->assertRedirect(route('password.request'))
         ->assertSessionHas('error');
+});
+
+test('a player in a second team this season is counted and filtered in both teams', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $season = Season::factory()->create(['is_current' => true]);
+    $juniors = Team::create(['name' => 'Juniorzy', 'slug' => 'juniorzy', 'category' => 'junior', 'birth_year' => 2008]);
+    $seniors = Team::create(['name' => 'Seniorzy', 'slug' => 'seniorzy', 'category' => 'senior']);
+    $player = Player::factory()->create(['team_id' => $seniors->id, 'first_name' => 'Alan', 'last_name' => 'Dwudrużynowy']);
+    $player->teams()->attach([$seniors->id => ['season_id' => $season->id], $juniors->id => ['season_id' => $season->id]]);
+
+    Livewire::test(PlayerManager::class)
+        ->assertViewHas('teamCounts', fn ($counts) => $counts[$juniors->id] === 1 && $counts[$seniors->id] === 1)
+        ->assertViewHas('totalCount', 1)
+        ->assertSee('+ Juniorzy')
+        ->set('teamFilter', (string) $juniors->id)->assertSee('Dwudrużynowy');
+});
+
+test('the player list shows when a player with an account last logged in', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $account = User::factory()->create(['password' => 'tajne-haslo-123']);
+    Player::factory()->create(['user_id' => $account->id, 'last_name' => 'Zalogowany']);
+
+    $this->post('/logout');
+    $this->post(route('login'), ['email' => $account->email, 'password' => 'tajne-haslo-123']);
+
+    expect($account->fresh()->last_login_at)->not->toBeNull();
+
+    $this->actingAs(User::factory()->admin()->create());
+    Livewire::test(PlayerManager::class)
+        ->assertSee('Ostatnie logowanie')
+        ->assertDontSee('Odbiór')
+        ->assertSee($account->fresh()->last_login_at->diffForHumans());
+});
+
+test('the users list shows views, likes and last login', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $parent = User::factory()->create(['name' => 'Rodzic Oglądany']);
+    $parent->forceFill(['views_count' => 77, 'last_login_at' => now()->subDays(3)])->save();
+    $parent->toggleLikeFor(User::factory()->create());
+
+    Livewire::test(UserManager::class)
+        ->call('sortBy', 'wyswietlenia')
+        ->assertSee('Rodzic Oglądany')
+        ->assertSee('77')
+        ->assertSee('Ostatnie logowanie')
+        ->assertSee('3 dni temu')
+        ->assertDontSee('Odbiór');
 });

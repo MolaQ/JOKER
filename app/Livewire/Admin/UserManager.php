@@ -287,12 +287,15 @@ class UserManager extends Component
         return [
             'nazwa' => 'name',
             'email' => 'email',
+            'wyswietlenia' => 'views_count',
+            'polubienia' => 'received_likes_count',
+            'logowanie' => 'last_login_at',
         ];
     }
 
     protected function sortDescendingFirst(): array
     {
-        return [];
+        return ['wyswietlenia', 'polubienia', 'logowanie'];
     }
 
     public function render()
@@ -304,7 +307,7 @@ class UserManager extends Component
             ->when($this->roleFilter === 'none', fn ($q) => $q->doesntHave('roleAssignments'))
             ->when(UserRole::tryFrom($this->roleFilter), fn ($q, UserRole $role) => $q->withRole($role))
             ->when(AccountStatus::tryFrom($this->statusFilter), fn ($q, AccountStatus $status) => $q->withAccountStatus($status))
-            ->with(['roleAssignments', 'activatedBy:id,name'])
+            ->with(['roleAssignments', 'activatedBy:id,name'])->withCount('receivedLikes')
             ->orderBy('name')
         )->paginate(15);
 

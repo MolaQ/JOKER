@@ -47,3 +47,14 @@ test('zawodnik z młodszego rocznika jest oznaczony w juniorach, ale nie w senio
     $this->get(route('teams.show', $juniors))->assertSee('z młodszego rocznika');
     $this->get(route('teams.show', $seniors))->assertSee($player->last_name)->assertDontSee('z młodszego rocznika');
 });
+
+test('zawodnik dopisany do drugiej drużyny liczy się w obu na liście drużyn', function () {
+    $season = Season::factory()->create(['is_current' => true]);
+    $juniors = Team::factory()->create(['name' => 'Juniorzy', 'category' => 'junior', 'birth_year' => 2008]);
+    $seniors = Team::factory()->create(['name' => 'Seniorzy', 'category' => 'senior', 'birth_year' => null]);
+    $player = Player::factory()->create(['team_id' => $seniors->id, 'is_active' => true]);
+    $juniors->seasonRoster($season->id)->attach($player->id);
+
+    expect(Team::withActivePlayersCount()->pluck('active_players_count', 'id')->all())
+        ->toBe([$juniors->id => 1, $seniors->id => 1]);
+});

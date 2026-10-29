@@ -8,6 +8,7 @@
     <link rel="apple-touch-icon" href="{{ $site->image('logo', asset('img/logo-180.png')) }}">
     <title>@yield('title', 'Panel Administracyjny') - {{ $site['club_name'] }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>:root { --color-like: {{ $site->color('color_like') }}; }</style>
     @livewireStyles
 </head>
 <body class="min-h-full admin-panel">

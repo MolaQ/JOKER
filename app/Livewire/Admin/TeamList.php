@@ -197,7 +197,7 @@ class TeamList extends Component
             'nazwa' => 'name',
             'rocznik' => 'birth_year',
             'trener' => fn ($q, $d) => $q->orderBy(User::select('name')->whereColumn('users.id', 'teams.trainer_id'), $d),
-            'zawodnicy' => 'players_count',
+            'zawodnicy' => 'active_players_count',
             'wyswietlenia' => 'views_count',
             'polubienia' => 'likes_count',
         ];
@@ -210,7 +210,7 @@ class TeamList extends Component
 
     public function render()
     {
-        $teams = $this->applySort(Team::managedBy(Auth::user())->withCount(['players', 'likes'])
+        $teams = $this->applySort(Team::managedBy(Auth::user())->withActivePlayersCount(activeOnly: false)->withCount('likes')
             ->with(['trainer', 'assistantTrainers'])
             ->when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
             ->orderBy('display_order')

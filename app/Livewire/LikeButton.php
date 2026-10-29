@@ -34,6 +34,7 @@ class LikeButton extends Component
         'tournament_match' => TournamentMatch::class,
         'gallery' => Gallery::class,
         'trainer' => User::class,
+        'person' => User::class,
     ];
 
     #[Locked]

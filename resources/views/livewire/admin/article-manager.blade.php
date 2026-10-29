@@ -26,7 +26,7 @@
                 <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"><x-sort-button field="tytul" :current="$sortField" :direction="$sortDirection">Tytuł</x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="autor" :current="$sortField" :direction="$sortDirection">Autor</x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="status" :current="$sortField" :direction="$sortDirection">Status</x-sort-button></th>
-                <th data-label="Odbiór" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><span class="mr-1">Odbiór:</span><x-sort-button field="wyswietlenia" :current="$sortField" :direction="$sortDirection">wyśw.</x-sort-button> <x-sort-button field="polubienia" :current="$sortField" :direction="$sortDirection">polub.</x-sort-button></th>
+                <th data-label="Wyświetlenia i polubienia" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="wyswietlenia" :current="$sortField" :direction="$sortDirection">wyśw.</x-sort-button> <x-sort-button field="polubienia" :current="$sortField" :direction="$sortDirection">polub.</x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Multimedia</th>
                 <th class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Akcje</span></th>
             </tr>
@@ -58,8 +58,8 @@
                                 <svg class="size-4 text-zinc-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.04 12.32a1 1 0 0 1 0-.64C3.42 7.51 7.36 4.5 12 4.5s8.57 3 9.96 7.18a1 1 0 0 1 0 .64C20.58 16.49 16.64 19.5 12 19.5s-8.57-3-9.96-7.18Z"/><circle cx="12" cy="12" r="3"/></svg>
                                 {{ number_format($article->views_count, 0, ',', ' ') }}<span class="sr-only"> wyświetleń</span>
                             </span>
-                            <span @class(['inline-flex items-center gap-1', 'text-rose-600' => $article->likes_count > 0]) title="Polubienia">
-                                <svg class="size-4 {{ $article->likes_count > 0 ? 'text-rose-500' : 'text-zinc-400' }}" fill="{{ $article->likes_count > 0 ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linejoin="round" d="M12 20s-7.5-4.6-9.6-9.3C.9 7.2 3 3.5 6.6 3.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.6 0 5.7 3.7 4.2 7.2C19.5 15.4 12 20 12 20Z"/></svg>
+                            <span @class(['inline-flex items-center gap-1', 'text-like' => $article->likes_count > 0]) title="Polubienia">
+                                <svg class="size-4 {{ $article->likes_count > 0 ? 'text-like' : 'text-zinc-400' }}" fill="{{ $article->likes_count > 0 ? 'currentColor' : 'none' }}" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linejoin="round" d="M12 20s-7.5-4.6-9.6-9.3C.9 7.2 3 3.5 6.6 3.5c2.1 0 3.6 1.2 5.4 3.2 1.8-2 3.3-3.2 5.4-3.2 3.6 0 5.7 3.7 4.2 7.2C19.5 15.4 12 20 12 20Z"/></svg>
                                 {{ $article->likes_count }}<span class="sr-only"> polubień</span>
                             </span>
                             <a href="{{ route('admin.comments.index') }}" class="inline-flex items-center gap-1 hover:text-zinc-900" title="Komentarze opublikowane{{ $article->pending_comments_count ? ' · czeka na akceptację: '.$article->pending_comments_count : '' }}">
