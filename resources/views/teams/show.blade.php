@@ -124,11 +124,15 @@
     <p class="eyebrow">{{ __('Treningi') }}</p>
     <h2 class="heading-lg mt-3">{{ __('Plan treningów') }}</h2>
     <ul class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        @foreach($team->trainingSessions as $session)
+        @foreach($team->trainingSessions->groupBy('weekday') as $daySessions)
             <li class="card p-4">
-                <p class="text-xs font-semibold tracking-widest text-sky-club-dark uppercase">{{ $session->weekdayLabel() }}</p>
-                <p class="mt-1 text-lg font-semibold tabular-nums">{{ $session->timeRange() }}</p>
-                <p class="text-sm text-zinc-600">{{ $session->venueLabel() }}@if($session->note) · {{ $session->note }}@endif</p>
+                <p class="text-xs font-semibold tracking-widest text-sky-club-dark uppercase">{{ $daySessions->first()->weekdayLabel() }}</p>
+                @foreach($daySessions as $session)
+                    <div @class(['mt-1', 'mt-3 border-t border-zinc-100 pt-3' => ! $loop->first])>
+                        <p class="text-lg font-semibold tabular-nums">{{ $session->timeRange() }}</p>
+                        <p class="text-sm text-zinc-600">{{ $session->venueLabel() }}@if($session->note) · {{ $session->note }}@endif</p>
+                    </div>
+                @endforeach
             </li>
         @endforeach
     </ul>
