@@ -58,9 +58,12 @@ class Messages extends Component
             $this->conversationId = null;
         }
 
-        if (request()->filled('do') && ($recipient = $this->recipients()->find((int) request('do')))) {
+        // Koperta przy nazwisku: ?do=12 albo kilka osób naraz (?do=12,15, np. rodzice zawodnika).
+        $ids = $this->recipients()->whereKey(array_map('intval', explode(',', (string) request('do'))))->pluck('id');
+
+        if ($ids->isNotEmpty()) {
             $this->startComposing();
-            $this->recipientIds = [$recipient->id];
+            $this->recipientIds = $ids->all();
         }
     }
 

@@ -16,6 +16,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PageViewController;
+use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PushSubscriptionController;
@@ -61,6 +62,7 @@ Route::get('/zawodnicy/{player}', [PlayerController::class, 'show'])->name('play
 
 // Trainers
 Route::get('/sztab/{trainer}', [TrainerController::class, 'show'])->name('trainers.show');
+Route::get('/osoby/{user}', [PersonController::class, 'show'])->name('people.show');
 
 // Schedule & Standings
 Route::get('/mecze', [ScheduleController::class, 'index'])->name('schedule.index');

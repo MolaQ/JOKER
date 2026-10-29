@@ -273,6 +273,17 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Aktywne konta z publicznym profilem: sztab i administracja klubu.
+     */
+    public function scopeWithPublicProfile(Builder $query): void
+    {
+        $query->withAccountStatus(AccountStatus::Active)->where(fn (Builder $query) => $query
+            ->withRole(UserRole::Admin, UserRole::Boss, UserRole::Trainer, UserRole::Staff)
+            ->orWhereHas('headCoachTeams')
+            ->orWhereHas('assistantTeams'));
+    }
+
+    /**
      * Konta z daną rolą (którąkolwiek z podanych).
      */
     public function scopeWithRole(Builder $query, UserRole ...$roles): void
@@ -665,6 +676,30 @@ class User extends Authenticatable implements MustVerifyEmail
     public function coordinatedTeams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class, 'team_coordinators')->withTimestamps();
+    }
+
+    /**
+     * Profil widoczny dla wszystkich (sztab, administracja klubu). Pozostałe osoby widzą tylko zalogowani.
+     */
+    public function hasPublicProfile(): bool
+    {
+        return $this->hasRole(UserRole::Admin, UserRole::Boss) || $this->isStaffMember();
+    }
+
+    /**
+     * Adres profilu osoby: sztab ma swoją stronę w „Sztabie”, reszta w „Osobach”.
+     */
+    public function profileUrl(bool $absolute = true): string
+    {
+        return $this->isStaffMember() ? route('trainers.show', $this, $absolute) : route('people.show', $this, $absolute);
+    }
+
+    /**
+     * Role do pokazania w profilu i w wyszukiwarce, np. „Rodzic · Fotograf”.
+     */
+    public function rolesLabel(): string
+    {
+        return $this->roles()->map(fn (UserRole $role) => __($role->label()))->unique()->implode(' · ');
     }
 
     /**

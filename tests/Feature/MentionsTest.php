@@ -27,12 +27,14 @@ it('shows mentions on the player profile only when articles mention them', funct
     $this->get(route('players.show', $this->player))->assertOk()->assertDontSee('Wzmianki');
 
     Article::factory()->create(['author_id' => User::factory()->create()->id, 'title' => 'Kadeci wygrywają', 'content' => '<p>Najlepszy był @Marcel Molak.</p>', 'status' => 'published', 'published_at' => now()->subDay()]);
-    Article::factory()->create(['author_id' => User::factory()->create()->id, 'title' => 'Szkic', 'content' => '<p>Marcel Molak</p>', 'status' => 'draft']);
+    Article::factory()->create(['author_id' => User::factory()->create()->id, 'title' => 'Szkic', 'content' => '<p>@Marcel Molak</p>', 'status' => 'draft']);
+    Article::factory()->create(['author_id' => User::factory()->create()->id, 'title' => 'Bez oznaczenia', 'content' => '<p>Marcel Molak zagrał.</p>', 'status' => 'published', 'published_at' => now()->subDay()]);
 
     $this->get(route('players.show', $this->player))->assertOk()
         ->assertSee('Wzmianki')
         ->assertSee('Kadeci wygrywają')
-        ->assertDontSee('Szkic');
+        ->assertDontSee('Szkic')
+        ->assertDontSee('Bez oznaczenia');
 });
 
 it('links mentions in the article and shows the configurable position bubble', function () {

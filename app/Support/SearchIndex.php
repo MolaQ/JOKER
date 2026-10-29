@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\AccountStatus;
 use App\Http\Middleware\SetLocale;
 use App\Models\Article;
 use App\Models\Document;
@@ -32,10 +33,43 @@ class SearchIndex
         return Cache::remember(self::CACHE_KEY.'-'.app()->getLocale(), now()->addMinutes(10), fn () => self::build());
     }
 
+    /**
+     * Osoby ze społeczności (rodzice, fotografowie, koordynatorzy...): tylko dla zalogowanych, poza Google.
+     *
+     * @return array<int, array{type: string, title: string, subtitle: string, url: string, text: string}>
+     */
+    public static function people(): array
+    {
+        return Cache::remember(self::CACHE_KEY.'-people-'.app()->getLocale(), now()->addMinutes(10), function () {
+            $public = User::withPublicProfile()->pluck('id');
+
+            return User::withAccountStatus(AccountStatus::Active)->whereKeyNot($public)->with(['roleAssignments', 'children'])->orderBy('name')->get()
+                ->map(fn (User $user) => [
+                    'type' => __('Osoby'),
+                    'title' => $user->name,
+                    'subtitle' => collect([$user->rolesLabel(), $user->children->pluck('full_name')->implode(', ')])->filter()->implode(' · '),
+                    'url' => route('people.show', $user, false),
+                    'text' => self::normalize($user->rolesLabel()),
+                ])
+                ->all();
+        });
+    }
+
+    /**
+     * Indeks dla bieżącego odwiedzającego: zalogowani widzą też osoby ze społeczności.
+     *
+     * @return array<int, array{type: string, title: string, subtitle: string, url: string, text: string}>
+     */
+    public static function entriesFor(?User $user): array
+    {
+        return $user ? array_merge(self::entries(), self::people()) : self::entries();
+    }
+
     public static function forget(): void
     {
         foreach (SetLocale::LOCALES as $locale) {
             Cache::forget(self::CACHE_KEY.'-'.$locale);
+            Cache::forget(self::CACHE_KEY.'-people-'.$locale);
         }
     }
 
@@ -44,7 +78,7 @@ class SearchIndex
      *
      * @return array<int, array{type: string, title: string, subtitle: string, url: string, text: string}>
      */
-    public static function search(string $query, int $limit = 60): array
+    public static function search(string $query, int $limit = 60, ?User $user = null): array
     {
         $terms = array_filter(explode(' ', self::normalize($query)));
 
@@ -52,7 +86,7 @@ class SearchIndex
             return [];
         }
 
-        return collect(self::entries())
+        return collect(self::entriesFor($user))
             ->map(function (array $entry) use ($terms) {
                 $title = self::normalize($entry['title']);
                 $haystack = $title.' '.self::normalize($entry['subtitle']).' '.self::normalize($entry['type']).' '.$entry['text'];
@@ -137,6 +171,13 @@ class SearchIndex
             $roles = $member->headCoachTeams->toBase()->map(fn ($team) => __('Trener główny').': '.$team->name)
                 ->merge($member->assistantTeams->map(fn ($team) => __($team->pivot->role ?: 'Asystent trenera').': '.$team->name));
             $add(__('Sztab'), $member->name, $roles->first(), route('trainers.show', $member, false), $roles->implode(' ').' '.$member->additional_info);
+        }
+
+        // Administracja klubu spoza sztabu ma publiczny profil.
+        $board = User::withPublicProfile()->with('roleAssignments')->orderBy('name')->get()->reject(fn (User $user) => $user->isStaffMember());
+
+        foreach ($board as $member) {
+            $add(__('Osoby'), $member->name, $member->rolesLabel(), route('people.show', $member, false), $member->rolesLabel());
         }
 
         foreach (Article::published()->get() as $article) {

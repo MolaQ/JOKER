@@ -16,7 +16,7 @@ use Livewire\Livewire;
 
 beforeEach(function () {
     $this->anna = User::factory()->parent()->create(['name' => 'Anna Nowak']);
-    $this->piotr = User::factory()->create(['name' => 'Piotr Kibic']);
+    $this->piotr = User::factory()->parent()->create(['name' => 'Piotr Kibic']);
 });
 
 test('użytkownik pisze do innej osoby, a ta widzi nieprzeczytaną wiadomość i dzwonek z liczbą', function () {

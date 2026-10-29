@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\Mentions;
 
 class TrainerController extends Controller
 {
@@ -21,6 +22,6 @@ class TrainerController extends Controller
             ->sortBy(fn ($entry) => $entry['team']->display_order)
             ->values();
 
-        return view('trainers.show', compact('trainer', 'roles'));
+        return view('trainers.show', ['trainer' => $trainer, 'roles' => $roles, 'mentions' => Mentions::articlesAbout($trainer->name)]);
     }
 }

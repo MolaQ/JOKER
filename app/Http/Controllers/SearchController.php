@@ -11,7 +11,7 @@ class SearchController extends Controller
     public function index(Request $request)
     {
         $query = trim((string) $request->query('q', ''));
-        $results = $query === '' ? [] : SearchIndex::search($query);
+        $results = $query === '' ? [] : SearchIndex::search($query, user: $request->user());
 
         return view('search.index', [
             'query' => $query,
@@ -26,16 +26,16 @@ class SearchController extends Controller
      */
     public function data(Request $request): JsonResponse
     {
-        $entries = SearchIndex::entries();
+        $entries = SearchIndex::entriesFor($request->user());
         $etag = '"'.md5(serialize($entries)).'"';
 
         if ($request->headers->get('If-None-Match') === $etag) {
             return response()->json(null, 304)->setEtag(trim($etag, '"'));
         }
 
-        return response()->json($entries)
-            ->setEtag(trim($etag, '"'))
-            ->setPublic()
-            ->setMaxAge(60);
+        $response = response()->json($entries)->setEtag(trim($etag, '"'))->setMaxAge(60);
+
+        // Z osobami ze społeczności: tylko w przeglądarce zalogowanego, nigdy we wspólnej pamięci podręcznej.
+        return $request->user() ? $response->setPrivate() : $response->setPublic();
     }
 }

@@ -43,7 +43,7 @@ class PlayerController extends Controller
             'career' => $this->career($player),
             'recentGames' => $recentGames,
             'photos' => $player->taggedPhotos(),
-            'mentions' => Mentions::articlesAbout($player),
+            'mentions' => Mentions::articlesAbout($player->full_name),
         ]);
     }
 
