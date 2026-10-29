@@ -14,7 +14,7 @@ class TeamController extends Controller
     public function index()
     {
         $teams = Team::with(['trainer', 'assistantTrainers'])
-            ->withCount('activePlayers')
+            ->withActivePlayersCount()
             ->orderBy('display_order')
             ->get();
 

@@ -137,6 +137,26 @@ class Team extends Model
         return $this->hasMany(Player::class);
     }
 
+    /**
+     * Liczba aktywnych zawodników jako active_players_count, razem z dopisanymi do składu z innej drużyny.
+     * W panelu ($activeOnly = false) liczymy też nieaktywnych, jak na liście zawodników.
+     */
+    public function scopeWithActivePlayersCount($query, bool $activeOnly = true)
+    {
+        $seasonId = Season::current()->value('id');
+
+        if ($query->getQuery()->columns === null) {
+            $query->select('teams.*');
+        }
+
+        return $query->selectSub(fn ($players) => $players->from('players')->selectRaw('count(*)')->when($activeOnly, fn ($active) => $active->where('players.is_active', true))
+            ->where(fn ($inner) => $inner->whereColumn('players.team_id', 'teams.id')
+                ->when($seasonId, fn ($roster) => $roster->orWhereExists(fn ($pivot) => $pivot->selectRaw('1')->from('team_player_season')
+                    ->whereColumn('team_player_season.player_id', 'players.id')
+                    ->whereColumn('team_player_season.team_id', 'teams.id')
+                    ->where('team_player_season.season_id', $seasonId)))), 'active_players_count');
+    }
+
     public function activePlayers(): HasMany
     {
         return $this->hasMany(Player::class)->where('is_active', true);

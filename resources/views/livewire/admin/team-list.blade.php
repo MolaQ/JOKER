@@ -49,7 +49,7 @@
                         @endif
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ $team->players_count }}
+                        {{ $team->active_players_count }}
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         <x-admin-reception :views="$team->views_count" :likes="$team->likes_count" />

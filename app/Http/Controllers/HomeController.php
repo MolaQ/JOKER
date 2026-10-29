@@ -36,7 +36,7 @@ class HomeController extends Controller
             ->limit(5)
             ->get();
 
-        $teams = Team::withCount('activePlayers')
+        $teams = Team::withActivePlayersCount()
             ->orderBy('display_order')
             ->get();
 

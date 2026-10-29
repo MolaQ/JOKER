@@ -143,7 +143,7 @@ class Conversation extends Model
             return collect();
         }
 
-        $players = $team->activePlayers()->with('guardians:id')->get(['id', 'user_id']);
+        $players = Player::inTeam($team->id)->where('is_active', true)->with('guardians:id')->get(['id', 'user_id']);
         $ids = collect([$team->trainer_id])
             ->merge($team->assistantTrainers()->pluck('users.id'))
             ->merge($team->coordinators()->pluck('users.id'));

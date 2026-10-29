@@ -124,3 +124,18 @@ test('awaria serwera poczty przy przypomnieniu hasła wraca do formularza z komu
         ->assertRedirect(route('password.request'))
         ->assertSessionHas('error');
 });
+
+test('a player in a second team this season is counted and filtered in both teams', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $season = Season::factory()->create(['is_current' => true]);
+    $juniors = Team::create(['name' => 'Juniorzy', 'slug' => 'juniorzy', 'category' => 'junior', 'birth_year' => 2008]);
+    $seniors = Team::create(['name' => 'Seniorzy', 'slug' => 'seniorzy', 'category' => 'senior']);
+    $player = Player::factory()->create(['team_id' => $seniors->id, 'first_name' => 'Alan', 'last_name' => 'Dwudrużynowy']);
+    $player->teams()->attach([$seniors->id => ['season_id' => $season->id], $juniors->id => ['season_id' => $season->id]]);
+
+    Livewire::test(PlayerManager::class)
+        ->assertViewHas('teamCounts', fn ($counts) => $counts[$juniors->id] === 1 && $counts[$seniors->id] === 1)
+        ->assertViewHas('totalCount', 1)
+        ->assertSee('+ Juniorzy')
+        ->set('teamFilter', (string) $juniors->id)->assertSee('Dwudrużynowy');
+});

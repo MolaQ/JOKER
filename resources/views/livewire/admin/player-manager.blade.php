@@ -20,7 +20,7 @@
         @endphp
         <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Drużyna">
             <span class="w-16 text-xs font-semibold uppercase tracking-wide text-gray-500">Drużyna</span>
-            <button type="button" wire:click="$set('teamFilter', '')" class="{{ $chip }} {{ $teamFilter === '' ? $on : $off }}">Wszystkie {!! $count($teamCounts->sum()) !!}</button>
+            <button type="button" wire:click="$set('teamFilter', '')" class="{{ $chip }} {{ $teamFilter === '' ? $on : $off }}">Wszystkie {!! $count($totalCount) !!}</button>
             @foreach($teams as $team)
                 <button type="button" wire:key="team-chip-{{ $team->id }}" wire:click="$set('teamFilter', '{{ $team->id }}')" class="{{ $chip }} {{ $teamFilter === (string) $team->id ? $on : $off }}">{{ $team->name }} {!! $count($teamCounts[$team->id] ?? 0) !!}</button>
             @endforeach
@@ -69,7 +69,7 @@
                         {{ $player->position?->label() ?? '—' }}
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        @if($player->team){{ $player->team->name }}@else<span class="rounded bg-amber-50 px-1.5 py-0.5 text-xs font-semibold text-amber-700">bez drużyny</span>@endif
+                        @if($player->team){{ $player->team->name }}@foreach($player->teams->reject(fn ($extra) => $extra->id === $player->team_id) as $extra)<span class="text-gray-400"> + {{ $extra->name }}</span>@endforeach@else<span class="rounded bg-amber-50 px-1.5 py-0.5 text-xs font-semibold text-amber-700">bez drużyny</span>@endif
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm">
                         @if($player->is_active)

@@ -238,6 +238,21 @@ class Player extends Model
     /**
      * Zawodnicy, których użytkownik może edytować: z prowadzonych drużyn (także grający w nich dodatkowo).
      */
+    /**
+     * Zawodnicy drużyny: z tej drużyny macierzystej albo dopisani do jej składu w bieżącym sezonie
+     * (np. junior grający też w seniorach).
+     */
+    public function scopeInTeam($query, int|string $teamId, ?int $seasonId = null)
+    {
+        $seasonId ??= Season::current()->value('id');
+
+        return $query->where(fn ($inner) => $inner->where('players.team_id', $teamId)
+            ->when($seasonId, fn ($roster) => $roster->orWhereExists(fn ($pivot) => $pivot->selectRaw('1')->from('team_player_season')
+                ->whereColumn('team_player_season.player_id', 'players.id')
+                ->where('team_player_season.team_id', $teamId)
+                ->where('team_player_season.season_id', $seasonId))));
+    }
+
     public function scopeManagedBy($query, User $user)
     {
         $teamIds = $user->managedTeamIds();
