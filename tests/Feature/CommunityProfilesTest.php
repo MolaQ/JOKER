@@ -88,3 +88,9 @@ it('follows the message rules from settings and can switch messages off', functi
     $this->get(route('messages.index'))->assertNotFound();
     $this->get(route('home'))->assertDontSee(route('messages.index'), false);
 });
+
+test('kolor serduszek ustawia się w panelu', function () {
+    app(SiteSettings::class)->set(['color_like' => '#e11d48']);
+
+    $this->get(route('home'))->assertSee('--color-like: #e11d48', false);
+});
