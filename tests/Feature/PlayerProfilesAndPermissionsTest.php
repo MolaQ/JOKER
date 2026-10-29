@@ -145,20 +145,21 @@ test('commenting can be taken away from one account in the user editor', functio
     $this->get(route('articles.show', $article))->assertSee('Klub wyłączył Ci możliwość komentowania.');
 });
 
-test('lista zawodników i drużyn w panelu pokazuje odbiór i sortuje według niego', function () {
+test('lista drużyn w panelu pokazuje odbiór, a lista zawodników sortuje po ostatnim logowaniu', function () {
     $this->actingAs(User::factory()->admin()->create());
-    $popular = Player::factory()->create(['team_id' => $this->team->id, 'jersey_number' => 9, 'last_name' => 'Popularny', 'views_count' => 120]);
-    $liked = Player::factory()->create(['team_id' => $this->team->id, 'jersey_number' => 1, 'last_name' => 'Lubiany', 'views_count' => 5]);
-    User::factory()->count(2)->create()->each(fn (User $fan) => $liked->toggleLikeFor($fan));
+    $recent = User::factory()->create(['last_login_at' => now()->subHour()]);
+    $older = User::factory()->create(['last_login_at' => now()->subMonth()]);
+    Player::factory()->create(['team_id' => $this->team->id, 'jersey_number' => 9, 'last_name' => 'Dawny', 'user_id' => $older->id]);
+    Player::factory()->create(['team_id' => $this->team->id, 'jersey_number' => 1, 'last_name' => 'Niedawny', 'user_id' => $recent->id]);
     $this->team->forceFill(['views_count' => 340])->save();
 
     Livewire::test(PlayerManager::class)
-        ->assertSeeInOrder(['Lubiany', 'Popularny'])
-        ->call('sortBy', 'wyswietlenia')
-        ->assertSeeInOrder(['Popularny', 'Lubiany'])
-        ->call('sortBy', 'polubienia')
-        ->assertSeeInOrder(['Lubiany', 'Popularny'])
-        ->assertSee('120');
+        ->assertSeeInOrder(['Niedawny', 'Dawny'])
+        ->call('sortBy', 'logowanie')
+        ->assertSeeInOrder(['Niedawny', 'Dawny'])
+        ->call('sortBy', 'logowanie')
+        ->assertSeeInOrder(['Dawny', 'Niedawny'])
+        ->assertSee('1 godzina temu');
 
     Livewire::test(TeamList::class)->call('sortBy', 'wyswietlenia')->assertSee('Odbiór')->assertSee('340');
 });

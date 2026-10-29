@@ -139,3 +139,20 @@ test('a player in a second team this season is counted and filtered in both team
         ->assertSee('+ Juniorzy')
         ->set('teamFilter', (string) $juniors->id)->assertSee('Dwudrużynowy');
 });
+
+test('the player list shows when a player with an account last logged in', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $account = User::factory()->create(['password' => 'tajne-haslo-123']);
+    Player::factory()->create(['user_id' => $account->id, 'last_name' => 'Zalogowany']);
+
+    $this->post('/logout');
+    $this->post(route('login'), ['email' => $account->email, 'password' => 'tajne-haslo-123']);
+
+    expect($account->fresh()->last_login_at)->not->toBeNull();
+
+    $this->actingAs(User::factory()->admin()->create());
+    Livewire::test(PlayerManager::class)
+        ->assertSee('Ostatnie logowanie')
+        ->assertDontSee('Odbiór')
+        ->assertSee($account->fresh()->last_login_at->diffForHumans());
+});

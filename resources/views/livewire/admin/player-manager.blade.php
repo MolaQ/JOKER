@@ -48,7 +48,7 @@
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="pozycja" :current="$sortField" :direction="$sortDirection">Pozycja</x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="druzyna" :current="$sortField" :direction="$sortDirection">Drużyna</x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="status" :current="$sortField" :direction="$sortDirection">Status</x-sort-button></th>
-                <th data-label="Odbiór" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><span class="mr-1">Odbiór:</span><x-sort-button field="wyswietlenia" :current="$sortField" :direction="$sortDirection">wyśw.</x-sort-button> <x-sort-button field="polubienia" :current="$sortField" :direction="$sortDirection">polub.</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="logowanie" :current="$sortField" :direction="$sortDirection">Ostatnie logowanie</x-sort-button></th>
                 <th class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Akcje</span></th>
             </tr>
         </thead>
@@ -79,7 +79,13 @@
                         @endif
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        <x-admin-reception :views="$player->views_count" :likes="$player->likes_count" />
+                        @if(! $player->user)
+                            <span class="text-gray-300">—</span>
+                        @elseif($player->user->last_login_at)
+                            <span title="{{ $player->user->last_login_at->format('d.m.Y H:i') }}">{{ $player->user->last_login_at->diffForHumans() }}</span>
+                        @else
+                            <span class="text-gray-400">jeszcze nie</span>
+                        @endif
                     </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                         <button type="button" wire:click="openEditModal({{ $player->id }})" class="text-sky-700 hover:text-sky-900 mr-4">Edytuj</button>

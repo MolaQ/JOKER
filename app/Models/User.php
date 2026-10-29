@@ -86,6 +86,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'notify_messages' => 'boolean',
             'messages_emailed_at' => 'datetime',
             'email_verified_at' => 'datetime',
+            'last_login_at' => 'datetime',
             'password' => 'hashed',
             'birth_date' => 'date',
             'birthday_display' => BirthdayDisplay::class,
