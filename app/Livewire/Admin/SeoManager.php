@@ -61,7 +61,7 @@ class SeoManager extends Component
                 : ['ok', 'robots.txt', 'Generowany przez stronę: blokuje panel i logowanie, wskazuje mapę strony.', route('robots')],
             $site['seo_google_verification']
                 ? ['ok', 'Google Search Console', 'Kod weryfikacji jest na stronie. W Search Console dodaj mapę strony: '.route('sitemap'), 'https://search.google.com/search-console']
-                : ['warn', 'Google Search Console', 'Dodaj stronę w Search Console (weryfikacja „Tag HTML”) i wklej kod w Ustawieniach. Zobaczysz, na jakie frazy klub się wyświetla i czy są błędy.', route('admin.settings.index', ['zakladka' => 'seo'])],
+                : ['warn', 'Google Search Console', 'Dodaj stronę w Search Console (weryfikacja „Tag HTML”) i wklej kod w Ustawieniach. Zobaczysz, na jakie frazy klub się wyświetla i czy są błędy.', route('admin.settings.index', ['tab' => 'seo'])],
             Award::where('is_active', true)->exists()
                 ? ['ok', 'Wyróżnienia klubu', 'Są w danych o klubie dla Google.', route('admin.awards.index')]
                 : ['warn', 'Wyróżnienia klubu', 'Dodaj oficjalne certyfikaty i nagrody (np. certyfikat ośrodka szkolenia); trafią do stopki i do danych o klubie dla wyszukiwarek.', route('admin.awards.index')],

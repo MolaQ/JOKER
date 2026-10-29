@@ -34,7 +34,7 @@ class Messages extends Component
     /** Najwięcej wiadomości na minutę od jednej osoby (ochrona przed spamem). */
     private const PER_MINUTE = 20;
 
-    #[Url(as: 'rozmowa', except: null)]
+    #[Url(as: 'conversation', except: null)]
     public ?int $conversationId = null;
 
     public string $body = '';
@@ -61,8 +61,8 @@ class Messages extends Component
             $this->conversationId = null;
         }
 
-        // Koperta przy nazwisku: ?do=12 albo kilka osób naraz (?do=12,15, np. rodzice zawodnika).
-        $ids = $this->recipients()->whereKey(array_map('intval', explode(',', (string) request('do'))))->pluck('id');
+        // Koperta przy nazwisku: ?to=12 albo kilka osób naraz (?to=12,15, np. rodzice zawodnika).
+        $ids = $this->recipients()->whereKey(array_map('intval', explode(',', (string) request('to'))))->pluck('id');
 
         if ($ids->isNotEmpty()) {
             $this->startComposing();
@@ -240,7 +240,7 @@ class Messages extends Component
             $conversation->participants->where('id', '!=', $user->id)->pluck('id'),
             $conversation->isGroup() ? $user->name.' · '.$conversation->titleFor($user) : $user->name,
             Str::limit($message->body, 140),
-            route('messages.index', ['rozmowa' => $conversation->id]),
+            route('messages.index', ['conversation' => $conversation->id]),
             'rozmowa-'.$conversation->id,
         );
     }

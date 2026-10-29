@@ -38,7 +38,7 @@ class SiteStatistics extends Component
         'search' => 'Wyszukiwarka',
     ];
 
-    #[Url(as: 'okres')]
+    #[Url(as: 'period')]
     public int $days = 30;
 
     public function setPeriod(int $days): void

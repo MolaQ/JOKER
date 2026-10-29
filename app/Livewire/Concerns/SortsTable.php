@@ -12,10 +12,10 @@ use Livewire\Attributes\Url;
  */
 trait SortsTable
 {
-    #[Url(as: 'sortuj', except: '')]
+    #[Url(as: 'sort', except: '')]
     public string $sortField = '';
 
-    #[Url(as: 'kierunek', except: 'asc')]
+    #[Url(as: 'direction', except: 'asc')]
     public string $sortDirection = 'asc';
 
     /**

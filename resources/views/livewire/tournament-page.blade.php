@@ -27,7 +27,7 @@
         @endif
 
         {{-- DRUŻYNY --}}
-        @if($currentTab === 'druzyny' && $current)
+        @if($currentTab === 'teams' && $current)
             <h2 class="heading-md">{{ __('Drużyny') }} <span class="text-zinc-400">· {{ $current->name }}</span></h2>
             @php
                 $cardDark = $site->isDark('tm_card_from', 'tm_card_to');
@@ -59,7 +59,7 @@
         @endif
 
         {{-- GRUPY --}}
-        @if($currentTab === 'grupy' && $current)
+        @if($currentTab === 'groups' && $current)
             <div class="grid gap-8 lg:grid-cols-2">
                 @foreach($current->groups as $group)
                     <div wire:key="group-{{ $group->id }}" class="card overflow-hidden">
@@ -122,13 +122,13 @@
         @endif
 
         {{-- MECZE: terminarz dniami i godzinami, z filtrem drużyny --}}
-        @if($currentTab === 'mecze' && $current)
+        @if($currentTab === 'matches' && $current)
             <x-tournament-schedule :matches="$current->matches" :bracket="$bracket" />
             <x-tournament-scoring-note :groups="$current->groups" :tournament="$tournament" class="mt-10" />
         @endif
 
         {{-- DRABINKA: grupy z postępem, mecze z numerami w kolumnach (na telefonie jedna pod drugą), podium --}}
-        @if($currentTab === 'drabinka' && $current)
+        @if($currentTab === 'bracket' && $current)
             <p class="max-w-3xl text-sm text-zinc-500">{{ __('Każdy mecz ma numer. Plakietka przy drużynie mówi, skąd przychodzi (1A = 1. miejsce grupy A, #7 = mecz nr 7), a napis w rogu meczu, dokąd idą zwycięzca i przegrany. Szare nazwy to prognoza, dopóki grupa trwa.') }}</p>
 
             @if($current->groups->isNotEmpty())
@@ -176,13 +176,13 @@
         @endif
 
         {{-- KLASYFIKACJA KOŃCOWA --}}
-        @if($currentTab === 'klasyfikacja' && $current)
+        @if($currentTab === 'ranking' && $current)
             <h2 class="heading-md">{{ __('Klasyfikacja końcowa') }} <span class="text-zinc-400">· {{ $current->name }}</span></h2>
             <x-tournament-podium :standings="$standings" class="mt-8" />
         @endif
 
         {{-- ZASADY I INFORMATOR --}}
-        @foreach(['zasady' => $tournament->rules, 'informator' => $tournament->guest_info] as $key => $content)
+        @foreach(['rules' => $tournament->rules, 'info' => $tournament->guest_info] as $key => $content)
             @if($currentTab === $key)
                 <div class="card mx-auto max-w-3xl p-8">
                     <h2 class="heading-md">{{ $tabs[$key] }}</h2>

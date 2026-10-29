@@ -69,7 +69,7 @@
                         type="text"
                         id="subject"
                         name="subject"
-                        value="{{ old('subject', \Illuminate\Support\Str::limit((string) request()->query('temat'), 120, '')) }}"
+                        value="{{ old('subject', \Illuminate\Support\Str::limit((string) request()->query('subject'), 120, '')) }}"
                         required
                         class="w-full px-4 py-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-sky-club focus:border-transparent @error('subject') border-red-500 @enderror"
                         placeholder="{{ __('W jakiej sprawie się kontaktujesz?') }}"

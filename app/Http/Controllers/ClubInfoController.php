@@ -22,7 +22,7 @@ class ClubInfoController extends Controller
     public function trainings(Request $request)
     {
         $sessions = TrainingSession::with('team')->ordered()->get();
-        $team = $request->filled('druzyna') ? Team::firstWhere('slug', $request->query('druzyna')) : null;
+        $team = $request->filled('team') ? Team::firstWhere('slug', $request->query('team')) : null;
 
         return view('club.trainings', [
             'days' => $sessions->when($team, fn ($all) => $all->where('team_id', $team->id))->groupBy('weekday')->sortKeys(),

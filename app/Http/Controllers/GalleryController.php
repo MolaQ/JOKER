@@ -12,7 +12,7 @@ class GalleryController extends Controller
 {
     public function index(Request $request)
     {
-        $team = $request->filled('druzyna') ? Team::firstWhere('slug', $request->query('druzyna')) : null;
+        $team = $request->filled('team') ? Team::firstWhere('slug', $request->query('team')) : null;
 
         $galleries = Gallery::published()
             ->whereHas('photos')

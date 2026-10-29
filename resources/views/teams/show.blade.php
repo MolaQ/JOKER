@@ -173,7 +173,7 @@
                 <div class="border-b border-zinc-100 px-6 py-4">
                     <div class="flex flex-wrap items-baseline justify-between gap-2">
                         <p class="font-display text-xl font-semibold uppercase">{{ $entry['competition']->name }}</p>
-                        <a href="{{ route('standings', ['rozgrywki' => $entry['competition']->getRouteKey()]) }}" class="text-sm font-semibold text-sky-club-dark hover:underline">{{ __('Wszystkie tabele') }} →</a>
+                        <a href="{{ route('standings', ['competition' => $entry['competition']->getRouteKey()]) }}" class="text-sm font-semibold text-sky-club-dark hover:underline">{{ __('Wszystkie tabele') }} →</a>
                     </div>
                     @if($entry['names'])
                         <p class="mt-1 text-sm text-zinc-500">{{ __('Gra jako') }}: <span class="font-medium text-zinc-700">{{ implode(' / ', $entry['names']) }}</span></p>

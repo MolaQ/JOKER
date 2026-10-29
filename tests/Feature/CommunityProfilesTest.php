@@ -38,9 +38,9 @@ it('shows the envelope to logged-in users who can write, and sends a player with
     $writer = User::factory()->parent()->create();
     $this->actingAs($writer)->get(route('players.show', $this->child))->assertOk()
         ->assertSee('Napisz do rodziców')
-        ->assertSee(route('messages.index', ['do' => $this->parent->id]), false);
+        ->assertSee(route('messages.index', ['to' => $this->parent->id]), false);
 
-    Livewire::withQueryParams(['do' => $this->parent->id.','.$this->admin->id])->test(Messages::class)
+    Livewire::withQueryParams(['to' => $this->parent->id.','.$this->admin->id])->test(Messages::class)
         ->assertSet('composing', true)
         ->assertSet('recipientIds', [$this->parent->id, $this->admin->id]);
 });

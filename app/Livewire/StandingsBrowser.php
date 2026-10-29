@@ -17,22 +17,12 @@ use Livewire\Component;
 class StandingsBrowser extends Component
 {
     /** Rozgrywki w adresie jako „6-iii-liga-mezczyzn” (czytelne dla ludzi i Google). */
-    #[Url(as: 'rozgrywki', except: '')]
+    #[Url(as: 'competition', except: '')]
     public string $competition = '';
 
     /** Etap rozgrywek (np. „Etap 2”) - młodzież gra w kilku etapach. */
-    #[Url(as: 'etap', except: '')]
+    #[Url(as: 'stage', except: '')]
     public string $stage = '';
-
-    /**
-     * Stare linki „/standings?competition=6” też otwierają właściwą tabelę.
-     */
-    public function mount(): void
-    {
-        if ($this->competition === '' && request()->filled('competition')) {
-            $this->competition = (string) request()->query('competition');
-        }
-    }
 
     public function select(string $routeKey): void
     {

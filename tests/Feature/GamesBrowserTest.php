@@ -23,10 +23,10 @@ beforeEach(function () {
 });
 
 test('the matches page shows upcoming games and filters instantly', function () {
-    $this->get(route('schedule.index', ['pokaz' => 'nadchodzace']))->assertOk()->assertSee('Warta Zawiercie')->assertDontSee('Gwardia Wrocław');
+    $this->get(route('schedule.index', ['show' => 'upcoming']))->assertOk()->assertSee('Warta Zawiercie')->assertDontSee('Gwardia Wrocław');
 
     Livewire::test(GamesBrowser::class)
-        ->call('setPeriod', 'nadchodzace')
+        ->call('setPeriod', 'upcoming')
         ->assertSee('ŁKS Łódź')
         ->set('search', 'lodz')
         ->assertSee('ŁKS Łódź')
@@ -35,7 +35,7 @@ test('the matches page shows upcoming games and filters instantly', function () 
         ->call('toggleTeam', 'seniorzy')
         ->assertSee('Warta Zawiercie')
         ->assertDontSee('ŁKS Łódź')
-        ->call('setPeriod', 'wyniki')
+        ->call('setPeriod', 'results')
         ->assertSee('Gwardia Wrocław')
         ->assertSee('Wygrana');
 });
@@ -53,7 +53,7 @@ test('the countdown can target the next match of any team', function () {
 test('calendar colours and the birthday icon come from the settings', function () {
     app(SiteSettings::class)->set(['cal_home_bg' => '#112233', 'cal_away_bg' => '#fefefe', 'cal_birthday_icon' => '🎈']);
 
-    $this->get('/matches?pokaz=wszystkie')
+    $this->get('/matches?show=all')
         ->assertOk()
         ->assertSee('--cal-home-bg: #112233', false)
         ->assertSee('--cal-away-bg: #fefefe', false);

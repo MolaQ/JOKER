@@ -39,7 +39,7 @@ class MatchMediaManager extends Component
     public string $search = '';
 
     /** Wybrany mecz jako „rodzaj:id”, np. „game:12” albo „tournament_match:5”. */
-    #[Url(as: 'mecz')]
+    #[Url(as: 'match')]
     public string $selected = '';
 
     /** @var array<int, array{url: string, label: string}> */

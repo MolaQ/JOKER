@@ -22,7 +22,7 @@ class SiteSettingsManager extends Component
 {
     use ShowsToasts, WithFileUploads;
 
-    #[Url(as: 'zakladka')]
+    #[Url(as: 'tab')]
     public string $tab = 'ogolne';
 
     /** @var array<string, mixed> */

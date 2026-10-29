@@ -40,6 +40,6 @@ class ShopProduct extends Model
 
     public function orderUrl(): string
     {
-        return route('contact.index', ['temat' => __('Zamówienie').': '.$this->name]);
+        return route('contact.index', ['subject' => __('Zamówienie').': '.$this->name]);
     }
 }

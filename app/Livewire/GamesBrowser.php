@@ -23,34 +23,34 @@ use Livewire\Component;
  */
 class GamesBrowser extends Component
 {
-    public const PERIODS = ['wszystkie' => 'Wszystkie', 'nadchodzace' => 'Nadchodzące', 'wyniki' => 'Wyniki'];
+    public const PERIODS = ['all' => 'Wszystkie', 'upcoming' => 'Nadchodzące', 'results' => 'Wyniki'];
 
     /** Wartości filtra rozgrywek obok id lig. */
     public const FILTER_TOURNAMENTS = 'turnieje';
 
     public const FILTER_FRIENDLIES = 'sparingi';
 
-    #[Url(as: 'szukaj', except: '')]
+    #[Url(as: 'search', except: '')]
     public string $search = '';
 
-    #[Url(as: 'druzyna', except: '')]
+    #[Url(as: 'team', except: '')]
     public string $team = '';
 
-    #[Url(as: 'rozgrywki', except: '')]
+    #[Url(as: 'competition', except: '')]
     public string $competition = '';
 
-    #[Url(as: 'pokaz', except: 'wszystkie')]
-    public string $period = 'wszystkie';
+    #[Url(as: 'show', except: 'all')]
+    public string $period = 'all';
 
-    #[Url(as: 'miejsce', except: '')]
+    #[Url(as: 'venue', except: '')]
     public string $place = '';
 
-    #[Url(as: 'sezon', except: '')]
+    #[Url(as: 'season', except: '')]
     public string $season = '';
 
     public function setPeriod(string $period): void
     {
-        $this->period = array_key_exists($period, self::PERIODS) ? $period : 'wszystkie';
+        $this->period = array_key_exists($period, self::PERIODS) ? $period : 'all';
     }
 
     public function toggleTeam(string $slug): void
@@ -115,8 +115,8 @@ class GamesBrowser extends Component
 
         return $this->seasonTournaments
             ->when($this->team !== '', fn (Collection $tournaments) => $tournaments->filter(fn (Tournament $tournament) => $tournament->teams->contains('slug', $this->team)))
-            ->when($this->place === 'dom', fn (Collection $tournaments) => $tournaments->where('is_organizer', true))
-            ->when($this->place === 'wyjazd', fn (Collection $tournaments) => $tournaments->where('is_organizer', false))
+            ->when($this->place === 'home', fn (Collection $tournaments) => $tournaments->where('is_organizer', true))
+            ->when($this->place === 'away', fn (Collection $tournaments) => $tournaments->where('is_organizer', false))
             ->when($terms, fn (Collection $tournaments) => $tournaments->filter(function (Tournament $tournament) use ($terms) {
                 $haystack = SearchIndex::normalize(implode(' ', [
                     'turniej',
@@ -145,8 +145,8 @@ class GamesBrowser extends Component
                 self::FILTER_FRIENDLIES => $games->where('kind', Game::KIND_FRIENDLY),
                 default => $games->where('competition_id', (int) $this->competition),
             })
-            ->when($this->place === 'dom', fn (Collection $games) => $games->where('is_home', true))
-            ->when($this->place === 'wyjazd', fn (Collection $games) => $games->where('is_home', false))
+            ->when($this->place === 'home', fn (Collection $games) => $games->where('is_home', true))
+            ->when($this->place === 'away', fn (Collection $games) => $games->where('is_home', false))
             ->when($terms, fn (Collection $games) => $games->filter(function (Game $game) use ($terms) {
                 $haystack = SearchIndex::normalize(implode(' ', [
                     $game->team?->name,
@@ -171,26 +171,26 @@ class GamesBrowser extends Component
         $filtered = $this->filteredGames();
 
         $periodCounts = [
-            'nadchodzace' => $filtered->filter(fn (Game $game) => ! $game->isFinished())->count(),
-            'wyniki' => $filtered->filter(fn (Game $game) => $game->isFinished())->count(),
-            'wszystkie' => $filtered->count(),
+            'upcoming' => $filtered->filter(fn (Game $game) => ! $game->isFinished())->count(),
+            'results' => $filtered->filter(fn (Game $game) => $game->isFinished())->count(),
+            'all' => $filtered->count(),
         ];
 
         $games = match ($this->period) {
-            'wyniki' => $filtered->filter(fn (Game $game) => $game->isFinished())->sortByDesc('game_date'),
-            'wszystkie' => $filtered,
+            'results' => $filtered->filter(fn (Game $game) => $game->isFinished())->sortByDesc('game_date'),
+            'all' => $filtered,
             default => $filtered->reject(fn (Game $game) => $game->isFinished()),
         };
 
         $today = now()->startOfDay();
         $tournaments = $this->filteredTournaments()->filter(fn (Tournament $tournament) => match ($this->period) {
-            'wyniki' => $tournament->lastDay()->lt($today),
-            'wszystkie' => true,
+            'results' => $tournament->lastDay()->lt($today),
+            'all' => true,
             default => $tournament->lastDay()->gte($today),
         });
 
         return view('livewire.games-browser', [
-            'months' => $this->calendarMonths($games, $tournaments, $this->search === '' && $this->competition === '' && $this->place === '', $this->period === 'wyniki'),
+            'months' => $this->calendarMonths($games, $tournaments, $this->search === '' && $this->competition === '' && $this->place === '', $this->period === 'results'),
             'total' => $games->count(),
             'periodCounts' => $periodCounts,
             'teams' => $this->seasonGames->pluck('team')->filter()->unique('id')->sortBy('display_order')->values(),

@@ -15,7 +15,7 @@
         <nav class="mt-8 flex flex-wrap gap-2" aria-label="{{ __('Drużyny') }}">
             <a href="{{ route('trainings.index') }}" @class(['chip', 'bg-ink text-white' => ! $team])>{{ __('Wszystkie') }}</a>
             @foreach($teams as $option)
-                <a href="{{ route('trainings.index', ['druzyna' => $option->slug]) }}" @class(['chip', 'bg-ink text-white' => $team?->is($option)])>{{ $option->name }}</a>
+                <a href="{{ route('trainings.index', ['team' => $option->slug]) }}" @class(['chip', 'bg-ink text-white' => $team?->is($option)])>{{ $option->name }}</a>
             @endforeach
         </nav>
     @endif
@@ -44,7 +44,7 @@
     @endif
 
     <div class="mt-10 flex flex-wrap gap-3">
-        <a href="{{ route('contact.index', ['temat' => __('Trening próbny')]) }}" class="btn-primary">{{ __('Zapisz na trening próbny') }}</a>
+        <a href="{{ route('contact.index', ['subject' => __('Trening próbny')]) }}" class="btn-primary">{{ __('Zapisz na trening próbny') }}</a>
         <a href="{{ route('pages.show', 'spoza-pily') }}" class="btn-dark">{{ __('Jesteś spoza Piły?') }}</a>
     </div>
 </section>

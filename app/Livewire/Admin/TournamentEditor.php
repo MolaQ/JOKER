@@ -28,10 +28,10 @@ class TournamentEditor extends Component
 
     public Tournament $tournament;
 
-    #[Url(as: 'sekcja')]
+    #[Url(as: 'section')]
     public string $section = 'strona';
 
-    #[Url(as: 'kategoria')]
+    #[Url(as: 'category')]
     public ?int $categoryId = null;
 
     public bool $has_page = false;

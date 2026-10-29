@@ -19,22 +19,22 @@ class AuditLogViewer extends Component
 {
     use WithPagination;
 
-    #[Url(as: 'szukaj', except: '')]
+    #[Url(as: 'search', except: '')]
     public string $search = '';
 
-    #[Url(as: 'kto', except: '')]
+    #[Url(as: 'user', except: '')]
     public string $actor = '';
 
-    #[Url(as: 'co', except: '')]
+    #[Url(as: 'action', except: '')]
     public string $type = '';
 
-    #[Url(as: 'zmiana', except: '')]
+    #[Url(as: 'change', except: '')]
     public string $action = '';
 
-    #[Url(as: 'od', except: '')]
+    #[Url(as: 'from', except: '')]
     public string $from = '';
 
-    #[Url(as: 'do', except: '')]
+    #[Url(as: 'to', except: '')]
     public string $to = '';
 
     public function updated(string $property): void

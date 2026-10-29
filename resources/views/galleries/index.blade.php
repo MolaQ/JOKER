@@ -12,7 +12,7 @@
     <nav class="mt-8 flex flex-wrap gap-2" aria-label="{{ __('Drużyny') }}">
         <a href="{{ route('galleries.index') }}" @class(['chip', 'bg-ink text-white' => ! $team])>{{ __('Wszystkie') }}</a>
         @foreach($teams as $option)
-            <a href="{{ route('galleries.index', ['druzyna' => $option->slug]) }}" @class(['chip', 'bg-ink text-white' => $team?->is($option)])>{{ $option->name }}</a>
+            <a href="{{ route('galleries.index', ['team' => $option->slug]) }}" @class(['chip', 'bg-ink text-white' => $team?->is($option)])>{{ $option->name }}</a>
         @endforeach
     </nav>
 </section>

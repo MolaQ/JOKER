@@ -29,7 +29,7 @@ test('team pages use the slug and old english addresses redirect', function () {
     $this->get('/teams/seniorzy')->assertOk();
     $this->get("/teams/{$this->team->id}")->assertRedirect('/teams/seniorzy');
     $this->get('/druzyny/seniorzy')->assertRedirect('/teams/seniorzy');
-    $this->get('/schedule?pokaz=wyniki')->assertRedirect('/matches?pokaz=wyniki');
+    $this->get('/schedule?show=results')->assertRedirect('/matches?show=results');
 });
 
 test('standings switch competitions without reloading and accept old links', function () {
@@ -49,7 +49,13 @@ test('standings switch competitions without reloading and accept old links', fun
         ->assertSet('competition', "{$youth->id}-mlodzicy")
         ->assertSee('UKS Kłos');
 
-    $this->get("/standings?rozgrywki={$league->getRouteKey()}")->assertOk()->assertSee('III Liga Mężczyzn');
+    $this->get("/standings?competition={$league->getRouteKey()}")->assertOk()->assertSee('III Liga Mężczyzn');
     $this->get("/standings?competition={$youth->id}")->assertOk()->assertSee('UKS Kłos');
     $this->get("/tabele?competition={$youth->id}")->assertRedirect("/standings?competition={$youth->id}");
+});
+
+test('old polish query parameters redirect to english ones', function () {
+    $this->get('/matches?pokaz=wyniki&druzyna=seniorzy')->assertRedirect('/matches?show=results&team=seniorzy')->assertStatus(301);
+    $this->get('/mecze?pokaz=nadchodzace')->assertRedirect('/mecze?show=upcoming');
+    $this->get('/matches?show=results')->assertOk();
 });

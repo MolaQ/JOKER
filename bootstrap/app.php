@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsurePrivacyConsent;
+use App\Http\Middleware\RedirectLegacyQuery;
 use App\Http\Middleware\RedirectToCanonicalUrl;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\TrackPageView;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
+            RedirectLegacyQuery::class,
             RedirectToCanonicalUrl::class,
             SetLocale::class,
             TrackPageView::class,
@@ -30,7 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Skrypt statystyk wysyła dane przez sendBeacon (bez tokenu CSRF).
-        $middleware->validateCsrfTokens(except: ['statystyki/*', 'powiadomienia/*']);
+        $middleware->validateCsrfTokens(except: ['stats/*', 'notifications/*']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Serwer poczty nie odpowiada albo zły login w .env: zamiast strony 500 wracamy do formularza z komunikatem.

@@ -163,7 +163,7 @@ class SiteSettings implements ArrayAccess
         }
 
         $related = [
-            'druzyny' => ['zawodnicy/*', 'sztab/*'],
+            'teams' => ['players/*', 'staff/*'],
         ];
 
         return request()->is($path, $path.'/*', ...$related[$path] ?? []);

@@ -88,10 +88,10 @@ test('the support page shows tax, packages and gadgets that order through the co
         ->assertSee('0000123456')
         ->assertSee('Partner złoty')
         ->assertSee('Szalik kibica')
-        ->assertSee('temat=Zam', false);
+        ->assertSee('subject=Zam', false);
     $this->get('/panel/support')->assertOk()->assertSee('Szalik kibica');
 
-    $this->get(route('contact.index', ['temat' => 'Zamówienie: Szalik kibica']))->assertSee('value="Zamówienie: Szalik kibica"', false);
+    $this->get(route('contact.index', ['subject' => 'Zamówienie: Szalik kibica']))->assertSee('value="Zamówienie: Szalik kibica"', false);
 });
 
 test('browsers subscribe to push notifications and new articles notify them once', function () {

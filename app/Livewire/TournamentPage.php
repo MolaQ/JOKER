@@ -18,10 +18,10 @@ class TournamentPage extends Component
 {
     public Tournament $tournament;
 
-    #[Url(as: 'kategoria', except: '')]
+    #[Url(as: 'category', except: '')]
     public string $category = '';
 
-    #[Url(as: 'zakladka', except: '')]
+    #[Url(as: 'tab', except: '')]
     public string $tab = '';
 
     public function selectCategory(int $categoryId): void
@@ -49,16 +49,16 @@ class TournamentPage extends Component
         $standings = $bracket?->standings() ?? collect();
 
         $tabs = collect([
-            'druzyny' => [__('Drużyny'), $current?->participants->isNotEmpty()],
-            'grupy' => [__('Grupy'), $current?->groups->isNotEmpty()],
-            'mecze' => [__('Mecze'), $matches->isNotEmpty()],
-            'drabinka' => [__('Drabinka i miejsca'), $board->isNotEmpty()],
-            'klasyfikacja' => [__('Klasyfikacja'), $standings->isNotEmpty()],
-            'zasady' => [__('Zasady'), filled($this->tournament->rules)],
-            'informator' => [__('Informator'), filled($this->tournament->guest_info)],
+            'teams' => [__('Drużyny'), $current?->participants->isNotEmpty()],
+            'groups' => [__('Grupy'), $current?->groups->isNotEmpty()],
+            'matches' => [__('Mecze'), $matches->isNotEmpty()],
+            'bracket' => [__('Drabinka i miejsca'), $board->isNotEmpty()],
+            'ranking' => [__('Klasyfikacja'), $standings->isNotEmpty()],
+            'rules' => [__('Zasady'), filled($this->tournament->rules)],
+            'info' => [__('Informator'), filled($this->tournament->guest_info)],
         ])->filter(fn (array $entry) => $entry[1])->map(fn (array $entry) => $entry[0]);
 
-        $currentTab = $tabs->has($this->tab) ? $this->tab : ($tabs->keys()->first() ?? 'druzyny');
+        $currentTab = $tabs->has($this->tab) ? $this->tab : ($tabs->keys()->first() ?? 'teams');
 
         return view('livewire.tournament-page', [
             'categories' => $categories,

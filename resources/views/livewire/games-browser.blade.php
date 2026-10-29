@@ -49,8 +49,8 @@
                     @endif
                     <select wire:model.live="place" class="h-9 flex-1 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700 sm:flex-none" aria-label="{{ __('U siebie czy na wyjeździe') }}">
                         <option value="">{{ __('Dom i wyjazd') }}</option>
-                        <option value="dom">{{ __('U siebie') }}</option>
-                        <option value="wyjazd">{{ __('Na wyjeździe') }}</option>
+                        <option value="home">{{ __('U siebie') }}</option>
+                        <option value="away">{{ __('Na wyjeździe') }}</option>
                     </select>
                     @if($seasons->count() > 1)
                         <select wire:model.live="season" class="h-9 flex-1 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700 sm:flex-none" aria-label="{{ __('Sezon') }}">
@@ -333,8 +333,8 @@
                 <p class="mt-2 text-zinc-500">{{ $hasFilters ? __('Żaden mecz nie pasuje do wybranych filtrów.') : __('Terminarz pojawi się tu, gdy tylko zostanie ogłoszony.') }}</p>
                 @if($hasFilters)
                     <button type="button" wire:click="resetFilters" class="btn-primary mt-6">{{ __('Pokaż wszystkie mecze') }}</button>
-                @elseif($period === 'nadchodzace' && $periodCounts['wyniki'] > 0)
-                    <button type="button" wire:click="setPeriod('wyniki')" class="btn-primary mt-6">{{ __('Zobacz wyniki') }}</button>
+                @elseif($period === 'upcoming' && $periodCounts['results'] > 0)
+                    <button type="button" wire:click="setPeriod('results')" class="btn-primary mt-6">{{ __('Zobacz wyniki') }}</button>
                 @endif
             </div>
         @endforelse

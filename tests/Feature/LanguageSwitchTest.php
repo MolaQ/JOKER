@@ -163,7 +163,7 @@ test('Livewire updates keep the chosen language', function () {
         '_token' => csrf_token(),
         'components' => [[
             'snapshot' => html_entity_decode($snapshotMatch[1]),
-            'updates' => ['period' => 'wszystkie'],
+            'updates' => ['period' => 'all'],
             'calls' => [],
         ]],
     ]);

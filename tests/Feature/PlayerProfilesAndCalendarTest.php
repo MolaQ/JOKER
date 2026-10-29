@@ -52,7 +52,7 @@ test('calendar marks home and away games, results with V or X and opens the newe
     $won->articles()->attach([$older->id, $newer->id, $draft->id]);
 
     Livewire::test(GamesBrowser::class)
-        ->set('period', 'wszystkie')
+        ->set('period', 'all')
         ->assertSeeHtml('bg-(--cal-home-bg) text-(--cal-home-text) ring-1 ring-(--cal-home-border)')
         ->assertSeeHtml('bg-(--cal-away-bg) text-(--cal-away-text)')
         ->assertSeeHtml('aria-label="Wygrana"')

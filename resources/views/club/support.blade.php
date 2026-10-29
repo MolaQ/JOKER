@@ -60,7 +60,7 @@
                                 <li class="flex gap-2"><span class="text-sky-club" aria-hidden="true">✓</span> {{ $benefit }}</li>
                             @endforeach
                         </ul>
-                        <a href="{{ route('contact.index', ['temat' => __('Pakiet sponsorski').': '.$package->name]) }}" class="btn-dark mt-6 justify-center">{{ __('Zapytaj o pakiet') }}</a>
+                        <a href="{{ route('contact.index', ['subject' => __('Pakiet sponsorski').': '.$package->name]) }}" class="btn-dark mt-6 justify-center">{{ __('Zapytaj o pakiet') }}</a>
                     </div>
                 @endforeach
             </div>
