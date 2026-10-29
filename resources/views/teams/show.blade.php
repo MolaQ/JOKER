@@ -82,7 +82,7 @@
                             <p class="mt-1 flex items-center gap-2 text-xs text-zinc-500">
                                 @if($number)<span class="font-bold text-zinc-900">#{{ $number }}</span>@endif
                                 @if($player->pivot?->is_captain)<span class="rounded bg-sky-club px-1.5 py-0.5 font-bold text-white" title="{{ __('Kapitan') }}">C</span>@endif
-                                @if($player->team_id !== $team->id)<span title="{{ __('Gra też w swojej drużynie macierzystej') }}">↑ {{ __('z młodszego rocznika') }}</span>@endif
+                                @if($player->team_id !== $team->id && $team->birth_year)<span title="{{ __('Gra też w swojej drużynie macierzystej') }}">↑ {{ __('z młodszego rocznika') }}</span>@endif
                             </p>
                         </div>
                     </a>
