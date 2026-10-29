@@ -36,9 +36,10 @@ function galleryWithPhotos(int $count, array $attributes = []): Gallery
 test('an event gallery without a match has its own page and listing', function () {
     $gallery = galleryWithPhotos(2, ['description' => 'Obóz letni']);
 
-    $this->get('/galerie')->assertOk()->assertSee('Turniej w Pile');
+    $this->get('/galleries')->assertOk()->assertSee('Turniej w Pile');
     $this->get(route('galleries.show', $gallery))->assertOk()->assertSee('Obóz letni')->assertSee('ImageGallery');
-    $this->get('/galerie/'.$gallery->id)->assertRedirect(route('galleries.show', $gallery));
+    $this->get('/galleries/'.$gallery->id)->assertRedirect(route('galleries.show', $gallery));
+    $this->get('/galerie/'.$gallery->id)->assertRedirect('/galleries/'.$gallery->id);
     $this->get('/sitemap.xml')->assertSee(route('galleries.show', $gallery), false);
 
     $gallery->update(['is_published' => false]);
@@ -51,7 +52,7 @@ test('match details show a few thumbnails and link to the gallery, the gallery l
     $response = $this->get(route('games.show', $this->game))->assertOk()
         ->assertSee(route('galleries.show', $gallery), false)
         ->assertSee('Zobacz całą galerię (12)');
-    expect(substr_count($response->getContent(), 'galleries/'.$gallery->id.'/'))->toBe(8);
+    expect(preg_match_all('#galleries/'.$gallery->id.'/\d+\.jpg#', $response->getContent()))->toBe(8);
 
     $this->get(route('galleries.show', $gallery))->assertSee(route('games.show', $this->game), false);
 });
@@ -132,5 +133,5 @@ test('the panel creates an event gallery, uploads photos, captions and tags them
     expect($photo->fresh()->caption)->toBe('Rozgrzewka')
         ->and($photo->tags()->approved()->count())->toBe(1);
 
-    $this->get('/panel/galerie')->assertOk();
+    $this->get('/panel/galleries')->assertOk();
 });

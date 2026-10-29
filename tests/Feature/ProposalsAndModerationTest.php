@@ -112,8 +112,8 @@ test('a rejected proposal removes its photos', function () {
 
     expect(Storage::disk('public')->exists($path))->toBeFalse()
         ->and($proposal->fresh()->review_note)->toBe('Nieostre');
-    $this->get('/panel/propozycje')->assertOk();
-    $this->actingAs(User::factory()->trainer()->create())->get('/panel/propozycje')->assertForbidden();
+    $this->get('/panel/proposals')->assertOk();
+    $this->actingAs(User::factory()->trainer()->create())->get('/panel/proposals')->assertForbidden();
 });
 
 test('zdjęcia z dopisaną relacją trafiają do galerii, a relacja do aktualności', function () {

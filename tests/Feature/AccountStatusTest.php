@@ -30,10 +30,10 @@ test('registration requires the privacy consents and stores the consent date', f
         'kind' => 'player', 'team_id' => $this->team->id,
     ];
 
-    $this->post('/rejestracja', $data)->assertSessionHasErrors(['privacy', 'policy', 'age']);
+    $this->post('/register', $data)->assertSessionHasErrors(['privacy', 'policy', 'age']);
     expect(User::where('email', 'ola@example.com')->exists())->toBeFalse();
 
-    $this->post('/rejestracja', $data + ['privacy' => '1', 'policy' => '1', 'age' => '1'])->assertRedirect(route('profile.edit'));
+    $this->post('/register', $data + ['privacy' => '1', 'policy' => '1', 'age' => '1'])->assertRedirect(route('profile.edit'));
     expect(User::firstWhere('email', 'ola@example.com')->privacy_consent_at)->not->toBeNull();
 });
 
@@ -41,11 +41,11 @@ test('an account without consent must give it before using the site', function (
     $user = User::factory()->create();
     $user->forceFill(['privacy_consent_at' => null])->save();
 
-    $this->actingAs($user)->get('/moj-profil')->assertRedirect(route('account.consent'));
+    $this->actingAs($user)->get('/my-profile')->assertRedirect(route('account.consent'));
     $this->get(route('account.consent'))->assertOk()->assertSee('Zgoda na przetwarzanie danych');
     $this->post(route('account.consent.store'), ['privacy' => '1'])->assertSessionHasErrors('policy');
-    $this->post(route('account.consent.store'), ['privacy' => '1', 'policy' => '1'])->assertRedirect('/moj-profil');
-    $this->get('/moj-profil')->assertOk();
+    $this->post(route('account.consent.store'), ['privacy' => '1', 'policy' => '1'])->assertRedirect('/my-profile');
+    $this->get('/my-profile')->assertOk();
 });
 
 test('the club rejects an account with a reason and the user resubmits corrected data', function () {
@@ -66,7 +66,7 @@ test('the club rejects an account with a reason and the user resubmits corrected
         ->and(ParentAssignment::pendingFor($this->admin)->whereKey($user->id)->exists())->toBeFalse();
     Notification::assertSentTo($user, AccountRejected::class);
 
-    $this->actingAs($user)->get('/moj-profil')->assertSee('Podaj pełne imię i nazwisko dziecka.')->assertSee('Wyślij prośbę ponownie');
+    $this->actingAs($user)->get('/my-profile')->assertSee('Podaj pełne imię i nazwisko dziecka.')->assertSee('Wyślij prośbę ponownie');
     $this->post(route('account.resubmit'), ['name' => 'Jan Nowak', 'kind' => 'parent', 'team_id' => $this->team->id, 'note' => 'Piotr Nowak, rocznik 2010'])->assertSessionHasNoErrors();
 
     $user->refresh();
@@ -78,7 +78,7 @@ test('the club rejects an account with a reason and the user resubmits corrected
 test('the name of an approved account cannot be changed by its owner', function () {
     $user = User::factory()->create(['name' => 'Anna Nowak', 'activated_at' => now()]);
 
-    $this->actingAs($user)->get('/moj-profil')->assertSee('imię i nazwisko zmienia tylko klub');
+    $this->actingAs($user)->get('/my-profile')->assertSee('imię i nazwisko zmienia tylko klub');
     $this->post(route('profile.request-change'), ['name' => 'Ktoś Inny', 'email' => $user->email])->assertSessionHasNoErrors();
 
     expect(ProfileChangeRequest::first()->proposed_data['name'])->toBe('Anna Nowak');

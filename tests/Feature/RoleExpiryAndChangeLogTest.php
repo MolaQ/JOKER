@@ -126,8 +126,8 @@ test('dziennik widzi admin i prezes, inni nie; filtry działają', function () {
     $boss = User::factory()->boss()->create(['name' => 'Prezes']);
     $editor = User::factory()->editor()->create(['name' => 'Redaktorka']);
 
-    $this->actingAs($editor)->get('/panel/dziennik-zmian')->assertForbidden();
-    $this->actingAs($boss)->get('/panel/dziennik-zmian')->assertOk()->assertSee('Dziennik zmian');
+    $this->actingAs($editor)->get('/panel/audit-log')->assertForbidden();
+    $this->actingAs($boss)->get('/panel/audit-log')->assertOk()->assertSee('Dziennik zmian');
 
     $this->actingAs($editor);
     Sponsor::create(['name' => 'Sklep Sportowy', 'tier' => 'silver']);

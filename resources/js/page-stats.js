@@ -33,7 +33,7 @@ export function initPageStats() {
             visibleSince = null;
         }
 
-        send('/statystyki/wyswietlenie', { seconds: Math.round(seconds), scroll: maxScroll });
+        send('/stats/view', { seconds: Math.round(seconds), scroll: maxScroll });
     };
 
     scrollDepth();
@@ -56,7 +56,7 @@ export function initPageStats() {
             const label = (tab.dataset.track || tab.textContent || '').replace(/\s+/g, ' ').trim();
 
             if (label) {
-                send('/statystyki/zakladka', { label });
+                send('/stats/tab', { label });
             }
         }
     });

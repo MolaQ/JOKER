@@ -11,16 +11,16 @@ use Illuminate\Support\Facades\Route;
 // zmienia się w panelu: Role i uprawnienia.
 Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/wzmianki.json', fn () => response()->json(Mentions::suggestions()))->name('mentions');
+    Route::get('/mentions.json', fn () => response()->json(Mentions::suggestions()))->name('mentions');
 
     Route::middleware('can:teams.manage')->group(function () {
         Route::view('/teams', 'admin.teams.index')->name('teams.index');
         Route::view('/players', 'admin.players.index')->name('players.index');
     });
 
-    Route::view('/plan-treningow', 'admin.trainings.index')->middleware('can:trainings.manage')->name('trainings.index');
-    Route::view('/wychowankowie', 'admin.alumni.index')->middleware('can:articles.manage')->name('alumni.index');
-    Route::view('/wsparcie', 'admin.support.index')->middleware('can:sponsors.manage')->name('support.index');
+    Route::view('/training-schedule', 'admin.trainings.index')->middleware('can:trainings.manage')->name('trainings.index');
+    Route::view('/alumni', 'admin.alumni.index')->middleware('can:articles.manage')->name('alumni.index');
+    Route::view('/support', 'admin.support.index')->middleware('can:sponsors.manage')->name('support.index');
 
     Route::middleware('can:games.manage')->group(function () {
         Route::view('/games', 'admin.games.index')->name('games.index');
@@ -35,7 +35,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
 
     // Transmisje i galerie zdjęć meczów ligowych i turniejowych
     Route::view('/media', 'admin.media.index')->middleware('can:media.manage')->name('media.index');
-    Route::view('/galerie', 'admin.galleries.index')->middleware('can:media.manage')->name('galleries.index');
+    Route::view('/galleries', 'admin.galleries.index')->middleware('can:media.manage')->name('galleries.index');
 
     Route::middleware('can:competitions.manage')->group(function () {
         Route::view('/competitions', 'admin.competitions.index')->name('competitions.index');
@@ -54,32 +54,42 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
         Route::view('/settings', 'admin.settings.index')->name('settings.index');
         Route::view('/pages', 'admin.pages.index')->name('pages.index');
         Route::view('/seo', 'admin.seo.index')->name('seo.index');
-        Route::view('/wyroznienia', 'admin.awards.index')->name('awards.index');
+        Route::view('/awards', 'admin.awards.index')->name('awards.index');
     });
 
     Route::view('/statistics', 'admin.statistics.index')->middleware('can:statistics.view')->name('statistics.index');
-    Route::view('/dziennik-zmian', 'admin.audit.index')->middleware('can:audit.view')->name('audit.index');
+    Route::view('/audit-log', 'admin.audit.index')->middleware('can:audit.view')->name('audit.index');
 
     Route::middleware('can:import.run')->group(function () {
         Route::view('/import', 'admin.import.index')->name('import.index');
-        Route::get('/import/wzor/{type}', fn (string $type) => response(DataImport::template($type), 200, [
+        Route::get('/import/template/{type}', fn (string $type) => response(DataImport::template($type), 200, [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="wzor-'.$type.'.csv"',
         ]))->whereIn('type', array_keys(DataImport::TYPES))->name('import.template');
     });
 
     // Do zatwierdzenia: jedna strona z zakładkami (App\Support\Approvals), każda zakładka pod własnym adresem
-    Route::get('/do-zatwierdzenia', ApprovalsController::class)->name('approvals.index');
-    Route::get('/rodzice-do-przypisania', ApprovalsController::class)->defaults('section', 'rodzice')->name('parents.index');
-    Route::get('/konta-do-aktywacji', ApprovalsController::class)->defaults('section', 'konta')->name('accounts.index');
-    Route::get('/propozycje', ApprovalsController::class)->defaults('section', 'propozycje')->name('content-proposals.index');
-    Route::get('/komentarze', ApprovalsController::class)->defaults('section', 'komentarze')->name('comments.index');
-    Route::get('/zgloszone-wiadomosci', ApprovalsController::class)->defaults('section', 'wiadomosci')->name('reported-messages.index');
-    Route::get('/oznaczenia-zdjec', ApprovalsController::class)->defaults('section', 'oznaczenia')->name('photo-tags.index');
+    Route::get('/approvals', ApprovalsController::class)->name('approvals.index');
+    Route::get('/parent-assignments', ApprovalsController::class)->defaults('section', 'rodzice')->name('parents.index');
+    Route::get('/account-activations', ApprovalsController::class)->defaults('section', 'konta')->name('accounts.index');
+    Route::get('/proposals', ApprovalsController::class)->defaults('section', 'propozycje')->name('content-proposals.index');
+    Route::get('/comments', ApprovalsController::class)->defaults('section', 'komentarze')->name('comments.index');
+    Route::get('/reported-messages', ApprovalsController::class)->defaults('section', 'wiadomosci')->name('reported-messages.index');
+    Route::get('/photo-tags', ApprovalsController::class)->defaults('section', 'oznaczenia')->name('photo-tags.index');
     Route::get('/player-change-requests', ApprovalsController::class)->defaults('section', 'zawodnicy')->name('player-change-requests.index');
     Route::get('/profile-change-requests', ApprovalsController::class)->defaults('section', 'profile')->name('profile-change-requests.index');
 });
 
 // Stary adres panelu. Na XAMPP /admin bywa zajęty przez narzędzie bazy danych, dlatego panel jest pod /panel.
+// Stare polskie adresy panelu.
+foreach ([
+    'plan-treningow' => 'training-schedule', 'wychowankowie' => 'alumni', 'wsparcie' => 'support', 'galerie' => 'galleries',
+    'wyroznienia' => 'awards', 'dziennik-zmian' => 'audit-log', 'do-zatwierdzenia' => 'approvals',
+    'rodzice-do-przypisania' => 'parent-assignments', 'konta-do-aktywacji' => 'account-activations', 'propozycje' => 'proposals',
+    'komentarze' => 'comments', 'zgloszone-wiadomosci' => 'reported-messages', 'oznaczenia-zdjec' => 'photo-tags',
+] as $old => $new) {
+    Route::redirect('/panel/'.$old, '/panel/'.$new, 301);
+}
+
 Route::redirect('/admin', '/panel', 301);
 Route::get('/admin/{path}', fn (string $path) => redirect('/panel/'.$path, 301))->where('path', '.*');

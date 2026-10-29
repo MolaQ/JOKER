@@ -69,7 +69,7 @@ test('switching back to Polish restores Polish texts', function () {
 });
 
 test('an unknown language is rejected', function () {
-    $this->get('/jezyk/de')->assertNotFound();
+    $this->get('/language/de')->assertNotFound();
 });
 
 test('an article with an English version shows it with a British flag', function () {

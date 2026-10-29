@@ -6,8 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 /**
- * Adres w postaci „12-jan-kowalski”: numer zapewnia unikalność, nazwa - czytelność i SEO.
- * Stare adresy z samym numerem nadal działają (przekierowanie na pełny adres).
+ * Adres w postaci „12/jan-kowalski”: numer zapewnia unikalność, nazwa - czytelność i SEO.
+ * Stare adresy („12”, „12-jan-kowalski”) nadal działają (przekierowanie na pełny adres).
+ * Trasa musi dopuszczać ukośnik w parametrze: ->where('player', Slug::ROUTE_PATTERN).
  */
 trait HasReadableRouteKey
 {
@@ -15,7 +16,17 @@ trait HasReadableRouteKey
 
     public function getRouteKey(): string
     {
-        return $this->getKey().'-'.Str::slug($this->routeSlugSource());
+        $slug = Str::slug($this->routeSlugSource());
+
+        return $slug === '' ? (string) $this->getKey() : $this->getKey().$this->routeKeySeparator().$slug;
+    }
+
+    /**
+     * „/” dla stron (12/jan-kowalski); w parametrach zapytania (np. ?rozgrywki=) czytelniejszy jest „-”.
+     */
+    protected function routeKeySeparator(): string
+    {
+        return '/';
     }
 
     /**

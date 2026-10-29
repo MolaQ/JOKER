@@ -54,8 +54,8 @@ test('jedno kliknięcie aktywuje rodzica i przypisuje dziecko', function () {
     $parent = User::factory()->inactive()->create(['name' => 'Anna Kowalska', 'requested_role' => UserRole::Parent, 'requested_team_id' => $this->cadets->id, 'registration_note' => 'Jan Kowalski']);
 
     $this->actingAs(User::factory()->admin()->create());
-    $this->get('/panel/rodzice-do-przypisania')->assertOk()->assertSee('Przypisz do: Jan Kowalski (Kadeci)');
-    $this->get('/panel/konta-do-aktywacji')->assertOk()->assertDontSee('Anna Kowalska');
+    $this->get('/panel/parent-assignments')->assertOk()->assertSee('Przypisz do: Jan Kowalski (Kadeci)');
+    $this->get('/panel/account-activations')->assertOk()->assertDontSee('Anna Kowalska');
 
     Livewire::test(ParentAssignment::class)
         ->call('assign', $parent->id, $jan->id)
@@ -94,7 +94,7 @@ test('koordynator widzi i przypisuje tylko rodziców swojej drużyny, ale nie je
         ->and($coordinator->managedTeamIds()->all())->toBe([$this->cadets->id])
         ->and($coordinator->isStaffMember())->toBeFalse();
 
-    $this->actingAs($coordinator)->get('/panel/rodzice-do-przypisania')->assertOk()->assertSee('Rodzic Kadeta')->assertDontSee('Rodzic Seniora');
+    $this->actingAs($coordinator)->get('/panel/parent-assignments')->assertOk()->assertSee('Rodzic Kadeta')->assertDontSee('Rodzic Seniora');
 
     Livewire::test(ParentAssignment::class)->call('assign', $mine->id, $senior->id)->assertDispatched('toast', message: 'Wybierz zawodnika.', type: 'error');
     expect($mine->fresh()->is_active)->toBeFalse();

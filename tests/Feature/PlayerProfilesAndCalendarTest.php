@@ -100,7 +100,7 @@ test('standings use the club name set for the competition and badges only for tw
         'position' => 1, 'points' => 9,
     ]);
 
-    $this->get('/tabele')
+    $this->get('/standings')
         ->assertOk()
         ->assertSeeText('LOMS Joker Piła')
         ->assertDontSeeText('(kadeci)')
@@ -116,7 +116,7 @@ test('standings use the club name set for the competition and badges only for tw
         'position' => 2, 'points' => 6,
     ]);
 
-    $this->get('/tabele')->assertOk()->assertSeeHtml('ml-1">Kadeci II</span>');
+    $this->get('/standings')->assertOk()->assertSeeHtml('ml-1">Kadeci II</span>');
 
     expect(Competition::defaultTeamLabel('Seniorzy', 'seniorzy', 'LOMS Joker Piła'))->toBe(['display_name' => 'LOMS Joker Piła', 'display_suffix' => null])
         ->and(Competition::defaultTeamLabel('Kadeci II', 'kadeci-ii', 'ASBL; KS ASBL Piła'))->toBe(['display_name' => 'KS ASBL Piła', 'display_suffix' => null]);
@@ -243,7 +243,7 @@ test('player profile shows physical data, career, achievements and recent matche
 });
 
 test('main menu starts with news, matches and standings', function () {
-    $this->get('/kontakt')->assertSeeInOrder(['href="'.url('/aktualnosci').'"', 'href="'.url('/mecze').'"', 'href="'.url('/tabele').'"', 'href="'.url('/druzyny').'"'], false);
+    $this->get('/contact')->assertSeeInOrder(['href="'.url('/news').'"', 'href="'.url('/matches').'"', 'href="'.url('/standings').'"', 'href="'.url('/teams').'"'], false);
 });
 
 test('a player can play several positions', function () {

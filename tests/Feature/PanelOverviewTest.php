@@ -26,9 +26,9 @@ test('everything awaiting approval is on one page with a tab per section', funct
     $admin = User::factory()->admin()->create();
     User::factory()->create(['is_active' => false]);
 
-    $this->actingAs($admin)->get('/panel/do-zatwierdzenia')->assertRedirect(route('admin.accounts.index'));
+    $this->actingAs($admin)->get('/panel/approvals')->assertRedirect(route('admin.accounts.index'));
 
-    $this->get('/panel/komentarze')->assertOk()
+    $this->get('/panel/comments')->assertOk()
         ->assertSee('Do zatwierdzenia')
         ->assertSee('Propozycje treści')
         ->assertSee('Oznaczenia na zdjęciach')
@@ -42,10 +42,10 @@ test('a trainer sees only the approval sections their role allows', function () 
     $sections = Approvals::sectionsFor($trainer)->keys()->all();
 
     expect($sections)->not->toContain('propozycje', 'komentarze');
-    $this->actingAs($trainer)->get('/panel/propozycje')->assertForbidden();
+    $this->actingAs($trainer)->get('/panel/proposals')->assertForbidden();
 
     $fan = User::factory()->create();
-    $this->actingAs($fan)->get('/panel/do-zatwierdzenia')->assertForbidden();
+    $this->actingAs($fan)->get('/panel/approvals')->assertForbidden();
 });
 
 test('the club crest is the default logo of every club team and in the settings', function () {

@@ -106,20 +106,15 @@ class SiteSettings implements ArrayAccess
     }
 
     /**
-     * Adresy zapisane przed zmianą na polskie (np. /schedule) zamieniamy na aktualne (/mecze).
+     * Adresy zapisane w ustawieniach po staremu (np. /druzyny, /schedule) zamieniamy na aktualne (/teams, /matches).
      */
     public static function currentPath(string $url): string
     {
-        $legacy = [
-            'teams' => 'druzyny', 'news' => 'aktualnosci', 'players' => 'zawodnicy', 'trenerzy' => 'sztab',
-            'schedule' => 'mecze', 'standings' => 'tabele', 'contact' => 'kontakt', 'profile' => 'moj-profil',
-        ];
+        if (! preg_match('#^/([^/?\#]+)#', $url, $match) || ! array_key_exists($match[1], LegacyUrls::PREFIXES)) {
+            return $url;
+        }
 
-        return preg_replace_callback(
-            '#^/('.implode('|', array_keys($legacy)).')(?=/|\?|$)#',
-            fn (array $match) => '/'.$legacy[$match[1]],
-            $url
-        );
+        return LegacyUrls::translate($url);
     }
 
     /**

@@ -27,7 +27,7 @@ test('admin saves colours, texts and links and the site shows them', function ()
     Livewire::test(SiteSettingsManager::class)
         ->set('values.color_topbar_bg', '#E30613')
         ->set('values.club_name', 'Joker Piła Test')
-        ->set('values.topbar_links_left', [['label' => 'Bilety', 'url' => '/strona/bilety']])
+        ->set('values.topbar_links_left', [['label' => 'Bilety', 'url' => '/page/bilety']])
         ->set('values.topbar_enabled', true)
         ->call('save')
         ->assertHasNoErrors();

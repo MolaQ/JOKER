@@ -35,7 +35,7 @@ test('alumni are managed in the panel and shown on their page and the homepage',
 
     $this->get(route('alumni.index'))->assertOk()->assertSee('Mateusz Malinowski')->assertSee('Powołanie do kadry');
     $this->get('/')->assertOk()->assertSee('Nasi wychowankowie')->assertSee('Mateusz Malinowski');
-    $this->get('/panel/wychowankowie')->assertOk()->assertSee('Mateusz Malinowski');
+    $this->get('/panel/alumni')->assertOk()->assertSee('Mateusz Malinowski');
 });
 
 test('a trainer plans trainings of own teams on several days and sees busy courts', function () {
@@ -68,8 +68,8 @@ test('a trainer plans trainings of own teams on several days and sees busy court
 test('staff members can plan trainings and fans cannot', function () {
     $staff = User::factory()->create(['role' => UserRole::Staff]);
 
-    $this->actingAs($staff)->get('/panel/plan-treningow')->assertOk();
-    $this->actingAs(User::factory()->create())->get('/panel/plan-treningow')->assertForbidden();
+    $this->actingAs($staff)->get('/panel/training-schedule')->assertOk();
+    $this->actingAs(User::factory()->create())->get('/panel/training-schedule')->assertForbidden();
 });
 
 test('the support page shows tax, packages and gadgets that order through the contact form', function () {
@@ -89,7 +89,7 @@ test('the support page shows tax, packages and gadgets that order through the co
         ->assertSee('Partner złoty')
         ->assertSee('Szalik kibica')
         ->assertSee('temat=Zam', false);
-    $this->get('/panel/wsparcie')->assertOk()->assertSee('Szalik kibica');
+    $this->get('/panel/support')->assertOk()->assertSee('Szalik kibica');
 
     $this->get(route('contact.index', ['temat' => 'Zamówienie: Szalik kibica']))->assertSee('value="Zamówienie: Szalik kibica"', false);
 });

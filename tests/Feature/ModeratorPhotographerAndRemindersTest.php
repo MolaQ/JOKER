@@ -41,7 +41,7 @@ test('moderator akceptuje konta i komentarze w całym klubie, fotograf zarządza
         ->and($photographer->hasPermission(Permission::Articles))->toBeFalse()
         ->and(Approvals::sectionsFor($photographer)->keys()->all())->toBe(['oznaczenia']);
 
-    $this->actingAs($photographer)->get('/panel/galerie')->assertOk();
+    $this->actingAs($photographer)->get('/panel/galleries')->assertOk();
     $this->actingAs($photographer)->get('/panel/articles')->assertForbidden();
 });
 
@@ -56,7 +56,7 @@ test('koordynator moderuje tylko komentarze pod meczami swoich drużyn, a panel 
 
     expect(CommentModeration::pendingCount($coordinator))->toBe(1);
 
-    $this->actingAs($coordinator)->get('/panel/komentarze')->assertOk()->assertSee('Brawo kadeci')->assertDontSee('Brawo seniorzy')->assertDontSee('Pod artykułem');
+    $this->actingAs($coordinator)->get('/panel/comments')->assertOk()->assertSee('Brawo kadeci')->assertDontSee('Brawo seniorzy')->assertDontSee('Pod artykułem');
 
     Livewire::test(CommentModeration::class)->call('approve', 'game', $mine->id);
     expect($mine->fresh()->is_approved)->toBeTrue()->and($mine->fresh()->approved_by)->toBe($coordinator->id);

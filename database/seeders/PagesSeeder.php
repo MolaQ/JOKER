@@ -134,11 +134,11 @@ class PagesSeeder extends Seeder
                     .'<li><strong>Telefon klubu:</strong> <a href="tel:+48531064100">+48 531 064 100</a></li>'
                     .'</ul>'
                     .'<h2>Treningi</h2>'
-                    .'<p>Każda grupa ma stały plan zajęć w tygodniu. Zobacz <a href="/plan-treningow">plan treningów</a> i wybierz grupę z rocznika.</p>'
+                    .'<p>Każda grupa ma stały plan zajęć w tygodniu. Zobacz <a href="/training-schedule">plan treningów</a> i wybierz grupę z rocznika.</p>'
                     .'<h2>Zakwaterowanie i dojazd</h2>'
                     .'<p><em>Do uzupełnienia w panelu (Podstrony): informacje o internacie lub zakwaterowaniu, kosztach i dojeździe do Piły.</em></p>'
                     .'<h2>Jak zacząć?</h2>'
-                    .'<p>Zadzwoń albo napisz: umówimy trening próbny i opowiemy o szkole. Zobacz też, kto już przeszedł tę drogę: <a href="/wychowankowie">nasi wychowankowie</a>.</p>',
+                    .'<p>Zadzwoń albo napisz: umówimy trening próbny i opowiemy o szkole. Zobacz też, kto już przeszedł tę drogę: <a href="/alumni">nasi wychowankowie</a>.</p>',
             ],
             [
                 'title' => 'Dla rodziców',
@@ -172,7 +172,7 @@ class PagesSeeder extends Seeder
                 'slug' => 'polityka-prywatnosci',
                 'lead' => 'Jak klub przetwarza dane osób korzystających z serwisu i kont użytkowników.',
                 'content' => '<p><em>Wzór do sprawdzenia przez zarząd klubu (najlepiej z prawnikiem lub inspektorem ochrony danych) i uzupełnienia w panelu (Podstrony).</em></p>'
-                    .'<h2>Administrator danych</h2><p>Administratorem danych jest UKS SMS Joker Piła, ul. Wincentego Pola 11, 64-920 Piła, tel. +48 531 064 100. W sprawach danych osobowych napisz przez <a href="/kontakt">formularz kontaktowy</a>.</p>'
+                    .'<h2>Administrator danych</h2><p>Administratorem danych jest UKS SMS Joker Piła, ul. Wincentego Pola 11, 64-920 Piła, tel. +48 531 064 100. W sprawach danych osobowych napisz przez <a href="/contact">formularz kontaktowy</a>.</p>'
                     .'<h2>Jakie dane i po co</h2><ul>'
                     .'<li><strong>Konto w serwisie</strong>: imię i nazwisko, e-mail, hasło (zaszyfrowane) i dane, które sam podasz w profilu. Podstawa: Twoja zgoda (art. 6 ust. 1 lit. a RODO). Zgoda jest warunkiem założenia konta.</li>'
                     .'<li><strong>Profile zawodników</strong>: imię i nazwisko, drużyna, pozycja, zdjęcie i statystyki. Podstawa: zgoda zawodnika albo jego rodzica (opiekuna) oraz uzasadniony interes klubu w informowaniu o działalności sportowej.</li>'

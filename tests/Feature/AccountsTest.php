@@ -23,7 +23,7 @@ beforeEach(function () {
 });
 
 test('a parent registers and waits for activation', function () {
-    $this->post('/rejestracja', [
+    $this->post('/register', [
         'name' => 'Anna Nowak',
         'email' => 'anna@example.com',
         'password' => 'tajnehaslo1',
@@ -41,7 +41,7 @@ test('a parent registers and waits for activation', function () {
         ->and($user->roles())->toBeEmpty();
     Notification::assertSentTo($user, VerifyEmail::class);
 
-    $this->get('/moj-profil')->assertSee('Konto czeka na aktywację');
+    $this->get('/my-profile')->assertSee('Konto czeka na aktywację');
     $this->get('/panel')->assertForbidden();
 });
 
@@ -74,7 +74,7 @@ test('a trainer activates a parent of own team and links the child', function ()
     $otherTeam = Team::create(['name' => 'Seniorzy', 'slug' => 'seniorzy', 'category' => 'senior']);
     $stranger = User::factory()->inactive()->create(['name' => 'Obca Osoba', 'requested_role' => UserRole::Parent, 'requested_team_id' => $otherTeam->id]);
 
-    $this->actingAs($trainer)->get('/panel/rodzice-do-przypisania')->assertOk()->assertSee('Anna Nowak')->assertDontSee('Obca Osoba');
+    $this->actingAs($trainer)->get('/panel/parent-assignments')->assertOk()->assertSee('Anna Nowak')->assertDontSee('Obca Osoba');
 
     Livewire::test(ParentAssignment::class)->call('assign', $parent->id, $child->id);
 
@@ -127,10 +127,10 @@ test('a parent goes inactive with the last child and comes back with it', functi
 test('password can be reset by email link', function () {
     $user = User::factory()->create(['email' => 'reset@example.com']);
 
-    $this->post('/haslo/przypomnij', ['email' => 'reset@example.com'])->assertSessionHas('success');
+    $this->post('/password/forgot', ['email' => 'reset@example.com'])->assertSessionHas('success');
 
     Notification::assertSentTo($user, ResetPassword::class, function (ResetPassword $notification) use ($user) {
-        $this->post('/haslo/nowe', [
+        $this->post('/password/reset', [
             'token' => $notification->token,
             'email' => $user->email,
             'password' => 'nowehaslo123',
@@ -147,14 +147,14 @@ test('password can be reset by email link', function () {
 test('users change their password in my profile', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user)->put('/moj-profil/haslo', ['current_password' => 'zle', 'password' => 'nowehaslo123', 'password_confirmation' => 'nowehaslo123'])->assertSessionHasErrors('current_password');
-    $this->actingAs($user)->put('/moj-profil/haslo', ['current_password' => 'password', 'password' => 'nowehaslo123', 'password_confirmation' => 'nowehaslo123'])->assertSessionHasNoErrors();
+    $this->actingAs($user)->put('/my-profile/password', ['current_password' => 'zle', 'password' => 'nowehaslo123', 'password_confirmation' => 'nowehaslo123'])->assertSessionHasErrors('current_password');
+    $this->actingAs($user)->put('/my-profile/password', ['current_password' => 'password', 'password' => 'nowehaslo123', 'password_confirmation' => 'nowehaslo123'])->assertSessionHasNoErrors();
 
     expect(Hash::check('nowehaslo123', $user->fresh()->password))->toBeTrue();
 });
 
 test('the join button in the menu leads guests to registration', function () {
-    $this->get('/')->assertOk()->assertSee('href="'.url('/rejestracja').'"', false);
+    $this->get('/')->assertOk()->assertSee('href="'.url('/register').'"', false);
 
-    $this->actingAs(User::factory()->create())->get('/')->assertOk()->assertDontSee('href="'.url('/rejestracja').'"', false);
+    $this->actingAs(User::factory()->create())->get('/')->assertOk()->assertDontSee('href="'.url('/register').'"', false);
 });

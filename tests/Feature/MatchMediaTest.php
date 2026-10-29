@@ -224,7 +224,7 @@ test('game page shows result, streams, galleries and linked articles', function 
     $article = Article::factory()->for(User::factory(), 'author')->create(['title' => 'Relacja z wygranej', 'status' => 'published', 'published_at' => now()->subDay()]);
     $article->games()->attach($game);
 
-    $this->get('/mecze/'.$game->id)
+    $this->get('/matches/'.$game->id)
         ->assertOk()
         ->assertSee('MKS Kalisz')
         ->assertSee('23:25')

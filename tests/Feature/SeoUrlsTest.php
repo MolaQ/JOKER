@@ -17,18 +17,19 @@ beforeEach(function () {
 test('player pages have readable addresses and old ones redirect', function () {
     $player = Player::factory()->create(['first_name' => 'Łukasz', 'last_name' => 'Żółć', 'team_id' => $this->team->id]);
 
-    expect(route('players.show', $player))->toEndWith("/zawodnicy/{$player->id}-lukasz-zolc");
+    expect(route('players.show', $player))->toEndWith("/players/{$player->id}/lukasz-zolc");
 
-    $this->get("/zawodnicy/{$player->id}-lukasz-zolc")->assertOk();
-    $this->get("/zawodnicy/{$player->id}")->assertRedirect("/zawodnicy/{$player->id}-lukasz-zolc")->assertStatus(301);
-    $this->get("/players/{$player->id}")->assertRedirect("/zawodnicy/{$player->id}")->assertStatus(301);
+    $this->get("/players/{$player->id}/lukasz-zolc")->assertOk();
+    $this->get("/players/{$player->id}")->assertRedirect("/players/{$player->id}/lukasz-zolc")->assertStatus(301);
+    $this->get("/players/{$player->id}-lukasz-zolc")->assertRedirect("/players/{$player->id}/lukasz-zolc")->assertStatus(301);
+    $this->get("/zawodnicy/{$player->id}-lukasz-zolc")->assertRedirect("/players/{$player->id}-lukasz-zolc")->assertStatus(301);
 });
 
 test('team pages use the slug and old english addresses redirect', function () {
-    $this->get('/druzyny/seniorzy')->assertOk();
-    $this->get("/druzyny/{$this->team->id}")->assertRedirect('/druzyny/seniorzy');
-    $this->get('/teams/seniorzy')->assertRedirect('/druzyny/seniorzy');
-    $this->get('/schedule?pokaz=wyniki')->assertRedirect('/mecze?pokaz=wyniki');
+    $this->get('/teams/seniorzy')->assertOk();
+    $this->get("/teams/{$this->team->id}")->assertRedirect('/teams/seniorzy');
+    $this->get('/druzyny/seniorzy')->assertRedirect('/teams/seniorzy');
+    $this->get('/schedule?pokaz=wyniki')->assertRedirect('/matches?pokaz=wyniki');
 });
 
 test('standings switch competitions without reloading and accept old links', function () {
@@ -48,6 +49,7 @@ test('standings switch competitions without reloading and accept old links', fun
         ->assertSet('competition', "{$youth->id}-mlodzicy")
         ->assertSee('UKS Kłos');
 
-    $this->get("/tabele?rozgrywki={$league->getRouteKey()}")->assertOk()->assertSee('III Liga Mężczyzn');
-    $this->get("/standings?competition={$youth->id}")->assertRedirect("/tabele?competition={$youth->id}");
+    $this->get("/standings?rozgrywki={$league->getRouteKey()}")->assertOk()->assertSee('III Liga Mężczyzn');
+    $this->get("/standings?competition={$youth->id}")->assertOk()->assertSee('UKS Kłos');
+    $this->get("/tabele?competition={$youth->id}")->assertRedirect("/standings?competition={$youth->id}");
 });

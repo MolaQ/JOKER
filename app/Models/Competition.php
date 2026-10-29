@@ -18,6 +18,11 @@ class Competition extends Model
 
     use HasReadableRouteKey;
 
+    protected function routeKeySeparator(): string
+    {
+        return '-';
+    }
+
     /**
      * Domyślna kolejność kryteriów sortowania tabeli, gdy rozgrywki nie mają
      * własnej konfiguracji.

@@ -28,14 +28,14 @@ test('login-only documents are listed and downloaded only by active accounts', f
     $public = document(true, 'regulations');
     $private = document(false);
 
-    $this->get('/dokumenty')->assertOk()->assertSee('Regulamin klubu')->assertDontSee('Klauzula RODO')->assertSee('dostępne po zalogowaniu');
+    $this->get('/documents')->assertOk()->assertSee('Regulamin klubu')->assertDontSee('Klauzula RODO')->assertSee('dostępne po zalogowaniu');
     $this->get($public->downloadUrl())->assertOk();
     $this->get($private->downloadUrl())->assertUnauthorized();
 
     $this->actingAs(User::factory()->inactive()->create())->get($private->downloadUrl())->assertForbidden();
 
     $this->actingAs(User::factory()->parent()->create());
-    $this->get('/dokumenty')->assertSee('Klauzula RODO')->assertSee('RODO i ochrona danych');
+    $this->get('/documents')->assertSee('Klauzula RODO')->assertSee('RODO i ochrona danych');
     $this->get($private->downloadUrl())->assertOk();
 
     expect($private->fresh()->download_count)->toBe(1);

@@ -14,7 +14,7 @@
         // Zalogowany nie potrzebuje przycisku prowadzącego do rejestracji.
         $navButtonUrl = (string) $site['nav_button_url'];
         $showNavButton = $site['nav_button_enabled'] && filled($site['nav_button_label'])
-            && ! (auth()->check() && rtrim($navButtonUrl, '/') === '/rejestracja');
+            && ! (auth()->check() && rtrim(\App\Support\SiteSettings::currentPath($navButtonUrl), '/') === '/register');
     @endphp
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">

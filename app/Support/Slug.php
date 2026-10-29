@@ -7,6 +7,9 @@ use Illuminate\Support\Str;
 
 class Slug
 {
+    /** Adres „12/jan-kowalski” (oraz stary „12-jan-kowalski” i „12”, przekierowywane na aktualny). */
+    public const ROUTE_PATTERN = '[0-9]+(?:-[^/]*)?(?:/[^/]*)?';
+
     /**
      * Czytelny, unikalny adres: „seniorzy”, a przy powtórce „seniorzy-2”.
      *
