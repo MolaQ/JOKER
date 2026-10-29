@@ -17,6 +17,7 @@ use App\Support\PushTriggers;
 use App\Support\SearchIndex;
 use App\Support\Sitemap;
 use App\Support\SiteSettings;
+use App\UserRole;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -53,6 +54,8 @@ class AppServiceProvider extends ServiceProvider
         // Uprawnienia z App\Permission (np. can:teams.manage) liczone z ról konta i jego wyjątków.
         Gate::before(fn (User $user, string $ability) => ($permission = Permission::tryFrom($ability)) ? $user->hasPermission($permission) : null);
         Gate::define('panel', fn (User $user) => $user->canAccessPanel());
+        // Zakładka „System” (ustawienia całej strony): administrator i szef.
+        Gate::define('system', fn (User $user) => $user->hasRole(UserRole::Admin, UserRole::Boss));
 
         // Powiadomienia push o nowych aktualnościach, wynikach i galeriach.
         PushTriggers::register();

@@ -36,7 +36,7 @@ class SiteSettingsManager extends Component
      */
     public function boot(): void
     {
-        abort_unless(auth()->user()?->can('site.manage'), 403);
+        abort_unless(auth()->user()?->can('system'), 403);
     }
 
     public function mount(SiteSettings $settings): void

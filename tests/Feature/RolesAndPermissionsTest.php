@@ -33,9 +33,9 @@ test('panel sections follow permissions', function () {
 
     $this->actingAs($editor)->get('/panel/articles')->assertOk();
     $this->actingAs($editor)->get('/panel/teams')->assertForbidden();
-    $this->actingAs($editor)->get('/panel/settings')->assertForbidden();
+    $this->actingAs($editor)->get('/panel/system')->assertForbidden();
 
-    $this->actingAs(User::factory()->boss()->create())->get('/panel/settings')->assertOk();
+    $this->actingAs(User::factory()->boss()->create())->get('/panel/system')->assertOk();
     $this->actingAs(User::factory()->admin()->create())->get('/panel/roles')->assertOk();
 });
 

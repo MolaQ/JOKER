@@ -25,10 +25,8 @@
                 ['label' => 'Galerie', 'route' => 'admin.galleries.index', 'icon' => 'photo', 'can' => 'media.manage'],
                 ['label' => 'Slajdy na stronie głównej', 'route' => 'admin.hero-slides.index', 'icon' => 'slides', 'can' => 'homepage.manage'],
             ],
-            'Wygląd strony' => [
-                ['label' => 'Wygląd i ustawienia', 'route' => 'admin.settings.index', 'icon' => 'cog', 'can' => 'site.manage'],
+            'Treści strony' => [
                 ['label' => 'Podstrony', 'route' => 'admin.pages.index', 'icon' => 'list', 'can' => 'site.manage'],
-                ['label' => 'Pozycjonowanie (SEO)', 'route' => 'admin.seo.index', 'icon' => 'chart', 'can' => 'site.manage'],
                 ['label' => 'Wyróżnienia i certyfikaty', 'route' => 'admin.awards.index', 'icon' => 'star', 'can' => 'site.manage'],
             ],
             'Klub' => [
@@ -38,8 +36,12 @@
                 ['label' => 'Sponsorzy', 'route' => 'admin.sponsors.index', 'icon' => 'briefcase', 'can' => 'sponsors.manage'],
                 ['label' => 'Wspieraj klub', 'route' => 'admin.support.index', 'icon' => 'heart', 'can' => 'sponsors.manage'],
                 ['label' => 'Dokumenty', 'route' => 'admin.documents.index', 'icon' => 'document', 'can' => 'documents.manage'],
+            ],
+            'System' => [
+                ['label' => 'Ustawienia systemu', 'route' => 'admin.settings.index', 'icon' => 'cog', 'can' => 'system'],
                 ['label' => 'Użytkownicy', 'route' => 'admin.users.index', 'icon' => 'key', 'can' => 'users.manage'],
                 ['label' => 'Role i uprawnienia', 'route' => 'admin.roles.index', 'icon' => 'shield', 'can' => 'roles.manage'],
+                ['label' => 'Pozycjonowanie (SEO)', 'route' => 'admin.seo.index', 'icon' => 'chart', 'can' => 'site.manage'],
                 ['label' => 'Dziennik zmian', 'route' => 'admin.audit.index', 'icon' => 'list', 'can' => 'audit.view'],
                 ['label' => 'Import z plików', 'route' => 'admin.import.index', 'icon' => 'upload', 'can' => 'import.run'],
             ],

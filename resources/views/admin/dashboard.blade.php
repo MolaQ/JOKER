@@ -14,7 +14,7 @@
             ['user', 'Dodaj zawodnika', 'Lub popraw dane w kadrze', 'admin.players.index', 'teams.manage'],
             ['users', 'Drużyny i sztab', 'Zdjęcie, trenerzy, funkcje', 'admin.teams.index', 'teams.manage'],
             ['video', 'Transmisje i galerie', 'Link do transmisji, zdjęcia', 'admin.media.index', 'media.manage'],
-            ['cog', 'Wygląd i ustawienia', 'Kolory, menu, pasek, teksty', 'admin.settings.index', 'site.manage'],
+            ['cog', 'System', 'Kolory, menu, wiadomości, ustawienia', 'admin.settings.index', 'system'],
             ['list', 'Podstrony', 'Dla rodziców, FAQ, O klubie', 'admin.pages.index', 'site.manage'],
         ], fn (array $action) => auth()->user()->can($action[4]));
     @endphp

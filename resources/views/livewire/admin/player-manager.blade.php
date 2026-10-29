@@ -331,7 +331,7 @@
                                             </div>
                                         @endforeach
                                     </div>
-                                    @can('site.manage')<p class="mt-1 text-xs text-gray-500">Listę serwisów i ikony ustawisz w <a href="{{ route('admin.settings.index') }}" class="text-sky-700 underline">Ustawienia → Profile zawodników</a>.</p>@endcan
+                                    @can('system')<p class="mt-1 text-xs text-gray-500">Listę serwisów i ikony ustawisz w <a href="{{ route('admin.settings.index') }}" class="text-sky-700 underline">System → Profile zawodników</a>.</p>@endcan
                                 </div>
                             @endif
 

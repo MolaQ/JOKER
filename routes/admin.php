@@ -50,8 +50,10 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     Route::view('/users', 'admin.users.index')->middleware('can:users.manage')->name('users.index');
     Route::view('/roles', 'admin.roles.index')->middleware('can:roles.manage')->name('roles.index');
 
+    Route::view('/system', 'admin.settings.index')->middleware('can:system')->name('settings.index');
+    Route::redirect('/settings', '/panel/system', 301);
+
     Route::middleware('can:site.manage')->group(function () {
-        Route::view('/settings', 'admin.settings.index')->name('settings.index');
         Route::view('/pages', 'admin.pages.index')->name('pages.index');
         Route::view('/seo', 'admin.seo.index')->name('seo.index');
         Route::view('/awards', 'admin.awards.index')->name('awards.index');

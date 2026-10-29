@@ -56,7 +56,7 @@ test('the club crest is the default logo of every club team and in the settings'
     $team->update(['logo_path' => 'teams/own.png']);
     expect($team->fresh()->logoPath())->toBe('teams/own.png');
 
-    $this->actingAs(User::factory()->admin()->create())->get('/panel/settings')->assertOk()->assertSee('img/logo-256.webp')->assertSee('domyślny');
+    $this->actingAs(User::factory()->admin()->create())->get('/panel/system')->assertOk()->assertSee('img/logo-256.webp')->assertSee('domyślny');
 });
 
 test('the start seeder adds this season competitions with the union pages', function () {
