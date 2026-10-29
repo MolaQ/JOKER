@@ -90,7 +90,7 @@ class Seo
             'image' => [Media::articleImage($article)],
             'datePublished' => $article->published_at?->toIso8601String(),
             'dateModified' => $article->updated_at?->toIso8601String(),
-            'author' => $article->author ? ['@type' => 'Person', 'name' => $article->author->name] : ['@type' => 'Organization', 'name' => config('app.name')],
+            'author' => $article->authorName() ? ['@type' => 'Person', 'name' => $article->authorName()] : ['@type' => 'Organization', 'name' => config('app.name')],
             'publisher' => ['@id' => url('/').'#klub'],
             'mainEntityOfPage' => route('articles.show', $article),
         ]);

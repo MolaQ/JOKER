@@ -118,7 +118,7 @@
                                             <tr>
                                                 <th class="sticky left-0 bg-gray-50 px-3 py-2 text-left font-semibold text-gray-600">Pisze ↓ / do →</th>
                                                 @foreach(\App\UserRole::cases() as $to)
-                                                    <th class="px-1 py-2 text-center font-semibold text-gray-600"><span class="block w-16 leading-tight">{{ $to->label() }}</span></th>
+                                                    <th class="px-1 py-2 text-center font-semibold text-gray-600 normal-case"><span class="block w-20 leading-tight break-words normal-case">{{ $to->label() }}</span></th>
                                                 @endforeach
                                             </tr>
                                         </thead>

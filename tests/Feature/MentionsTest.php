@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Admin\ArticleManager;
 use App\Models\Article;
 use App\Models\Player;
 use App\Models\Team;
@@ -50,4 +51,28 @@ it('gives the editor a list of players to mention', function () {
         ->getJson(route('admin.mentions'))
         ->assertOk()
         ->assertJsonFragment(['name' => 'Marcel Molak', 'team' => 'Kadeci']);
+});
+
+it('lets the editor choose the article author or type an outside author', function () {
+    $admin = User::factory()->admin()->create(['name' => 'Marcin Admin']);
+    $coach = User::factory()->trainer()->create(['name' => 'Dawid Trener']);
+    $this->actingAs($admin);
+
+    Livewire\Livewire::test(ArticleManager::class)
+        ->call('openCreateModal')
+        ->assertSet('authorId', (string) $admin->id)
+        ->set('title', 'Relacja')->set('content', '<p>Tekst</p>')
+        ->set('authorId', (string) $coach->id)
+        ->call('save')->assertHasNoErrors();
+
+    $article = Article::where('title', 'Relacja')->firstOrFail();
+    expect($article->author_id)->toBe($coach->id)->and($article->authorName())->toBe('Dawid Trener');
+
+    Livewire\Livewire::test(ArticleManager::class)
+        ->call('openEditModal', $article->id)
+        ->set('authorName', 'Jan Gość')->set('status', 'published')
+        ->call('save')->assertHasNoErrors();
+
+    expect($article->fresh()->authorName())->toBe('Jan Gość');
+    $this->get(route('articles.show', $article))->assertSee('Jan Gość');
 });

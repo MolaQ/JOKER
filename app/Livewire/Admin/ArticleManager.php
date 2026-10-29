@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\AccountStatus;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Livewire\Concerns\SortsTable;
 use App\Models\Article;
@@ -44,6 +45,12 @@ class ArticleManager extends Component
 
     public bool $allow_comments = true;
 
+    /** Autor z listy kont (domyślnie osoba, która dodaje artykuł). */
+    public string $authorId = '';
+
+    /** Autor spoza społeczności, wpisany ręcznie (ma pierwszeństwo przed listą). */
+    public string $authorName = '';
+
     public $featured_image = null;
 
     public ?string $existingImage = null;
@@ -84,6 +91,8 @@ class ArticleManager extends Component
             'focusY' => 'integer|between:0,100',
             'gameIds' => 'array',
             'gameIds.*' => 'integer|exists:games,id',
+            'authorId' => 'nullable|integer|exists:users,id',
+            'authorName' => 'nullable|string|max:120',
         ];
     }
 
@@ -118,6 +127,8 @@ class ArticleManager extends Component
         $this->published_at = $article->published_at?->format('Y-m-d\TH:i');
         $this->is_featured = $article->is_featured;
         $this->allow_comments = $article->allow_comments;
+        $this->authorId = (string) $article->author_id;
+        $this->authorName = (string) $article->author_name;
         $this->existingImage = $article->featured_image;
         $this->featured_image = null;
         [$this->focusX, $this->focusY] = array_map('intval', explode(' ', str_replace('%', '', $article->imageFocus())));
@@ -137,7 +148,9 @@ class ArticleManager extends Component
             unset($validated['featured_image']);
         }
 
-        unset($validated['gameIds'], $validated['gameIds.*'], $validated['focusX'], $validated['focusY']);
+        unset($validated['gameIds'], $validated['gameIds.*'], $validated['focusX'], $validated['focusY'], $validated['authorId'], $validated['authorName']);
+        $validated['author_id'] = (int) ($this->authorId ?: Auth::id());
+        $validated['author_name'] = trim($this->authorName) ?: null;
         $validated['featured_image_focus'] = $this->focusX.'% '.$this->focusY.'%';
 
         foreach (['title_en', 'excerpt_en', 'content_en'] as $englishField) {
@@ -151,7 +164,6 @@ class ArticleManager extends Component
             $this->toast('Artykuł został zaktualizowany.');
         } else {
             $validated['slug'] = Slug::unique(Article::class, $this->title);
-            $validated['author_id'] = Auth::id();
             Article::create($validated)->games()->sync($this->gameIds);
             $this->toast('Artykuł został dodany.');
         }
@@ -230,6 +242,8 @@ class ArticleManager extends Component
         $this->published_at = null;
         $this->is_featured = false;
         $this->allow_comments = true;
+        $this->authorId = (string) Auth::id();
+        $this->authorName = '';
         $this->featured_image = null;
         $this->existingImage = null;
         $this->focusX = 50;
@@ -243,7 +257,7 @@ class ArticleManager extends Component
     {
         return [
             'tytul' => 'title',
-            'autor' => fn ($q, $d) => $q->orderBy(User::select('name')->whereColumn('users.id', 'articles.author_id'), $d),
+            'autor' => fn ($q, $d) => $q->orderByRaw('coalesce(articles.author_name, (select name from users where users.id = articles.author_id)) '.($d === 'desc' ? 'desc' : 'asc')),
             'status' => 'status',
             'wyswietlenia' => 'views_count',
             'polubienia' => 'likes_count',
@@ -269,6 +283,10 @@ class ArticleManager extends Component
             'articles' => $articles,
             'linkedGames' => $this->showModal ? Game::with(['team', 'opponentTeam'])->whereIn('id', $this->gameIds)->orderBy('game_date')->get() : collect(),
             'gameSuggestions' => $this->showModal ? $this->gameSuggestions() : collect(),
+            'authorOptions' => $this->showModal
+                ? User::withAccountStatus(AccountStatus::Active)->with('roleAssignments')->orderBy('name')->get(['id', 'name'])
+                    ->map(fn (User $user) => ['value' => (string) $user->id, 'label' => $user->name.($user->rolesLabel() ? ' ('.$user->rolesLabel().')' : '')])->all()
+                : [],
         ]);
     }
 }

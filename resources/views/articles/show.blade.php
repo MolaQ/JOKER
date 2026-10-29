@@ -18,7 +18,7 @@
         <div class="absolute inset-0 -z-10 bg-gradient-to-t from-ink via-ink/50 to-ink/10"></div>
         <div class="container-site max-w-4xl pt-24 pb-14 lg:pt-36">
             <a href="{{ route('articles.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ __('Aktualności') }}</a>
-            <p class="eyebrow mt-6">{{ $article->published_at?->translatedFormat('d F Y') }} · {{ $article->author?->name }}</p>
+            <p class="eyebrow mt-6">{{ $article->published_at?->translatedFormat('d F Y') }} @if($article->authorName()) · @if($article->authorUrl())<a href="{{ $article->authorUrl() }}" class="hover:text-white">{{ $article->authorName() }}</a>@else{{ $article->authorName() }}@endif @endif</p>
             <h1 class="mt-4 font-display text-4xl leading-[1.05] font-bold uppercase sm:text-6xl">{{ $article->localizedTitle() }}</h1>
             @if($article->hasEnglish())
                 <p class="mt-4 inline-flex items-center gap-2 text-sm text-zinc-300"><x-english-badge /> {{ __('Dostępna wersja angielska') }}</p>

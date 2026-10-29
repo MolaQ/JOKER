@@ -44,7 +44,7 @@
                         @endif
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ $article->author->name }}
+                        {{ $article->authorName() }}
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm">
                         @php [$statusLabel, $statusClass] = $article->statusBadge(); @endphp
@@ -241,6 +241,17 @@
                                     </ul>
                                 @endif
                                 @error('gameIds.*') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Autor</label>
+                                <p class="text-xs text-gray-500">Domyślnie Ty. Wybierz kogoś ze społeczności albo wpisz ręcznie osobę spoza klubu (wpisane ma pierwszeństwo).</p>
+                                <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                                    <x-search-select model="authorId" empty="— ja —" placeholder="Szukaj osoby…" :options="$authorOptions" />
+                                    <input type="text" wire:model="authorName" maxlength="120" placeholder="albo wpisz: imię i nazwisko" class="block w-full rounded-lg border-zinc-300 text-sm shadow-xs focus:border-sky-500 focus:ring-sky-500">
+                                </div>
+                                @error('authorId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                @error('authorName') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
                             <div class="flex items-center space-x-6">

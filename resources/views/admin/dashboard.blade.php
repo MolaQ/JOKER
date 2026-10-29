@@ -90,7 +90,7 @@
                         <div class="flex justify-between items-start">
                             <div>
                                 <p class="text-sm font-medium text-gray-900">{{ $article->title }}</p>
-                                <p class="text-sm text-gray-500">{{ $article->author->name }} • {{ $article->published_at->format('d.m.Y') }}</p>
+                                <p class="text-sm text-gray-500">{{ $article->authorName() }} • {{ $article->published_at->format('d.m.Y') }}</p>
                             </div>
                             @if($article->is_featured)
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">

@@ -40,6 +40,7 @@ class Article extends Model
         'featured_image',
         'featured_image_focus',
         'author_id',
+        'author_name',
         'status',
         'published_at',
         'views_count',
@@ -59,6 +60,22 @@ class Article extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'author_id');
+    }
+
+    /**
+     * Podpis autora: wpisany ręcznie (osoba spoza społeczności) albo nazwa konta.
+     */
+    public function authorName(): ?string
+    {
+        return filled($this->author_name) ? $this->author_name : $this->author?->name;
+    }
+
+    /**
+     * Link do profilu autora, gdy jest w społeczności klubu.
+     */
+    public function authorUrl(): ?string
+    {
+        return blank($this->author_name) && $this->author ? $this->author->profileUrl() : null;
     }
 
     /**
