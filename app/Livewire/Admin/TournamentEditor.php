@@ -687,6 +687,33 @@ class TournamentEditor extends Component
         $this->toast('Ponumerowano mecze według harmonogramu.');
     }
 
+    /**
+     * Przeciągnięcie meczu w obrębie fazy: mecze tej fazy dostają po kolei te same numery, które miały, w nowym porządku.
+     * Numery meczów z innych faz zostają bez zmian.
+     */
+    public function moveMatch(int|string $matchId, int $position): void
+    {
+        $match = $this->category()->matches()->findOrFail((int) $matchId);
+        $stageMatches = $this->category()->matches()->where('stage', $match->stage)->get()
+            ->sortBy(fn (TournamentMatch $item) => [$item->number ?? PHP_INT_MAX, $item->id])->values();
+        $numbers = $stageMatches->pluck('number')->map(fn ($number, int $index) => $number ?? $index + 1)->sort()->values();
+
+        $ordered = $stageMatches->reject(fn (TournamentMatch $item) => $item->id === $match->id)->values();
+        $ordered->splice(max(0, min($position, $ordered->count())), 0, [$match]);
+
+        DB::transaction(fn () => $ordered->each(fn (TournamentMatch $item, int $index) => $item->number === $numbers[$index] || $item->update(['number' => $numbers[$index]])));
+    }
+
+    public function moveMatchBy(int $matchId, int $offset): void
+    {
+        $match = $this->category()->matches()->findOrFail($matchId);
+        $position = $this->category()->matches()->where('stage', $match->stage)->get()
+            ->sortBy(fn (TournamentMatch $item) => [$item->number ?? PHP_INT_MAX, $item->id])->values()
+            ->search(fn (TournamentMatch $item) => $item->id === $match->id);
+
+        $this->moveMatch($match->id, max(0, $position + $offset));
+    }
+
     public function deleteMatch(int $id): void
     {
         $category = $this->category();

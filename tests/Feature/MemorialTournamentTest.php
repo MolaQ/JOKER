@@ -499,3 +499,24 @@ test('organizer numbers matches by the schedule once, and later time changes kee
     $editor->set("results.{$courtOne->id}.starts_at", '2026-11-14T12:30');
     expect($courtOne->fresh()->number)->toBe(1);
 });
+
+test('organizer reorders group matches by dragging or arrows, and only that stage is renumbered', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz, $poznan] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $category->matches()->delete();
+    $group = $category->groups()->value('id');
+    $a = $category->matches()->create(['stage' => 'group', 'tournament_group_id' => $group, 'number' => 1, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id]);
+    $b = $category->matches()->create(['stage' => 'group', 'tournament_group_id' => $group, 'number' => 2, 'home_participant_id' => $joker->id, 'away_participant_id' => $poznan->id]);
+    $c = $category->matches()->create(['stage' => 'group', 'tournament_group_id' => $group, 'number' => 3, 'home_participant_id' => $kalisz->id, 'away_participant_id' => $poznan->id]);
+    $final = $category->matches()->create(['stage' => 'placement', 'placement' => 1, 'number' => 4]);
+
+    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
+        ->call('moveMatch', (string) $c->id, 0);
+
+    expect([$c->fresh()->number, $a->fresh()->number, $b->fresh()->number, $final->fresh()->number])->toBe([1, 2, 3, 4]);
+
+    $editor->call('moveMatchBy', $c->id, 1);
+
+    expect([$a->fresh()->number, $c->fresh()->number, $b->fresh()->number])->toBe([1, 2, 3]);
+});

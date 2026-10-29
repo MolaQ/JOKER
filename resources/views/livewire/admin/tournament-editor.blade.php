@@ -412,15 +412,21 @@
 
             @foreach(\App\Models\TournamentMatch::STAGES as $stage => $stageName)
                 @php
-                    $stageMatches = $category->matches->where('stage', $stage)->sortBy(fn ($m) => [$m->tournament_group_id ?? 0, $m->bracket_round ?? 0, $m->bracket_slot ?? 0, $m->placement ?? 0, $m->starts_at?->timestamp ?? 0, $m->id]);
+                    $stageMatches = $category->matches->where('stage', $stage)->sortBy(fn ($m) => [$m->number ?? PHP_INT_MAX, $m->id]);
                 @endphp
                 @if($stageMatches->isNotEmpty())
                     <div>
-                        <h3 class="mb-2 font-semibold text-gray-900">{{ $stageName }}</h3>
-                        <div class="space-y-2">
+                        <h3 class="mb-2 font-semibold text-gray-900">{{ $stageName }} <span class="text-xs font-normal text-gray-500">· kolejność i numery zmieniasz, przeciągając mecz za uchwyt ⠿ albo strzałkami</span></h3>
+                        <div class="space-y-2" wire:sort="moveMatch">
                             @foreach($stageMatches as $tournamentMatch)
-                                <div class="grid gap-2 rounded-lg border border-gray-200 p-3 lg:grid-cols-[minmax(0,2fr)_10rem_11rem_9rem_auto] lg:items-center" wire:key="match-{{ $tournamentMatch->id }}">
-                                    <div class="text-sm">
+                                <div class="grid gap-2 rounded-lg border border-gray-200 bg-white p-3 lg:grid-cols-[minmax(0,2fr)_10rem_11rem_9rem_auto] lg:items-center" wire:key="match-{{ $tournamentMatch->id }}" wire:sort:item="{{ $tournamentMatch->id }}">
+                                    <div class="flex items-center gap-2 text-sm">
+                                        <div class="flex shrink-0 flex-col items-center text-gray-400">
+                                            <button type="button" wire:click="moveMatchBy({{ $tournamentMatch->id }}, -1)" @disabled($loop->first) class="leading-none hover:text-gray-900 disabled:opacity-30" aria-label="Przesuń wyżej">▲</button>
+                                            <span wire:sort:handle class="cursor-grab text-lg leading-none hover:text-gray-900 active:cursor-grabbing" title="Przeciągnij, żeby zmienić kolejność">⠿</span>
+                                            <button type="button" wire:click="moveMatchBy({{ $tournamentMatch->id }}, 1)" @disabled($loop->last) class="leading-none hover:text-gray-900 disabled:opacity-30" aria-label="Przesuń niżej">▼</button>
+                                        </div>
+                                        <div class="min-w-0">
                                         <span class="text-xs font-semibold uppercase text-gray-500"><span class="mr-1 rounded bg-gray-900 px-1.5 py-0.5 text-white">#{{ $tournamentMatch->number }}</span>{{ $tournamentMatch->group?->name ?? $tournamentMatch->title() }}</span>
                                         <div class="flex flex-wrap items-center gap-1">
                                             @foreach(['home', 'away'] as $side)
@@ -436,6 +442,7 @@
                                                 @endif
                                                 @if($side === 'home') <span class="text-gray-400">–</span> @endif
                                             @endforeach
+                                        </div>
                                         </div>
                                     </div>
                                     <div>
