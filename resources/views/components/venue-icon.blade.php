@@ -1,12 +1,12 @@
 @props(['venue', 'small' => false])
 @php
-    // Symbol miejsca treningu: sala podzielona w poprzek na trzy boiska (1 lewe, 2 środkowe, 3 prawe), główne boisko to cała sala, siłownia osobno.
+    // Symbol miejsca treningu: sala podzielona w poprzek na trzy boiska (3 lewe, 2 środkowe, 1 prawe), główne boisko to cała sala, siłownia osobno.
     // Kolory i ikonę siłowni ustawia się w panelu: System → Ustawienia systemu → Kolory.
     $site = app(\App\Support\SiteSettings::class);
     $court = $site->color('color_venue');
     $gym = $site->color('color_gym');
     $third = 46 / 3;
-    $part = ['court1' => 0, 'court2' => 1, 'court3' => 2][$venue] ?? null;
+    $part = ['court1' => 2, 'court2' => 1, 'court3' => 0][$venue] ?? null;
 @endphp
 <svg {{ $attributes->merge(['class' => ($small ? 'h-[18px] w-[29px]' : 'h-[30px] w-12').' shrink-0']) }} viewBox="0 0 48 30" aria-hidden="true">
     @if($venue === 'gym')
