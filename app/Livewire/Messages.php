@@ -53,6 +53,10 @@ class Messages extends Component
 
     public string $teamGroup = '';
 
+    public bool $addingPeople = false;
+
+    public string $memberSearch = '';
+
     public function mount(): void
     {
         abort_unless(app(SiteSettings::class)->get('messages_enabled'), 404);
@@ -114,6 +118,7 @@ class Messages extends Component
         $this->conversationId = $conversationId;
         $this->composing = false;
         $this->body = '';
+        $this->reset('addingPeople', 'memberSearch');
 
         if (! $this->conversation()) {
             $this->conversationId = null;
@@ -124,6 +129,7 @@ class Messages extends Component
     {
         $this->conversationId = null;
         $this->composing = false;
+        $this->reset('addingPeople', 'memberSearch');
     }
 
     public function startComposing(): void
@@ -145,6 +151,48 @@ class Messages extends Component
     public function removeRecipient(int $userId): void
     {
         $this->recipientIds = array_values(array_diff($this->recipientIds, [$userId]));
+    }
+
+    /**
+     * Dodawanie osób do rozmowy. Rozmowa dwóch osób zostaje prywatna: zamiast niej zaczyna się nowa grupa z tą samą osobą.
+     */
+    public function toggleAddingPeople(): void
+    {
+        $conversation = $this->conversation();
+
+        if (! $conversation || $conversation->isTeamGroup() || ! $this->user()->canMessage()) {
+            return;
+        }
+
+        if (! $conversation->isGroup()) {
+            $others = $conversation->participants->where('id', '!=', $this->user()->id)->pluck('id');
+            $this->startComposing();
+            $this->recipientIds = $this->recipients()->whereKey($others)->pluck('id')->all();
+
+            return;
+        }
+
+        $this->addingPeople = ! $this->addingPeople;
+        $this->memberSearch = '';
+    }
+
+    public function addParticipant(int $userId): void
+    {
+        $conversation = $this->conversation();
+
+        if (! $conversation || ! $conversation->isGroup() || $conversation->isTeamGroup() || ! $this->user()->canMessage()) {
+            return;
+        }
+
+        $person = $this->recipients()->whereKey($userId)->first();
+
+        if ($person && ! $conversation->participants->contains('id', $person->id)) {
+            // Nowa osoba widzi wcześniejsze wiadomości, ale nie są dla niej „nieprzeczytane”.
+            $conversation->participants()->attach($person->id, ['last_read_message_id' => (int) $conversation->messages()->max('id')]);
+            $this->toast($person->name.' dołącza do rozmowy.');
+        }
+
+        $this->memberSearch = '';
     }
 
     public function send(): void
@@ -300,6 +348,7 @@ class Messages extends Component
             ->get();
 
         $search = trim($this->recipientSearch);
+        $memberSearch = trim($this->memberSearch);
 
         return view('livewire.messages', [
             'conversations' => $conversations,
@@ -310,6 +359,9 @@ class Messages extends Component
             'chosen' => $this->composing ? User::whereKey($this->recipientIds)->get(['id', 'name']) : collect(),
             'matches' => $this->composing && mb_strlen($search) >= 2
                 ? $this->recipients()->where('name', 'like', '%'.$search.'%')->whereKeyNot($this->recipientIds)->orderBy('name')->limit(8)->get()
+                : collect(),
+            'memberMatches' => $conversation && $this->addingPeople && mb_strlen($memberSearch) >= 2
+                ? $this->recipients()->where('name', 'like', '%'.$memberSearch.'%')->whereKeyNot($conversation->participants->pluck('id'))->orderBy('name')->limit(8)->get()
                 : collect(),
             'audiences' => Conversation::AUDIENCES,
         ]);

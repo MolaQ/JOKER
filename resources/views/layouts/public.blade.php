@@ -304,21 +304,25 @@
                 </div>
             </div>
 
-            <div class="mt-14 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
-                    <p>&copy; {{ date('Y') }} {{ $site['club_name'] }}@if(filled($site['footer_note']) && $site['footer_note'] !== $site['club_name']) · {{ $site['footer_note'] }}@endif</p>
+            <div class="mt-14 space-y-4 border-t border-white/10 pt-6 text-xs">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p class="flex items-center gap-3">
+                        <img src="{{ $logoUrl }}" alt="" width="28" height="28" loading="lazy" class="h-7 w-7 shrink-0 object-contain">
+                        <span><span class="text-zinc-200">&copy; {{ date('Y') }} {{ $site['club_name'] }}</span>@if(filled($site['footer_note']) && $site['footer_note'] !== $site['club_name']) · {{ $site['footer_note'] }}@endif</span>
+                    </p>
                     <livewire:visit-counter />
                 </div>
-                <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    @foreach($site->links('footer_bottom_links') as $link)
-                        @unless($loop->first)<span aria-hidden="true">·</span>@endunless
-                        <a href="{{ $site->href($link['url']) }}" class="underline hover:text-white">{{ __($link['label']) }}</a>
-                    @endforeach
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        @foreach($site->links('footer_bottom_links') as $link)
+                            @unless($loop->first)<span aria-hidden="true">·</span>@endunless
+                            <a href="{{ $site->href($link['url']) }}" class="underline hover:text-white">{{ __($link['label']) }}</a>
+                        @endforeach
+                    </p>
                     @if(filled($site['footer_author']))
-                        @if($site->links('footer_bottom_links'))<span aria-hidden="true">·</span>@endif
-                        <span>{{ __('Projekt i wykonanie') }}: @if(filled($site['footer_author_url']))<a href="{{ $site['footer_author_url'] }}" class="underline hover:text-white" rel="noopener" target="_blank">{{ $site['footer_author'] }}</a>@else{{ $site['footer_author'] }}@endif</span>
+                        <p>{{ __('Projekt i wykonanie') }}: @if(filled($site['footer_author_url']))<a href="{{ $site['footer_author_url'] }}" class="underline hover:text-white" rel="noopener" target="_blank">{{ $site['footer_author'] }}</a>@else{{ $site['footer_author'] }}@endif</p>
                     @endif
-                </p>
+                </div>
             </div>
         </div>
     </footer>

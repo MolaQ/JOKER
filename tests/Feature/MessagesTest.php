@@ -156,3 +156,31 @@ test('e-mail zbiorczy idzie po kwadransie, raz na nowe wiadomości i nie do osó
     $this->artisan(SendMessageEmails::class);
     Notification::assertNotSentTo($this->anna, MessagesWaiting::class);
 });
+
+test('do rozmowy grupowej można dodać kolejną osobę, a rozmowa dwóch osób zaczyna nową grupę', function () {
+    $ewa = User::factory()->parent()->create(['name' => 'Ewa Nowa']);
+    $group = Conversation::create(['title' => 'Koordynatorzy', 'created_by' => $this->anna->id]);
+    $group->participants()->attach([$this->anna->id, $this->piotr->id]);
+    $group->messages()->create(['user_id' => $this->anna->id, 'body' => 'Witajcie']);
+
+    $this->actingAs($this->anna);
+    Livewire::test(Messages::class)
+        ->call('open', $group->id)
+        ->call('toggleAddingPeople')
+        ->set('memberSearch', 'Ewa')
+        ->assertSee('Ewa Nowa')
+        ->call('addParticipant', $ewa->id);
+
+    expect($group->fresh()->participants->pluck('id'))->toContain($ewa->id)
+        ->and($ewa->fresh()->unreadMessagesCount())->toBe(0);
+
+    $private = Conversation::between($this->anna, $this->piotr);
+    Livewire::test(Messages::class)
+        ->call('open', $private->id)
+        ->call('toggleAddingPeople')
+        ->assertSet('composing', true)
+        ->assertSet('recipientIds', [$this->piotr->id])
+        ->call('addParticipant', $ewa->id);
+
+    expect($private->fresh()->participants)->toHaveCount(2);
+});

@@ -30,17 +30,16 @@
         @if($preview)
             <div class="{{ $boxWidth }} shrink-0 overflow-hidden rounded-xl bg-zinc-100 ring-1 ring-zinc-200" style="{{ $boxStyle }}">
                 <div x-show="source" x-ref="preview" class="h-full w-full overflow-hidden"></div>
-                <template x-if="! source">
-                    <div class="h-full w-full">
-                        @if($pending)
-                            <img src="{{ $pending }}" alt="{{ __('Nowe zdjęcie') }}" class="h-full w-full {{ $aspect === 'free' ? 'object-contain p-1' : 'object-cover' }}">
-                        @elseif($current)
-                            <img src="{{ $current }}" alt="{{ __('Obecne zdjęcie') }}" class="h-full w-full {{ $aspect === 'free' ? 'object-contain p-1' : 'object-cover' }}">
-                        @else
-                            <div class="flex h-full items-center justify-center text-xs text-zinc-400">{{ __('brak zdjęcia') }}</div>
-                        @endif
-                    </div>
-                </template>
+                {{-- x-show, a nie x-if: Livewire po wysłaniu kadru podmienia tę treść, a kopii z <template> by nie odświeżył --}}
+                <div x-show="! source" class="h-full w-full">
+                    @if($pending)
+                        <img src="{{ $pending }}" alt="{{ __('Nowe zdjęcie') }}" class="h-full w-full {{ $aspect === 'free' ? 'object-contain p-1' : 'object-cover' }}">
+                    @elseif($current)
+                        <img src="{{ $current }}" alt="{{ __('Obecne zdjęcie') }}" class="h-full w-full {{ $aspect === 'free' ? 'object-contain p-1' : 'object-cover' }}">
+                    @else
+                        <div class="flex h-full items-center justify-center text-xs text-zinc-400">{{ __('brak zdjęcia') }}</div>
+                    @endif
+                </div>
             </div>
         @endif
         <div class="min-w-0 flex-1 space-y-2 text-sm">

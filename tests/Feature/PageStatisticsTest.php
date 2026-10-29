@@ -68,7 +68,7 @@ test('footer counter shows people online, visitors today and all page views', fu
     Cache::forget('visit-counter');
 
     Livewire::test(VisitCounter::class)
-        ->assertSee('2 osoby teraz')
-        ->assertSee('2 gości dziś')
-        ->assertSee('3 odsłon');
+        ->assertSeeHtml('2</b> osoby teraz')
+        ->assertSeeHtml('2</b> gości dziś')
+        ->assertSeeHtml('3</b> odsłon');
 });

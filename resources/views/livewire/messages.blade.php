@@ -130,7 +130,32 @@
                         <p class="truncate text-xs text-zinc-500" title="{{ $conversation->participants->pluck('name')->join(', ') }}">{{ trans_choice('{1} :count osoba|[2,4] :count osoby|[5,*] :count osób', $conversation->participants->count(), ['count' => $conversation->participants->count()]) }}: {{ $conversation->participants->pluck('name')->take(8)->join(', ') }}{{ $conversation->participants->count() > 8 ? '…' : '' }}</p>
                     @endif
                 </div>
+                @if($canWrite && ! $conversation->isTeamGroup())
+                    <button type="button" wire:click="toggleAddingPeople" class="ml-auto shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold text-sky-club-dark ring-1 ring-sky-club/30 hover:bg-sky-club/10">{{ $addingPeople ? __('Gotowe') : '+ '.__('Dodaj osoby') }}</button>
+                @endif
             </div>
+
+            @if($addingPeople)
+                <div class="border-b border-zinc-100 bg-zinc-50 p-4">
+                    <label for="member-search" class="block text-sm font-semibold text-zinc-700">{{ __('Dodaj do rozmowy') }}</label>
+                    <input id="member-search" type="search" wire:model.live.debounce.300ms="memberSearch" autocomplete="off" autofocus placeholder="{{ __('Wpisz imię lub nazwisko…') }}" class="mt-2 w-full rounded-lg border-zinc-300 text-sm">
+                    @if($memberMatches->isNotEmpty())
+                        <ul class="mt-1 divide-y divide-zinc-100 rounded-lg bg-white ring-1 ring-zinc-200">
+                            @foreach($memberMatches as $person)
+                                <li wire:key="member-match-{{ $person->id }}">
+                                    <button type="button" wire:click="addParticipant({{ $person->id }})" class="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-zinc-50">
+                                        <span class="font-medium text-zinc-900">{{ $person->name }}</span>
+                                        <span class="text-xs text-zinc-500">{{ $person->roles()->map(fn ($role) => $role->label())->join(', ') ?: __('Kibic') }}</span>
+                                    </button>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @elseif(mb_strlen(trim($memberSearch)) >= 2)
+                        <p class="mt-1 text-sm text-zinc-500">{{ __('Nikogo takiego nie znaleźliśmy.') }}</p>
+                    @endif
+                    <p class="mt-2 text-xs text-zinc-500">{{ __('Dodana osoba zobaczy też wcześniejsze wiadomości z tej rozmowy.') }}</p>
+                </div>
+            @endif
 
             <div class="flex flex-1 flex-col gap-3 overflow-y-auto bg-zinc-50/60 p-4" style="max-height: 60vh" x-data x-init="$el.scrollTop = $el.scrollHeight" x-effect="$el.scrollTop = $el.scrollHeight">
                 @forelse($thread as $message)
