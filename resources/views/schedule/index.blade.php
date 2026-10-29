@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', __('Mecze'))
-@section('description', __('Terminarz i wyniki meczów wszystkich drużyn Joker Piła: II liga, III liga i rozgrywki młodzieżowe.'))
+@section('description', __('Terminarz i wyniki meczów wszystkich drużyn :club: ligi seniorskie i rozgrywki młodzieżowe.', ['club' => $site['club_name']]))
 
 @section('content')
 <section class="container-site pt-14 pb-6 lg:pt-20">

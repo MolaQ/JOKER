@@ -25,7 +25,7 @@
             <img class="dl-logo" src="{{ $site->image('logo', asset('img/logo-512.png')) }}" alt="">
             <div class="dl-date">{{ $lineup->date->format('d.m.Y') }}<small>{{ $lineup->date->translatedFormat('l') }}</small></div>
             <div class="dl-title">{{ __('Skład dnia') }}</div>
-            <div class="dl-sub">{{ __('Joker Piła · wszystkie roczniki') }}</div>
+            <div class="dl-sub">{{ __(':club · wszystkie roczniki', ['club' => $site['club_name']]) }}</div>
         </div>
 
         <div class="dl-court" aria-hidden="true">

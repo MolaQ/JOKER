@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', __('Aktualności'))
-@section('description', __('Aktualności Joker Piła: relacje z meczów, sukcesy zawodników, turnieje i życie klubu siatkarskiego z Piły.'))
+@section('description', __('Aktualności :club: relacje z meczów, sukcesy zawodników, turnieje i życie klubu.', ['club' => $site['club_name']]))
 
 @php use App\Support\Media; @endphp
 

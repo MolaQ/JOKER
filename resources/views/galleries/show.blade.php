@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', $gallery->title)
-@section('description', \Illuminate\Support\Str::limit($gallery->description ?: __('Zdjęcia: :title. Galeria klubu siatkarskiego Joker Piła.', ['title' => $gallery->title]), 160))
+@section('description', \Illuminate\Support\Str::limit($gallery->description ?: __('Zdjęcia: :title. Galeria klubu siatkarskiego :club.', ['title' => $gallery->title, 'club' => $site['club_name']]), 160))
 @section('og_image', $gallery->photos->first()?->url() ?? '')
 
 @push('structured-data')

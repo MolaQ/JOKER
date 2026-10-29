@@ -1,11 +1,11 @@
 @extends('layouts.public')
 
 @section('title', __('Wychowankowie'))
-@section('description', __('Wychowankowie Jokera Piła, którzy grają w PlusLidze, w reprezentacji i w rozgrywkach centralnych.'))
+@section('description', __('Wychowankowie :club, którzy grają w PlusLidze, w reprezentacji i w rozgrywkach centralnych.', ['club' => $site['club_name_genitive']]))
 
 @section('content')
 <section class="container-site pt-14 pb-10 lg:pt-20">
-    <p class="eyebrow">{{ __('Od Jokera do PlusLigi') }}</p>
+    <p class="eyebrow">{{ __('Od :club do PlusLigi', ['club' => $site['club_name_genitive']]) }}</p>
     <h1 class="heading-xl mt-4">{{ __('Wychowankowie') }}</h1>
     <p class="mt-6 max-w-2xl text-lg text-zinc-600">{{ __('Zaczynali w naszych grupach młodzieżowych, dziś grają na najwyższym poziomie. Każdy z nich przeszedł przez treningi w Pile.') }}</p>
 </section>
@@ -35,7 +35,7 @@
                                 {{ $alumnus->name }}
                             @endif
                         </h2>
-                        <p class="mt-1 text-sm text-zinc-500">{{ collect([$alumnus->position, $alumnus->current_club, $alumnus->years_in_club ? __('w Jokerze').' '.$alumnus->years_in_club : null])->filter()->implode(' · ') }}</p>
+                        <p class="mt-1 text-sm text-zinc-500">{{ collect([$alumnus->position, $alumnus->current_club, $alumnus->years_in_club ? __('w :club', ['club' => $site['club_name_locative']]).' '.$alumnus->years_in_club : null])->filter()->implode(' · ') }}</p>
                         @if($alumnus->achievementList())
                             <ul class="mt-4 space-y-1 text-sm text-zinc-700">
                                 @foreach($alumnus->achievementList() as $achievement)

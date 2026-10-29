@@ -298,7 +298,7 @@
     <section class="container-site py-16 lg:py-20" data-reveal>
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
-                <p class="eyebrow">{{ __('Od Jokera do PlusLigi') }}</p>
+                <p class="eyebrow">{{ __('Od :club do PlusLigi', ['club' => $site['club_name_genitive']]) }}</p>
                 <h2 class="heading-lg mt-3">{{ __('Nasi wychowankowie') }}</h2>
             </div>
             <a href="{{ route('alumni.index') }}" class="text-sm font-semibold text-sky-club-dark hover:underline">{{ __('Wszyscy wychowankowie') }} →</a>

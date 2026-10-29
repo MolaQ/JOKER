@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Game;
+use App\Support\SiteSettings;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 
 class GameCalendarController extends Controller
 {
@@ -15,13 +17,13 @@ class GameCalendarController extends Controller
         $game->load(['team', 'opponentTeam', 'competition']);
 
         $start = $game->game_date->copy()->utc();
-        $title = 'Joker '.($game->team?->name ?? 'Piła').' vs '.$game->opponentShortName();
+        $title = app(SiteSettings::class)['club_short_name'].' '.$game->team?->name.' vs '.$game->opponentShortName();
         $escape = fn (?string $text) => str_replace([',', ';', "\n"], ['\,', '\;', '\n'], (string) $text);
 
         $ics = implode("\r\n", [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
-            'PRODID:-//Joker Pila//Terminarz//PL',
+            'PRODID:-//'.Str::ascii(app(SiteSettings::class)['club_name']).'//Terminarz//PL',
             'CALSCALE:GREGORIAN',
             'BEGIN:VEVENT',
             'UID:mecz-'.$game->id.'@'.request()->getHost(),

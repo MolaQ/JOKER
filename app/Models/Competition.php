@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\HasReadableRouteKey;
 use App\Services\ScheduleImporter;
+use App\Support\SiteSettings;
 use Database\Factories\CompetitionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -125,7 +126,7 @@ class Competition extends Model
     {
         $pivot = $team ? $this->teams->firstWhere('id', $team->id)?->pivot : null;
 
-        return ['name' => filled($pivot?->display_name) ? $pivot->display_name : 'Joker Piła', 'badge' => $team?->name];
+        return ['name' => filled($pivot?->display_name) ? $pivot->display_name : app(SiteSettings::class)['club_name'], 'badge' => $team?->name];
     }
 
     /**

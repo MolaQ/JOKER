@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ $site->image('logo', asset('img/logo-32.png')) }}">
     <link rel="apple-touch-icon" href="{{ $site->image('logo', asset('img/logo-180.png')) }}">
-    <title>@yield('title', 'Panel Administracyjny') - Joker Piła</title>
+    <title>@yield('title', 'Panel Administracyjny') - {{ $site['club_name'] }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
@@ -69,7 +69,7 @@
                 <a href="{{ route('admin.dashboard') }}" class="flex min-w-0 items-center gap-3">
                     <img src="{{ $site->image('logo', asset('img/logo-96.png')) }}" alt="" class="size-9 shrink-0 object-contain">
                     <span class="min-w-0 leading-tight">
-                        <span class="block truncate text-sm font-semibold text-white">{{ $site['club_name'] ?: 'Joker Piła' }}</span>
+                        <span class="block truncate text-sm font-semibold text-white">{{ $site['club_name'] }}</span>
                         <span class="block text-xs text-zinc-500">Panel klubu</span>
                     </span>
                 </a>

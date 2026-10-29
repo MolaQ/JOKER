@@ -27,7 +27,7 @@
                     <input id="alumnus-position" type="text" wire:model="position" placeholder="np. atakujący" class="mt-1 block w-full">
                 </div>
                 <div>
-                    <label for="alumnus-years" class="block text-sm font-medium text-gray-700">Lata w Jokerze</label>
+                    <label for="alumnus-years" class="block text-sm font-medium text-gray-700">Lata w klubie</label>
                     <input id="alumnus-years" type="text" wire:model="years_in_club" placeholder="np. 2008–2014" class="mt-1 block w-full">
                 </div>
                 <div>

@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', $trainer->name.' - '.__('sztab'))
-@section('description', __(':name - sztab szkoleniowy klubu siatkarskiego Joker Piła.', ['name' => $trainer->name]))
+@section('description', __(':name - sztab szkoleniowy klubu siatkarskiego :club.', ['name' => $trainer->name, 'club' => $site['club_name']]))
 
 @section('content')
 <section class="relative isolate -mt-16 overflow-hidden bg-ink pt-16 text-white lg:-mt-20 lg:pt-20">

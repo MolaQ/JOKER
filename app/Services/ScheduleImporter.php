@@ -140,7 +140,7 @@ class ScheduleImporter
     {
         try {
             $response = Http::timeout(20)
-                ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; JokerPilaBot/1.0; +'.config('app.url').')'])
+                ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; ClubSiteBot/1.0; +'.config('app.url').')'])
                 ->get($url)
                 ->throw();
 

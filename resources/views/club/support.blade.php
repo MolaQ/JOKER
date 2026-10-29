@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', __('Wspieraj klub'))
-@section('description', __('Jak wesprzeć Jokera Piła: pakiety sponsorskie, gadżety klubowe i 1,5% podatku.'))
+@section('description', __('Jak wesprzeć :club: pakiety sponsorskie, gadżety klubowe i 1,5% podatku.', ['club' => $site['club_name_genitive']]))
 
 @section('content')
 <section class="container-site pt-14 pb-10 lg:pt-20">
@@ -23,7 +23,7 @@
                 <div class="rounded-3xl bg-ink p-8 text-white">
                     <p class="eyebrow">{{ __('Nic nie kosztuje') }}</p>
                     <h2 class="mt-3 font-display text-3xl font-bold uppercase">{{ __('Przekaż 1,5% podatku') }}</h2>
-                    <p class="mt-4 text-white/80">{{ __('W zeznaniu PIT wpisz numer KRS. Pieniądze trafią na szkolenie młodzieży Jokera.') }}</p>
+                    <p class="mt-4 text-white/80">{{ __('W zeznaniu PIT wpisz numer KRS. Pieniądze trafią na szkolenie młodzieży :club.', ['club' => $site['club_name_genitive']]) }}</p>
                     <dl class="mt-6 space-y-3">
                         <div><dt class="text-xs text-white/60 uppercase">KRS</dt><dd class="font-display text-4xl font-bold tracking-wider tabular-nums">{{ $site['support_krs'] }}</dd></div>
                         @if(filled($site['support_tax_goal']))

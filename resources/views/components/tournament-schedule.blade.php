@@ -93,7 +93,7 @@
                             class="inline-flex h-9 max-w-full items-center gap-2 rounded-full py-1 pr-4 pl-1 text-sm font-semibold ring-1 transition"
                             :class="team === @js((string) $participant->id) ? 'bg-sky-club text-white ring-sky-club' : 'bg-sky-club/10 text-sky-club-dark ring-sky-club/30 hover:ring-sky-club'">
                             <x-avatar logo :photo="$participant->logoPath()" :name="$participant->name()" class="h-7 w-7 shrink-0 rounded-full text-[10px]" />
-                            <span class="truncate">{{ $ownTeams->count() === 1 ? 'Joker' : $participant->name() }}</span>
+                            <span class="truncate">{{ $ownTeams->count() === 1 ? $site['club_short_name'] : $participant->name() }}</span>
                         </button>
                     @endforeach
                     <label class="relative min-w-0 flex-1 basis-56 sm:max-w-xs">

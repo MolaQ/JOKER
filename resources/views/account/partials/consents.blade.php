@@ -1,7 +1,7 @@
 {{-- Zgody wymagane do prowadzenia konta (rejestracja i strona zgody). --}}
 <label class="flex items-start gap-2 text-sm text-zinc-700">
     <input type="checkbox" name="privacy" value="1" class="mt-0.5 rounded border-zinc-300 text-sky-club-dark" @checked(old('privacy'))>
-    <span>{{ __('Wyrażam zgodę na przetwarzanie moich danych osobowych (imię i nazwisko, e-mail, dane podane w profilu) przez UKS SMS Joker Piła w celu prowadzenia konta w serwisie klubu.') }} <span class="text-red-600">*</span></span>
+    <span>{{ __('Wyrażam zgodę na przetwarzanie moich danych osobowych (imię i nazwisko, e-mail, dane podane w profilu) przez :club w celu prowadzenia konta w serwisie klubu.', ['club' => $site['club_legal_name']]) }} <span class="text-red-600">*</span></span>
 </label>
 @error('privacy')<p class="text-sm text-red-600">{{ $message }}</p>@enderror
 

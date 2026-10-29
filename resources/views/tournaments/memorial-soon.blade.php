@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', __('Memoriał im. Włodzimierza Winklera'))
-@section('description', __('Memoriał im. Włodzimierza Winklera - turniej siatkówki młodzieżowej organizowany przez Joker Piła.'))
+@section('description', __('Memoriał im. Włodzimierza Winklera - turniej siatkówki młodzieżowej organizowany przez :club.', ['club' => $site['club_name']]))
 
 @section('content')
 <section class="relative isolate -mt-16 overflow-hidden bg-gradient-to-br from-club-navy via-club-navy to-sky-club-dark pt-16 text-white lg:-mt-20 lg:pt-20">

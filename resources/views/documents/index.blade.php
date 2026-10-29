@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', __('Dokumenty'))
-@section('description', __('Dokumenty klubu Joker Piła do pobrania: regulaminy, zgody, formularze i deklaracje.'))
+@section('description', __('Dokumenty klubu :club do pobrania: regulaminy, zgody, formularze i deklaracje.', ['club' => $site['club_name']]))
 
 @section('content')
 <section class="container-site max-w-4xl pt-14 pb-6 lg:pt-20">

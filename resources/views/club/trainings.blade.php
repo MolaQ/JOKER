@@ -3,7 +3,7 @@
 @php use App\Models\TrainingSession; @endphp
 
 @section('title', $team ? __('Plan treningów').' - '.$team->name : __('Plan treningów'))
-@section('description', __('Stały tygodniowy plan treningów drużyn Jokera Piła: dni, godziny i miejsca zajęć.'))
+@section('description', __('Stały tygodniowy plan treningów drużyn :club: dni, godziny i miejsca zajęć.', ['club' => $site['club_name_genitive']]))
 
 @section('content')
 <section class="container-site pt-14 pb-10 lg:pt-20">

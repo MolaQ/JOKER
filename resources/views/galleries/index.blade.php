@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', $team ? __('Galerie').' - '.$team->name : __('Galerie'))
-@section('description', __('Zdjęcia z meczów, turniejów i wydarzeń klubu siatkarskiego Joker Piła.'))
+@section('description', __('Zdjęcia z meczów, turniejów i wydarzeń klubu siatkarskiego :club.', ['club' => $site['club_name']]))
 
 @section('content')
 <section class="container-site pt-14 pb-10 lg:pt-20">

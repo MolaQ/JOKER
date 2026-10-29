@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\HasMatchMedia;
 use App\Models\Concerns\Likeable;
 use App\Services\ScheduleImporter;
+use App\Support\SiteSettings;
 use Database\Factories\GameFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -162,7 +163,7 @@ class Game extends Model
             return $this->competition->teamLabel($this->team);
         }
 
-        return ['name' => 'Joker Piła', 'badge' => $this->team?->name];
+        return ['name' => app(SiteSettings::class)['club_name'], 'badge' => $this->team?->name];
     }
 
     public function articles(): BelongsToMany

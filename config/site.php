@@ -21,8 +21,12 @@ return [
             'icon' => 'cog',
             'fields' => [
                 'club_name' => ['type' => 'text', 'label' => 'Nazwa klubu', 'default' => 'Joker Piła'],
+                'club_short_name' => ['type' => 'text', 'label' => 'Krótka nazwa klubu', 'help' => 'Np. w kalendarzu meczów i turniejach: „Joker vs Kalisz”.', 'default' => 'Joker'],
+                'club_name_genitive' => ['type' => 'text', 'label' => 'Nazwa klubu: kogo? czego?', 'help' => 'Odmiana do zdań typu „wychowankowie Jokera”, „jak wesprzeć Jokera”.', 'default' => 'Jokera'],
+                'club_name_locative' => ['type' => 'text', 'label' => 'Nazwa klubu: w kim? w czym?', 'help' => 'Do zdań typu „lata w Jokerze”.', 'default' => 'Jokerze'],
+                'club_legal_name' => ['type' => 'text', 'label' => 'Pełna nazwa (stowarzyszenie)', 'help' => 'W zgodach na przetwarzanie danych (RODO).', 'default' => 'UKS SMS Joker Piła'],
                 'club_tagline' => ['type' => 'text', 'label' => 'Podpis pod nazwą', 'default' => 'Klub siatkówki od 1992 roku'],
-                'logo' => ['type' => 'image', 'crop' => ['aspect' => '1/1', 'format' => 'png', 'width' => 512], 'label' => 'Herb / logo', 'help' => 'Najlepiej kwadratowy PNG z przezroczystym tłem. Bez wgranego pliku używany jest herb klubu. Herb jest też domyślnym logo wszystkich drużyn Jokera.', 'default' => null, 'preview' => 'img/logo-256.webp'],
+                'logo' => ['type' => 'image', 'crop' => ['aspect' => '1/1', 'format' => 'png', 'width' => 512], 'label' => 'Herb / logo', 'help' => 'Najlepiej kwadratowy PNG z przezroczystym tłem. Bez wgranego pliku używany jest herb klubu. Herb jest też domyślnym logo wszystkich drużyn klubu.', 'default' => null, 'preview' => 'img/logo-256.webp'],
                 'site_title' => ['type' => 'text', 'label' => 'Tytuł strony (w karcie przeglądarki i Google)', 'default' => 'Joker Piła - Klub Siatkówki'],
                 'site_description' => ['type' => 'textarea', 'label' => 'Opis strony dla Google', 'default' => 'UKS SMS Joker Piła - klub siatkarski z Piły, jeden z czołowych ośrodków szkolenia siatkówki młodzieżowej w Polsce. Drużyny od minisiatkówki po II ligę, terminarz, wyniki i aktualności.'],
             ],

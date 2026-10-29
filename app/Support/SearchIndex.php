@@ -196,7 +196,7 @@ class SearchIndex
 
         foreach ($games as $game) {
             $result = $game->isFinished() ? " ({$game->home_score}:{$game->away_score})" : '';
-            $add(__('Mecz'), ($game->team?->name ?? 'Joker').' vs '.$game->opponentShortName().$result,
+            $add(__('Mecz'), app(SiteSettings::class)['club_short_name'].' '.$game->team?->name.' vs '.$game->opponentShortName().$result,
                 $game->game_date?->translatedFormat('d F Y, H:i').' · '.($game->is_home ? __('u siebie') : __('wyjazd')),
                 route('schedule.index', [], false), $game->opponentDisplayName().' '.$game->competition?->name.' '.$game->venue);
         }

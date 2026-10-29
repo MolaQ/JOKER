@@ -19,7 +19,7 @@
                     <td class="py-4 pr-3 pl-4 text-sm whitespace-nowrap text-gray-700 sm:pl-6">{{ $tournament->dateRangeLabel() }}.{{ $tournament->start_date->format('Y') }}</td>
                     <td class="px-3 py-4 text-sm">
                         <p class="flex items-center gap-2 font-semibold text-gray-900"><x-admin-icon name="trophy" class="size-4 text-amber-500" /> {{ $tournament->fullName() }}</p>
-                        <p class="text-gray-500">{{ collect([$tournament->venue, $tournament->city])->filter()->implode(', ') }}@if($tournament->is_organizer) · <span class="font-semibold text-blue-700">organizuje Joker</span>@endif @if($tournament->games_count) · {{ $tournament->games_count }} mecz(e)@endif</p>
+                        <p class="text-gray-500">{{ collect([$tournament->venue, $tournament->city])->filter()->implode(', ') }}@if($tournament->is_organizer) · <span class="font-semibold text-blue-700">organizuje {{ $site['club_short_name'] }}</span>@endif @if($tournament->games_count) · {{ $tournament->games_count }} mecz(e)@endif</p>
                     </td>
                     <td class="px-3 py-4 text-sm text-gray-700">
                         @foreach($tournament->teams as $team)
@@ -89,7 +89,7 @@
 
                             <label class="flex items-center text-sm text-gray-700">
                                 <input type="checkbox" wire:model="is_organizer" class="mr-2 rounded border-gray-300 text-sky-700 focus:ring-sky-500">
-                                Organizuje Joker Piła (w kalendarzu jak mecz u siebie)
+                                Organizuje {{ $site['club_name'] }} (w kalendarzu jak mecz u siebie)
                             </label>
 
                             <div>

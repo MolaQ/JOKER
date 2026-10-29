@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', $person->name)
-@section('description', __(':name - :roles w klubie siatkarskim Joker Piła.', ['name' => $person->name, 'roles' => $person->rolesLabel()]))
+@section('description', __(':name - :roles w klubie siatkarskim :club.', ['name' => $person->name, 'roles' => $person->rolesLabel(), 'club' => $site['club_name']]))
 @unless($person->hasPublicProfile())
     @push('head')
         <meta name="robots" content="noindex, nofollow">
