@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasReadableRouteKey;
 use App\Models\Concerns\Likeable;
 use Database\Factories\TournamentFactory;
 use Illuminate\Database\Eloquent\Collection;
@@ -20,7 +21,7 @@ use Illuminate\Support\Str;
 class Tournament extends Model
 {
     /** @use HasFactory<TournamentFactory> */
-    use HasFactory, Likeable;
+    use HasFactory, HasReadableRouteKey, Likeable;
 
     protected $fillable = [
         'season_id',
@@ -75,9 +76,12 @@ class Tournament extends Model
         return $this->hasMany(TournamentCategory::class)->orderBy('display_order')->orderBy('id');
     }
 
-    public function getRouteKeyName(): string
+    /**
+     * Adres „/tournaments/1/memorial-wlodzimierza-winklera-2026” (z kolumny slug „1-memorial-...”).
+     */
+    protected function routeSlugSource(): string
     {
-        return 'slug';
+        return preg_replace('/^\d+-/', '', (string) $this->slug) ?: $this->fullName();
     }
 
     protected static function booted(): void

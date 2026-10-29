@@ -8,6 +8,7 @@ use App\Models\TournamentMatch;
 use App\Support\TournamentBracket;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -18,16 +19,12 @@ class TournamentPage extends Component
 {
     public Tournament $tournament;
 
-    #[Url(as: 'category', except: '')]
-    public string $category = '';
+    /** Kategoria wiekowa z adresu strony (/tournaments/1/memorial-2026/kadeci). */
+    #[Locked]
+    public ?int $categoryId = null;
 
     #[Url(as: 'tab', except: '')]
     public string $tab = '';
-
-    public function selectCategory(int $categoryId): void
-    {
-        $this->category = (string) $categoryId;
-    }
 
     public function selectTab(string $tab): void
     {
@@ -41,7 +38,7 @@ class TournamentPage extends Component
             ->get();
 
         /** @var TournamentCategory|null $current */
-        $current = $categories->firstWhere('id', (int) $this->category) ?? $categories->first();
+        $current = $categories->firstWhere('id', $this->categoryId) ?? $categories->first();
 
         $matches = $current?->matches ?? collect();
         $bracket = $current ? TournamentBracket::for($current) : null;

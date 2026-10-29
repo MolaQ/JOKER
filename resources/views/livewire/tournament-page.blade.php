@@ -5,7 +5,7 @@
             @if($categories->count() > 1)
                 <div class="flex flex-wrap gap-2" aria-label="{{ __('Kategoria wiekowa') }}">
                     @foreach($categories as $categoryOption)
-                        <button type="button" data-track="{{ __('Kategoria') }}: {{ $categoryOption->name }}" wire:click="selectCategory({{ $categoryOption->id }})" @class(['chip transition', 'bg-club-navy text-white' => $current?->id === $categoryOption->id, 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => $current?->id !== $categoryOption->id])>{{ $categoryOption->name }}</button>
+                        <a href="{{ route('tournaments.show', ['tournament' => $tournament, 'category' => $loop->first ? null : $categoryOption->slug(), 'tab' => $tabs->has($currentTab) && $currentTab !== $tabs->keys()->first() ? $currentTab : null]) }}" data-track="{{ __('Kategoria') }}: {{ $categoryOption->name }}" @if($current?->id === $categoryOption->id) aria-current="page" @endif @class(['chip transition', 'bg-club-navy text-white' => $current?->id === $categoryOption->id, 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => $current?->id !== $categoryOption->id])>{{ $categoryOption->name }}</a>
                     @endforeach
                 </div>
             @endif

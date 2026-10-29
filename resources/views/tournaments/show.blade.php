@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', $tournament->fullName())
+@section('title', trim($tournament->fullName().($category && $tournament->categories()->count() > 1 ? ' - '.$category->name : '')))
 @section('description', trim($tournament->fullName().' - '.$tournament->dateRangeLabel().'.'.$tournament->start_date->format('Y').' '.($tournament->city ?? '').'. '.__('Drużyny, grupy, wyniki, drabinka i informator dla gości.')))
 
 @section('content')
@@ -25,7 +25,7 @@
     </div>
 </section>
 
-@livewire('tournament-page', ['tournament' => $tournament])
+@livewire('tournament-page', ['tournament' => $tournament, 'categoryId' => $category?->id])
 
 @php $editions = $tournament->otherEditions(); @endphp
 @if($editions->isNotEmpty())

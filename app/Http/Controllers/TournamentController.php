@@ -6,6 +6,7 @@ use App\Models\Tournament;
 use App\Support\SiteSettings;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class TournamentController extends Controller
 {
@@ -25,13 +26,29 @@ class TournamentController extends Controller
             return view('tournaments.memorial-soon');
         }
 
-        return redirect()->route('tournaments.show', ['tournament' => $tournament, ...request()->query()]);
+        $query = request()->getQueryString();
+
+        return redirect(route('tournaments.show', $tournament).($query ? '?'.$query : ''));
     }
 
-    public function show(Tournament $tournament): View
+    /**
+     * Kategoria wiekowa w adresie (/tournaments/1/memorial-2026/kadeci); pierwsza kategoria bez dopisku.
+     * Stary adres z ?category=ID przekierowuje na nowy.
+     */
+    public function show(Request $request, Tournament $tournament, ?string $category = null): View|RedirectResponse
     {
         abort_unless($tournament->has_page, 404);
 
-        return view('tournaments.show', ['tournament' => $tournament]);
+        $categories = $tournament->categories()->get(['id', 'tournament_id', 'name']);
+        $chosen = $request->filled('category')
+            ? $categories->firstWhere('id', (int) $request->query('category'))
+            : ($category !== null ? $categories->first(fn ($option) => $option->slug() === $category) : null);
+        $canonical = $chosen && $chosen->isNot($categories->first()) ? $chosen->slug() : null;
+
+        if ($request->filled('category') || $category !== $canonical) {
+            return redirect()->route('tournaments.show', ['tournament' => $tournament, 'category' => $canonical, ...$request->except('category')], 301);
+        }
+
+        return view('tournaments.show', ['tournament' => $tournament, 'category' => $chosen ?? $categories->first()]);
     }
 }

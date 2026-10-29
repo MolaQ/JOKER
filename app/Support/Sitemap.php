@@ -113,8 +113,12 @@ class Sitemap
             $urls[] = ['loc' => route('games.show', $game), 'lastmod' => $game->updated_at, 'priority' => '0.5'];
         }
 
-        foreach (Tournament::where('has_page', true)->get() as $tournament) {
+        foreach (Tournament::where('has_page', true)->with('categories')->get() as $tournament) {
             $urls[] = ['loc' => route('tournaments.show', $tournament), 'lastmod' => $tournament->updated_at, 'priority' => '0.6'];
+
+            foreach ($tournament->categories->skip(1) as $category) {
+                $urls[] = ['loc' => route('tournaments.show', ['tournament' => $tournament, 'category' => $category->slug()]), 'lastmod' => $tournament->updated_at, 'priority' => '0.5'];
+            }
         }
 
         if (Route::has('galleries.show')) {

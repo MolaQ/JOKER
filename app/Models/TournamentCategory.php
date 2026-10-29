@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 /**
  * Kategoria wiekowa turnieju (np. młodzicy, kadeci, juniorzy) - każda ma własne drużyny, grupy i mecze.
@@ -16,6 +17,14 @@ class TournamentCategory extends Model
         'name',
         'display_order',
     ];
+
+    /**
+     * Część adresu kategorii: /tournaments/1/memorial-2026/kadeci.
+     */
+    public function slug(): string
+    {
+        return Str::slug($this->name) ?: (string) $this->id;
+    }
 
     public function tournament(): BelongsTo
     {

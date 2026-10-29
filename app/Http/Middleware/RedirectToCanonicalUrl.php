@@ -31,7 +31,10 @@ class RedirectToCanonicalUrl
         }
 
         if ($changed) {
-            return redirect()->route($route->getName(), $parameters + $request->query(), 301);
+            // Zapytanie doklejamy osobno: ?category= nie może trafić w parametr trasy o tej samej nazwie.
+            $query = $request->getQueryString();
+
+            return redirect(route($route->getName(), $parameters).($query ? '?'.$query : ''), 301);
         }
 
         return $next($request);

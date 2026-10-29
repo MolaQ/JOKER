@@ -82,9 +82,27 @@ test('memorial tab opens the newest edition with categories and tabs', function 
         ->call('selectTab', 'groups')
         ->assertSee('Grupa A')
         ->call('selectTab', 'info')
-        ->assertSee('Hala Lotnisko')
-        ->call('selectCategory', $this->tournament->categories()->where('name', 'Młodziczki')->value('id'))
+        ->assertSee('Hala Lotnisko');
+
+    Livewire::test(TournamentPage::class, ['tournament' => $this->tournament, 'categoryId' => $this->tournament->categories()->where('name', 'Młodziczki')->value('id')])
         ->assertDontSee('UKS Dwójka Kalisz');
+});
+
+test('tournament and age category have readable addresses and old ones redirect', function () {
+    memorialGroup($this->tournament, $this->team);
+    $tournament = $this->tournament->fresh();
+    $second = $tournament->categories()->create(['name' => 'Młodziczki', 'display_order' => 1]);
+    $base = route('tournaments.show', $tournament);
+
+    expect($base)->toEndWith('/tournaments/'.$tournament->id.'/'.preg_replace('/^\d+-/', '', $tournament->slug))
+        ->and(route('tournaments.show', ['tournament' => $tournament, 'category' => 'mlodziczki']))->toBe($base.'/mlodziczki');
+
+    $this->get($base)->assertOk()->assertSee($base.'/mlodziczki', false);
+    $this->get($base.'/mlodziczki')->assertOk()->assertSee('<title>'.$tournament->fullName().' - Młodziczki', false);
+    $this->get('/tournaments/'.$tournament->slug.'?category='.$second->id)->assertRedirect($base.'?category='.$second->id);
+    $this->get($base.'?category='.$second->id.'&tab=groups')->assertRedirect($base.'/mlodziczki?tab=groups');
+    $this->get($base.'/nie-ma-takiej')->assertRedirect($base);
+    $this->get($base.'/'.$tournament->categories()->first()->slug())->assertRedirect($base);
 });
 
 test('memorial tab without a published edition shows a coming soon page', function () {

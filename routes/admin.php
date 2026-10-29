@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Models\Tournament;
 use App\Support\DataImport;
 use App\Support\Mentions;
+use App\Support\Slug;
 use Illuminate\Support\Facades\Route;
 
 // Każda sekcja panelu wymaga swojego uprawnienia (App\Permission). Uprawnienia ról
@@ -30,7 +31,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     // Turnieje i sparingi w trakcie sezonu
     Route::middleware('can:tournaments.manage')->group(function () {
         Route::view('/tournaments', 'admin.tournaments.index')->name('tournaments.index');
-        Route::get('/tournaments/{tournament}', fn (Tournament $tournament) => view('admin.tournaments.edit', ['tournament' => $tournament]))->name('tournaments.edit');
+        Route::get('/tournaments/{tournament}', fn (Tournament $tournament) => view('admin.tournaments.edit', ['tournament' => $tournament]))->where('tournament', Slug::ROUTE_PATTERN)->name('tournaments.edit');
     });
 
     // Transmisje i galerie zdjęć meczów ligowych i turniejowych
