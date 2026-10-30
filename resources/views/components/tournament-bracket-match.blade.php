@@ -19,7 +19,7 @@
         @if($match->starts_at || $match->court)
             <p class="mt-1.5 flex items-center justify-between gap-3">
                 @if($match->starts_at)
-                    <span class="inline-flex items-baseline gap-1.5 text-xs opacity-80"><span>{{ $match->starts_at->translatedFormat('D d.m') }}</span><span class="font-display text-lg leading-none font-semibold tabular-nums opacity-100">{{ $match->starts_at->format('H:i') }}</span></span>
+                    <span class="inline-flex items-baseline gap-1.5 text-xs opacity-80"><span>{{ $match->starts_at->translatedFormat('D d.m') }}</span><span class="font-display text-lg leading-none font-semibold tabular-nums opacity-100">{{ $match->starts_at->format('H:i') }}</span><x-match-delay :match="$match" class="self-center" /></span>
                 @else
                     <span></span>
                 @endif

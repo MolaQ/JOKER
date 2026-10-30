@@ -45,6 +45,7 @@ class TournamentMatch extends Model
         'home_source',
         'away_source',
         'starts_at',
+        'planned_starts_at',
         'court',
         'is_live',
         'home_sets',
@@ -59,6 +60,7 @@ class TournamentMatch extends Model
     {
         static::creating(function (TournamentMatch $match) {
             $match->number ??= (int) static::query()->where('tournament_category_id', $match->tournament_category_id)->max('number') + 1;
+            $match->planned_starts_at ??= $match->starts_at;
         });
     }
 
@@ -66,6 +68,7 @@ class TournamentMatch extends Model
     {
         return [
             'starts_at' => 'datetime',
+            'planned_starts_at' => 'datetime',
             'is_live' => 'boolean',
             'sets_score' => 'array',
         ];
@@ -173,6 +176,20 @@ class TournamentMatch extends Model
     public function tournament(): ?Tournament
     {
         return $this->category?->tournament;
+    }
+
+    /**
+     * Minuty opóźnienia względem planu (ujemne: mecz zaczyna się wcześniej); null, gdy różnica jest mniejsza niż 5 minut.
+     */
+    public function delayMinutes(): ?int
+    {
+        if ($this->starts_at === null || $this->planned_starts_at === null || $this->isFinished()) {
+            return null;
+        }
+
+        $minutes = (int) $this->planned_starts_at->diffInMinutes($this->starts_at, false);
+
+        return abs($minutes) >= 5 ? $minutes : null;
     }
 
     public function setsLabel(): ?string

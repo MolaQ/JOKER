@@ -403,6 +403,39 @@
                 </div>
             </form>
 
+            {{-- Harmonogram: pierwszy mecz i odstęp; zmiana godziny meczu przesuwa kolejne na tym samym sektorze --}}
+            @if($category->matches->isNotEmpty())
+                <div class="rounded-lg border border-gray-200 bg-white p-4">
+                    <h3 class="font-semibold text-gray-900">Harmonogram</h3>
+                    <div class="mt-3 flex flex-wrap items-end gap-3">
+                        <label class="block text-sm">
+                            <span class="text-gray-700">Pierwszy mecz</span>
+                            <input type="datetime-local" wire:model="scheduleStart" class="{{ $input }} mt-1">
+                        </label>
+                        <label class="block w-40 text-sm">
+                            <span class="text-gray-700">Odstęp na sektorze</span>
+                            <input type="text" wire:model.blur.live="matchInterval" placeholder="1:30" class="{{ $input }} mt-1">
+                        </label>
+                        <button type="button" wire:click="arrangeSchedule" wire:confirm="Ustawić godziny wszystkim meczom tej kategorii? Na każdym sektorze kolejny mecz (według numeru) zacznie się po odstępie. Mecze trwające i z wynikiem zostaną bez zmian." class="{{ $primary }}">Ułóż godziny według numerów</button>
+                        <label class="inline-flex items-center gap-2 pb-2 text-sm text-gray-700">
+                            <input type="checkbox" wire:model.live="shiftFollowing" class="rounded border-gray-300">
+                            Przesuwaj kolejne mecze na sektorze, gdy zmienię godzinę
+                        </label>
+                    </div>
+                    @error('scheduleStart') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    @error('matchInterval') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                    <p class="mt-2 text-xs text-gray-500">Zmiana godziny meczu przesuwa o tyle samo kolejne mecze tego dnia na tym samym sektorze, także z innych kategorii. Mecze trwające i z wynikiem się nie ruszają. Zmiana w dniu meczu pokazuje kibicom opóźnienie.</p>
+                </div>
+            @endif
+
+            @if($scheduleUndo)
+                <div class="flex flex-wrap items-center gap-3 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-900 ring-1 ring-emerald-200" role="status">
+                    <span>✓ {{ $scheduleUndo['message'] }}</span>
+                    <button type="button" wire:click="undoSchedule" class="ml-auto font-semibold underline hover:text-emerald-700">Cofnij</button>
+                    <button type="button" wire:click="dismissScheduleUndo" class="text-emerald-700 hover:text-emerald-900" aria-label="Zamknij">×</button>
+                </div>
+            @endif
+
             @if($category->matches->count() > 1)
                 <div class="flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
                     <button type="button" wire:click="renumberMatchesBySchedule" wire:confirm="Nadać meczom numery 1, 2, 3… według terminu (a przy tej samej godzinie według boiska)?" class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-800 hover:bg-gray-100">Numeruj według harmonogramu</button>
@@ -449,7 +482,12 @@
                                         <input type="text" wire:model.blur.live="results.{{ $tournamentMatch->id }}.sets" class="{{ $input }}" placeholder="25:20, 23:25, 15:12">
                                         @error("results.{$tournamentMatch->id}.sets") <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                                     </div>
-                                    <input type="datetime-local" wire:model.blur.live="results.{{ $tournamentMatch->id }}.starts_at" class="{{ $input }}">
+                                    <div>
+                                        <input type="datetime-local" wire:model.blur.live="results.{{ $tournamentMatch->id }}.starts_at" class="{{ $input }}">
+                                        @if($delay = $tournamentMatch->delayMinutes())
+                                            <p class="mt-1 text-xs"><span class="rounded-full bg-amber-100 px-1.5 font-semibold text-amber-800">{{ $delay > 0 ? '+' : '−' }}{{ abs($delay) }} min</span> <span class="text-gray-500">plan {{ $tournamentMatch->planned_starts_at->format('H:i') }}</span></p>
+                                        @endif
+                                    </div>
                                     <x-court-picker model="results.{{ $tournamentMatch->id }}.court" :value="$results[$tournamentMatch->id]['court'] ?? null" :free="false" />
                                     <div class="flex items-center gap-3">
                                         <label @class(['inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold ring-1', 'bg-red-50 text-red-700 ring-red-200' => $results[$tournamentMatch->id]['live'] ?? false, 'text-gray-500 ring-gray-200' => ! ($results[$tournamentMatch->id]['live'] ?? false)]) title="Włącz, gdy mecz się zaczął; wyłącz po wpisaniu wyniku końcowego">

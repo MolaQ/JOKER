@@ -567,3 +567,66 @@ test('placement matches outside the bracket stand above it, and the bracket can 
         ->assertSee('Po kolei')
         ->assertSee('Sektory');
 });
+
+test('match times are arranged per sector every interval and a delay shifts the next matches on that sector', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz, $poznan] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $other = $this->tournament->categories()->create(['name' => 'Juniorki', 'display_order' => 1]);
+    $base = ['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id];
+    $first = $category->matches()->create($base + ['number' => 1, 'court' => 'Sektor III']);
+    $second = $category->matches()->create($base + ['number' => 2, 'court' => 'Sektor II']);
+    $third = $category->matches()->create($base + ['number' => 3, 'court' => 'Sektor III']);
+    $fourth = $category->matches()->create($base + ['number' => 4, 'court' => 'Sektor III']);
+    $finished = $category->matches()->create($base + ['number' => 5, 'court' => 'Sektor III', 'home_sets' => 2, 'away_sets' => 0]);
+    $foreign = $other->matches()->create(['stage' => 'placement', 'placement' => 1, 'court' => 'Sektor III', 'starts_at' => '2026-11-14 15:00']);
+
+    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
+        ->assertSet('scheduleStart', '2026-11-14T09:00')
+        ->assertSet('matchInterval', '1:30')
+        ->set('matchInterval', '1:15')
+        ->call('arrangeSchedule')
+        ->assertSee('Cofnij');
+
+    expect($category->fresh()->match_interval)->toBe(75);
+    expect(collect([$first, $second, $third, $fourth])->map(fn ($m) => $m->fresh()->starts_at->format('H:i'))->all())->toBe(['09:00', '09:00', '10:15', '11:30'])
+        ->and($finished->fresh()->starts_at)->toBeNull();
+
+    // W dniu turnieju mecz #3 zaczyna się 20 minut później: #4 i mecz innej kategorii na Sektorze III też, Sektor II bez zmian.
+    $this->travelTo('2026-11-14 10:00');
+    $editor->set("results.{$third->id}.starts_at", '2026-11-14T10:35')
+        ->assertSee('Sektor III: przesunięto 2 kolejne mecze o +20 min');
+
+    expect($fourth->fresh()->starts_at->format('H:i'))->toBe('11:50')
+        ->and($foreign->fresh()->starts_at->format('H:i'))->toBe('15:20')
+        ->and($second->fresh()->starts_at->format('H:i'))->toBe('09:00')
+        ->and($third->fresh()->delayMinutes())->toBe(20)
+        ->and($fourth->fresh()->planned_starts_at->format('H:i'))->toBe('11:30');
+
+    Livewire::test(TournamentPage::class, ['tournament' => $this->tournament])->call('selectTab', 'matches')->assertSee('opóźnienie 20 min');
+
+    $editor->call('undoSchedule');
+    expect($third->fresh()->starts_at->format('H:i'))->toBe('10:15')
+        ->and($fourth->fresh()->starts_at->format('H:i'))->toBe('11:30')
+        ->and($foreign->fresh()->starts_at->format('H:i'))->toBe('15:00')
+        ->and($third->fresh()->delayMinutes())->toBeNull();
+
+    // Bez zaznaczonego przesuwania zmienia się tylko jeden mecz.
+    $editor->set('shiftFollowing', false)->set("results.{$third->id}.starts_at", '2026-11-14T10:05');
+    expect($fourth->fresh()->starts_at->format('H:i'))->toBe('11:30');
+});
+
+test('changing a match time before the tournament day changes the plan without a delay', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
+    $match = $joker->category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id, 'court' => 'Sektor I', 'starts_at' => '2026-11-14 09:00']);
+    $next = $joker->category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'court' => 'Sektor I', 'starts_at' => '2026-11-14 10:30']);
+
+    $this->travelTo('2026-11-01 12:00');
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
+        ->set("results.{$match->id}.starts_at", '2026-11-14T09:30');
+
+    expect($match->fresh()->delayMinutes())->toBeNull()
+        ->and($next->fresh()->starts_at->format('H:i'))->toBe('11:00')
+        ->and($next->fresh()->delayMinutes())->toBeNull();
+});

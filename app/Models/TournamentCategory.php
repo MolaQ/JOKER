@@ -16,6 +16,7 @@ class TournamentCategory extends Model
         'tournament_id',
         'name',
         'display_order',
+        'match_interval',
     ];
 
     /**

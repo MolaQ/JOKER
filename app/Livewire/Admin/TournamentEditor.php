@@ -9,9 +9,12 @@ use App\Models\Tournament;
 use App\Models\TournamentCategory;
 use App\Models\TournamentMatch;
 use App\Models\TournamentParticipant;
+use App\Models\TrainingSession;
 use App\Support\TournamentBracket;
+use App\Support\TournamentSchedule;
 use App\Support\TournamentTable;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Url;
@@ -89,6 +92,18 @@ class TournamentEditor extends Component
 
     /** @var array<int, array<string, mixed>> Własna punktacja grupy („custom” włącza ją, inaczej obowiązuje turniejowa). */
     public array $groupScoring = [];
+
+    /** Godzina pierwszego meczu przy układaniu harmonogramu kategorii. */
+    public string $scheduleStart = '';
+
+    /** Odstęp między meczami na sektorze, np. „1:30”. */
+    public string $matchInterval = '1:30';
+
+    /** Zmiana godziny meczu przesuwa kolejne mecze na tym samym sektorze. */
+    public bool $shiftFollowing = true;
+
+    /** @var array{message?: string, matches?: array<int, array{starts_at: ?string, planned_starts_at: ?string}>} Ostatnie przesunięcie do cofnięcia. */
+    public array $scheduleUndo = [];
 
     public function mount(Tournament $tournament): void
     {
@@ -528,6 +543,7 @@ class TournamentEditor extends Component
         $match = $this->category()->matches()->findOrFail($matchId);
         $row = $this->results[$matchId] ?? [];
         $sets = self::parseSets((string) ($row['sets'] ?? ''), "results.{$matchId}.sets");
+        $previous = $match->replicate();
 
         $match->update([
             'sets_score' => $sets ?: null,
@@ -537,6 +553,7 @@ class TournamentEditor extends Component
             'court' => trim($row['court'] ?? '') ?: null,
             'is_live' => (bool) ($row['live'] ?? false),
         ]);
+        $this->afterTimeChange($match, $previous);
         $this->syncBracket();
 
         $this->toast('Zapisano: '.$match->fresh()->homeName().' – '.$match->awayName().'.');
@@ -634,6 +651,7 @@ class TournamentEditor extends Component
         $text = fn (string $key): ?string => trim((string) ($data[$key] ?? '')) ?: null;
 
         $stage = $data['stage'];
+        $previous = $match->replicate();
         $match->update([
             'number' => (int) $data['number'],
             'home_source' => ($data['home_source'] ?? '') ?: null,
@@ -657,12 +675,110 @@ class TournamentEditor extends Component
                 default => null,
             },
         ]);
+        $this->afterTimeChange($match, $previous);
         $this->syncBracket();
 
         if ($close) {
             $this->editingMatchId = null;
         }
         $this->toast('Zapisano mecz: '.$match->fresh()->title().'.');
+    }
+
+    /**
+     * Po zmianie godziny meczu: godzina z planu (opóźnienie w dniu meczu) i przesunięcie kolejnych meczów na sektorze.
+     */
+    private function afterTimeChange(TournamentMatch $match, TournamentMatch $previous): void
+    {
+        $old = $previous->starts_at;
+        $new = $match->starts_at;
+
+        if ($old?->equalTo($new) || ($old === null && $new === null)) {
+            return;
+        }
+
+        $match->update(['planned_starts_at' => TournamentSchedule::plannedAfterChange($match, $old, $new)]);
+
+        if (! $this->shiftFollowing || $old === null || $new === null) {
+            return;
+        }
+
+        $shifted = TournamentSchedule::shiftFollowing($match, $old);
+
+        if ($shifted === []) {
+            return;
+        }
+
+        $minutes = (int) $old->diffInMinutes($new, false);
+        $numbers = TournamentMatch::with('category')->whereKey(array_keys($shifted))->orderBy('starts_at')->get()
+            ->map(fn (TournamentMatch $item) => '#'.$item->number.($item->tournament_category_id !== $match->tournament_category_id ? ' '.$item->category->name : ''))
+            ->implode(', ');
+
+        $this->scheduleUndo = [
+            'message' => TrainingSession::courtLabel($match->court).': '
+                .trans_choice('przesunięto :count kolejny mecz|przesunięto :count kolejne mecze|przesunięto :count kolejnych meczów', count($shifted)).' o '.($minutes > 0 ? '+' : '−').abs($minutes).' min ('.$numbers.').',
+            'matches' => [$match->id => TournamentSchedule::snapshot($previous)] + $shifted,
+        ];
+    }
+
+    /**
+     * Ustawia godziny wszystkim meczom kategorii: na każdym sektorze kolejny mecz (według numeru) co odstęp.
+     */
+    public function arrangeSchedule(): void
+    {
+        $interval = TournamentSchedule::parseInterval($this->matchInterval);
+        $this->validate(['scheduleStart' => 'required|date'], ['scheduleStart.required' => 'Podaj termin pierwszego meczu.']);
+
+        if ($interval === null || $interval < 5) {
+            throw ValidationException::withMessages(['matchInterval' => 'Wpisz odstęp jak „1:30”.']);
+        }
+
+        $category = $this->category();
+        $category->update(['match_interval' => $interval]);
+        $result = TournamentSchedule::arrange($category, Carbon::parse($this->scheduleStart), $interval);
+
+        $this->scheduleUndo = $result['before'] === [] ? [] : [
+            'message' => 'Ułożono godziny '.trans_choice(':count meczu|:count meczów|:count meczów', count($result['before'])).' co '.TournamentSchedule::formatInterval($interval).'.',
+            'matches' => $result['before'],
+        ];
+        $this->loadCategoryState();
+        $this->toast($result['skipped'] > 0
+            ? 'Ułożono godziny. Bez sektora, więc bez zmian: '.trans_choice(':count mecz|:count mecze|:count meczów', $result['skipped']).'.'
+            : 'Ułożono godziny meczów.');
+    }
+
+    public function updatedMatchInterval(): void
+    {
+        $interval = TournamentSchedule::parseInterval($this->matchInterval);
+
+        if ($interval === null || $interval < 5) {
+            throw ValidationException::withMessages(['matchInterval' => 'Wpisz odstęp jak „1:30”.']);
+        }
+
+        $this->category()->update(['match_interval' => $interval]);
+        $this->matchInterval = TournamentSchedule::formatInterval($interval);
+    }
+
+    /**
+     * „Cofnij”: przywraca godziny sprzed ostatniego przesunięcia albo ułożenia.
+     */
+    public function undoSchedule(): void
+    {
+        $tournamentCategories = $this->tournament->categories()->pluck('id');
+
+        DB::transaction(function () use ($tournamentCategories) {
+            foreach ($this->scheduleUndo['matches'] ?? [] as $id => $times) {
+                TournamentMatch::whereKey($id)->whereIn('tournament_category_id', $tournamentCategories)->update($times);
+            }
+        });
+
+        $this->scheduleUndo = [];
+        $this->loadCategoryState();
+        $this->toast('Przywrócono poprzednie godziny.');
+    }
+
+    public function dismissScheduleUndo(): void
+    {
+        $this->scheduleUndo = [];
     }
 
     /**
@@ -822,6 +938,9 @@ class TournamentEditor extends Component
         $this->scoring = self::scoringState(TournamentTable::scoring(tournament: $this->tournament->fresh()));
         $this->groupScoring = $groups->mapWithKeys(fn ($group) => [$group->id => ['custom' => $group->scoring !== null] + self::scoringState(TournamentTable::scoring($group, $this->tournament))])->all();
         $this->groupPlaces = $groups->mapWithKeys(fn ($group) => [$group->id => collect($group->final_places ?? [])->map(fn ($place) => (string) $place)->all()])->all();
+
+        $this->matchInterval = TournamentSchedule::formatInterval((int) ($category?->match_interval ?? 90));
+        $this->scheduleStart = ($category?->matches->min('starts_at') ?? $this->tournament->start_date?->copy()->setTime(9, 0))?->format('Y-m-d\TH:i') ?? '';
 
         $this->results = $category?->matches->mapWithKeys(fn (TournamentMatch $match) => [$match->id => [
             'sets' => collect($match->sets_score ?? [])->map(fn ($set) => implode(':', (array) $set))->implode(', '),

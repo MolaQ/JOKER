@@ -13,7 +13,7 @@
         <p class="mb-2 flex flex-wrap items-center gap-x-2 text-[11px] font-semibold tracking-wide text-zinc-500 uppercase">
             @if($match->number)<span class="rounded bg-zinc-100 px-1 text-zinc-600">#{{ $match->number }}</span>@endif
             @if($showTitle)<span class="text-sky-club-dark">{{ $match->title() }}</span>@endif
-            @if($match->starts_at)<span class="tabular-nums">@if($showDate){{ $match->starts_at->translatedFormat('D d.m') }}, @endif{{ $match->starts_at->format('H:i') }}</span>@endif
+            @if($match->starts_at)<span class="tabular-nums">@if($showDate){{ $match->starts_at->translatedFormat('D d.m') }}, @endif{{ $match->starts_at->format('H:i') }}</span><x-match-delay :match="$match" />@endif
             @if($match->court)<span class="inline-flex items-center gap-1">· @if($venue = \App\Models\TrainingSession::venueForCourt($match->court))<x-venue-icon :venue="$venue" small />@endif{{ \App\Models\TrainingSession::courtLabel($match->court) }}</span>@endif
         </p>
     @endif

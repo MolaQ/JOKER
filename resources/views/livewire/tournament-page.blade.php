@@ -201,7 +201,7 @@
                             <span class="font-display text-xl font-semibold tabular-nums text-zinc-900">{{ $match->starts_at?->format('H:i') ?? '–' }}</span>
                             <span class="hidden sm:block"><span class="rounded-md bg-(--tm-number-bg) px-1.5 text-sm font-bold text-(--tm-number-text) tabular-nums">#{{ $match->number }}</span></span>
                             <span class="min-w-0">
-                                <span class="block truncate text-sm font-semibold text-zinc-900"><span class="sm:hidden">#{{ $match->number }} · </span>{{ $match->title() }}</span>
+                                <span class="block truncate text-sm font-semibold text-zinc-900"><span class="sm:hidden">#{{ $match->number }} · </span>{{ $match->title() }} <x-match-delay :match="$match" /></span>
                                 <span class="block truncate text-sm text-zinc-500">{{ $bracket->side($match, 'home')['text'] }} – {{ $bracket->side($match, 'away')['text'] }}@if($match->home_sets !== null) · <b class="text-zinc-800 tabular-nums">{{ $match->home_sets }}:{{ $match->away_sets }}</b>@endif</span>
                             </span>
                             <span class="col-start-2 inline-flex items-center gap-2 text-sm text-zinc-600 sm:col-start-auto">
