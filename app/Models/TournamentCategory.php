@@ -15,6 +15,7 @@ class TournamentCategory extends Model
     protected $fillable = [
         'tournament_id',
         'name',
+        'color',
         'display_order',
         'match_interval',
         'schedule_days',
@@ -33,6 +34,23 @@ class TournamentCategory extends Model
     public function slug(): string
     {
         return Str::slug($this->name) ?: (string) $this->id;
+    }
+
+    /** @var list<string> Kolory domyślne kolejnych kategorii. */
+    public const COLORS = ['#45a0e0', '#f59e0b', '#10b981', '#8b5cf6', '#f43f5e', '#84cc16', '#06b6d4', '#ec4899'];
+
+    /**
+     * Kolor kategorii: ustawiony w panelu albo kolejny z palety według kolejności kategorii w turnieju.
+     */
+    public function color(): string
+    {
+        if ($this->color) {
+            return $this->color;
+        }
+
+        $index = $this->tournament->categories()->orderBy('display_order')->orderBy('id')->pluck('id')->search($this->id);
+
+        return self::COLORS[(int) $index % count(self::COLORS)];
     }
 
     public function tournament(): BelongsTo

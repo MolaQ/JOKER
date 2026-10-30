@@ -311,6 +311,13 @@ class TournamentEditor extends Component
         $this->toast('Zmieniono nazwę kategorii.');
     }
 
+    public function setCategoryColor(int $id, string $color): void
+    {
+        if (preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
+            $this->tournament->categories()->whereKey($id)->update(['color' => strtolower($color)]);
+        }
+    }
+
     public function updatedGroupNames(string $value, string $id): void
     {
         $this->validate(["groupNames.{$id}" => 'required|string|max:60']);

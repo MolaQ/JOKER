@@ -713,3 +713,23 @@ test('groups get default sectors, other matches go to the first free sector and 
     $editor->call('undoSchedule');
     $this->get(route('admin.tournaments.edit', ['tournament' => $this->tournament, 'section' => 'mecze']))->assertOk()->assertSee('Obłożenie sektorów')->assertSee('nakłada się');
 });
+
+test('category colours are configurable and the sector occupancy switches between days', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $category->matches()->create(['stage' => 'placement', 'placement' => 1, 'court' => 'Sektor I', 'starts_at' => '2026-11-14 09:00']);
+    $category->matches()->create(['stage' => 'placement', 'placement' => 3, 'court' => 'Sektor II', 'starts_at' => '2026-11-15 10:00']);
+
+    expect($category->color())->toBe('#45a0e0');
+
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'kategorie')
+        ->call('setCategoryColor', $category->id, '#FF0000')
+        ->call('setCategoryColor', $category->id, 'red;');
+
+    expect($category->fresh()->color())->toBe('#ff0000');
+
+    $this->get(route('admin.tournaments.edit', ['tournament' => $this->tournament, 'section' => 'mecze']))->assertOk()
+        ->assertSee('#ff0000', false)
+        ->assertSee('14.11')->assertSee('15.11')->assertSee('role="tablist"', false);
+});

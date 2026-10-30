@@ -101,6 +101,7 @@
             <ul class="divide-y divide-gray-200 rounded-lg border border-gray-200">
                 @forelse($categories as $cat)
                     <li class="flex flex-wrap items-center gap-3 px-4 py-3" wire:key="cat-{{ $cat->id }}">
+                        <input type="color" value="{{ $cat->color() }}" wire:change="setCategoryColor({{ $cat->id }}, $event.target.value)" class="h-7 w-9 cursor-pointer rounded border border-gray-300 p-0.5" title="Kolor kategorii w obłożeniu sektorów">
                         @if($renaming === 'category:'.$cat->id)
                             <input type="text" wire:model.blur.live="categoryNames.{{ $cat->id }}" x-init="$el.focus()" x-on:keydown.enter="$el.blur()" x-on:blur="$wire.set('renaming', '')" class="{{ $input }} max-w-xs">
                         @else
