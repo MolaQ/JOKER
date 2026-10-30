@@ -48,7 +48,7 @@ try {
         } else {
             $mode = '0644'
             if ($item.Extension -eq '.sh') { $mode = '0755' }
-            $lines.Add((Escape-Mtree $relative) + ' type=file mode=' + $mode + ' contents=' + (Escape-Mtree $item.FullName.Replace('\', '/')))
+            $lines.Add((Escape-Mtree $relative) + ' type=file mode=' + $mode + ' time=' + [DateTimeOffset]::new($item.LastWriteTimeUtc).ToUnixTimeSeconds() + '.0 contents=' + (Escape-Mtree $item.FullName.Replace('\', '/')))
         }
     }
 

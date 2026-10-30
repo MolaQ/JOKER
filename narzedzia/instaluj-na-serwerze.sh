@@ -88,6 +88,10 @@ done
 find "$APP" -path "$APP/storage/app/public" -prune -o -type d ! -perm 755 -exec chmod 755 {} +
 find "$APP" -path "$APP/storage/app/public" -prune -o -type f ! -perm 644 -exec chmod 644 {} +
 
+# Pliki z paczki mają datę z 1980 roku: OPcache serwera uznałby zmieniony plik PHP za ten sam
+# i dalej uruchamiał starą wersję. Świeża data wymusza wczytanie nowego kodu.
+find "$APP" \( -path "$APP/storage" -o -path "$APP/node_modules" \) -prune -o -type f -name '*.php' -exec touch {} +
+
 BLAD=0
 krok() {
     echo "--- $*"
