@@ -751,3 +751,24 @@ test('group matches skip a slot pointing to a deleted team', function () {
     Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->call('deleteParticipant', $b->id);
     expect($group->fresh()->slots)->toBe(["participant:{$a->id}", 'participant:99999']);
 });
+
+test('swapping a team keeps its group, matches and times', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $category = $this->tournament->categories()->create(['name' => 'Kadetki']);
+    $group = $category->groups()->create(['name' => 'Grupa A']);
+    $old = $category->participants()->create(['competitor_type' => 'rival_team', 'competitor_id' => RivalTeam::create(['full_name' => 'MKS Kalisz'])->id, 'tournament_group_id' => $group->id, 'roster' => 'Anna']);
+    $other = $category->participants()->create(['competitor_type' => 'rival_team', 'competitor_id' => RivalTeam::create(['full_name' => 'Sparta Złotów'])->id, 'tournament_group_id' => $group->id]);
+    $match = $group->matches()->create(['tournament_category_id' => $category->id, 'stage' => 'group', 'home_participant_id' => $old->id, 'away_participant_id' => $other->id, 'starts_at' => '2026-11-06 10:00:00', 'court' => 'court1']);
+    $new = RivalTeam::create(['full_name' => 'Orzeł Trzcianka']);
+
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])
+        ->call('startSwap', $old->id)
+        ->set('swapWith', 'rival:'.$new->id)
+        ->call('swapParticipant')
+        ->assertHasNoErrors();
+
+    expect($old->fresh())->competitor_id->toBe($new->id)->tournament_group_id->toBe($group->id)->roster->toBeNull()
+        ->and($old->fresh()->name())->toBe('Orzeł Trzcianka')
+        ->and($match->fresh())->home_participant_id->toBe($old->id)->court->toBe('court1')
+        ->and($match->fresh()->starts_at->format('Y-m-d H:i'))->toBe('2026-11-06 10:00');
+});

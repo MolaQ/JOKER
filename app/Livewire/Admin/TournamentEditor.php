@@ -57,6 +57,13 @@ class TournamentEditor extends Component
 
     public string $newParticipantName = '';
 
+    /** Zamiana drużyny: która pozycja (id uczestnika) i na kogo. */
+    public ?int $swapParticipant = null;
+
+    public string $swapWith = '';
+
+    public string $swapName = '';
+
     public $newParticipantLogo = null;
 
     /** @var array<int, array{group: ?string, roster: string, final_position: ?string, display_name: string}> */
@@ -504,6 +511,49 @@ class TournamentEditor extends Component
         }
 
         $this->toast('Zapisano drużyny.');
+    }
+
+    public function startSwap(int $id): void
+    {
+        $this->swapParticipant = $id;
+        $this->reset('swapWith', 'swapName');
+    }
+
+    public function cancelSwap(): void
+    {
+        $this->reset('swapParticipant', 'swapWith', 'swapName');
+    }
+
+    /**
+     * Podmienia drużynę na tej samej pozycji: grupa, mecze, godziny, sektory i drabinka zostają,
+     * bo wskazują pozycję w turnieju, a nie klub.
+     */
+    public function swapParticipant(): void
+    {
+        $participant = $this->category()->participants()->findOrFail($this->swapParticipant);
+        $this->validate([
+            'swapWith' => 'nullable|string',
+            'swapName' => 'required_without:swapWith|nullable|string|max:255',
+        ], ['swapName.required_without' => 'Wybierz drużynę z listy albo wpisz nazwę nowej.']);
+
+        if ($this->swapWith !== '') {
+            [$type, $id] = explode(':', $this->swapWith);
+            $competitor = $type === 'team' ? Team::findOrFail((int) $id) : RivalTeam::findOrFail((int) $id);
+        } else {
+            $competitor = RivalTeam::create(['full_name' => trim($this->swapName)]);
+        }
+
+        $old = $participant->name();
+        $participant->update([
+            'competitor_type' => $competitor instanceof Team ? 'team' : 'rival_team',
+            'competitor_id' => $competitor->id,
+            'display_name' => null,
+            'roster' => null,
+        ]);
+
+        $this->cancelSwap();
+        $this->loadCategoryState();
+        $this->toast("Zamieniono {$old} na {$participant->fresh()->name()}. Mecze, grupa i terminarz zostały.");
     }
 
     public function deleteParticipant(int $id): void

@@ -180,7 +180,28 @@
                                 <label class="text-xs text-gray-500">Skład (jedna osoba w linii)</label>
                                 <textarea rows="2" wire:model.blur.live="participants.{{ $participant->id }}.roster" class="{{ $input }}" placeholder="opcjonalnie"></textarea>
                             </div>
-                            <button type="button" wire:click="deleteParticipant({{ $participant->id }})" wire:confirm="Usunąć {{ $participant->name() }} z turnieju?" class="text-sm text-red-600 hover:text-red-800 lg:mt-6">Usuń</button>
+                            <div class="flex gap-3 text-sm lg:mt-6 lg:flex-col lg:gap-1">
+                                <button type="button" wire:click="startSwap({{ $participant->id }})" class="text-sky-700 hover:text-sky-900">Zamień</button>
+                                <button type="button" wire:click="deleteParticipant({{ $participant->id }})" wire:confirm="Usunąć {{ $participant->name() }} z turnieju?" class="text-red-600 hover:text-red-800">Usuń</button>
+                            </div>
+                            @if($swapParticipant === $participant->id)
+                                {{-- Zamiana drużyny na tej samej pozycji: mecze, grupa i terminarz zostają --}}
+                                <form wire:submit="swapParticipant" class="grid gap-3 rounded-lg bg-sky-50 p-3 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end lg:col-span-full">
+                                    <div>
+                                        <label class="{{ $label }}">Zamień {{ $participant->name() }} na</label>
+                                        <x-search-select model="swapWith" empty="— nowa drużyna (wpisz nazwę obok) —" placeholder="Szukaj drużyny lub klubu…" :options="$teamOptions->map(fn ($team) => ['value' => 'team:'.$team->id, 'label' => $site['club_short_name'].': '.$team->name, 'group' => 'Nasze drużyny'])
+                                            ->concat($rivalOptions->sortBy(fn ($rival) => ($rival->club?->name ?? '~').' '.$rival->full_name)->map(fn ($rival) => ['value' => 'rival:'.$rival->id, 'label' => $rival->full_name, 'group' => $rival->club?->name ?? 'Rywale bez klubu']))->all()" />
+                                    </div>
+                                    <div>
+                                        <label class="{{ $label }}">albo nazwa nowej drużyny</label>
+                                        <input type="text" wire:model="swapName" class="{{ $input }}" placeholder="np. UKS Dwójka Kalisz">
+                                    </div>
+                                    <button type="submit" class="{{ $primary }}" wire:confirm="Zamienić drużynę? Grupa, mecze, godziny i wpisane wyniki zostaną przy nowej drużynie.">Zamień</button>
+                                    <button type="button" wire:click="cancelSwap" class="text-sm text-gray-600 hover:text-gray-900">Anuluj</button>
+                                    <p class="text-xs text-gray-600 sm:col-span-4">Nowa drużyna wchodzi na to samo miejsce: zostaje grupa, wszystkie mecze z godzinami i sektorami oraz drabinka. Skład i „nazwa na tym turnieju” czyszczą się, bo dotyczyły poprzedniej drużyny.</p>
+                                    @error('swapName') <p class="text-sm text-red-600 sm:col-span-4">{{ $message }}</p> @enderror
+                                </form>
+                            @endif
                         </div>
                     @endforeach
                     <p class="text-xs text-gray-500">Zmiany zapisują się same. „Miejsce” zostaw puste, a końcowa klasyfikacja wyliczy się z meczów o miejsca, finału i reguł grup.</p>
