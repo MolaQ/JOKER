@@ -6,7 +6,9 @@
 param(
     [Parameter(Mandatory = $true)][string]$Root,
     [Parameter(Mandatory = $true)][string]$Folder,
-    [Parameter(Mandatory = $true)][string]$Out
+    [Parameter(Mandatory = $true)][string]$Out,
+    # Pliki w zipie bez folderu nadrzednego: rozpakowanie w folderze strony na serwerze kladzie je od razu na miejsce.
+    [switch]$BezFolderu
 )
 
 $ErrorActionPreference = 'Stop'
@@ -36,10 +38,11 @@ try {
 
     $lines = New-Object System.Collections.Generic.List[string]
     $lines.Add('#mtree')
-    $lines.Add((Escape-Mtree $Folder) + '/ type=dir mode=0755')
+    $prefix = $Folder + '/'
+    if ($BezFolderu) { $prefix = '' } else { $lines.Add((Escape-Mtree $Folder) + '/ type=dir mode=0755') }
 
     foreach ($item in $items) {
-        $relative = $Folder + '/' + $item.FullName.Substring($base.Length + 1).Replace('\', '/')
+        $relative = $prefix + $item.FullName.Substring($base.Length + 1).Replace('\', '/')
         if ($item.PSIsContainer) {
             $lines.Add((Escape-Mtree $relative) + ' type=dir mode=0755')
         } else {

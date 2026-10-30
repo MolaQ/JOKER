@@ -15,12 +15,14 @@ ZNACZNIK="$APP/storage/framework/instalacja-zrobiona"
 WERSJA="$APP/bootstrap/wersja-paczki.txt"
 LOG="$APP/storage/logs/instalacja.log"
 
-# Paczka rozpakowana o poziom za głęboko (joker/joker): przenosi pliki na właściwe miejsce.
-if [ -f "$APP/joker/artisan" ]; then
-    cp -a "$APP/joker/." "$APP/" && rm -rf "$APP/joker"
+# Paczka rozpakowana o poziom za głęboko (np. joker/joker, joker/oker): przenosi pliki na właściwe miejsce.
+for ZAGLEBIONY in "$APP"/*/; do
+    ZAGLEBIONY="${ZAGLEBIONY%/}"
+    [ -f "$ZAGLEBIONY/artisan" ] && [ -d "$ZAGLEBIONY/vendor" ] || continue
+    cp -a "$ZAGLEBIONY/." "$APP/" && rm -rf "$ZAGLEBIONY"
     mkdir -p "$APP/storage/logs"
-    echo "$(date '+%Y-%m-%d %H:%M:%S') Paczka była rozpakowana w joker/joker - przeniesiono pliki do $APP." >>"$APP/storage/logs/instalacja.log"
-fi
+    echo "$(date '+%Y-%m-%d %H:%M:%S') Paczka była rozpakowana w $ZAGLEBIONY - przeniesiono pliki do $APP." >>"$APP/storage/logs/instalacja.log"
+done
 
 # Paczka rozpakowana z uprawnieniami 777 (zip z Windows) daje błąd 403/500: serwer nie uruchamia plików,
 # które może zmieniać każdy. Foldery 755, pliki 644 (skrypty .sh zostają wykonywalne).
