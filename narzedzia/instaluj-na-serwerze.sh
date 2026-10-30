@@ -10,6 +10,9 @@ cd "$(dirname "$0")/.." || exit 1
 APP="$(pwd)"
 DOMENA="$(dirname "$APP")"
 ZNACZNIK="$APP/storage/framework/instalacja-zrobiona"
+# Numer paczki zapisany przez paczka-na-serwer.bat: inny niż przy ostatniej instalacji = nowa paczka,
+# nawet gdy menedżer plików zostawi przy rozpakowaniu stare daty plików.
+WERSJA="$APP/bootstrap/wersja-paczki.txt"
 LOG="$APP/storage/logs/instalacja.log"
 
 # Paczka rozpakowana z uprawnieniami 777 (zip z Windows) daje błąd 403/500: serwer nie uruchamia plików,
@@ -39,7 +42,8 @@ if [ -z "$PHPBIN" ]; then
 fi
 
 # Strona zainstalowana i nic nowego nie wgrano: tylko zadania okresowe (terminarze co 3 godziny, sprzątanie statystyk).
-if [ -f "$ZNACZNIK" ] && [ "$ZNACZNIK" -nt vendor/autoload.php ] && [ "$ZNACZNIK" -nt .env ]; then
+if [ -f "$ZNACZNIK" ] && [ "$ZNACZNIK" -nt vendor/autoload.php ] && [ "$ZNACZNIK" -nt .env ] \
+    && { [ ! -f "$WERSJA" ] || cmp -s "$WERSJA" "$ZNACZNIK"; }; then
     "$PHPBIN" artisan schedule:run --no-interaction >/dev/null 2>&1
     exit 0
 fi
@@ -92,7 +96,9 @@ krok joker:optimize-photos
 krok optimize
 
 if [ "$BLAD" -eq 0 ]; then
+    if [ -f "$WERSJA" ]; then cp "$WERSJA" "$ZNACZNIK"; fi
     touch "$ZNACZNIK"
+    echo "Paczka: $(cat "$WERSJA" 2>/dev/null || echo bez numeru)"
     echo "=== GOTOWE ==="
 else
     echo "=== Były błędy (powyżej). Wklej ten log Claude. Kolejna próba przy następnym uruchomieniu crona. ==="

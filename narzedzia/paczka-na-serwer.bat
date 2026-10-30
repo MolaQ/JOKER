@@ -69,6 +69,8 @@ if %ERRORLEVEL% GEQ 8 (
 )
 rem Zapamietane ustawienia z tego komputera nie moga trafic na serwer.
 del /q "%ROBOCZY%\joker\bootstrap\cache\*.php" 2>nul
+rem Numer paczki: po nim instalator na serwerze rozpoznaje nowa paczke (daty plikow po rozpakowaniu bywaja stare).
+powershell -NoProfile -Command "[IO.File]::WriteAllText('%ROBOCZY%\joker\bootstrap\wersja-paczki.txt', (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'))"
 for %%F in (app\public framework\cache\data framework\sessions framework\views logs) do if not exist "%ROBOCZY%\joker\storage\%%F" mkdir "%ROBOCZY%\joker\storage\%%F"
 
 echo [3/5] Pobieram biblioteki bez narzedzi programisty (composer install --no-dev) ...
