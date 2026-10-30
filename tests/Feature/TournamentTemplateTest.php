@@ -72,3 +72,16 @@ test('a category saved as a template is rebuilt in a new category and fills in a
     $editor->call('generateGroupMatches', $newGroup->id);
     expect($copy->matches()->where('tournament_group_id', $newGroup->id)->count())->toBe(2);
 });
+
+test('the tv screen rotates through category slides and links to the next one', function () {
+    $category = $this->tournament->categories()->create(['name' => 'Kadetki']);
+    $group = $category->groups()->create(['name' => 'Grupa A']);
+    $a = $category->participants()->create(['competitor_type' => 'rival_team', 'competitor_id' => templateRival('MKS Kalisz'), 'tournament_group_id' => $group->id]);
+    $b = $category->participants()->create(['competitor_type' => 'rival_team', 'competitor_id' => templateRival('Sparta Złotów'), 'tournament_group_id' => $group->id]);
+    $group->matches()->create(['tournament_category_id' => $category->id, 'stage' => 'group', 'home_participant_id' => $a->id, 'away_participant_id' => $b->id, 'starts_at' => '2026-11-14 10:00', 'is_live' => true, 'home_sets' => 1, 'away_sets' => 0]);
+
+    $this->get(route('tournaments.tv', $this->tournament))->assertOk()
+        ->assertSee('Tabele grup')->assertSee('MKS Kalisz')->assertSee('Teraz gramy')->assertSee('plansza 1/2');
+
+    $this->get(route('tournaments.tv', [$this->tournament, 's' => 1]))->assertOk()->assertSee('Teraz i za chwilę');
+});

@@ -16,7 +16,8 @@
             </button>
         @endforeach
         @if($tournament->has_page)
-            <a href="{{ route('tournaments.show', $tournament) }}" target="_blank" class="ml-auto text-sm font-semibold text-sky-700 hover:underline self-center">Zobacz stronę ↗</a>
+            <a href="{{ route('tournaments.tv', $tournament) }}" target="_blank" class="ml-auto text-sm font-semibold text-sky-700 hover:underline self-center" title="Otwórz na komputerze podłączonym do telewizora i naciśnij F11 (pełny ekran)">Ekran TV ↗</a>
+            <a href="{{ route('tournaments.show', $tournament) }}" target="_blank" class="text-sm font-semibold text-sky-700 hover:underline self-center">Zobacz stronę ↗</a>
         @endif
     </div>
 

@@ -214,6 +214,17 @@ return [
             ],
         ],
 
+        'telewizor' => [
+            'label' => 'Turnieje: ekran na telewizor',
+            'icon' => 'tv',
+            'fields' => [
+                'tv_interval' => ['type' => 'select', 'label' => 'Zmiana planszy co', 'help' => 'Ekran otwierasz w panelu turnieju („Ekran TV”). Każda plansza wczytuje się na nowo, więc wyniki są zawsze aktualne.', 'options' => ['15' => '15 sekund', '20' => '20 sekund', '25' => '25 sekund', '30' => '30 sekund', '40' => '40 sekund', '60' => '1 minuta'], 'default' => '25'],
+                'tv_live_bar' => ['type' => 'toggle', 'label' => 'Pasek „Teraz gramy” u dołu', 'help' => 'Mecze oznaczone jako „Trwa” z wynikiem, na każdej planszy.', 'default' => true],
+                'tv_sponsors' => ['type' => 'toggle', 'label' => 'Plansza ze sponsorami', 'help' => 'Logotypy aktywnych sponsorów na końcu każdej rundy.', 'default' => true],
+                'tv_footer' => ['type' => 'text', 'label' => 'Napis u dołu ekranu', 'help' => 'Puste = „Wyniki na żywo: adres strony”.', 'default' => ''],
+            ],
+        ],
+
         'zawodnicy' => [
             'label' => 'Profile zawodników',
             'icon' => 'user',

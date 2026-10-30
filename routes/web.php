@@ -27,6 +27,7 @@ use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TournamentController;
 use App\Http\Controllers\TournamentMatchController;
+use App\Http\Controllers\TournamentTvController;
 use App\Http\Controllers\TrainerController;
 use App\Support\LegacyUrls;
 use App\Support\Slug;
@@ -62,6 +63,7 @@ Route::post('/news/{article}/comments', [ArticleController::class, 'storeComment
 // Players
 Route::get('/memorial', [TournamentController::class, 'memorial'])->name('memorial');
 Route::get('/tournaments/{tournament}/matches/{match}', [TournamentMatchController::class, 'show'])->where('tournament', Slug::ROUTE_PATTERN)->whereNumber('match')->name('tournaments.matches.show');
+Route::get('/tournaments/{tournament}/tv', [TournamentTvController::class, 'show'])->where('tournament', Slug::ROUTE_PATTERN)->name('tournaments.tv');
 Route::get('/tournaments/{tournament}/{category?}', [TournamentController::class, 'show'])->where('tournament', Slug::ROUTE_PATTERN)->where('category', '[a-z0-9-]+')->name('tournaments.show');
 Route::get('/players/{player}', [PlayerController::class, 'show'])->where('player', Slug::ROUTE_PATTERN)->name('players.show');
 
