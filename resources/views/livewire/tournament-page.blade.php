@@ -60,7 +60,7 @@
 
         {{-- GRUPY --}}
         @if($currentTab === 'groups' && $current)
-            <div class="grid gap-8 lg:grid-cols-2">
+            <div @class(['grid gap-8', 'lg:grid-cols-2' => $current->groups->count() > 1])>
                 @foreach($current->groups as $group)
                     <div wire:key="group-{{ $group->id }}" class="card overflow-hidden">
                         <h2 class="flex items-center justify-between gap-2 bg-gradient-to-r from-club-navy to-sky-club-dark px-5 py-3 font-display text-xl font-semibold text-white uppercase">{{ $group->name }} <x-tournament-group-status :progress="$bracket->groupProgress($group)" dark /></h2>
@@ -68,38 +68,38 @@
                             <table data-sortable class="w-full text-sm">
                                 <thead class="bg-zinc-50 text-xs font-semibold text-zinc-500 uppercase">
                                     <tr>
-                                        <th class="px-4 py-2 text-left">#</th>
-                                        <th class="px-2 py-2 text-left">{{ __('Drużyna') }}</th>
-                                        <th class="px-2 py-2 text-center" title="{{ __('Mecze') }}">M</th>
-                                        <th class="px-2 py-2 text-center" title="{{ __('Wygrane') }}">W</th>
-                                        <th class="px-2 py-2 text-center" title="{{ __('Porażki') }}">P</th>
-                                        <th class="px-2 py-2 text-center">{{ __('Sety') }}</th>
-                                        <th class="px-2 py-2 text-center">{{ __('Małe pkt') }}</th>
-                                        <th class="px-4 py-2 text-center">{{ __('Pkt') }}</th>
+                                        <th class="px-3 sm:px-4 py-2 text-left">#</th>
+                                        <th class="px-1.5 sm:px-2 py-2 text-left">{{ __('Drużyna') }}</th>
+                                        <th class="px-1.5 sm:px-2 py-2 text-center" title="{{ __('Mecze') }}">M</th>
+                                        <th class="hidden px-1.5 sm:px-2 py-2 text-center sm:table-cell" title="{{ __('Wygrane') }}">W</th>
+                                        <th class="hidden px-1.5 sm:px-2 py-2 text-center sm:table-cell" title="{{ __('Porażki') }}">P</th>
+                                        <th class="px-1.5 sm:px-2 py-2 text-center">{{ __('Sety') }}</th>
+                                        <th class="hidden px-1.5 sm:px-2 py-2 text-center sm:table-cell">{{ __('Małe pkt') }}</th>
+                                        <th class="px-3 sm:px-4 py-2 text-center">{{ __('Pkt') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-zinc-100">
                                     @foreach($bracket->groupTable($group) as $row)
                                         <tr @class(['bg-sky-club/10 font-semibold' => $row['participant']->isOwnTeam()])>
-                                            <td class="px-4 py-2.5 font-bold">{{ $row['position'] }}</td>
-                                            <td class="px-2 py-2.5">
+                                            <td class="px-3 sm:px-4 py-2.5 font-bold">{{ $row['position'] }}</td>
+                                            <td class="w-full max-w-0 px-1.5 sm:px-2 py-2.5">
                                                 <span class="flex items-center gap-2">
                                                     <x-avatar logo :photo="$row['participant']->logoPath()" :name="$row['participant']->name()" class="h-6 w-6 shrink-0 rounded-full text-[9px]" />
-                                                    <span class="truncate">{{ $row['participant']->name() }}</span>
+                                                    <span class="line-clamp-2 leading-tight">{{ $row['participant']->name() }}</span>
                                                 </span>
                                             </td>
-                                            <td class="px-2 py-2.5 text-center tabular-nums">{{ $row['played'] }}</td>
-                                            <td class="px-2 py-2.5 text-center text-emerald-700 tabular-nums">{{ $row['won'] }}</td>
-                                            <td class="px-2 py-2.5 text-center text-red-600 tabular-nums">{{ $row['lost'] }}</td>
-                                            <td class="px-2 py-2.5 text-center tabular-nums">{{ $row['sets_won'] }}:{{ $row['sets_lost'] }}</td>
-                                            <td class="px-2 py-2.5 text-center text-zinc-500 tabular-nums">{{ $row['small_won'] }}:{{ $row['small_lost'] }}</td>
-                                            <td class="px-4 py-2.5 text-center font-display text-lg font-bold tabular-nums">{{ $row['points'] }}</td>
+                                            <td class="px-1.5 sm:px-2 py-2.5 text-center tabular-nums">{{ $row['played'] }}</td>
+                                            <td class="hidden px-1.5 sm:px-2 py-2.5 text-center text-emerald-700 tabular-nums sm:table-cell">{{ $row['won'] }}</td>
+                                            <td class="hidden px-1.5 sm:px-2 py-2.5 text-center text-red-600 tabular-nums sm:table-cell">{{ $row['lost'] }}</td>
+                                            <td class="px-1.5 sm:px-2 py-2.5 text-center tabular-nums">{{ $row['sets_won'] }}:{{ $row['sets_lost'] }}</td>
+                                            <td class="hidden px-1.5 sm:px-2 py-2.5 text-center text-zinc-500 tabular-nums sm:table-cell">{{ $row['small_won'] }}:{{ $row['small_lost'] }}</td>
+                                            <td class="px-3 sm:px-4 py-2.5 text-center font-display text-lg font-bold tabular-nums">{{ $row['points'] }}</td>
                                         </tr>
                                     @endforeach
-                                    @foreach($bracket->members($group)->whereNull('participant') as $member)
+                                    @foreach($bracket->members($group)->whereNull('participant')->reject(fn ($member) => str_starts_with($member['key'], 'participant:')) as $member)
                                         <tr class="text-zinc-400 italic">
-                                            <td class="px-4 py-2.5 font-bold not-italic">–</td>
-                                            <td class="px-2 py-2.5" colspan="7">{{ $member['text'] }}</td>
+                                            <td class="px-3 sm:px-4 py-2.5 font-bold not-italic">–</td>
+                                            <td class="px-1.5 sm:px-2 py-2.5" colspan="7">{{ $member['text'] }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -108,11 +108,18 @@
                         @if($group->matches->isNotEmpty())
                             <details class="border-t border-zinc-100 px-5 py-3">
                                 <summary class="cursor-pointer text-sm font-semibold text-sky-club-dark" data-track="{{ __('Mecze grupy') }}: {{ $group->name }}">{{ __('Mecze grupy') }} ({{ $group->matches->count() }})</summary>
-                                <div class="mt-3 grid gap-2 sm:grid-cols-2">
-                                    @foreach($group->matches as $match)
-                                        <x-tournament-match :match="$match" :bracket="$bracket" :show-title="false" />
-                                    @endforeach
-                                </div>
+                                {{-- Mecze dniami turnieju, w dniu według godziny --}}
+                                @foreach($group->matches->sortBy(fn ($match) => [$match->starts_at?->timestamp ?? PHP_INT_MAX, $match->number ?? PHP_INT_MAX])->groupBy(fn ($match) => $match->starts_at?->toDateString() ?? '') as $day => $dayMatches)
+                                    <h3 class="mt-4 mb-2 flex items-center gap-2 text-xs font-bold tracking-wide text-zinc-500 uppercase">
+                                        <span>{{ $day ? \Illuminate\Support\Str::ucfirst(\Illuminate\Support\Carbon::parse($day)->translatedFormat('l, j F')) : __('Termin do ustalenia') }}</span>
+                                        <span class="h-px flex-1 bg-zinc-200"></span>
+                                    </h3>
+                                    <div @class(['grid gap-2 sm:grid-cols-2', 'lg:grid-cols-3' => $current->groups->count() === 1])>
+                                        @foreach($dayMatches as $match)
+                                            <x-tournament-match :match="$match" :bracket="$bracket" :show-title="false" />
+                                        @endforeach
+                                    </div>
+                                @endforeach
                             </details>
                         @endif
                     </div>
