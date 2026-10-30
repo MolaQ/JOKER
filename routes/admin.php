@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Models\Tournament;
 use App\Support\DataImport;
 use App\Support\Mentions;
+use App\Support\SiteSettings;
 use App\Support\Slug;
 use Illuminate\Support\Facades\Route;
 
@@ -35,7 +36,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     });
 
     // Transmisje i galerie zdjęć meczów ligowych i turniejowych
-    Route::view('/minisiatkowka', 'admin.mini.index')->middleware('can:mini.manage')->name('mini.index');
+    Route::get('/minisiatkowka', fn () => app(SiteSettings::class)['module_mini'] ? view('admin.mini.index') : abort(404))->middleware('can:mini.manage')->name('mini.index');
     Route::view('/media', 'admin.media.index')->middleware('can:media.manage')->name('media.index');
     Route::view('/galleries', 'admin.galleries.index')->middleware('can:media.manage')->name('galleries.index');
 

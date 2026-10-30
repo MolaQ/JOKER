@@ -1,12 +1,13 @@
 @extends('layouts.public')
 
-@section('title', __('Minisiatkówka'))
+@section('title', __($site['mini_title']))
 @section('description', __('Minisiatkówka w :club: grupy, dzieci, wyjazdy na turnieje i wyniki.', ['club' => $site['club_name']]))
 
 @section('content')
 <section class="container-site py-16 lg:py-24">
-    <p class="eyebrow">{{ __('Pierwsze kroki') }}</p>
-    <h1 class="heading-xl mt-3">{{ __('Minisiatkówka') }}</h1>
+    @if($site['mini_eyebrow'])<p class="eyebrow">{{ __($site['mini_eyebrow']) }}</p>@endif
+    <h1 class="heading-xl mt-3">{{ __($site['mini_title']) }}</h1>
+    @if($site['mini_intro'])<p class="mt-5 max-w-3xl text-lg whitespace-pre-line text-zinc-600">{{ __($site['mini_intro']) }}</p>@endif
 
     <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         @forelse($groups as $group)
@@ -17,6 +18,7 @@
     </div>
 
     <div class="mt-16 grid gap-10 lg:grid-cols-2">
+        @if($site['mini_show_trips'])
         <div>
             <h2 class="heading-md">{{ __('Najbliższe wyjazdy') }}</h2>
             <div class="mt-5 space-y-3">
@@ -27,6 +29,8 @@
                 @endforelse
             </div>
         </div>
+        @endif
+        @if($site['mini_show_results'])
         <div>
             <h2 class="heading-md">{{ __('Ostatnie wyniki') }}</h2>
             <ul class="mt-5 divide-y divide-zinc-100 overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200">
@@ -43,6 +47,7 @@
                 @endforelse
             </ul>
         </div>
+        @endif
     </div>
 </section>
 @endsection

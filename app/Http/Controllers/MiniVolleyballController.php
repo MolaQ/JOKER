@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MiniGroup;
 use App\Models\MiniTrip;
 use App\Models\MiniTripTeam;
+use App\Support\SiteSettings;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -14,6 +15,8 @@ class MiniVolleyballController extends Controller
 {
     public function index()
     {
+        abort_unless(app(SiteSettings::class)['module_mini'], 404);
+
         $groups = MiniGroup::where('is_active', true)->ordered()->withCount(['players' => fn ($query) => $query->where('is_active', true)])->get();
 
         return view('mini.index', [
@@ -27,7 +30,7 @@ class MiniVolleyballController extends Controller
 
     public function show(MiniGroup $miniGroup)
     {
-        abort_unless($miniGroup->is_active, 404);
+        abort_unless(app(SiteSettings::class)['module_mini'] && $miniGroup->is_active, 404);
 
         $trips = MiniTrip::whereHas('teams', fn ($query) => $query->where('mini_group_id', $miniGroup->id))
             ->with(['teams' => fn ($query) => $query->where('mini_group_id', $miniGroup->id)->with('players'), 'tournament'])

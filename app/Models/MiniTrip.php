@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\SiteSettings;
 use App\UserRole;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -63,6 +64,6 @@ class MiniTrip extends Model
 
     public static function canSeeParentInfo(?User $user): bool
     {
-        return $user !== null && ($user->hasRole(UserRole::Parent) || $user->canAccessPanel());
+        return app(SiteSettings::class)['mini_show_parent_info'] && $user !== null && ($user->hasRole(UserRole::Parent) || $user->canAccessPanel());
     }
 }

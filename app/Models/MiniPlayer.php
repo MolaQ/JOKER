@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\Media;
+use App\Support\SiteSettings;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -43,10 +44,22 @@ class MiniPlayer extends Model
     }
 
     /**
+     * Podpis na stronie według ustawień: imię i nazwisko, imię i inicjał albo samo imię.
+     */
+    public function displayName(): string
+    {
+        return match (app(SiteSettings::class)['mini_child_names']) {
+            'initial' => trim($this->first_name.' '.mb_substr($this->last_name, 0, 1).'.'),
+            'first' => $this->first_name,
+            default => $this->name(),
+        };
+    }
+
+    /**
      * Zdjęcie na stronie: tylko gdy rodzic zgodził się na publikację wizerunku.
      */
     public function photoUrl(): ?string
     {
-        return $this->image_consent ? Media::url($this->photo_path) : null;
+        return $this->image_consent && app(SiteSettings::class)['mini_show_photos'] ? Media::url($this->photo_path) : null;
     }
 }

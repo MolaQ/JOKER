@@ -57,7 +57,7 @@ class HomeController extends Controller
 
         $alumni = $site['home_alumni_enabled'] && $site['module_alumni'] ? Alumnus::published()->with('player')->limit(4)->get() : collect();
 
-        $miniGroups = $site['home_mini_enabled'] ? MiniGroup::where('is_active', true)->ordered()->withCount(['players' => fn ($query) => $query->where('is_active', true)])->get() : collect();
+        $miniGroups = $site['home_mini_enabled'] && $site['module_mini'] ? MiniGroup::where('is_active', true)->ordered()->withCount(['players' => fn ($query) => $query->where('is_active', true)])->get() : collect();
 
         return view('home', compact('seasonName', 'heroSlides', 'upcoming_games', 'recent_results', 'articles', 'teams', 'sponsors', 'stats', 'countdownGame', 'alumni', 'lineup', 'miniGroups'));
     }

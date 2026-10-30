@@ -8,6 +8,7 @@ use App\Models\MiniPlayer;
 use App\Models\MiniTrip;
 use App\Models\MiniTripTeam;
 use App\Models\Tournament;
+use App\Support\SiteSettings;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -34,7 +35,7 @@ class MiniVolleyballManager extends Component
     public bool $showTripForm = false;
 
     /** @var array{group: string, name: string} */
-    public array $newTeam = ['group' => '', 'name' => 'Joker 1'];
+    public array $newTeam = ['group' => '', 'name' => ''];
 
     /** @var array<int, array{place: string, teams_count: string, note: string}> */
     public array $results = [];
@@ -92,7 +93,7 @@ class MiniVolleyballManager extends Component
             'tournament_id' => (string) $trip->tournament_id,
         ];
         $this->showTripForm = false;
-        $this->newTeam = ['group' => '', 'name' => 'Joker '.($trip->teams()->count() + 1)];
+        $this->newTeam = ['group' => '', 'name' => $this->teamName($trip->teams()->count() + 1)];
         $this->loadResults();
     }
 
@@ -145,7 +146,7 @@ class MiniVolleyballManager extends Component
         ], [], ['newTeam.name' => 'nazwa drużyny'])['newTeam'];
 
         $trip->teams()->create(['mini_group_id' => $data['group'] ?: null, 'name' => trim($data['name'])]);
-        $this->newTeam['name'] = 'Joker '.($trip->teams()->count() + 1);
+        $this->newTeam['name'] = $this->teamName($trip->teams()->count() + 1);
         $this->loadResults();
     }
 
@@ -189,6 +190,11 @@ class MiniVolleyballManager extends Component
         $this->tripTeam((int) $this->photoTeamId)->update(['photo_path' => $this->teamPhoto->store('mini', 'public')]);
         $this->reset(['teamPhoto', 'photoTeamId']);
         $this->toast('Dodano zdjęcie.');
+    }
+
+    private function teamName(int $number): string
+    {
+        return trim((app(SiteSettings::class)['mini_team_prefix'] ?: '').' '.$number);
     }
 
     private function tripTeam(int $id): MiniTripTeam

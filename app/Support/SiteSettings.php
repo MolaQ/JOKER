@@ -95,6 +95,7 @@ class SiteSettings implements ArrayAccess
         $disabled = array_keys(array_filter([
             '/memorial' => blank($this->get('featured_tournament_name')),
             '/alumni' => ! $this->get('module_alumni'),
+            '/minisiatkowka' => ! $this->get('module_mini'),
         ]));
 
         return collect((array) $this->get($key, []))

@@ -6,6 +6,7 @@ use App\Models\MiniPlayer;
 use App\Models\MiniTrip;
 use App\Models\MiniTripTeam;
 use App\Models\User;
+use App\Support\SiteSettings;
 use Livewire\Livewire;
 
 test('the migration prepares four hidden groups', function () {
@@ -73,4 +74,20 @@ test('child photos need parental consent and trip details are only for parents a
 test('only roles with the mini volleyball permission open the panel', function () {
     $this->actingAs(User::factory()->trainer()->create())->get('/panel/minisiatkowka')->assertOk();
     $this->actingAs(User::factory()->editor()->create())->get('/panel/minisiatkowka')->assertForbidden();
+});
+
+test('the whole mini volleyball module and each part of it can be switched off in the settings', function () {
+    MiniGroup::query()->delete();
+    $group = MiniGroup::create(['name' => 'Czwórki', 'players_on_court' => 4, 'rules' => 'Siatka 2,15 m']);
+    MiniPlayer::create(['mini_group_id' => $group->id, 'first_name' => 'Antek', 'last_name' => 'Kowalski', 'birth_year' => 2013]);
+    $settings = app(SiteSettings::class);
+
+    $settings->set(['mini_child_names' => 'initial', 'mini_show_birth_year' => false, 'mini_show_rules' => false, 'mini_title' => 'Mini Joker']);
+    $this->get(route('mini.show', $group))->assertOk()->assertSee('Antek K.')->assertDontSee('Kowalski')->assertDontSee('2013')->assertDontSee('Siatka 2,15 m')->assertSee('Mini Joker');
+
+    $settings->set(['module_mini' => false]);
+    $this->get(route('mini.index'))->assertNotFound();
+    $this->get(route('mini.show', $group))->assertNotFound();
+    $this->get('/')->assertOk()->assertDontSee('Wszystko o minisiatkówce');
+    $this->actingAs(User::factory()->trainer()->create())->get('/panel/minisiatkowka')->assertNotFound();
 });

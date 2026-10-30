@@ -17,7 +17,7 @@
                         <span @class(['rounded-full px-2 py-0.5 text-xs font-bold', 'bg-amber-100 text-amber-800' => $team->place === 1, 'bg-zinc-200 text-zinc-700' => $team->place === 2, 'bg-orange-100 text-orange-800' => $team->place === 3, 'bg-sky-50 text-sky-800' => $team->place > 3])>{{ $team->place <= 3 ? ['🥇', '🥈', '🥉'][$team->place - 1].' ' : '' }}{{ $team->resultLabel() }}</span>
                     @endif
                 </p>
-                @if($team->players->isNotEmpty())<p class="text-sm text-zinc-600">{{ $team->players->map->name()->implode(', ') }}</p>@endif
+                @if($site['mini_show_lineups'] && $team->players->isNotEmpty())<p class="text-sm text-zinc-600">{{ $team->players->map->displayName()->implode(', ') }}</p>@endif
                 @if($team->note)<p class="text-sm text-zinc-500 italic">{{ $team->note }}</p>@endif
                 @if($team->photoUrl())<img src="{{ $team->photoUrl() }}" alt="{{ $team->name }}, {{ $trip->title }}" loading="lazy" class="mt-2 max-h-64 rounded-xl object-cover">@endif
             </div>

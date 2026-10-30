@@ -64,6 +64,36 @@ return [
             ],
         ],
 
+        'minisiatkowka' => [
+            'label' => 'Minisiatkówka',
+            'icon' => 'star',
+            'fields' => [
+                'module_mini' => ['type' => 'toggle', 'label' => 'Minisiatkówka włączona', 'help' => 'Strona /minisiatkowka, strony grup, kafle na stronie głównej i panel „Minisiatkówka”. Wyłączenie ukrywa wszystko, dane zostają.', 'default' => true],
+                'mini_title' => ['type' => 'text', 'label' => 'Tytuł', 'default' => 'Minisiatkówka'],
+                'mini_eyebrow' => ['type' => 'text', 'label' => 'Mały napis nad tytułem', 'default' => 'Pierwsze kroki'],
+                'mini_intro' => ['type' => 'textarea', 'label' => 'Wstęp na stronie /minisiatkowka (puste = bez wstępu)', 'default' => ''],
+                'mini_show_children' => ['type' => 'toggle', 'label' => 'Pokazuj dzieci na stronie grupy', 'default' => true],
+                'mini_child_names' => ['type' => 'select', 'label' => 'Podpis dziecka', 'default' => 'full', 'options' => [
+                    'full' => 'Imię i nazwisko',
+                    'initial' => 'Imię i inicjał nazwiska',
+                    'first' => 'Tylko imię',
+                ]],
+                'mini_show_birth_year' => ['type' => 'toggle', 'label' => 'Pokazuj rocznik dziecka', 'default' => true],
+                'mini_show_photos' => ['type' => 'toggle', 'label' => 'Pokazuj zdjęcia dzieci (tylko ze zgodą rodzica)', 'help' => 'Wyłączone: wszystkie dzieci mają sylwetkę.', 'default' => true],
+                'mini_show_trips' => ['type' => 'toggle', 'label' => 'Pokazuj najbliższe wyjazdy', 'default' => true],
+                'mini_show_lineups' => ['type' => 'toggle', 'label' => 'Pokazuj składy drużyn na wyjazdach', 'default' => true],
+                'mini_show_parent_info' => ['type' => 'toggle', 'label' => 'Szczegóły wyjazdu dla zalogowanych rodziców', 'help' => 'Zbiórka, transport, koszt. Widzą je tylko rodzice i osoby z panelu.', 'default' => true],
+                'mini_show_results' => ['type' => 'toggle', 'label' => 'Pokazuj wyniki', 'default' => true],
+                'mini_show_history' => ['type' => 'toggle', 'label' => 'Pokazuj historię i medale', 'default' => true],
+                'mini_show_rules' => ['type' => 'toggle', 'label' => 'Pokazuj zasady gry', 'default' => true],
+                'mini_tile_dots' => ['type' => 'toggle', 'label' => 'Kafel: kropki z liczbą graczy na boisku', 'default' => true],
+                'mini_tile_count' => ['type' => 'toggle', 'label' => 'Kafel: liczba dzieci', 'default' => true],
+                'mini_tile_medal' => ['type' => 'toggle', 'label' => 'Kafel: złoty medal', 'default' => true],
+                'mini_tile_live' => ['type' => 'toggle', 'label' => 'Kafel: najbliższy wyjazd albo ostatni wynik', 'default' => true],
+                'mini_team_prefix' => ['type' => 'text', 'label' => 'Nazwa drużyn na wyjazdach', 'help' => 'Nowa drużyna dostaje nazwę z kolejnym numerem, np. „Joker 1”, „Joker 2”.', 'default' => 'Joker'],
+            ],
+        ],
+
         'seo' => [
             'label' => 'Wyszukiwarki (SEO)',
             'icon' => 'chart',
