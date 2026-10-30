@@ -64,27 +64,47 @@
                             {{ $group->name }}
                             @if($group->court)<span class="text-2xl font-semibold text-white/80">{{ \App\Models\TrainingSession::courtLabel($group->court) }}</span>@endif
                         </h2>
-                        <table class="w-full text-left">
-                            <thead class="text-xl font-semibold tracking-wider text-white/50 uppercase">
-                                <tr><th class="px-8 py-3">#</th><th class="py-3">{{ __('Drużyna') }}</th><th class="px-4 py-3 text-center">M</th><th class="px-4 py-3 text-center">{{ __('Sety') }}</th><th class="px-8 py-3 text-center">{{ __('Pkt') }}</th></tr>
+                        @php($wide = $slide['groups']->count() === 1)
+                        @php($scoring = \App\Support\TournamentTable::scoring($group, $tournament))
+                        <table @class(['w-full text-left', 'text-3xl' => $wide, 'text-2xl' => ! $wide])>
+                            <thead class="text-lg font-semibold tracking-wider whitespace-nowrap text-white/50 uppercase">
+                                <tr>
+                                    <th class="py-3 pr-2 pl-8">#</th>
+                                    <th class="py-3">{{ __('Drużyna') }}</th>
+                                    <th class="px-3 py-3 text-center" title="{{ __('Mecze') }}">M</th>
+                                    <th class="px-3 py-3 text-center" title="{{ __('Wygrane') }}">W</th>
+                                    <th class="px-3 py-3 text-center" title="{{ __('Porażki') }}">P</th>
+                                    <th class="px-3 py-3 text-center">{{ __('Sety') }}</th>
+                                    <th class="px-3 py-3 text-center">{{ __('Małe pkt') }}</th>
+                                    <th class="py-3 pr-8 pl-3 text-center">{{ __('Pkt') }}</th>
+                                </tr>
                             </thead>
                             <tbody>
                                 @foreach($rows as $row)
                                     <tr @class(['border-t border-white/10', 'bg-sky-400/15' => $row['participant']->isOwnTeam()])>
-                                        <td class="px-8 py-3 font-display text-4xl font-bold" style="color: {{ $row['position'] <= 2 ? $color : 'inherit' }}">{{ $row['position'] }}</td>
+                                        <td class="py-3 pr-2 pl-8 font-display text-4xl font-bold" style="color: {{ $row['position'] <= 2 ? $color : 'inherit' }}">{{ $row['position'] }}</td>
                                         <td class="w-full max-w-0 py-3">
                                             <span class="flex items-center gap-4">
-                                                <x-avatar logo :photo="$row['participant']->logoPath()" :name="$row['participant']->name()" class="h-12 w-12 shrink-0 rounded-full text-base" />
-                                                <span class="truncate text-3xl font-semibold">{{ $row['participant']->name() }}</span>
+                                                <x-avatar logo :photo="$row['participant']->logoPath()" :name="$row['participant']->name()" @class(['shrink-0 rounded-full text-base', 'h-12 w-12' => $wide, 'h-10 w-10' => ! $wide]) />
+                                                <span class="truncate font-semibold">{{ $row['participant']->name() }}</span>
                                             </span>
                                         </td>
-                                        <td class="px-4 py-3 text-center text-3xl tabular-nums">{{ $row['played'] }}</td>
-                                        <td class="px-4 py-3 text-center text-3xl tabular-nums">{{ $row['sets_won'] }}:{{ $row['sets_lost'] }}</td>
-                                        <td class="px-8 py-3 text-center font-display text-5xl font-bold tabular-nums">{{ $row['points'] }}</td>
+                                        <td class="px-3 py-3 text-center tabular-nums">{{ $row['played'] }}</td>
+                                        <td class="px-3 py-3 text-center text-emerald-300 tabular-nums">{{ $row['won'] }}</td>
+                                        <td class="px-3 py-3 text-center text-red-300 tabular-nums">{{ $row['lost'] }}</td>
+                                        <td class="px-3 py-3 text-center tabular-nums">{{ $row['sets_won'] }}:{{ $row['sets_lost'] }}</td>
+                                        <td class="px-3 py-3 text-center text-white/60 tabular-nums">{{ $row['small_won'] }}:{{ $row['small_lost'] }}</td>
+                                        <td class="py-3 pr-8 pl-3 text-center font-display text-5xl font-bold tabular-nums">{{ $row['points'] }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
+                        {{-- Zasady tabeli drobnym drukiem, jak na stronie turnieju --}}
+                        <p class="mt-auto px-8 pt-4 pb-5 text-lg leading-snug text-white/40">
+                            {{ __('Punktacja') }}: {{ \App\Support\TournamentTable::describe($scoring) }}.
+                            {{ ($scoring['criteria'][0] ?? 'points') === 'points' ? __('Przy równej liczbie punktów') : __('Kolejność w tabeli') }}: {{ \App\Support\TournamentTable::describeCriteria($scoring) }}.
+                            @if(filled($group->manual_order)) {{ __('Kolejność ustalona przez organizatora.') }} @endif
+                        </p>
                     </section>
                 @endforeach
             </div>
