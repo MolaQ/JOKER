@@ -17,7 +17,15 @@ class TournamentCategory extends Model
         'name',
         'display_order',
         'match_interval',
+        'schedule_days',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'schedule_days' => 'array',
+        ];
+    }
 
     /**
      * Część adresu kategorii: /tournaments/1/memorial-2026/kadeci.

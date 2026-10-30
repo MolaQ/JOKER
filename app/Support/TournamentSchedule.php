@@ -99,20 +99,55 @@ class TournamentSchedule
     }
 
     /**
-     * Na każdym sektorze mecze kategorii po kolei według numerów: pierwszy o podanej godzinie, każdy następny co odstęp.
+     * Dni turnieju w kategorii: zapisane albo po jednym na każdy dzień turnieju, od 9:00.
+     * Pierwszy dzień zaczyna się od pierwszego meczu, kolejne od najniższego numeru meczu, który już ma ten dzień.
+     *
+     * @return list<array{date: string, time: string, from: string}>
+     */
+    public static function days(TournamentCategory $category): array
+    {
+        if (filled($category->schedule_days)) {
+            return array_values($category->schedule_days);
+        }
+
+        $tournament = $category->tournament;
+        $start = $tournament->start_date->copy();
+        $end = $tournament->end_date && $tournament->end_date->gte($start) ? $tournament->end_date : $start;
+        $matches = $category->matches()->get();
+        $days = [];
+
+        for ($date = $start->copy(); $date->lte($end) && count($days) < 7; $date->addDay()) {
+            $dayMatches = $matches->filter(fn (TournamentMatch $match) => $match->starts_at?->isSameDay($date));
+            $days[] = [
+                'date' => $date->toDateString(),
+                'time' => $dayMatches->min('starts_at')?->format('H:i') ?? '09:00',
+                'from' => $days === [] ? '1' : (string) ($dayMatches->min('number') ?? ''),
+            ];
+        }
+
+        return $days;
+    }
+
+    /**
+     * Na każdym sektorze mecze kategorii po kolei według numerów: pierwszy mecz dnia o godzinie rozpoczęcia dnia,
+     * każdy następny co odstęp. Dzień obejmuje mecze od swojego numeru do numeru, od którego zaczyna się następny.
      * Mecz, który trwa albo ma wynik, zachowuje godzinę, ale zajmuje swoje miejsce w kolejce.
      *
+     * @param  list<array{date: string, time: string, from: string|int}>  $days
      * @return array{before: array<int, array{starts_at: ?string, planned_starts_at: ?string}>, skipped: int}
      */
-    public static function arrange(TournamentCategory $category, CarbonInterface $first, int $interval): array
+    public static function arrange(TournamentCategory $category, array $days, int $interval): array
     {
         $matches = $category->matches()->get()->sortBy(fn (TournamentMatch $match) => [$match->number ?? PHP_INT_MAX, $match->id]);
+        $days = collect($days)->filter(fn (array $day) => filled($day['from'] ?? null))->sortBy(fn (array $day) => (int) $day['from'])->values();
+        $dayOf = fn (TournamentMatch $match) => $days->filter(fn (array $day) => (int) $day['from'] <= (int) $match->number)->keys()->last() ?? 0;
         $before = [];
 
         $matches->filter(fn (TournamentMatch $match) => self::sector($match->court) !== null)
-            ->groupBy(fn (TournamentMatch $match) => self::sector($match->court))
-            ->each(function (Collection $sectorMatches) use ($first, $interval, &$before) {
-                $starts = Carbon::instance($first);
+            ->groupBy(fn (TournamentMatch $match) => $dayOf($match).'|'.self::sector($match->court))
+            ->each(function (Collection $sectorMatches, string $key) use ($days, $interval, &$before) {
+                $day = $days[(int) explode('|', $key)[0]];
+                $starts = Carbon::parse($day['date'].' '.$day['time']);
 
                 foreach ($sectorMatches as $match) {
                     if (! self::locked($match)) {

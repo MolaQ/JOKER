@@ -16,19 +16,18 @@
                 <span class="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white uppercase"><span class="size-1.5 animate-pulse rounded-full bg-white"></span>{{ __('Trwa') }}</span>
             @endif
         </p>
-        @if($match->starts_at || $match->court)
-            <p class="mt-1.5 flex items-center justify-between gap-3">
+        {{-- Druga linia zawsze, żeby kafle w drabince miały równą wysokość --}}
+        <p class="mt-1.5 flex min-h-5 items-center justify-between gap-3">
                 @if($match->starts_at)
                     <span class="inline-flex items-baseline gap-1.5 text-xs opacity-80"><span>{{ $match->starts_at->translatedFormat('D d.m') }}</span><span class="font-display text-lg leading-none font-semibold tabular-nums opacity-100">{{ $match->starts_at->format('H:i') }}</span><x-match-delay :match="$match" class="self-center" /></span>
                 @else
-                    <span></span>
+                    <span class="text-xs opacity-60">{{ __('Godzina do ustalenia') }}</span>
                 @endif
                 @if($match->court)
                     @php $venue = \App\Models\TrainingSession::venueForCourt($match->court); @endphp
                     <span class="inline-flex min-w-0 items-center gap-1.5 text-xs opacity-90">@if($venue)<x-venue-icon :venue="$venue" small class="rounded-[3px] bg-white" />@endif<span class="truncate">{{ \App\Models\TrainingSession::courtLabel($match->court) }}</span></span>
                 @endif
             </p>
-        @endif
     </header>
     @foreach(['home', 'away'] as $side)
         @php

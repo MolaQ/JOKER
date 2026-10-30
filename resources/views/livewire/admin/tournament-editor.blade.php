@@ -407,22 +407,37 @@
             @if($category->matches->isNotEmpty())
                 <div class="rounded-lg border border-gray-200 bg-white p-4">
                     <h3 class="font-semibold text-gray-900">Harmonogram</h3>
-                    <div class="mt-3 flex flex-wrap items-end gap-3">
-                        <label class="block text-sm">
-                            <span class="text-gray-700">Pierwszy mecz</span>
-                            <input type="datetime-local" wire:model="scheduleStart" class="{{ $input }} mt-1">
-                        </label>
+                    {{-- Dni turnieju: każdy dzień zaczyna się od podanego meczu, na każdym sektorze od godziny rozpoczęcia --}}
+                    <div class="mt-3 space-y-2">
+                        @foreach($scheduleDays as $index => $day)
+                            <div class="flex flex-wrap items-center gap-2 text-sm" wire:key="schedule-day-{{ $index }}">
+                                <span class="w-16 font-semibold text-gray-900">Dzień {{ $index + 1 }}</span>
+                                <input type="date" wire:model.blur.live="scheduleDays.{{ $index }}.date" class="{{ str_replace('w-full', 'w-40', $input) }}" aria-label="Data dnia {{ $index + 1 }}">
+                                <span class="text-gray-500">od</span>
+                                <input type="time" wire:model.blur.live="scheduleDays.{{ $index }}.time" step="300" class="{{ str_replace('w-full', 'w-32', $input) }}" aria-label="Godzina pierwszego meczu dnia {{ $index + 1 }}">
+                                <span class="text-gray-500">mecze od</span>
+                                <span class="inline-flex items-center gap-1">#<input type="number" min="1" wire:model.blur.live="scheduleDays.{{ $index }}.from" @disabled($index === 0) placeholder="nr" class="{{ str_replace('w-full', 'w-20', $input) }} disabled:bg-gray-50" aria-label="Pierwszy mecz dnia {{ $index + 1 }}"></span>
+                                @if($index > 0)
+                                    <button type="button" wire:click="removeScheduleDay({{ $index }})" class="text-xs text-red-600 hover:text-red-800">Usuń dzień</button>
+                                @endif
+                                @error("scheduleDays.{$index}.date") <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                                @error("scheduleDays.{$index}.time") <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                                @error("scheduleDays.{$index}.from") <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                            </div>
+                        @endforeach
+                        <button type="button" wire:click="addScheduleDay" class="text-sm font-semibold text-sky-700 hover:text-sky-900">+ Dodaj dzień</button>
+                    </div>
+                    <div class="mt-3 flex flex-wrap items-end gap-3 border-t border-gray-100 pt-3">
                         <label class="block w-40 text-sm">
                             <span class="text-gray-700">Odstęp na sektorze</span>
                             <input type="text" wire:model.blur.live="matchInterval" placeholder="1:30" class="{{ $input }} mt-1">
                         </label>
-                        <button type="button" wire:click="arrangeSchedule" wire:confirm="Ustawić godziny wszystkim meczom tej kategorii? Na każdym sektorze kolejny mecz (według numeru) zacznie się po odstępie. Mecze trwające i z wynikiem zostaną bez zmian." class="{{ $primary }}">Ułóż godziny według numerów</button>
+                        <button type="button" wire:click="arrangeSchedule" wire:confirm="Ustawić godziny wszystkim meczom tej kategorii? Każdego dnia na każdym sektorze pierwszy mecz zacznie się o godzinie rozpoczęcia dnia, a kolejne (według numeru) co odstęp. Mecze trwające i z wynikiem zostaną bez zmian." class="{{ $primary }}">Ułóż godziny według numerów</button>
                         <label class="inline-flex items-center gap-2 pb-2 text-sm text-gray-700">
                             <input type="checkbox" wire:model.live="shiftFollowing" class="rounded border-gray-300">
                             Przesuwaj kolejne mecze na sektorze, gdy zmienię godzinę
                         </label>
                     </div>
-                    @error('scheduleStart') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     @error('matchInterval') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     <p class="mt-2 text-xs text-gray-500">Zmiana godziny meczu przesuwa o tyle samo kolejne mecze tego dnia na tym samym sektorze, także z innych kategorii. Mecze trwające i z wynikiem się nie ruszają. Zmiana w dniu meczu pokazuje kibicom opóźnienie.</p>
                 </div>
@@ -443,9 +458,10 @@
                 </div>
             @endif
 
-            @foreach(\App\Models\TournamentMatch::STAGES as $stage => $stageName)
+            {{-- Dwie listy: faza grupowa oraz drabinka razem z meczami o miejsca (numeracja wspólna, kolejność dowolna) --}}
+            @foreach(['group' => 'Faza grupowa', 'knockout' => 'Drabinka i mecze o miejsca'] as $list => $stageName)
                 @php
-                    $stageMatches = $category->matches->where('stage', $stage)->sortBy(fn ($m) => [$m->number ?? PHP_INT_MAX, $m->id]);
+                    $stageMatches = $category->matches->filter(fn ($m) => ($m->stage === \App\Models\TournamentMatch::STAGE_GROUP) === ($list === 'group'))->sortBy(fn ($m) => [$m->number ?? PHP_INT_MAX, $m->id]);
                 @endphp
                 @if($stageMatches->isNotEmpty())
                     <div>

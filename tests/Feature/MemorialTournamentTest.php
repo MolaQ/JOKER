@@ -582,7 +582,7 @@ test('match times are arranged per sector every interval and a delay shifts the 
     $foreign = $other->matches()->create(['stage' => 'placement', 'placement' => 1, 'court' => 'Sektor III', 'starts_at' => '2026-11-14 15:00']);
 
     $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
-        ->assertSet('scheduleStart', '2026-11-14T09:00')
+        ->assertSet('scheduleDays', [['date' => '2026-11-14', 'time' => '09:00', 'from' => '1'], ['date' => '2026-11-15', 'time' => '09:00', 'from' => '']])
         ->assertSet('matchInterval', '1:30')
         ->set('matchInterval', '1:15')
         ->call('arrangeSchedule')
@@ -629,4 +629,46 @@ test('changing a match time before the tournament day changes the plan without a
     expect($match->fresh()->delayMinutes())->toBeNull()
         ->and($next->fresh()->starts_at->format('H:i'))->toBe('11:00')
         ->and($next->fresh()->delayMinutes())->toBeNull();
+});
+
+test('each tournament day starts again from its first hour, and moving a match to another day shifts nothing', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $base = ['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id];
+    $matches = collect(range(1, 4))->map(fn ($number) => $category->matches()->create($base + ['number' => $number, 'court' => 'Sektor I']));
+
+    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
+        ->set('scheduleDays.1.from', '3')
+        ->set('scheduleDays.1.time', '10:00')
+        ->call('arrangeSchedule');
+
+    expect($matches->map(fn ($m) => $m->fresh()->starts_at->format('d.m H:i'))->all())->toBe(['14.11 09:00', '14.11 10:30', '15.11 10:00', '15.11 11:30'])
+        ->and($category->fresh()->schedule_days[1])->toBe(['date' => '2026-11-15', 'time' => '10:00', 'from' => '3']);
+
+    $editor->set("results.{$matches[1]->id}.starts_at", '2026-11-15T13:00');
+    expect($matches[2]->fresh()->starts_at->format('d.m H:i'))->toBe('15.11 10:00');
+});
+
+test('a placement match can be moved before the bracket matches', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $quarter = $category->matches()->create(['stage' => 'playoff', 'bracket_round' => 1, 'number' => 21]);
+    $ninth = $category->matches()->create(['stage' => 'placement', 'placement' => 9, 'number' => 22]);
+
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
+        ->assertSee('Drabinka i mecze o miejsca')
+        ->call('moveMatchBy', $ninth->id, -1);
+
+    expect([$ninth->fresh()->number, $quarter->fresh()->number])->toBe([21, 22]);
+});
+
+test('bracket columns keep the match order from the panel', function () {
+    [$joker] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $final = $category->matches()->create(['stage' => 'playoff', 'bracket_round' => 3, 'bracket_slot' => 1, 'decides_place' => 1, 'number' => 33]);
+    $seventh = $category->matches()->create(['stage' => 'playoff', 'bracket_round' => 3, 'bracket_slot' => 4, 'decides_place' => 7, 'number' => 30]);
+
+    expect(TournamentPage::boardColumns($category->matches()->get())->first()['matches']->pluck('number')->all())->toBe([30, 33]);
 });

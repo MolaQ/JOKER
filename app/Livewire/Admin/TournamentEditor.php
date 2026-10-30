@@ -15,6 +15,7 @@ use App\Support\TournamentSchedule;
 use App\Support\TournamentTable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Url;
@@ -93,8 +94,8 @@ class TournamentEditor extends Component
     /** @var array<int, array<string, mixed>> Własna punktacja grupy („custom” włącza ją, inaczej obowiązuje turniejowa). */
     public array $groupScoring = [];
 
-    /** Godzina pierwszego meczu przy układaniu harmonogramu kategorii. */
-    public string $scheduleStart = '';
+    /** @var list<array{date: string, time: string, from: string}> Dni turnieju: data, godzina pierwszego meczu, od którego numeru meczu. */
+    public array $scheduleDays = [];
 
     /** Odstęp między meczami na sektorze, np. „1:30”. */
     public string $matchInterval = '1:30';
@@ -698,7 +699,8 @@ class TournamentEditor extends Component
 
         $match->update(['planned_starts_at' => TournamentSchedule::plannedAfterChange($match, $old, $new)]);
 
-        if (! $this->shiftFollowing || $old === null || $new === null) {
+        // Przeniesienie meczu na inny dzień nie przesuwa meczów, które zostają w starym dniu.
+        if (! $this->shiftFollowing || $old === null || $new === null || ! $old->isSameDay($new)) {
             return;
         }
 
@@ -726,15 +728,15 @@ class TournamentEditor extends Component
     public function arrangeSchedule(): void
     {
         $interval = TournamentSchedule::parseInterval($this->matchInterval);
-        $this->validate(['scheduleStart' => 'required|date'], ['scheduleStart.required' => 'Podaj termin pierwszego meczu.']);
+        $this->validateScheduleDays();
 
         if ($interval === null || $interval < 5) {
             throw ValidationException::withMessages(['matchInterval' => 'Wpisz odstęp jak „1:30”.']);
         }
 
         $category = $this->category();
-        $category->update(['match_interval' => $interval]);
-        $result = TournamentSchedule::arrange($category, Carbon::parse($this->scheduleStart), $interval);
+        $category->update(['match_interval' => $interval, 'schedule_days' => $this->scheduleDays]);
+        $result = TournamentSchedule::arrange($category, $this->scheduleDays, $interval);
 
         $this->scheduleUndo = $result['before'] === [] ? [] : [
             'message' => 'Ułożono godziny '.trans_choice(':count meczu|:count meczów|:count meczów', count($result['before'])).' co '.TournamentSchedule::formatInterval($interval).'.',
@@ -744,6 +746,47 @@ class TournamentEditor extends Component
         $this->toast($result['skipped'] > 0
             ? 'Ułożono godziny. Bez sektora, więc bez zmian: '.trans_choice(':count mecz|:count mecze|:count meczów', $result['skipped']).'.'
             : 'Ułożono godziny meczów.');
+    }
+
+    private function validateScheduleDays(): void
+    {
+        $this->validate([
+            'scheduleDays' => 'required|array|min:1',
+            'scheduleDays.*.date' => 'required|date',
+            'scheduleDays.*.time' => 'required|date_format:H:i',
+            'scheduleDays.*.from' => 'nullable|integer|min:1|max:999',
+            'scheduleDays.0.from' => 'required',
+        ], [
+            'scheduleDays.*.date.required' => 'Podaj datę dnia.',
+            'scheduleDays.*.time.required' => 'Podaj godzinę pierwszego meczu.',
+            'scheduleDays.*.from.integer' => 'Podaj numer meczu.',
+            'scheduleDays.0.from.required' => 'Podaj numer pierwszego meczu.',
+        ]);
+    }
+
+    /**
+     * Dni turnieju zapisują się w kategorii od razu po zmianie pola.
+     */
+    public function updatedScheduleDays(): void
+    {
+        $this->validateScheduleDays();
+        $this->category()->update(['schedule_days' => array_values($this->scheduleDays)]);
+    }
+
+    public function addScheduleDay(): void
+    {
+        $last = end($this->scheduleDays) ?: ['date' => $this->tournament->start_date->toDateString(), 'time' => '09:00'];
+        $this->scheduleDays[] = ['date' => Carbon::parse($last['date'])->addDay()->toDateString(), 'time' => $last['time'], 'from' => ''];
+        $this->category()->update(['schedule_days' => $this->scheduleDays]);
+    }
+
+    public function removeScheduleDay(int $index): void
+    {
+        if ($index > 0) {
+            unset($this->scheduleDays[$index]);
+            $this->scheduleDays = array_values($this->scheduleDays);
+            $this->category()->update(['schedule_days' => $this->scheduleDays]);
+        }
     }
 
     public function updatedMatchInterval(): void
@@ -829,13 +872,13 @@ class TournamentEditor extends Component
     }
 
     /**
-     * Przeciągnięcie meczu w obrębie fazy: mecze tej fazy dostają po kolei te same numery, które miały, w nowym porządku.
-     * Numery meczów z innych faz zostają bez zmian.
+     * Przeciągnięcie meczu w obrębie listy: mecze tej listy dostają po kolei te same numery, które miały, w nowym porządku.
+     * Numery meczów z drugiej listy zostają bez zmian.
      */
     public function moveMatch(int|string $matchId, int $position): void
     {
         $match = $this->category()->matches()->findOrFail((int) $matchId);
-        $stageMatches = $this->category()->matches()->where('stage', $match->stage)->get()
+        $stageMatches = $this->listMatches($match)
             ->sortBy(fn (TournamentMatch $item) => [$item->number ?? PHP_INT_MAX, $item->id])->values();
         $numbers = $stageMatches->pluck('number')->map(fn ($number, int $index) => $number ?? $index + 1)->sort()->values();
 
@@ -845,10 +888,23 @@ class TournamentEditor extends Component
         DB::transaction(fn () => $ordered->each(fn (TournamentMatch $item, int $index) => $item->number === $numbers[$index] || $item->update(['number' => $numbers[$index]])));
     }
 
+    /**
+     * Mecze z tej samej listy w panelu: faza grupowa osobno, drabinka i mecze o miejsca razem
+     * (mecz o 9. miejsce może stać przed ćwierćfinałami).
+     *
+     * @return Collection<int, TournamentMatch>
+     */
+    private function listMatches(TournamentMatch $match): Collection
+    {
+        return $this->category()->matches()
+            ->when($match->stage === TournamentMatch::STAGE_GROUP, fn ($query) => $query->where('stage', TournamentMatch::STAGE_GROUP), fn ($query) => $query->where('stage', '!=', TournamentMatch::STAGE_GROUP))
+            ->get();
+    }
+
     public function moveMatchBy(int $matchId, int $offset): void
     {
         $match = $this->category()->matches()->findOrFail($matchId);
-        $position = $this->category()->matches()->where('stage', $match->stage)->get()
+        $position = $this->listMatches($match)
             ->sortBy(fn (TournamentMatch $item) => [$item->number ?? PHP_INT_MAX, $item->id])->values()
             ->search(fn (TournamentMatch $item) => $item->id === $match->id);
 
@@ -940,7 +996,7 @@ class TournamentEditor extends Component
         $this->groupPlaces = $groups->mapWithKeys(fn ($group) => [$group->id => collect($group->final_places ?? [])->map(fn ($place) => (string) $place)->all()])->all();
 
         $this->matchInterval = TournamentSchedule::formatInterval((int) ($category?->match_interval ?? 90));
-        $this->scheduleStart = ($category?->matches->min('starts_at') ?? $this->tournament->start_date?->copy()->setTime(9, 0))?->format('Y-m-d\TH:i') ?? '';
+        $this->scheduleDays = $category ? TournamentSchedule::days($category) : [];
 
         $this->results = $category?->matches->mapWithKeys(fn (TournamentMatch $match) => [$match->id => [
             'sets' => collect($match->sets_score ?? [])->map(fn ($set) => implode(':', (array) $set))->implode(', '),

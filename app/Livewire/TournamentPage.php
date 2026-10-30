@@ -99,7 +99,8 @@ class TournamentPage extends Component
                     $column->count() === 4 => __('Ćwierćfinały'),
                     default => __('Runda :round', ['round' => $round]),
                 },
-                'matches' => $column->sortBy(fn (TournamentMatch $match) => [$match->bracket_slot ?? 999, $match->bracketFrom(), $match->number])->values(),
+                // Kolejność jak w panelu: według numerów meczów (przestawianych przeciąganiem).
+                'matches' => $column->sortBy(fn (TournamentMatch $match) => [$match->number ?? PHP_INT_MAX, $match->bracket_slot ?? 999, $match->id])->values(),
             ];
         })->values();
     }
