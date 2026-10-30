@@ -65,6 +65,25 @@ test('a trainer plans trainings of own teams on several days and sees busy court
     $this->get(route('teams.show', $own))->assertOk()->assertSee('Plan treningów')->assertSee('Środa');
 });
 
+test('editing a training saves each change at once without a save button', function () {
+    $trainer = User::factory()->trainer()->create();
+    $own = Team::factory()->create(['name' => 'Kadeci', 'trainer_id' => $trainer->id]);
+    $session = TrainingSession::create(['team_id' => $own->id, 'weekday' => 1, 'starts_at' => '16:15:00', 'ends_at' => '17:15:00', 'venue' => 'court1']);
+
+    $this->actingAs($trainer);
+    $planner = Livewire::test(TrainingPlanner::class)
+        ->call('edit', $session->id)
+        ->assertDontSee('Zapisz')
+        ->set('venue', 'court3')
+        ->set('weekdays.0', 4)
+        ->set('ends_at', '18:15');
+
+    expect($session->fresh()->only(['venue', 'weekday', 'ends_at']))->toBe(['venue' => 'court3', 'weekday' => 4, 'ends_at' => '18:15:00']);
+
+    $planner->set('ends_at', '15:00')->assertHasErrors('ends_at');
+    expect($session->fresh()->ends_at)->toBe('18:15:00');
+});
+
 test('staff members can plan trainings and fans cannot', function () {
     $staff = User::factory()->create(['role' => UserRole::Staff]);
 

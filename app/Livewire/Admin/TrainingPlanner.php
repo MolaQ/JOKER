@@ -114,6 +114,28 @@ class TrainingPlanner extends Component
         $this->resetForm();
     }
 
+    /**
+     * Edycja istniejącego treningu zapisuje się od razu po każdej zmianie, bez przycisku „Zapisz”.
+     */
+    public function updated(string $property): void
+    {
+        if ($this->editingId === null || ! in_array(explode('.', $property)[0], ['team_id', 'weekdays', 'starts_at', 'ends_at', 'venue', 'note'], true)) {
+            return;
+        }
+
+        $data = $this->validate();
+        $this->editable($this->editingId)->update([
+            'team_id' => $data['team_id'],
+            'weekday' => (int) $data['weekdays'][0],
+            'starts_at' => $data['starts_at'].':00',
+            'ends_at' => $data['ends_at'].':00',
+            'venue' => $data['venue'],
+            'note' => trim($data['note'] ?? '') ?: null,
+            'updated_by' => Auth::id(),
+        ]);
+        $this->toast('Zapisano.');
+    }
+
     public function edit(int $id): void
     {
         $session = $this->editable($id);

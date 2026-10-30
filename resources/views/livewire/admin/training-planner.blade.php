@@ -10,7 +10,7 @@
           <div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(10rem,14rem)_minmax(18rem,1fr)_minmax(14rem,16rem)]">
             <div>
                 <label for="training-team" class="block text-sm font-medium text-gray-700">Drużyna</label>
-                <select id="training-team" wire:model="team_id" class="mt-1 block w-full">
+                <select id="training-team" wire:model.live="team_id" class="mt-1 block w-full">
                     @foreach($this->teams as $team)
                         <option value="{{ $team->id }}">{{ $team->name }}</option>
                     @endforeach
@@ -47,9 +47,10 @@
             <fieldset class="md:col-span-2 xl:col-span-2">
                 <legend class="text-sm font-medium text-gray-700">Miejsce</legend>
                 <div class="mt-1 grid grid-cols-3 gap-1 sm:grid-cols-5">
-                    @foreach(TrainingSession::venueNames() as $key => $label)
-                        <label class="flex cursor-pointer items-center justify-center rounded-md px-2 py-2 text-center text-sm font-semibold ring-1 ring-gray-200 has-[:checked]:bg-sky-600 has-[:checked]:text-white has-[:checked]:ring-sky-600">
-                            <input type="radio" wire:model.live="venue" value="{{ $key }}" class="sr-only"> {{ $label }}
+                    {{-- Kolejność jak w sali: III z lewej, I z prawej, potem całe boisko i siłownia --}}
+                    @foreach(['court3', 'court2', 'court1', 'main', 'gym'] as $key)
+                        <label class="flex cursor-pointer items-center justify-center gap-2 rounded-md px-2 py-2 text-center text-sm font-semibold ring-1 ring-gray-200 has-[:checked]:bg-sky-50 has-[:checked]:text-sky-800 has-[:checked]:ring-2 has-[:checked]:ring-sky-600">
+                            <input type="radio" wire:model.live="venue" value="{{ $key }}" class="sr-only"><x-venue-icon :venue="$key" small /> {{ TrainingSession::venueNames()[$key] }}
                         </label>
                     @endforeach
                 </div>
@@ -57,7 +58,7 @@
 
             <div>
                 <label for="training-note" class="block text-sm font-medium text-gray-700">Uwagi (opcjonalnie)</label>
-                <input type="text" id="training-note" wire:model="note" maxlength="120" placeholder="np. tylko rozgrywający" class="mt-1 block w-full">
+                <input type="text" id="training-note" wire:model.blur.live="note" maxlength="120" placeholder="np. tylko rozgrywający" class="mt-1 block w-full">
             </div>
 
           </div>
@@ -76,11 +77,12 @@
 
             <div class="mt-4 flex items-center justify-end gap-3">
                 @if($editingId)
-                    <button type="button" wire:click="resetForm" class="text-sm font-semibold text-gray-500 hover:text-gray-800">Anuluj</button>
+                    {{-- Zmiany zapisują się od razu; przycisk tylko zamyka edycję --}}
+                    <span class="mr-auto text-xs text-gray-500">Zmiany zapisują się od razu.</span>
+                    <button type="button" wire:click="resetForm" class="rounded-md bg-white px-5 py-2.5 text-sm font-semibold text-gray-800 ring-1 ring-gray-300 hover:bg-gray-50">Gotowe</button>
                 @else
-                    <span></span>
+                    <button type="submit" class="rounded-md bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">Dodaj do planu</button>
                 @endif
-                <button type="submit" class="rounded-md bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">{{ $editingId ? 'Zapisz' : 'Dodaj do planu' }}</button>
             </div>
         @endif
     </form>
