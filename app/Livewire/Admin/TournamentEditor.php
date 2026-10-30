@@ -9,10 +9,12 @@ use App\Models\Tournament;
 use App\Models\TournamentCategory;
 use App\Models\TournamentMatch;
 use App\Models\TournamentParticipant;
+use App\Models\TournamentTemplate;
 use App\Models\TrainingSession;
 use App\Support\TournamentBracket;
 use App\Support\TournamentSchedule;
 use App\Support\TournamentTable;
+use App\Support\TournamentTemplates;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -49,6 +51,15 @@ class TournamentEditor extends Component
     public $image = null;
 
     public string $newCategory = '';
+
+    /** Szablon wstawiany do nowej kategorii (id) i formularz zapisu szablonu z kategorii. */
+    public string $newCategoryTemplate = '';
+
+    public ?int $templateFrom = null;
+
+    public string $templateName = '';
+
+    public string $templateDescription = '';
 
     public string $newGroup = '';
 
@@ -174,9 +185,45 @@ class TournamentEditor extends Component
             'display_order' => $this->tournament->categories()->count(),
         ]);
 
-        $this->newCategory = '';
+        if ($this->newCategoryTemplate !== '' && $template = TournamentTemplate::find((int) $this->newCategoryTemplate)) {
+            TournamentTemplates::apply($template, $category);
+            $this->toast("Wstawiono szablon „{$template->name}”. Dodaj drużyny i przypisz je do grup: wpiszą się same w mecze.");
+        }
+
+        $this->reset('newCategory', 'newCategoryTemplate');
         $this->categoryId = $category->id;
         $this->loadCategoryState();
+    }
+
+    public function startTemplate(int $categoryId): void
+    {
+        $this->templateFrom = $categoryId;
+        $this->templateName = (string) $this->tournament->categories()->whereKey($categoryId)->value('name');
+        $this->templateDescription = '';
+    }
+
+    public function saveTemplate(): void
+    {
+        $this->validate([
+            'templateName' => 'required|string|max:120',
+            'templateDescription' => 'nullable|string|max:1000',
+        ], ['templateName.required' => 'Wpisz nazwę szablonu.']);
+
+        $category = $this->tournament->categories()->findOrFail($this->templateFrom);
+        TournamentTemplates::capture($category, trim($this->templateName), trim($this->templateDescription) ?: null);
+
+        $this->reset('templateFrom', 'templateName', 'templateDescription');
+        $this->toast('Zapisano szablon. Wybierzesz go przy dodawaniu kategorii.');
+    }
+
+    public function cancelTemplate(): void
+    {
+        $this->reset('templateFrom', 'templateName', 'templateDescription');
+    }
+
+    public function deleteTemplate(int $id): void
+    {
+        TournamentTemplate::whereKey($id)->delete();
     }
 
     public function deleteCategory(int $id): void
@@ -377,6 +424,7 @@ class TournamentEditor extends Component
 
     private function saveGroupRules(int $groupId): void
     {
+        TournamentTemplates::fill($this->category());
         $category = $this->category()->load(['groups.participants', 'participants', 'matches.group']);
         $group = $category->groups->firstWhere('id', $groupId) ?? abort(404);
         $allowed = TournamentBracket::slotOptions($category, $group);
@@ -510,6 +558,7 @@ class TournamentEditor extends Component
             }
         }
 
+        TournamentTemplates::fill($this->category());
         $this->toast('Zapisano drużyny.');
     }
 
@@ -1154,6 +1203,7 @@ class TournamentEditor extends Component
             'category' => $category,
             'rivalOptions' => RivalTeam::with('club')->whereNotIn('id', $usedRivals)->orderBy('full_name')->get(['id', 'full_name', 'rival_club_id']),
             'teamOptions' => Team::whereNotIn('id', $usedTeams)->orderBy('display_order')->get(['id', 'name']),
+            'templates' => TournamentTemplate::orderBy('name')->get(),
         ]);
     }
 }

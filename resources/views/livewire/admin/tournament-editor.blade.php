@@ -109,19 +109,66 @@
                         @endif
                         @error('categoryNames.'.$cat->id) <span class="text-xs text-red-600">{{ $message }}</span> @enderror
                         <span class="ml-auto flex gap-3">
+                        <button type="button" wire:click="startTemplate({{ $cat->id }})" class="text-sm text-sky-700 hover:text-blue-800" title="Zapisz grupy, mecze, drabinkę i dni do użycia w kolejnych turniejach">Zapisz jako szablon</button>
                         <button type="button" wire:click="$set('renaming', 'category:{{ $cat->id }}')" class="text-sm text-sky-700 hover:text-blue-800">Edytuj</button>
                         <button type="button" wire:click="deleteCategory({{ $cat->id }})" wire:confirm="Usunąć kategorię {{ $cat->name }} razem z drużynami, grupami i meczami?" class="text-sm text-red-600 hover:text-red-800">Usuń</button>
                         </span>
                     </li>
+                    @if($templateFrom === $cat->id)
+                        <li class="bg-sky-50 px-4 py-3">
+                            <form wire:submit="saveTemplate" class="grid gap-3 sm:grid-cols-[1fr_2fr_auto_auto] sm:items-end">
+                                <div>
+                                    <label class="{{ $label }}">Nazwa szablonu</label>
+                                    <input type="text" wire:model="templateName" class="{{ $input }}" placeholder="np. 8 drużyn: 2 grupy + półfinały">
+                                </div>
+                                <div>
+                                    <label class="{{ $label }}">Krótki opis</label>
+                                    <input type="text" wire:model="templateDescription" class="{{ $input }}" placeholder="np. 2 grupy po 4, krzyżowe półfinały, mecze o miejsca 1–8, 2 dni">
+                                </div>
+                                <button type="submit" class="{{ $primary }}">Zapisz szablon</button>
+                                <button type="button" wire:click="cancelTemplate" class="text-sm text-gray-600 hover:text-gray-900">Anuluj</button>
+                                <p class="text-xs text-gray-600 sm:col-span-4">Szablon zapamięta grupy z sektorami i punktacją, wszystkie mecze z numerami, godzinami i sektorami, drabinkę, mecze o miejsca oraz dni i odstęp między meczami. Bez drużyn i wyników.</p>
+                                @error('templateName') <p class="text-sm text-red-600 sm:col-span-4">{{ $message }}</p> @enderror
+                            </form>
+                        </li>
+                    @endif
                 @empty
                     <li class="px-4 py-3 text-sm text-gray-500">Brak kategorii. Dodaj np. „Kadetki”, „Juniorki młodsze”, „Młodziczki”.</li>
                 @endforelse
             </ul>
-            <form wire:submit="addCategory" class="flex gap-2">
+            <form wire:submit="addCategory" class="flex flex-wrap gap-2">
                 <input type="text" wire:model="newCategory" placeholder="Nazwa kategorii wiekowej" class="{{ $input }} max-w-sm">
+                @if($templates->isNotEmpty())
+                    <select wire:model="newCategoryTemplate" class="{{ $input }} max-w-sm">
+                        <option value="">pusta, bez szablonu</option>
+                        @foreach($templates as $template)
+                            <option value="{{ $template->id }}">z szablonu: {{ $template->name }}</option>
+                        @endforeach
+                    </select>
+                @endif
                 <button type="submit" class="{{ $primary }}">Dodaj kategorię</button>
             </form>
             @error('newCategory') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
+
+            @if($templates->isNotEmpty())
+                <div>
+                    <h3 class="mt-4 font-semibold text-gray-900">Szablony turniejów</h3>
+                    <p class="text-xs text-gray-500">Wybierz szablon przy dodawaniu kategorii. Potem dodaj drużyny i przypisz je do grup: pierwsza drużyna grupy na liście zajmie pozycję 1 w meczach, druga pozycję 2 itd.</p>
+                    <ul class="mt-2 divide-y divide-gray-200 rounded-lg border border-gray-200">
+                        @foreach($templates as $template)
+                            <li class="flex flex-wrap items-start gap-3 px-4 py-3" wire:key="template-{{ $template->id }}">
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-semibold text-gray-900">{{ $template->name }} <span class="font-normal text-gray-500">· {{ $template->summary() }}</span></p>
+                                    @if($template->description)
+                                        <p class="text-sm text-gray-600">{{ $template->description }}</p>
+                                    @endif
+                                </div>
+                                <button type="button" wire:click="deleteTemplate({{ $template->id }})" wire:confirm="Usunąć szablon {{ $template->name }}? Turnieje już z niego zrobione zostaną bez zmian." class="text-sm text-red-600 hover:text-red-800">Usuń</button>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
         </div>
     @endif
 

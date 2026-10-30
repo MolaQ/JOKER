@@ -253,6 +253,14 @@ class TournamentBracket
             ];
         }
 
+        // Pozycja w grupie z szablonu, zanim przypiszesz drużyny („slot:{grupa}:{nr}”).
+        if ($parts[0] === 'slot') {
+            $group = $this->groups->get((int) ($parts[1] ?? 0));
+            $letter = $group ? self::groupLetter($group) : '?';
+
+            return ['participant' => null, 'state' => self::PENDING, 'chip' => $letter.($parts[2] ?? '?'), 'description' => __('Drużyna :number – :group', ['number' => $parts[2] ?? '?', 'group' => $group?->name ?? '?'])];
+        }
+
         $from = $this->matches->get((int) ($parts[1] ?? 0));
         $winner = $parts[0] === 'winner';
         $number = $from?->number ?? '?';
