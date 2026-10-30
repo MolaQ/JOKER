@@ -13,6 +13,7 @@ class TournamentGroup extends Model
     protected $fillable = [
         'tournament_category_id',
         'name',
+        'court',
         'slots',
         'final_places',
         'scoring',

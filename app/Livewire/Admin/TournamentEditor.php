@@ -82,6 +82,9 @@ class TournamentEditor extends Component
     /** @var array<int, string> */
     public array $groupNames = [];
 
+    /** @var array<int, string> Domyślny sektor grupy (nazwa jak w meczu). */
+    public array $groupCourts = [];
+
     /** @var array<int, list<string>> Skład grup z reguł: „participant:4”, „group:2:1”, „winner:9”. */
     public array $groupSlots = [];
 
@@ -318,6 +321,24 @@ class TournamentEditor extends Component
     /**
      * Skład grupy z reguł zapisuje się od razu; drużyny pojawią się w tabeli, gdy reguła się rozstrzygnie.
      */
+    /**
+     * Sektor grupy: dostają go mecze grupy bez sektora albo z dotychczasowym sektorem grupy (oprócz trwających i rozegranych).
+     */
+    public function updatedGroupCourts(mixed $value, string $key): void
+    {
+        $group = $this->category()->groups()->findOrFail((int) $key);
+        $court = trim((string) $value) ?: null;
+        $previous = $group->court;
+        $group->update(['court' => $court]);
+
+        $group->matches()->get()
+            ->filter(fn (TournamentMatch $match) => ! TournamentSchedule::locked($match) && (blank($match->court) || $match->court === $previous))
+            ->each(fn (TournamentMatch $match) => $match->update(['court' => $court]));
+
+        $this->loadCategoryState();
+        $this->toast($court ? $group->name.': mecze na '.TrainingSession::courtLabel($court).'.' : $group->name.': bez stałego sektora, przy układaniu mecze trafią na wolne sektory.');
+    }
+
     public function updatedGroupSlots(mixed $value, string $key): void
     {
         $this->saveGroupRules((int) explode('.', $key)[0]);
@@ -408,6 +429,7 @@ class TournamentEditor extends Component
                     'away_participant_id' => $side($away)['participant_id'],
                     'home_source' => $side($home)['source'],
                     'away_source' => $side($away)['source'],
+                    'court' => $group->court,
                 ]);
                 $created++;
             }
@@ -528,7 +550,7 @@ class TournamentEditor extends Component
             'home_source' => ($data['home_source'] ?? '') ?: null,
             'away_source' => ($data['away_source'] ?? '') ?: null,
             'starts_at' => $data['starts_at'] ?: null,
-            'court' => trim((string) ($data['court'] ?? '')) ?: null,
+            'court' => trim((string) ($data['court'] ?? '')) ?: ($data['stage'] === TournamentMatch::STAGE_GROUP ? $category->groups()->whereKey((int) $data['group'])->value('court') : null),
         ]);
 
         $this->resetMatchForm($data['stage']);
@@ -692,34 +714,58 @@ class TournamentEditor extends Component
     {
         $old = $previous->starts_at;
         $new = $match->starts_at;
+        $timeChanged = ! ($old?->equalTo($new) || ($old === null && $new === null));
+        $sectorChanged = TournamentSchedule::sector($previous->court) !== TournamentSchedule::sector($match->court);
 
-        if ($old?->equalTo($new) || ($old === null && $new === null)) {
+        if ($timeChanged) {
+            $match->update(['planned_starts_at' => TournamentSchedule::plannedAfterChange($match, $old, $new)]);
+        }
+
+        if (! $this->shiftFollowing || $new === null) {
             return;
         }
 
-        $match->update(['planned_starts_at' => TournamentSchedule::plannedAfterChange($match, $old, $new)]);
+        $messages = [];
+        $shifted = [];
 
         // Przeniesienie meczu na inny dzień nie przesuwa meczów, które zostają w starym dniu.
-        if (! $this->shiftFollowing || $old === null || $new === null || ! $old->isSameDay($new)) {
-            return;
+        if ($timeChanged && $old !== null && $old->isSameDay($new)) {
+            $moved = TournamentSchedule::shiftFollowing($match, $old);
+            $minutes = (int) $old->diffInMinutes($new, false);
+
+            if ($moved !== []) {
+                $messages[] = TrainingSession::courtLabel($match->court).': '
+                    .trans_choice('przesunięto :count kolejny mecz|przesunięto :count kolejne mecze|przesunięto :count kolejnych meczów', count($moved)).' o '.($minutes > 0 ? '+' : '−').abs($minutes).' min ('.$this->matchNumbers($moved, $match).')';
+                $shifted += $moved;
+            }
         }
 
-        $shifted = TournamentSchedule::shiftFollowing($match, $old);
+        if ($sectorChanged) {
+            $moved = TournamentSchedule::shiftAfterSectorChange($match, $previous->court, (int) ($match->category->match_interval ?? 90));
 
-        if ($shifted === []) {
-            return;
+            if ($moved !== []) {
+                $messages[] = 'Mecz #'.$match->number.' przeszedł na '.TrainingSession::courtLabel($match->court).': '
+                    .trans_choice('przesunięto :count mecz|przesunięto :count mecze|przesunięto :count meczów', count($moved)).' na sektorach ('.$this->matchNumbers($moved, $match).')';
+                $shifted += $moved;
+            }
         }
 
-        $minutes = (int) $old->diffInMinutes($new, false);
-        $numbers = TournamentMatch::with('category')->whereKey(array_keys($shifted))->orderBy('starts_at')->get()
+        if ($shifted !== []) {
+            $this->scheduleUndo = [
+                'message' => implode('. ', $messages).'.',
+                'matches' => [$match->id => TournamentSchedule::snapshot($previous)] + $shifted,
+            ];
+        }
+    }
+
+    /**
+     * @param  array<int, mixed>  $shifted
+     */
+    private function matchNumbers(array $shifted, TournamentMatch $match): string
+    {
+        return TournamentMatch::with('category')->whereKey(array_keys($shifted))->orderBy('starts_at')->get()
             ->map(fn (TournamentMatch $item) => '#'.$item->number.($item->tournament_category_id !== $match->tournament_category_id ? ' '.$item->category->name : ''))
             ->implode(', ');
-
-        $this->scheduleUndo = [
-            'message' => TrainingSession::courtLabel($match->court).': '
-                .trans_choice('przesunięto :count kolejny mecz|przesunięto :count kolejne mecze|przesunięto :count kolejnych meczów', count($shifted)).' o '.($minutes > 0 ? '+' : '−').abs($minutes).' min ('.$numbers.').',
-            'matches' => [$match->id => TournamentSchedule::snapshot($previous)] + $shifted,
-        ];
     }
 
     /**
@@ -743,8 +789,8 @@ class TournamentEditor extends Component
             'matches' => $result['before'],
         ];
         $this->loadCategoryState();
-        $this->toast($result['skipped'] > 0
-            ? 'Ułożono godziny. Bez sektora, więc bez zmian: '.trans_choice(':count mecz|:count mecze|:count meczów', $result['skipped']).'.'
+        $this->toast($result['assigned'] > 0
+            ? 'Ułożono godziny. Mecze bez sektora rozłożone na wolne sektory: '.$result['assigned'].'.'
             : 'Ułożono godziny meczów.');
     }
 
@@ -787,6 +833,23 @@ class TournamentEditor extends Component
             $this->scheduleDays = array_values($this->scheduleDays);
             $this->category()->update(['schedule_days' => $this->scheduleDays]);
         }
+    }
+
+    /**
+     * „Resetuj harmonogram”: usuwa daty i godziny meczów kategorii (oprócz trwających i rozegranych); sektory zostają.
+     */
+    public function resetSchedule(): void
+    {
+        $matches = $this->category()->matches()->whereNotNull('starts_at')->get()->reject(fn (TournamentMatch $match) => TournamentSchedule::locked($match));
+        $before = $matches->mapWithKeys(fn (TournamentMatch $match) => [$match->id => TournamentSchedule::snapshot($match)])->all();
+
+        TournamentMatch::whereKey(array_keys($before))->update(['starts_at' => null, 'planned_starts_at' => null]);
+
+        $this->scheduleUndo = $before === [] ? [] : [
+            'message' => 'Usunięto daty i godziny: '.trans_choice(':count mecz|:count mecze|:count meczów', count($before)).'.',
+            'matches' => $before,
+        ];
+        $this->loadCategoryState();
     }
 
     public function updatedMatchInterval(): void
@@ -990,6 +1053,7 @@ class TournamentEditor extends Component
         $this->categoryNames = $this->tournament->categories()->pluck('name', 'id')->all();
         $groups = $category?->groups()->get() ?? collect();
         $this->groupNames = $groups->pluck('name', 'id')->all();
+        $this->groupCourts = $groups->mapWithKeys(fn ($group) => [$group->id => (string) $group->court])->all();
         $this->groupSlots = $groups->mapWithKeys(fn ($group) => [$group->id => $group->slots ?? []])->all();
         $this->scoring = self::scoringState(TournamentTable::scoring(tournament: $this->tournament->fresh()));
         $this->groupScoring = $groups->mapWithKeys(fn ($group) => [$group->id => ['custom' => $group->scoring !== null] + self::scoringState(TournamentTable::scoring($group, $this->tournament))])->all();

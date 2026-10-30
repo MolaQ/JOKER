@@ -672,3 +672,44 @@ test('bracket columns keep the match order from the panel', function () {
 
     expect(TournamentPage::boardColumns($category->matches()->get())->first()['matches']->pluck('number')->all())->toBe([30, 33]);
 });
+
+test('groups get default sectors, other matches go to the first free sector and nothing overlaps with other categories', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $groupA = $joker->group;
+    $groupB = $category->groups()->create(['name' => 'Grupa B', 'display_order' => 1]);
+    $base = ['stage' => 'group', 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id];
+    $a1 = $category->matches()->create($base + ['number' => 1, 'tournament_group_id' => $groupA->id]);
+    $b1 = $category->matches()->create($base + ['number' => 2, 'tournament_group_id' => $groupB->id]);
+    $a2 = $category->matches()->create($base + ['number' => 3, 'tournament_group_id' => $groupA->id]);
+    $final = $category->matches()->create(['stage' => 'placement', 'placement' => 1, 'number' => 4]);
+    $juniors = $this->tournament->categories()->create(['name' => 'Juniorki', 'display_order' => 1]);
+    $busy = $juniors->matches()->create(['stage' => 'placement', 'placement' => 1, 'court' => 'Sektor I', 'starts_at' => '2026-11-14 09:00']);
+
+    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
+        ->set("groupCourts.{$groupA->id}", 'Sektor III')
+        ->set("groupCourts.{$groupB->id}", 'Sektor I')
+        ->call('arrangeSchedule');
+
+    $at = fn ($match) => $match->fresh()->court.' '.$match->fresh()->starts_at->format('H:i');
+    expect($at($a1))->toBe('Sektor III 09:00')
+        ->and($at($b1))->toBe('Sektor I 10:30')   // Sektor I zajęty do 10:30 przez juniorki
+        ->and($at($a2))->toBe('Sektor III 10:30')
+        ->and($at($final))->toBe('Sektor II 09:00'); // bez grupy: najwcześniej wolny sektor
+
+    // Mecz #3 przechodzi na wolny Sektor II: jego miejsce na Sektorze III zwalnia się, a na Sektorze II finał ustępuje.
+    $later = $category->matches()->create($base + ['number' => 5, 'tournament_group_id' => $groupA->id, 'court' => 'Sektor III', 'starts_at' => '2026-11-14 12:00']);
+    $editor->set("results.{$a2->id}.court", 'Sektor II')->assertSee('przeszedł na Sektor II');
+    expect($at($later))->toBe('Sektor III 10:30')
+        ->and($at($final))->toBe('Sektor II 09:00');
+
+    $editor->call('undoSchedule');
+    expect($at($a2))->toBe('Sektor III 10:30')->and($at($later))->toBe('Sektor III 12:00');
+
+    $editor->call('resetSchedule');
+    expect($a1->fresh()->starts_at)->toBeNull()->and($a1->fresh()->court)->toBe('Sektor III')->and($busy->fresh()->starts_at)->not->toBeNull();
+
+    $editor->call('undoSchedule');
+    $this->get(route('admin.tournaments.edit', ['tournament' => $this->tournament, 'section' => 'mecze']))->assertOk()->assertSee('Obłożenie sektorów')->assertSee('nakłada się');
+});

@@ -210,6 +210,12 @@
                             </span>
                         </div>
 
+                        <div class="flex flex-wrap items-center gap-3">
+                            <p class="text-xs font-semibold text-gray-500 uppercase">Sektor grupy</p>
+                            <x-court-picker model="groupCourts.{{ $group->id }}" :value="$groupCourts[$group->id] ?? null" :free="false" />
+                            <span class="text-xs text-gray-500">{{ filled($groupCourts[$group->id] ?? null) ? \App\Models\TrainingSession::courtLabel($groupCourts[$group->id]) : 'brak: przy układaniu godzin mecze trafią na wolne sektory' }}</span>
+                        </div>
+
                         <div>
                             <p class="text-xs font-semibold text-gray-500 uppercase">Skład ({{ $members->count() }})</p>
                             <ul class="mt-1 space-y-1 text-sm text-gray-700">
@@ -433,6 +439,7 @@
                             <input type="text" wire:model.blur.live="matchInterval" placeholder="1:30" class="{{ $input }} mt-1">
                         </label>
                         <button type="button" wire:click="arrangeSchedule" wire:confirm="Ustawić godziny wszystkim meczom tej kategorii? Każdego dnia na każdym sektorze pierwszy mecz zacznie się o godzinie rozpoczęcia dnia, a kolejne (według numeru) co odstęp. Mecze trwające i z wynikiem zostaną bez zmian." class="{{ $primary }}">Ułóż godziny według numerów</button>
+                        <button type="button" wire:click="resetSchedule" wire:confirm="Usunąć daty i godziny wszystkich meczów tej kategorii? Sektory zostaną, mecze trwające i z wynikiem bez zmian. Można to cofnąć." class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-100">Resetuj harmonogram</button>
                         <label class="inline-flex items-center gap-2 pb-2 text-sm text-gray-700">
                             <input type="checkbox" wire:model.live="shiftFollowing" class="rounded border-gray-300">
                             Przesuwaj kolejne mecze na sektorze, gdy zmienię godzinę
@@ -441,6 +448,13 @@
                     @error('matchInterval') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     <p class="mt-2 text-xs text-gray-500">Zmiana godziny meczu przesuwa o tyle samo kolejne mecze tego dnia na tym samym sektorze, także z innych kategorii. Mecze trwające i z wynikiem się nie ruszają. Zmiana w dniu meczu pokazuje kibicom opóźnienie.</p>
                 </div>
+            @endif
+
+            @if($category->matches->isNotEmpty())
+                <details class="group rounded-lg border border-gray-200 bg-white p-4">
+                    <summary class="cursor-pointer font-semibold text-gray-900">Obłożenie sektorów <span class="text-xs font-normal text-gray-500">· wszystkie kategorie, cały turniej</span></summary>
+                    <x-sector-occupancy :tournament="$tournament" class="mt-4" />
+                </details>
             @endif
 
             @if($scheduleUndo)
