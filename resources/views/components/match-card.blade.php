@@ -21,11 +21,11 @@
             @endif
         </span>
         @if($outcome === 'derby')
-            <span class="inline-flex items-center gap-1 rounded-full bg-sky-club/15 px-2.5 py-0.5 font-bold {{ $dark ? 'text-sky-club-light' : 'text-sky-club-dark' }}"><x-derby-heart class="h-3.5 w-3.5 {{ $dark ? 'text-sky-club-light' : 'text-sky-club' }}" /> {{ $site['derby_short'] }}</span>
+            <span class="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-sky-club/15 px-2.5 py-0.5 font-bold {{ $dark ? 'text-sky-club-light' : 'text-sky-club-dark' }}"><x-derby-heart class="h-3.5 w-3.5 {{ $dark ? 'text-sky-club-light' : 'text-sky-club' }}" /> {{ $site['derby_short'] }}</span>
         @elseif($won !== null)
-            <span @class(['rounded-full px-2.5 py-0.5 font-bold', 'bg-emerald-500/15 text-emerald-500' => $won, 'bg-red-500/15 text-red-500' => ! $won])>{{ $won ? __('Wygrana') : __('Porażka') }}</span>
+            <span @class(['shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 font-bold', 'bg-emerald-500/15 text-emerald-500' => $won, 'bg-red-500/15 text-red-500' => ! $won])>{{ $won ? __('Wygrana') : __('Porażka') }}</span>
         @else
-            <span class="rounded-full px-2.5 py-0.5 font-semibold {{ $dark ? 'bg-white/10' : 'bg-zinc-100' }}">{{ $game->is_home ? __('U siebie') : __('Wyjazd') }}</span>
+            <span class="shrink-0 whitespace-nowrap rounded-full px-2.5 py-0.5 font-semibold {{ $dark ? 'bg-white/10' : 'bg-zinc-100' }}">{{ $game->is_home ? __('U siebie') : __('Wyjazd') }}</span>
         @endif
     </div>
 

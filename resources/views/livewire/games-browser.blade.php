@@ -286,7 +286,7 @@
                                     {{ $won ? __('Wygrana') : __('Porażka') }} {{ $result[0] }}:{{ $result[1] }}
                                 </span>
                             @else
-                                <span class="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600">{{ $game->is_home ? __('U siebie') : __('Wyjazd') }}</span>
+                                <span class="shrink-0 whitespace-nowrap rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600">{{ $game->is_home ? __('U siebie') : __('Wyjazd') }}</span>
                             @endif
                             <a href="{{ route('games.show', $game) }}" class="inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-sky-club-dark hover:underline">{{ __('Szczegóły meczu') }} →</a>
                             @if($article)
