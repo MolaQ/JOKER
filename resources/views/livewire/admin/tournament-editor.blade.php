@@ -186,7 +186,7 @@
                             </div>
                             @if($swapParticipant === $participant->id)
                                 {{-- Zamiana drużyny na tej samej pozycji: mecze, grupa i terminarz zostają --}}
-                                <form wire:submit="swapParticipant" class="grid gap-3 rounded-lg bg-sky-50 p-3 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end lg:col-span-full">
+                                <form wire:submit="swapTeam" class="grid gap-3 rounded-lg bg-sky-50 p-3 sm:grid-cols-[1fr_1fr_auto_auto] sm:items-end lg:col-span-full">
                                     <div>
                                         <label class="{{ $label }}">Zamień {{ $participant->name() }} na</label>
                                         <x-search-select model="swapWith" empty="— nowa drużyna (wpisz nazwę obok) —" placeholder="Szukaj drużyny lub klubu…" :options="$teamOptions->map(fn ($team) => ['value' => 'team:'.$team->id, 'label' => $site['club_short_name'].': '.$team->name, 'group' => 'Nasze drużyny'])

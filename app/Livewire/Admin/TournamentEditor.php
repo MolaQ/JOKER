@@ -528,7 +528,7 @@ class TournamentEditor extends Component
      * Podmienia drużynę na tej samej pozycji: grupa, mecze, godziny, sektory i drabinka zostają,
      * bo wskazują pozycję w turnieju, a nie klub.
      */
-    public function swapParticipant(): void
+    public function swapTeam(): void
     {
         $participant = $this->category()->participants()->findOrFail($this->swapParticipant);
         $this->validate([

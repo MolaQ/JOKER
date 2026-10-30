@@ -764,7 +764,7 @@ test('swapping a team keeps its group, matches and times', function () {
     Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])
         ->call('startSwap', $old->id)
         ->set('swapWith', 'rival:'.$new->id)
-        ->call('swapParticipant')
+        ->call('swapTeam')
         ->assertHasNoErrors();
 
     expect($old->fresh())->competitor_id->toBe($new->id)->tournament_group_id->toBe($group->id)->roster->toBeNull()
