@@ -16,7 +16,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('mini_groups', function (Blueprint $table) {
+        // Tabele mogły powstać przy przerwanym wcześniej uruchomieniu (MySQL nie cofa zmian struktury).
+        Schema::hasTable('mini_groups') || Schema::create('mini_groups', function (Blueprint $table) {
             $table->id();
             $table->string('name', 60);
             $table->string('slug', 80)->unique();
@@ -34,7 +35,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('mini_players', function (Blueprint $table) {
+        Schema::hasTable('mini_players') || Schema::create('mini_players', function (Blueprint $table) {
             $table->id();
             $table->foreignId('mini_group_id')->nullable()->constrained()->nullOnDelete();
             $table->string('first_name', 60);
@@ -46,7 +47,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('mini_trips', function (Blueprint $table) {
+        Schema::hasTable('mini_trips') || Schema::create('mini_trips', function (Blueprint $table) {
             $table->id();
             $table->string('title');
             $table->date('starts_on');
@@ -62,7 +63,7 @@ return new class extends Migration
             $table->index('starts_on');
         });
 
-        Schema::create('mini_trip_teams', function (Blueprint $table) {
+        Schema::hasTable('mini_trip_teams') || Schema::create('mini_trip_teams', function (Blueprint $table) {
             $table->id();
             $table->foreignId('mini_trip_id')->constrained()->cascadeOnDelete();
             $table->foreignId('mini_group_id')->nullable()->constrained()->nullOnDelete();
@@ -74,17 +75,20 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // Tabela składów jest pusta, gdy poprzednie uruchomienie przerwał zbyt długi indeks: zakładamy ją od nowa.
+        Schema::dropIfExists('mini_player_mini_trip_team');
         Schema::create('mini_player_mini_trip_team', function (Blueprint $table) {
             $table->id();
             $table->foreignId('mini_trip_team_id')->constrained()->cascadeOnDelete();
             $table->foreignId('mini_player_id')->constrained()->cascadeOnDelete();
 
-            $table->unique(['mini_trip_team_id', 'mini_player_id']);
+            // Krótka nazwa: MySQL przyjmuje najwyżej 64 znaki.
+            $table->unique(['mini_trip_team_id', 'mini_player_id'], 'mini_lineup_unique');
         });
 
         // Cztery grupy na start, ukryte do czasu uzupełnienia (zdjęcie, dzieci) w panelu.
         foreach ([['Czwórki', 'czworki', 4, 'U-13'], ['Trójki', 'trojki', 3, 'U-12'], ['Dwójki', 'dwojki', 2, 'U-11'], ['Singielki', 'singielki', 1, 'U-10']] as $order => [$name, $slug, $players, $age]) {
-            DB::table('mini_groups')->insert(['name' => $name, 'slug' => $slug, 'players_on_court' => $players, 'age_label' => $age, 'display_order' => $order, 'is_active' => false, 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('mini_groups')->insertOrIgnore(['name' => $name, 'slug' => $slug, 'players_on_court' => $players, 'age_label' => $age, 'display_order' => $order, 'is_active' => false, 'created_at' => now(), 'updated_at' => now()]);
         }
 
         foreach ([UserRole::Admin, UserRole::Boss, UserRole::Trainer, UserRole::Coordinator] as $role) {
