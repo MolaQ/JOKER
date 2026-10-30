@@ -24,7 +24,6 @@
     $color = $category?->color() ?? '#38bdf8';
     $bracket = $category ? $brackets[$category->id] : null;
     $logoUrl = $site->image('logo', asset('img/logo-256.webp'));
-    $side = fn ($match, $key) => $bracket ? $bracket->side($match, $key) : ['participant' => $match->{$key}, 'text' => $match->{$key}?->name() ?? '—'];
 @endphp
 <div id="tv-stage" class="flex flex-col overflow-hidden" style="background: radial-gradient(1200px 700px at 85% -10%, {{ $color }}33, transparent 60%), linear-gradient(160deg, #0d1d45 0%, #071029 60%)">
     {{-- Nagłówek: turniej, kategoria, tytuł planszy, zegar i odliczanie --}}
@@ -93,34 +92,7 @@
         @elseif($slide['type'] === 'matches')
             <div class="tv-in grid h-full grid-cols-2 grid-rows-4 gap-6">
                 @foreach($slide['matches'] as $match)
-                    @php($winnerId = $match->winner()?->id)
-                    <div @class(['flex min-h-0 items-center gap-6 rounded-3xl px-8 ring-1', 'bg-red-500/15 ring-red-400/60' => $match->is_live, 'bg-white/[0.06] ring-white/10' => ! $match->is_live])>
-                        <div class="w-36 shrink-0 text-center">
-                            @if($match->is_live)
-                                <p class="inline-flex items-center gap-2 rounded-full bg-red-500 px-4 py-1 font-display text-2xl font-bold uppercase"><span class="h-3 w-3 animate-pulse rounded-full bg-white"></span>{{ __('Trwa') }}</p>
-                            @else
-                                <p class="font-display text-5xl font-bold tabular-nums">{{ $match->starts_at?->format('H:i') ?? '—' }}</p>
-                                <p class="text-xl text-white/60">{{ $match->starts_at?->translatedFormat('D d.m') }}</p>
-                            @endif
-                            @if($match->court)<p class="mt-1 text-xl font-semibold text-sky-300">{{ \App\Models\TrainingSession::courtLabel($match->court) }}</p>@endif
-                        </div>
-                        <div class="min-w-0 flex-1 space-y-2">
-                            @foreach(['home', 'away'] as $key)
-                                @php($s = $side($match, $key))
-                                <div @class(['flex items-center gap-4', 'text-white/50' => $winnerId && $s['participant']?->id !== $winnerId])>
-                                    @if($s['participant'])
-                                        <x-avatar logo :photo="$s['participant']->logoPath()" :name="$s['text']" class="h-11 w-11 shrink-0 rounded-full text-sm" />
-                                    @else
-                                        <span class="h-11 w-11 shrink-0 rounded-full bg-white/10"></span>
-                                    @endif
-                                    <span @class(['min-w-0 flex-1 truncate text-3xl', 'font-bold' => $winnerId && $s['participant']?->id === $winnerId, 'italic text-white/50' => ! $s['participant']])>{{ $s['text'] }}</span>
-                                    <span class="w-10 text-right font-display text-5xl font-bold tabular-nums">{{ $match->{$key.'_sets'} ?? '' }}</span>
-                                </div>
-                            @endforeach
-                            @if($match->setsLabel())<p class="text-right text-xl text-white/50 tabular-nums">({{ $match->setsLabel() }})</p>@endif
-                        </div>
-                        @if($match->number)<span class="self-start pt-5 font-display text-2xl text-white/40">#{{ $match->number }}</span>@endif
-                    </div>
+                    <x-tv-match :match="$match" :bracket="$bracket" />
                 @endforeach
             </div>
 
@@ -128,20 +100,10 @@
             <div class="tv-in flex h-full gap-6">
                 @foreach($slide['columns'] as $column)
                     <section class="flex min-w-0 flex-1 flex-col gap-4">
-                        <h2 class="font-display text-3xl font-bold tracking-wide uppercase" style="color: {{ $color }}">{{ $column['name'] }}</h2>
-                        <div class="flex min-h-0 flex-1 flex-col justify-around gap-3">
+                        <h2 class="font-display text-4xl font-bold tracking-wide uppercase" style="color: {{ $color }}">{{ $column['name'] }}</h2>
+                        <div class="flex min-h-0 flex-1 flex-col justify-around gap-4">
                             @foreach($column['matches'] as $match)
-                                @php($winnerId = $match->winner()?->id)
-                                <div @class(['rounded-2xl px-5 py-3 ring-1', 'bg-red-500/15 ring-red-400/60' => $match->is_live, 'bg-white/[0.06] ring-white/10' => ! $match->is_live])>
-                                    <p class="mb-1 flex gap-3 text-lg text-white/50">@if($match->number)<span>#{{ $match->number }}</span>@endif<span>{{ $match->label ?: ($match->placement ? __('o :place. miejsce', ['place' => $match->placement]) : '') }}</span><span class="ml-auto tabular-nums">{{ $match->starts_at?->format('H:i') }}</span></p>
-                                    @foreach(['home', 'away'] as $key)
-                                        @php($s = $side($match, $key))
-                                        <div @class(['flex items-center gap-3', 'text-white/50' => $winnerId && $s['participant']?->id !== $winnerId])>
-                                            <span @class(['min-w-0 flex-1 truncate text-2xl', 'font-bold' => $winnerId && $s['participant']?->id === $winnerId, 'italic text-white/50' => ! $s['participant']])>{{ $s['text'] }}</span>
-                                            <span class="font-display text-3xl font-bold tabular-nums">{{ $match->{$key.'_sets'} ?? '' }}</span>
-                                        </div>
-                                    @endforeach
-                                </div>
+                                <x-tv-match :match="$match" :bracket="$bracket" :compact="$slide['columns']->max(fn ($c) => $c['matches']->count()) > 4 || $slide['columns']->count() >= 3" />
                             @endforeach
                         </div>
                     </section>
