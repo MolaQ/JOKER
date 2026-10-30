@@ -440,7 +440,7 @@
                                                         @endforeach
                                                     </select>
                                                 @endif
-                                                @if($side === 'home') <span class="text-gray-400">–</span> @endif
+                                                @if($side === 'home') <button type="button" wire:click="swapMatchSides({{ $tournamentMatch->id }})" class="rounded px-1 text-gray-400 hover:bg-gray-100 hover:text-gray-900" title="Zamień gospodarza z gościem">⇄</button> @endif
                                             @endforeach
                                         </div>
                                         </div>

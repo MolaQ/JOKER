@@ -665,6 +665,31 @@ class TournamentEditor extends Component
         $this->toast('Zapisano mecz: '.$match->fresh()->title().'.');
     }
 
+    /**
+     * Zamiana gospodarza z gościem: drużyny (albo ich miejsca w drabince) i wynik setów przechodzą na drugą stronę.
+     */
+    public function swapMatchSides(int $matchId): void
+    {
+        $match = $this->category()->matches()->findOrFail($matchId);
+        $sets = collect($match->sets_score ?? [])->map(fn ($set) => array_reverse(array_values((array) $set)))->all();
+
+        $match->update([
+            'home_participant_id' => $match->away_participant_id,
+            'away_participant_id' => $match->home_participant_id,
+            'home_placeholder' => $match->away_placeholder,
+            'away_placeholder' => $match->home_placeholder,
+            'home_source' => $match->away_source,
+            'away_source' => $match->home_source,
+            'home_sets' => $match->away_sets,
+            'away_sets' => $match->home_sets,
+            'sets_score' => $sets ?: null,
+        ]);
+        $this->results[$match->id]['sets'] = collect($sets)->map(fn ($set) => implode(':', $set))->implode(', ');
+        $this->syncBracket();
+
+        $this->toast('Zamieniono strony: '.$match->fresh()->homeName().' – '.$match->awayName().'.');
+    }
+
     public function setMatchTeams(int $matchId, string $side, string $participantId): void
     {
         $match = $this->category()->matches()->findOrFail($matchId);

@@ -540,3 +540,17 @@ test('court is picked with the hall symbol and named courts get the symbol on th
 
     expect($match->fresh()->court)->toBe('Sektor I');
 });
+
+test('organizer swaps home and away in a match together with the set scores', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
+    $match = $joker->category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id, 'sets_score' => [[25, 20], [23, 25], [15, 12]], 'home_sets' => 2, 'away_sets' => 1]);
+
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
+        ->call('swapMatchSides', $match->id)
+        ->assertSet("results.{$match->id}.sets", '20:25, 25:23, 12:15');
+
+    $match->refresh();
+    expect([$match->home_participant_id, $match->away_participant_id, $match->home_sets, $match->away_sets])->toBe([$kalisz->id, $joker->id, 1, 2])
+        ->and($match->sets_score)->toBe([[20, 25], [25, 23], [12, 15]]);
+});
