@@ -772,3 +772,17 @@ test('swapping a team keeps its group, matches and times', function () {
         ->and($match->fresh())->home_participant_id->toBe($old->id)->court->toBe('court1')
         ->and($match->fresh()->starts_at->format('Y-m-d H:i'))->toBe('2026-11-06 10:00');
 });
+
+test('a corrected result clears the earlier set format error', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $category = $this->tournament->categories()->create(['name' => 'Kadetki']);
+    $match = $category->matches()->create(['stage' => 'placement', 'placement' => 1]);
+
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])
+        ->set("results.{$match->id}.sets", '25:21, 21:25, 25:15, 1')
+        ->assertHasErrors("results.{$match->id}.sets")
+        ->set("results.{$match->id}.sets", '25:21, 21:25, 25:15, 15:12')
+        ->assertHasNoErrors();
+
+    expect($match->fresh())->home_sets->toBe(3)->away_sets->toBe(1);
+});

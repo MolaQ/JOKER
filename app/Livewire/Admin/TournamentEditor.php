@@ -684,6 +684,8 @@ class TournamentEditor extends Component
     {
         $match = $this->category()->matches()->findOrFail($matchId);
         $row = $this->results[$matchId] ?? [];
+        // Poprzedni błąd znika, gdy poprawiony wynik da się odczytać.
+        $this->resetErrorBag("results.{$matchId}.sets");
         $sets = self::parseSets((string) ($row['sets'] ?? ''), "results.{$matchId}.sets");
         $previous = $match->replicate();
 
