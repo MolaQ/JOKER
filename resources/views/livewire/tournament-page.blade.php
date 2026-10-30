@@ -156,17 +156,70 @@
                 </div>
             @endif
 
-            <div class="mt-8 grid gap-8 lg:auto-cols-[minmax(19rem,1fr)] lg:grid-flow-col lg:overflow-x-auto lg:pb-2">
-                @foreach($board as $column)
-                    <section wire:key="board-column-{{ $loop->index }}">
-                        <h2 class="mb-3 text-xs font-semibold tracking-widest text-zinc-500 uppercase">{{ $column['name'] }}</h2>
-                        <div class="space-y-3">
-                            @foreach($column['matches'] as $match)
-                                <x-tournament-bracket-match :match="$match" :bracket="$bracket" wire:key="board-{{ $match->id }}" />
-                            @endforeach
-                        </div>
-                    </section>
-                @endforeach
+            <div x-data="{ list: false }" class="mt-8">
+                {{-- Przełącznik: drabinka albo wszystkie mecze po kolei (wygodne na telefonie w hali) --}}
+                <div class="inline-flex rounded-full bg-white p-1 shadow-sm ring-1 ring-zinc-200" role="group" aria-label="{{ __('Widok') }}">
+                    <button type="button" @click="list = false" :aria-pressed="! list" :class="! list ? 'bg-club-navy text-white shadow' : 'text-zinc-600 hover:text-zinc-900'" class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold transition">
+                        <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5h5v4H3zM3 15h5v4H3zM8 7h3v10H8M11 12h4M15 10h6v4h-6z"/></svg>
+                        {{ __('Drabinka') }}
+                    </button>
+                    <button type="button" @click="list = true" :aria-pressed="list" :class="list ? 'bg-club-navy text-white shadow' : 'text-zinc-600 hover:text-zinc-900'" class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold transition">
+                        <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>
+                        {{ __('Po kolei') }}
+                    </button>
+                </div>
+
+                <div x-show="! list" class="mt-6">
+                    @if($standalone->isNotEmpty())
+                        <section class="mb-8">
+                            <h2 class="mb-3 text-xs font-semibold tracking-widest text-zinc-500 uppercase">{{ __('Mecze o dalsze miejsca') }}</h2>
+                            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                @foreach($standalone as $match)
+                                    <x-tournament-bracket-match :match="$match" :bracket="$bracket" wire:key="standalone-{{ $match->id }}" />
+                                @endforeach
+                            </div>
+                        </section>
+                    @endif
+                    <div class="grid gap-8 lg:auto-cols-[minmax(19rem,1fr)] lg:grid-flow-col lg:overflow-x-auto lg:pb-2">
+                        @foreach($board as $column)
+                            <section wire:key="board-column-{{ $loop->index }}">
+                                <h2 class="mb-3 text-xs font-semibold tracking-widest text-zinc-500 uppercase">{{ $column['name'] }}</h2>
+                                <div class="space-y-3">
+                                    @foreach($column['matches'] as $match)
+                                        <x-tournament-bracket-match :match="$match" :bracket="$bracket" wire:key="board-{{ $match->id }}" />
+                                    @endforeach
+                                </div>
+                            </section>
+                        @endforeach
+                    </div>
+                </div>
+
+                <ol x-show="list" x-cloak class="mt-6 divide-y divide-zinc-100 overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200">
+                    @foreach($knockout as $match)
+                        @php $venue = \App\Models\TrainingSession::venueForCourt($match->court); @endphp
+                        <li class="grid grid-cols-[4rem_minmax(0,1fr)] items-center gap-x-3 gap-y-1 px-4 py-3 sm:grid-cols-[4.5rem_3.5rem_minmax(0,1fr)_9rem]" wire:key="list-{{ $match->id }}">
+                            <span class="font-display text-xl font-semibold tabular-nums text-zinc-900">{{ $match->starts_at?->format('H:i') ?? '–' }}</span>
+                            <span class="hidden sm:block"><span class="rounded-md bg-(--tm-number-bg) px-1.5 text-sm font-bold text-(--tm-number-text) tabular-nums">#{{ $match->number }}</span></span>
+                            <span class="min-w-0">
+                                <span class="block truncate text-sm font-semibold text-zinc-900"><span class="sm:hidden">#{{ $match->number }} · </span>{{ $match->title() }}</span>
+                                <span class="block truncate text-sm text-zinc-500">{{ $bracket->side($match, 'home')['text'] }} – {{ $bracket->side($match, 'away')['text'] }}@if($match->home_sets !== null) · <b class="text-zinc-800 tabular-nums">{{ $match->home_sets }}:{{ $match->away_sets }}</b>@endif</span>
+                            </span>
+                            <span class="col-start-2 inline-flex items-center gap-2 text-sm text-zinc-600 sm:col-start-auto">
+                                @if($venue)<x-venue-icon :venue="$venue" small />@endif{{ \App\Models\TrainingSession::courtLabel($match->court) }}
+                            </span>
+                        </li>
+                    @endforeach
+                </ol>
+
+                @php $usedVenues = $knockout->map(fn ($match) => \App\Models\TrainingSession::venueForCourt($match->court))->filter()->unique(); @endphp
+                @if($usedVenues->isNotEmpty())
+                    <p class="mt-6 inline-flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-white px-4 py-2.5 text-sm text-zinc-600 ring-1 ring-zinc-200">
+                        <span class="font-semibold text-zinc-900">{{ __('Sektory') }}:</span>
+                        @foreach(['court3', 'court2', 'court1', 'main'] as $venue)
+                            <span class="inline-flex items-center gap-2"><x-venue-icon :venue="$venue" small />{{ \App\Models\TrainingSession::venueNames()[$venue] }}</span>
+                        @endforeach
+                    </p>
+                @endif
             </div>
 
             @if($standings->isNotEmpty())

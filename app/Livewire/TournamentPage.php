@@ -42,14 +42,19 @@ class TournamentPage extends Component
 
         $matches = $current?->matches ?? collect();
         $bracket = $current ? TournamentBracket::for($current) : null;
-        $board = self::boardColumns($matches->where('stage', '!=', TournamentMatch::STAGE_GROUP));
+        $knockout = $matches->where('stage', '!=', TournamentMatch::STAGE_GROUP);
+        // Mecze o dalsze miejsca, które nie wynikają z drabinki (np. piąte drużyny grup grają o 9. miejsce), stoją osobno nad drabinką.
+        $standalone = $knockout->filter(fn (TournamentMatch $match) => $match->stage === TournamentMatch::STAGE_PLACEMENT && $match->bracket_round === null
+            && ! collect([$match->home_source, $match->away_source])->contains(fn ($source) => str_starts_with((string) $source, 'winner:') || str_starts_with((string) $source, 'loser:')))
+            ->sortBy(fn (TournamentMatch $match) => [$match->number ?? PHP_INT_MAX, $match->id])->values();
+        $board = self::boardColumns($knockout->whereNotIn('id', $standalone->pluck('id')));
         $standings = $bracket?->standings() ?? collect();
 
         $tabs = collect([
             'teams' => [__('Drużyny'), $current?->participants->isNotEmpty()],
             'groups' => [__('Grupy'), $current?->groups->isNotEmpty()],
             'matches' => [__('Mecze'), $matches->isNotEmpty()],
-            'bracket' => [__('Drabinka i miejsca'), $board->isNotEmpty()],
+            'bracket' => [__('Drabinka i miejsca'), $knockout->isNotEmpty()],
             'ranking' => [__('Klasyfikacja'), $standings->isNotEmpty()],
             'rules' => [__('Zasady'), filled($this->tournament->rules)],
             'info' => [__('Informator'), filled($this->tournament->guest_info)],
@@ -64,6 +69,8 @@ class TournamentPage extends Component
             'currentTab' => $currentTab,
             'bracket' => $bracket,
             'board' => $board,
+            'standalone' => $standalone,
+            'knockout' => $knockout->sortBy(fn (TournamentMatch $match) => [$match->starts_at?->timestamp ?? PHP_INT_MAX, $match->number ?? PHP_INT_MAX, $match->id])->values(),
             'standings' => $standings,
         ]);
     }

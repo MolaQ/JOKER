@@ -7,14 +7,27 @@
     $destinations = $bracket->destinations($match);
 @endphp
 <article {{ $attributes->merge(['class' => 'overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-zinc-200']) }} id="mecz-{{ $match->number }}">
-    <header class="flex items-baseline gap-2 bg-(--tm-bar-bg) px-3 py-2 text-(--tm-bar-text)">
-        <span class="rounded-md bg-(--tm-number-bg) px-1.5 text-sm font-bold text-(--tm-number-text) tabular-nums">#{{ $match->number }}</span>
-        <span class="min-w-0 truncate font-semibold">{{ $match->title() }}</span>
-        @if($match->is_live)
-            <span class="inline-flex shrink-0 items-center gap-1 self-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white uppercase"><span class="size-1.5 animate-pulse rounded-full bg-white"></span>{{ __('Trwa') }}</span>
-        @endif
+    {{-- Nagłówek: numer i pełna nazwa meczu, pod spodem termin z lewej i sektor z prawej --}}
+    <header class="bg-(--tm-bar-bg) px-3 py-2 text-(--tm-bar-text)">
+        <p class="flex items-center gap-2">
+            <span class="rounded-md bg-(--tm-number-bg) px-1.5 text-sm font-bold text-(--tm-number-text) tabular-nums">#{{ $match->number }}</span>
+            <span class="min-w-0 font-semibold leading-tight">{{ $match->title() }}</span>
+            @if($match->is_live)
+                <span class="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white uppercase"><span class="size-1.5 animate-pulse rounded-full bg-white"></span>{{ __('Trwa') }}</span>
+            @endif
+        </p>
         @if($match->starts_at || $match->court)
-            <span class="ml-auto shrink-0 text-xs whitespace-nowrap opacity-75">{{ $match->starts_at?->translatedFormat('D d.m, H:i') }}{{ $match->starts_at && $match->court ? ' · ' : '' }}{{ \App\Models\TrainingSession::courtLabel($match->court) }}</span>
+            <p class="mt-1.5 flex items-center justify-between gap-3">
+                @if($match->starts_at)
+                    <span class="inline-flex items-baseline gap-1.5 text-xs opacity-80"><span>{{ $match->starts_at->translatedFormat('D d.m') }}</span><span class="font-display text-lg leading-none font-semibold tabular-nums opacity-100">{{ $match->starts_at->format('H:i') }}</span></span>
+                @else
+                    <span></span>
+                @endif
+                @if($match->court)
+                    @php $venue = \App\Models\TrainingSession::venueForCourt($match->court); @endphp
+                    <span class="inline-flex min-w-0 items-center gap-1.5 text-xs opacity-90">@if($venue)<x-venue-icon :venue="$venue" small class="rounded-[3px] bg-white" />@endif<span class="truncate">{{ \App\Models\TrainingSession::courtLabel($match->court) }}</span></span>
+                @endif
+            </p>
         @endif
     </header>
     @foreach(['home', 'away'] as $side)

@@ -177,7 +177,7 @@ test('a second bracket for places 5-8 gets its own heading and feeds the final s
     Livewire::test(TournamentPage::class, ['tournament' => $this->tournament])
         ->call('selectTab', 'bracket')
         ->assertSee('Play-off o miejsca od 5.')
-        ->assertSeeText('15.11, 15:30');
+        ->assertSeeText('15.11')->assertSeeText('15:30');
 });
 
 test('match time typed in the panel is saved without pressing save', function () {
@@ -553,4 +553,17 @@ test('organizer swaps home and away in a match together with the set scores', fu
     $match->refresh();
     expect([$match->home_participant_id, $match->away_participant_id, $match->home_sets, $match->away_sets])->toBe([$kalisz->id, $joker->id, 1, 2])
         ->and($match->sets_score)->toBe([[20, 25], [25, 23], [12, 15]]);
+});
+
+test('placement matches outside the bracket stand above it, and the bracket can be read in order', function () {
+    [$joker, $kalisz, $poznan] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $category->matches()->create(['stage' => 'playoff', 'bracket_round' => 1, 'number' => 22, 'label' => 'Ćwierćfinał 1', 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id, 'court' => 'Sektor I', 'starts_at' => '2026-11-15 09:30']);
+    $category->matches()->create(['stage' => 'placement', 'placement' => 9, 'number' => 21, 'home_placeholder' => '5. miejsce A', 'away_placeholder' => '5. miejsce B', 'court' => 'Sektor III', 'starts_at' => '2026-11-15 09:30']);
+
+    Livewire::test(TournamentPage::class, ['tournament' => $this->tournament])
+        ->call('selectTab', 'bracket')
+        ->assertSeeHtml('Mecze o dalsze miejsca')->assertSeeHtml('id="mecz-21"')->assertSee('Ćwierćfinał 1')
+        ->assertSee('Po kolei')
+        ->assertSee('Sektory');
 });
