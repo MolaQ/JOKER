@@ -73,7 +73,7 @@
                                 @foreach($rows as $row)
                                     <tr @class(['border-t border-white/10', 'bg-sky-400/15' => $row['participant']->isOwnTeam()])>
                                         <td class="px-8 py-3 font-display text-4xl font-bold" style="color: {{ $row['position'] <= 2 ? $color : 'inherit' }}">{{ $row['position'] }}</td>
-                                        <td class="py-3">
+                                        <td class="w-full max-w-0 py-3">
                                             <span class="flex items-center gap-4">
                                                 <x-avatar logo :photo="$row['participant']->logoPath()" :name="$row['participant']->name()" class="h-12 w-12 shrink-0 rounded-full text-base" />
                                                 <span class="truncate text-3xl font-semibold">{{ $row['participant']->name() }}</span>
@@ -164,11 +164,12 @@
         <div class="flex h-20 items-center overflow-hidden bg-red-600">
             <span class="z-10 flex h-full shrink-0 items-center gap-3 bg-red-700 px-8 font-display text-3xl font-bold uppercase"><span class="h-4 w-4 animate-pulse rounded-full bg-white"></span>{{ __('Teraz gramy') }}</span>
             <div class="min-w-0 flex-1 overflow-hidden">
-                <div class="flex w-max gap-16 pl-10 text-3xl whitespace-nowrap" @if($live->count() > 2) style="animation: tv-ticker {{ 12 * $live->count() }}s linear infinite" @endif>
-                    @foreach($live->count() > 2 ? [1, 2] : [1] as $copy)
+                {{-- Przewija się, gdy napis nie mieści się na szerokość ekranu (sprawdza skrypt na dole) --}}
+                <div id="tv-ticker" class="flex w-max gap-16 pl-10 text-3xl whitespace-nowrap">
+                    @foreach([1, 2] as $copy)
                         @foreach($live as $match)
                             @php($liveBracket = $brackets[$match->tournament_category_id])
-                            <span><strong>{{ $match->category->name }}</strong> · {{ \App\Models\TrainingSession::courtLabel($match->court) }} · {{ $liveBracket->side($match, 'home')['text'] }} <strong class="font-display text-4xl">{{ $match->home_sets ?? 0 }}:{{ $match->away_sets ?? 0 }}</strong> {{ $liveBracket->side($match, 'away')['text'] }}</span>
+                            <span @if($copy === 2) data-copy hidden @endif><strong>{{ $match->category->name }}</strong> · {{ \App\Models\TrainingSession::courtLabel($match->court) }} · {{ $liveBracket->side($match, 'home')['text'] }} <strong class="font-display text-4xl">{{ $match->home_sets ?? 0 }}:{{ $match->away_sets ?? 0 }}</strong> {{ $liveBracket->side($match, 'away')['text'] }}</span>
                         @endforeach
                     @endforeach
                 </div>
@@ -196,6 +197,7 @@
         const label = document.getElementById('tv-seconds');
         const clock = document.getElementById('tv-clock');
         const next = new URL(location.href);
+        let leaving = 0;
         next.searchParams.set('s', {{ $next }});
 
         setInterval(() => {
@@ -203,8 +205,18 @@
             label.textContent = Math.ceil(left);
             ring.style.strokeDashoffset = 276.5 * (1 - left / total);
             clock.textContent = new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
-            if (left <= 0) location.replace(next);
+            // Raz; gdy serwer nie odpowie (np. chwilowy brak sieci), kolejna próba po 15 sekundach.
+            if (left <= 0 && (! leaving || Date.now() - leaving > 15000)) {
+                leaving = Date.now();
+                location.replace(next);
+            }
         }, 250);
+
+        const ticker = document.getElementById('tv-ticker');
+        if (ticker && ticker.scrollWidth > ticker.parentElement.clientWidth) {
+            ticker.querySelectorAll('[data-copy]').forEach((item) => item.hidden = false);
+            ticker.style.animation = `tv-ticker ${Math.max(15, ticker.scrollWidth / 120)}s linear infinite`;
+        }
     })();
 </script>
 </body>
