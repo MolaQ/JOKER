@@ -31,9 +31,9 @@
         <img src="{{ $logoUrl }}" alt="" class="h-24 w-24 object-contain">
         <div class="min-w-0 flex-1">
             <p class="font-display text-2xl font-semibold tracking-[0.3em] text-sky-300 uppercase">{{ $tournament->name }}</p>
-            <h1 class="mt-1 flex items-center gap-5 font-display text-7xl leading-none font-bold uppercase">
+            <h1 id="tv-title" class="mt-1 flex items-center gap-5 overflow-hidden font-display text-7xl leading-none font-bold whitespace-nowrap uppercase">
                 @if($category)
-                    <span class="rounded-2xl px-5 py-1 text-white" style="background: {{ $color }}">{{ $category->name }}</span>
+                    <span class="shrink-0 rounded-2xl px-5 py-1 text-white" style="background: {{ $color }}">{{ $category->name }}</span>
                 @endif
                 <span>{{ $slide['title'] ?? $tournament->name }}</span>
             </h1>
@@ -186,6 +186,12 @@
         const fit = () => stage.style.transform = `translate(-50%, -50%) scale(${Math.min(innerWidth / 1920, innerHeight / 1080)})`;
         fit();
         addEventListener('resize', fit);
+
+        // Długa nazwa kategorii i planszy: zmniejszamy napis, aż zmieści się w jednej linii.
+        const title = document.getElementById('tv-title');
+        for (let size = 72; size > 36 && title.scrollWidth > title.clientWidth; size -= 4) {
+            title.style.fontSize = `${size - 4}px`;
+        }
 
         const total = {{ $seconds }};
         const started = Date.now();
