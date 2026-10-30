@@ -733,3 +733,21 @@ test('category colours are configurable and the sector occupancy switches betwee
         ->assertSee('#ff0000', false)
         ->assertSee('14.11')->assertSee('15.11')->assertSee('role="tablist"', false);
 });
+
+test('group matches skip a slot pointing to a deleted team', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $category = $this->tournament->categories()->create(['name' => 'Kadetki']);
+    $group = $category->groups()->create(['name' => 'Grupa A']);
+    $a = $category->participants()->create(['competitor_type' => 'rival_team', 'competitor_id' => RivalTeam::create(['full_name' => 'MKS Kalisz'])->id]);
+    $b = $category->participants()->create(['competitor_type' => 'rival_team', 'competitor_id' => RivalTeam::create(['full_name' => 'Sparta Złotów'])->id]);
+    $group->update(['slots' => ["participant:{$a->id}", "participant:{$b->id}", 'participant:99999']]);
+
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])
+        ->call('generateGroupMatches', $group->id)
+        ->assertHasNoErrors();
+
+    expect($group->matches()->count())->toBe(1);
+
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->call('deleteParticipant', $b->id);
+    expect($group->fresh()->slots)->toBe(["participant:{$a->id}", 'participant:99999']);
+});

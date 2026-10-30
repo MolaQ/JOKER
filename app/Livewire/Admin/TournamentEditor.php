@@ -416,7 +416,10 @@ class TournamentEditor extends Component
     {
         $category = $this->category()->load(['groups.participants', 'participants', 'matches.group']);
         $group = $category->groups->firstWhere('id', $groupId) ?? abort(404);
-        $members = TournamentBracket::for($category)->members($group)->pluck('key')->unique()->values();
+        // Bez miejsc wskazujących usuniętą drużynę (inaczej mecz łamie klucz obcy w bazie).
+        $members = TournamentBracket::for($category)->members($group)
+            ->reject(fn (array $member) => str_starts_with($member['key'], 'participant:') && ! $member['participant'])
+            ->pluck('key')->unique()->values();
         $sideKey = fn (TournamentMatch $match, string $side) => $match->{$side.'_source'} ?? ($match->{$side.'_participant_id'} ? 'participant:'.$match->{$side.'_participant_id'} : null);
         $existing = $category->matches->where('tournament_group_id', $group->id)
             ->map(fn (TournamentMatch $match) => collect([$sideKey($match, 'home'), $sideKey($match, 'away')])->sort()->implode('|'));
@@ -505,7 +508,17 @@ class TournamentEditor extends Component
 
     public function deleteParticipant(int $id): void
     {
-        $this->category()->participants()->whereKey($id)->delete();
+        $category = $this->category();
+        $category->participants()->whereKey($id)->delete();
+
+        // Usunięta drużyna znika też z miejsc w składach grup.
+        foreach ($category->groups()->get() as $group) {
+            $slots = collect($group->slots ?? []);
+            if ($slots->contains("participant:{$id}")) {
+                $group->update(['slots' => $slots->reject(fn ($slot) => $slot === "participant:{$id}")->values()->all()]);
+            }
+        }
+
         $this->loadCategoryState();
     }
 
