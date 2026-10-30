@@ -14,6 +14,7 @@ use App\Http\Controllers\GameCalendarController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\MiniVolleyballController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PageViewController;
 use App\Http\Controllers\PersonController;
@@ -49,6 +50,8 @@ Route::get('/support-us', [ClubInfoController::class, 'support'])->name('support
 Route::get('/galleries', [GalleryController::class, 'index'])->name('galleries.index');
 Route::get('/galleries/{gallery}', [GalleryController::class, 'show'])->where('gallery', Slug::ROUTE_PATTERN)->name('galleries.show');
 Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');
+Route::get('/minisiatkowka', [MiniVolleyballController::class, 'index'])->name('mini.index');
+Route::get('/minisiatkowka/{miniGroup}', [MiniVolleyballController::class, 'show'])->name('mini.show');
 Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');
 
 // Articles

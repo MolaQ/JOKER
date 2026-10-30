@@ -7,6 +7,7 @@ use App\Models\Article;
 use App\Models\DailyLineup;
 use App\Models\Game;
 use App\Models\HeroSlide;
+use App\Models\MiniGroup;
 use App\Models\Player;
 use App\Models\Season;
 use App\Models\Sponsor;
@@ -56,7 +57,9 @@ class HomeController extends Controller
 
         $alumni = $site['home_alumni_enabled'] && $site['module_alumni'] ? Alumnus::published()->with('player')->limit(4)->get() : collect();
 
-        return view('home', compact('seasonName', 'heroSlides', 'upcoming_games', 'recent_results', 'articles', 'teams', 'sponsors', 'stats', 'countdownGame', 'alumni', 'lineup'));
+        $miniGroups = $site['home_mini_enabled'] ? MiniGroup::where('is_active', true)->ordered()->withCount(['players' => fn ($query) => $query->where('is_active', true)])->get() : collect();
+
+        return view('home', compact('seasonName', 'heroSlides', 'upcoming_games', 'recent_results', 'articles', 'teams', 'sponsors', 'stats', 'countdownGame', 'alumni', 'lineup', 'miniGroups'));
     }
 
     /**

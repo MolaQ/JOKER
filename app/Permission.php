@@ -19,6 +19,7 @@ enum Permission: string
     case Trainings = 'trainings.manage';
     case Games = 'games.manage';
     case Tournaments = 'tournaments.manage';
+    case MiniVolleyball = 'mini.manage';
     case Competitions = 'competitions.manage';
     case Proposals = 'proposals.review';
     case Documents = 'documents.manage';
@@ -47,6 +48,7 @@ enum Permission: string
             self::Trainings => 'Plan treningów',
             self::Games => 'Mecze, wyniki i tabele',
             self::Tournaments => 'Turnieje',
+            self::MiniVolleyball => 'Minisiatkówka: dzieci, wyjazdy i wyniki',
             self::Competitions => 'Rozgrywki, rywale, sezony',
             self::Proposals => 'Zatwierdzanie zmian od zawodników i rodziców',
             self::Documents => 'Dokumenty',
@@ -89,7 +91,7 @@ enum Permission: string
     {
         return match ($this) {
             self::Articles, self::Media, self::Homepage, self::Comments, self::ContentProposals, self::PhotoTags => 'Treści',
-            self::Teams, self::AllTeams, self::Trainings, self::Games, self::Tournaments, self::Competitions, self::Proposals => 'Drużyny i rozgrywki',
+            self::Teams, self::AllTeams, self::Trainings, self::Games, self::Tournaments, self::MiniVolleyball, self::Competitions, self::Proposals => 'Drużyny i rozgrywki',
             self::Documents, self::Sponsors => 'Klub',
             self::WriteComments, self::WriteMessages => 'Korzystanie ze strony',
             default => 'Konta i strona',

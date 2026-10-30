@@ -143,6 +143,24 @@
 </section>
 @endif
 
+{{-- MINISIATKÓWKA --}}
+@if($site['home_mini_enabled'] && $miniGroups->isNotEmpty())
+<section class="container-site pb-20 lg:pb-28" data-reveal>
+    <div class="flex flex-wrap items-end justify-between gap-6">
+        <div>
+            <p class="eyebrow">{{ __($site['home_mini_eyebrow']) }}</p>
+            <h2 class="heading-lg mt-3 max-w-xl text-balance">{{ __($site['home_mini_title']) }}</h2>
+        </div>
+        <a href="{{ route('mini.index') }}" class="link-underline pb-1 text-sm font-semibold">{{ __('Wszystko o minisiatkówce') }} →</a>
+    </div>
+    <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        @foreach($miniGroups as $miniGroup)
+            <x-mini-group-tile :group="$miniGroup" />
+        @endforeach
+    </div>
+</section>
+@endif
+
 {{-- TERMINARZ I WYNIKI --}}
 @if($site['home_games_enabled'] && ($upcoming_games->isNotEmpty() || $recent_results->isNotEmpty()))
 <section class="relative overflow-hidden bg-ink py-20 text-white lg:py-28">

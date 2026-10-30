@@ -22,6 +22,7 @@
                 ['label' => 'Plan treningów', 'route' => 'admin.trainings.index', 'icon' => 'clock', 'can' => 'trainings.manage'],
                 ['label' => 'Mecze i wyniki', 'route' => 'admin.games.index', 'icon' => 'ball', 'can' => 'games.manage'],
                 ['label' => 'Turnieje', 'route' => 'admin.tournaments.index', 'icon' => 'flag', 'can' => 'tournaments.manage'],
+                ['label' => 'Minisiatkówka', 'route' => 'admin.mini.index', 'icon' => 'star', 'can' => 'mini.manage'],
                 ['label' => 'Transmisje i zdjęcia meczów', 'route' => 'admin.media.index', 'icon' => 'video', 'can' => 'media.manage'],
                 ['label' => 'Galerie', 'route' => 'admin.galleries.index', 'icon' => 'photo', 'can' => 'media.manage'],
                 ['label' => 'Slajdy na stronie głównej', 'route' => 'admin.hero-slides.index', 'icon' => 'slides', 'can' => 'homepage.manage'],
