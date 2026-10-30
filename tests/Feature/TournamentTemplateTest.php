@@ -6,6 +6,7 @@ use App\Models\Season;
 use App\Models\Tournament;
 use App\Models\TournamentTemplate;
 use App\Models\User;
+use App\Support\SiteSettings;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -81,7 +82,10 @@ test('the tv screen rotates through category slides and links to the next one', 
     $group->matches()->create(['tournament_category_id' => $category->id, 'stage' => 'group', 'home_participant_id' => $a->id, 'away_participant_id' => $b->id, 'starts_at' => '2026-11-14 10:00', 'is_live' => true, 'home_sets' => 1, 'away_sets' => 0]);
 
     $this->get(route('tournaments.tv', $this->tournament))->assertOk()
-        ->assertSee('Tabele grup')->assertSee('MKS Kalisz')->assertSee('Teraz gramy')->assertSee('plansza 1/2');
+        ->assertSee('Tabela')->assertSee('MKS Kalisz')->assertSee('Teraz gramy')->assertSee('plansza 1/2');
 
-    $this->get(route('tournaments.tv', [$this->tournament, 's' => 1]))->assertOk()->assertSee('Teraz i za chwilę');
+    $this->get(route('tournaments.tv', [$this->tournament, 's' => 1]))->assertOk()->assertSee('Najbliższe mecze · Grupa A');
+
+    app(SiteSettings::class)->set(['tv_show_tables' => '0']);
+    $this->get(route('tournaments.tv', $this->tournament))->assertOk()->assertSee('Najbliższe mecze')->assertSee('plansza 1/1');
 });

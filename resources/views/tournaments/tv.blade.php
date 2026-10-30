@@ -21,11 +21,11 @@
 <body class="font-sans text-white">
 @php
     $category = $slide['category'] ?? null;
-    $color = $category?->color() ?? '#38bdf8';
+    $color = $colors['accent'] ?? $category?->color() ?? '#38bdf8';
     $bracket = $category ? $brackets[$category->id] : null;
     $logoUrl = $site->image('logo', asset('img/logo-256.webp'));
 @endphp
-<div id="tv-stage" class="flex flex-col overflow-hidden" style="background: radial-gradient(1200px 700px at 85% -10%, {{ $color }}33, transparent 60%), linear-gradient(160deg, #0d1d45 0%, #071029 60%)">
+<div id="tv-stage" class="flex flex-col overflow-hidden" style="--tv-live: {{ $colors['live'] }}; background: radial-gradient(1200px 700px at 85% -10%, {{ $color }}33, transparent 60%), linear-gradient(160deg, {{ $colors['top'] }} 0%, {{ $colors['bottom'] }} 60%)">
     {{-- Nagłówek: turniej, kategoria, tytuł planszy, zegar i odliczanie --}}
     <header class="flex items-center gap-8 px-16 pt-10 pb-6">
         <img src="{{ $logoUrl }}" alt="" class="h-24 w-24 object-contain">
@@ -110,9 +110,9 @@
             </div>
 
         @elseif($slide['type'] === 'matches')
-            <div class="tv-in grid h-full grid-cols-2 grid-rows-4 gap-6">
+            <div class="tv-in grid h-full grid-cols-2 gap-6" style="grid-template-rows: repeat({{ (int) ceil($perSlide / 2) }}, minmax(0, 1fr))">
                 @foreach($slide['matches'] as $match)
-                    <x-tv-match :match="$match" :bracket="$bracket" />
+                    <x-tv-match :match="$match" :bracket="$bracket" :compact="$perSlide > 8" :show-group="false" />
                 @endforeach
             </div>
 
@@ -130,6 +130,20 @@
                 @endforeach
             </div>
 
+        @elseif($slide['type'] === 'standings')
+            @php($rows = $slide['standings'])
+            <div class="tv-in grid h-full grid-flow-col gap-x-10 gap-y-3" style="grid-template-rows: repeat({{ min(8, max(1, (int) ceil($rows->count() / ($rows->count() > 8 ? 2 : 1)))) }}, minmax(0, 1fr))">
+                @foreach($rows as $row)
+                    <div @class(['flex min-h-0 items-center gap-6 rounded-3xl px-8 ring-1 ring-white/10', 'bg-white/[0.12]' => $row['position'] <= 3, 'bg-white/[0.05]' => $row['position'] > 3])>
+                        <span class="w-20 shrink-0 font-display text-5xl font-bold" style="color: {{ match ($row['position']) { 1 => '#facc15', 2 => '#e5e7eb', 3 => '#f59e0b', default => $color } }}">{{ $row['position'] }}.</span>
+                        @if($row['participant'])
+                            <x-avatar logo :photo="$row['participant']->logoPath()" :name="$row['text']" class="h-12 w-12 shrink-0 rounded-full text-base" />
+                        @endif
+                        <span @class(['min-w-0 flex-1 truncate text-3xl', 'font-bold' => $row['position'] <= 3, 'italic text-white/50' => ! $row['participant']])>{{ $row['text'] }}</span>
+                    </div>
+                @endforeach
+            </div>
+
         @elseif($slide['type'] === 'sponsors')
             <div class="tv-in grid h-full grid-cols-4 content-center gap-10">
                 @foreach($slide['sponsors'] as $sponsor)
@@ -143,8 +157,8 @@
 
     {{-- Pasek „Teraz gramy”: mecze w trakcie ze wszystkich kategorii --}}
     @if($live->isNotEmpty())
-        <div class="flex h-20 items-center overflow-hidden bg-red-600">
-            <span class="z-10 flex h-full shrink-0 items-center gap-3 bg-red-700 px-8 font-display text-3xl font-bold uppercase"><span class="h-4 w-4 animate-pulse rounded-full bg-white"></span>{{ __('Teraz gramy') }}</span>
+        <div class="flex h-20 items-center overflow-hidden" style="background: var(--tv-live)">
+            <span class="z-10 flex h-full shrink-0 items-center gap-3 bg-black/25 px-8 font-display text-3xl font-bold uppercase"><span class="h-4 w-4 animate-pulse rounded-full bg-white"></span>{{ __('Teraz gramy') }}</span>
             <div class="min-w-0 flex-1 overflow-hidden">
                 {{-- Przewija się, gdy napis nie mieści się na szerokość ekranu (sprawdza skrypt na dole) --}}
                 <div id="tv-ticker" class="flex w-max gap-16 pl-10 text-3xl whitespace-nowrap">
