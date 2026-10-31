@@ -19,7 +19,7 @@
     </div>
     <div>
         <label class="{{ $label }}">Termin</label>
-        <input type="datetime-local" wire:model.blur.live="editMatch.starts_at" class="{{ $input }}">
+        <x-datetime-input model="editMatch.starts_at" live class="{{ $input }}" />
     </div>
     <div>
         <label class="{{ $label }}">Boisko / hala</label>

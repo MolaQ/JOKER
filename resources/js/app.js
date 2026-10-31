@@ -10,6 +10,7 @@ import { initSearch } from './search';
 import { registerSearchSelect } from './search-select';
 import { initShareCards } from './share-card';
 import { initTableSort } from './table-sort';
+import { registerTimeInputs } from './time-input';
 import { registerToasts } from './toasts';
 
 registerPhotoCropper();
@@ -17,6 +18,7 @@ registerRichEditor();
 registerToasts();
 registerConfirmModal();
 registerSearchSelect();
+registerTimeInputs();
 
 initSearch();
 initPageStats();

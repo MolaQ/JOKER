@@ -479,7 +479,7 @@
                 <div class="grid gap-3 sm:grid-cols-4">
                     <div>
                         <label class="{{ $label }}">Termin</label>
-                        <input type="datetime-local" wire:model="match.starts_at" class="{{ $input }}">
+                        <x-datetime-input model="match.starts_at" class="{{ $input }}" />
                     </div>
                     <div>
                         <label class="{{ $label }}">Boisko / hala</label>
@@ -502,7 +502,7 @@
                                 <span class="w-16 font-semibold text-gray-900">Dzień {{ $index + 1 }}</span>
                                 <input type="date" wire:model.blur.live="scheduleDays.{{ $index }}.date" class="{{ str_replace('w-full', 'w-40', $input) }}" aria-label="Data dnia {{ $index + 1 }}">
                                 <span class="text-gray-500">od</span>
-                                <input type="time" wire:model.blur.live="scheduleDays.{{ $index }}.time" step="300" class="{{ str_replace('w-full', 'w-32', $input) }}" aria-label="Godzina pierwszego meczu dnia {{ $index + 1 }}">
+                                <x-time-input :model="'scheduleDays.'.$index.'.time'" live class="{{ str_replace('w-full', 'w-32', $input) }}" aria-label="Godzina pierwszego meczu dnia {{ $index + 1 }}" />
                                 <span class="text-gray-500">mecze od</span>
                                 <span class="inline-flex items-center gap-1">#<input type="number" min="1" wire:model.blur.live="scheduleDays.{{ $index }}.from" @disabled($index === 0) placeholder="nr" class="{{ str_replace('w-full', 'w-20', $input) }} disabled:bg-gray-50" aria-label="Pierwszy mecz dnia {{ $index + 1 }}"></span>
                                 @if($index > 0)
@@ -595,7 +595,7 @@
                                         @error("results.{$tournamentMatch->id}.sets") <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                                     </div>
                                     <div>
-                                        <input type="datetime-local" wire:model.blur.live="results.{{ $tournamentMatch->id }}.starts_at" class="{{ $input }}">
+                                        <x-datetime-input :model="'results.'.$tournamentMatch->id.'.starts_at'" live class="{{ $input }}" />
                                         @if($delay = $tournamentMatch->delayMinutes())
                                             <p class="mt-1 text-xs"><span class="rounded-full bg-amber-100 px-1.5 font-semibold text-amber-800">{{ $delay > 0 ? '+' : '−' }}{{ abs($delay) }} min</span> <span class="text-gray-500">plan {{ $tournamentMatch->planned_starts_at->format('H:i') }}</span></p>
                                         @endif

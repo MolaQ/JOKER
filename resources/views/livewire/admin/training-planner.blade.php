@@ -34,12 +34,12 @@
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label for="training-start" class="block text-sm font-medium text-gray-700">Od</label>
-                    <input type="time" id="training-start" wire:model.live.debounce.400ms="starts_at" step="300" class="mt-1 block w-full">
+                    <x-time-input model="starts_at" live id="training-start" class="mt-1 block w-full" />
                     @error('starts_at') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <div>
                     <label for="training-end" class="block text-sm font-medium text-gray-700">Do</label>
-                    <input type="time" id="training-end" wire:model.live.debounce.400ms="ends_at" step="300" class="mt-1 block w-full">
+                    <x-time-input model="ends_at" live id="training-end" class="mt-1 block w-full" />
                     @error('ends_at') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
             </div>

@@ -47,7 +47,7 @@
                 <div class="mt-3 grid gap-3 sm:grid-cols-[9rem_1fr]">
                     <div>
                         <label class="block text-xs font-medium text-zinc-600" for="start-{{ $match->id }}">{{ __('Rozpoczęcie') }}</label>
-                        <input id="start-{{ $match->id }}" type="time" wire:model="rows.{{ $match->id }}.start" @disabled($live || $finished) class="mt-1 block w-full rounded-lg border border-zinc-300 text-base tabular-nums disabled:bg-zinc-50 disabled:text-zinc-500">
+                        <x-time-input id="start-{{ $match->id }}" :model="'rows.'.$match->id.'.start'" :disabled="$live || $finished" class="mt-1 block w-full rounded-lg border border-zinc-300 text-base tabular-nums disabled:bg-zinc-50 disabled:text-zinc-500" />
                         @error("rows.{$match->id}.start")<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                     </div>
                     @if($live || $finished)

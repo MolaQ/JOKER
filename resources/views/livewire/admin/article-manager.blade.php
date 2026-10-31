@@ -181,7 +181,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Data publikacji</label>
-                                    <input type="datetime-local" wire:model="published_at" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                    <x-datetime-input model="published_at" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500" />
                                     <p class="mt-1 text-xs text-gray-500">Puste = od razu po zapisaniu. Data w przyszłości = artykuł pojawi się wtedy sam.</p>
                                 </div>
                             </div>
