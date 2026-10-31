@@ -99,7 +99,7 @@
                             <span class="mt-1 block text-lg tracking-[0.3em] text-sky-club-light">{{ $month['month']->year }}</span>
                         </h2>
                         <p class="text-sm text-white/85">
-                            {{ trans_choice(':count mecz|:count mecze|:count meczów', $count) }}@if($month['tournaments']->isNotEmpty()) · {{ trans_choice('{1} :count turniej|[2,4] :count turnieje|[0,*] :count turniejów', $month['tournaments']->count()) }}@endif @if($month['mini']->isNotEmpty()) · {{ trans_choice('{1} :count wyjazd mini|[2,4] :count wyjazdy mini|[0,*] :count wyjazdów mini', $month['mini']->count()) }}@endif @if($finished->isNotEmpty()) · <span class="font-semibold text-emerald-300">{{ trans_choice('{1} :count wygrana|[0,*] :count wygranych', $wins) }}</span>@endif
+                            {{ trans_choice(':count mecz|:count mecze|:count meczów', $count) }}@if($month['tournaments']->isNotEmpty()) · {{ trans_choice('{1} :count turniej|[2,4] :count turnieje|[0,*] :count turniejów', $month['tournaments']->count()) }}@endif @if($month['mini']->isNotEmpty()) · {{ trans_choice('{1} :count turniej mini|[2,4] :count turnieje mini|[0,*] :count turniejów mini', $month['mini']->count()) }}@endif @if($finished->isNotEmpty()) · <span class="font-semibold text-emerald-300">{{ trans_choice('{1} :count wygrana|[0,*] :count wygranych', $wins) }}</span>@endif
                         </p>
                     </header>
 
@@ -163,7 +163,7 @@
                                                 @foreach($day['mini'] as $trip)
                                                     <li wire:key="cell-mini-{{ $trip->id }}" class="rounded-lg bg-gradient-to-br from-emerald-100 to-emerald-50 px-1.5 py-1 text-[11px] leading-tight text-emerald-950 ring-1 ring-emerald-300" title="{{ __('Minisiatkówka') }} · {{ $trip->title }}{{ $trip->city ? ' · '.$trip->city : '' }}">
                                                         <p class="font-semibold"><a href="{{ route('mini.index') }}" class="hover:underline">🏐 {{ $trip->title }}</a></p>
-                                                        <p class="text-emerald-800">{{ __('Minisiatkówka') }}{{ $trip->city ? ' · '.$trip->city : '' }}</p>
+                                                        <p class="text-emerald-800">{{ __('Minisiatkówka') }} · {{ $trip->isHome() ? __('u nas') : ($trip->city ?: __('wyjazd')) }}</p>
                                                         @foreach($trip->teams as $miniTeam)
                                                             <p class="truncate">{{ $miniTeam->name }}@if($miniTeam->place) · <strong>{{ $miniTeam->place }}.</strong>@if($miniTeam->teams_count)<span class="text-emerald-700">/{{ $miniTeam->teams_count }}</span>@endif @endif</p>
                                                         @endforeach
@@ -315,7 +315,7 @@
                 @endforeach
                 @foreach($month['mini'] as $trip)
                     <li id="mini-{{ $trip->id }}" wire:key="list-mini-{{ $trip->id }}" class="card scroll-mt-24 lg:scroll-mt-48 bg-emerald-50 p-4 text-sm text-emerald-950 ring-emerald-200">
-                        <p class="text-xs font-semibold tracking-wide text-emerald-700 uppercase">{{ __('Minisiatkówka') }} · {{ $trip->dateLabel() }}</p>
+                        <p class="text-xs font-semibold tracking-wide text-emerald-700 uppercase">{{ __('Minisiatkówka') }} · {{ $trip->dateLabel() }} · {{ $trip->isHome() ? __('u nas') : __('wyjazd') }}</p>
                         <p class="mt-1 font-display text-lg font-semibold uppercase">🏐 {{ $trip->title }}</p>
                         @if($trip->venue || $trip->city)
                             <p class="text-xs text-emerald-800">{{ collect([$trip->venue, $trip->city])->filter()->implode(', ') }}</p>

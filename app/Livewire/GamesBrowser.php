@@ -105,7 +105,7 @@ class GamesBrowser extends Component
     }
 
     /**
-     * Wyjazdy minisiatkówki w sezonie (gdy moduł jest włączony), z miejscami naszych zespołów.
+     * Turnieje minisiatkówki w sezonie (wyjazdowe i u nas) (gdy moduł jest włączony), z miejscami naszych zespołów.
      *
      * @return Collection<int, MiniTrip>
      */
@@ -123,23 +123,26 @@ class GamesBrowser extends Component
     }
 
     /**
-     * Wyjazdy minisiatkówki pasujące do filtrów (filtr drużyny i ligi je ukrywa, wyszukiwanie przeszukuje miasto i zespoły).
+     * Turnieje minisiatkówki pasujące do filtrów (filtr drużyny i ligi je ukrywa; u siebie = w mieście klubu).
      *
      * @return Collection<int, MiniTrip>
      */
     private function filteredMiniTrips(): Collection
     {
-        if (($this->competition !== '' && $this->competition !== self::FILTER_MINI) || $this->team !== '' || $this->place !== '') {
+        if (($this->competition !== '' && $this->competition !== self::FILTER_MINI) || $this->team !== '') {
             return collect();
         }
 
         $terms = array_filter(explode(' ', SearchIndex::normalize($this->search)));
 
-        return $this->seasonMiniTrips->when($terms, fn (Collection $trips) => $trips->filter(function (MiniTrip $trip) use ($terms) {
-            $haystack = SearchIndex::normalize(implode(' ', ['minisiatkowka mini', $trip->title, $trip->city, $trip->venue, $trip->teams->pluck('name')->implode(' '), $trip->starts_on->format('d.m.Y')]));
+        return $this->seasonMiniTrips
+            ->when($this->place === 'home', fn (Collection $trips) => $trips->filter->isHome())
+            ->when($this->place === 'away', fn (Collection $trips) => $trips->reject->isHome())
+            ->when($terms, fn (Collection $trips) => $trips->filter(function (MiniTrip $trip) use ($terms) {
+                $haystack = SearchIndex::normalize(implode(' ', ['minisiatkowka mini', $trip->title, $trip->city, $trip->venue, $trip->teams->pluck('name')->implode(' '), $trip->starts_on->format('d.m.Y')]));
 
-            return collect($terms)->every(fn (string $term) => str_contains($haystack, $term));
-        }));
+                return collect($terms)->every(fn (string $term) => str_contains($haystack, $term));
+            }));
     }
 
     /**

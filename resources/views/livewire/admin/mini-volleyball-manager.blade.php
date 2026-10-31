@@ -5,7 +5,7 @@
 @endphp
 <div class="space-y-6">
     <nav class="flex flex-wrap gap-2">
-        @foreach(['wyjazdy' => 'Wyjazdy i wyniki', 'dzieci' => 'Dzieci', 'grupy' => 'Grupy'] as $key => $name)
+        @foreach(['wyjazdy' => 'Turnieje i wyniki', 'dzieci' => 'Dzieci', 'grupy' => 'Grupy'] as $key => $name)
             <button type="button" wire:click="$set('section', '{{ $key }}')" @class(['rounded-full px-4 py-1.5 text-sm font-semibold', 'bg-sky-600 text-white' => $section === $key, 'bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50' => $section !== $key])>{{ $name }}</button>
         @endforeach
     </nav>
@@ -14,7 +14,7 @@
     @if($section === 'wyjazdy')
         @if($showTripForm)
             <form wire:submit="saveTrip" class="space-y-4 rounded-lg bg-white p-5 shadow ring-1 ring-zinc-200">
-                <h2 class="text-lg font-semibold text-gray-900">{{ $tripId ? 'Dane wyjazdu' : 'Nowy wyjazd' }}</h2>
+                <h2 class="text-lg font-semibold text-gray-900">{{ $tripId ? 'Dane turnieju' : 'Nowy turniej (wyjazd albo u nas)' }}</h2>
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div class="sm:col-span-2"><label class="{{ $label }}">Turniej</label><input type="text" wire:model="trip.title" placeholder="np. Mistrzostwa Wielkopolski, eliminacje" class="{{ $input }}">@error('trip.title')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div>
                     <div><label class="{{ $label }}">Data</label><input type="date" wire:model="trip.starts_on" class="{{ $input }}">@error('trip.starts_on')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div>
@@ -38,7 +38,7 @@
             {{-- Otwarty wyjazd: drużyny, składy i wynik (duże pola, wygodne na telefonie) --}}
             <div class="space-y-4">
                 <div class="flex flex-wrap items-center gap-3">
-                    <button type="button" wire:click="closeTrip" class="text-sm font-semibold text-sky-700 hover:text-sky-900">← Wszystkie wyjazdy</button>
+                    <button type="button" wire:click="closeTrip" class="text-sm font-semibold text-sky-700 hover:text-sky-900">← Wszystkie turnieje</button>
                     <h2 class="text-xl font-bold text-gray-900">{{ $openTrip->title }}</h2>
                     <span class="text-sm text-gray-500">{{ $openTrip->dateLabel() }}@if($openTrip->city) · {{ $openTrip->city }}@endif</span>
                     @unless($showTripForm)<button type="button" wire:click="editTripDetails" class="admin-action ml-auto">Edytuj dane</button>@endunless

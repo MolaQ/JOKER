@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\SearchIndex;
 use App\Support\SiteSettings;
 use App\UserRole;
 use Illuminate\Database\Eloquent\Builder;
@@ -48,6 +49,16 @@ class MiniTrip extends Model
     public function scopeUpcoming(Builder $query): void
     {
         $query->whereDate('starts_on', '>=', today())->orderBy('starts_on');
+    }
+
+    /**
+     * Turniej u nas: miasto turnieju jest w adresie klubu (Ustawienia → Kontakt), np. „Piła”.
+     */
+    public function isHome(): bool
+    {
+        $city = SearchIndex::normalize((string) $this->city);
+
+        return $city !== '' && str_contains(SearchIndex::normalize((string) app(SiteSettings::class)['contact_address']), $city);
     }
 
     public function isPast(): bool
