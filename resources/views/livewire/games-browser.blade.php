@@ -7,7 +7,7 @@
                 <label class="relative flex-1">
                     <span class="sr-only">{{ __('Szukaj meczu') }}</span>
                     <svg class="pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"/></svg>
-                    <input type="search" wire:model.live.debounce.150ms="search" placeholder="{{ __('Szukaj: rywal, drużyna, hala, data (np. 28.10)…') }}" autocomplete="off" enterkeyhint="search"
+                    <input type="search" wire:model.live.debounce.150ms="search" placeholder="{{ __('Szukaj: rywal, drużyna, hala, wynik, czwórki, dziecko, data…') }}" autocomplete="off" enterkeyhint="search"
                         class="h-12 w-full rounded-full border-0 bg-zinc-100 pr-4 pl-12 text-base text-zinc-900 ring-1 ring-transparent transition outline-none placeholder:text-zinc-400 focus:bg-white focus:ring-sky-club">
                 </label>
 

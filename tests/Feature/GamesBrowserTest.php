@@ -5,8 +5,10 @@ use App\Models\Game;
 use App\Models\MiniGroup;
 use App\Models\MiniPlayer;
 use App\Models\MiniTrip;
+use App\Models\RivalTeam;
 use App\Models\Season;
 use App\Models\Team;
+use App\Models\Tournament;
 use App\Support\SiteSettings;
 use Livewire\Livewire;
 
@@ -85,6 +87,25 @@ test('minivolleyball tournaments show in the calendar with category names, place
         ->set('competition', GamesBrowser::FILTER_MINI)
         ->assertSee('Faza powiatowa');
 
+    // Wyszukiwarka szuka po całej treści kafelka: grupa, dziecko, miejsce.
+    foreach (['czworki', 'Zosia', '1. miejsce'] as $phrase) {
+        Livewire::test(GamesBrowser::class)->set('search', $phrase)->assertSee('Faza powiatowa')->assertDontSee('Turniej w Wałczu');
+    }
+
     app(SiteSettings::class)->set(['mini_in_calendar' => false]);
     Livewire::test(GamesBrowser::class)->assertDontSee('Faza powiatowa');
+});
+
+test('search finds tournaments by any team or category and games by result words', function () {
+    $tournament = Tournament::factory()->create(['name' => 'Memoriał Winklera', 'edition' => null, 'season_id' => $this->season->id, 'start_date' => now()->addDays(4), 'end_date' => now()->addDays(5)]);
+    $category = $tournament->categories()->create(['name' => 'Kadetki']);
+    $rival = RivalTeam::factory()->create(['full_name' => 'Chemik Police']);
+    $category->participants()->create(['competitor_type' => 'rival_team', 'competitor_id' => $rival->id]);
+
+    Livewire::test(GamesBrowser::class)->call('setPeriod', 'upcoming')
+        ->set('search', 'chemik')->assertSee('Memoriał Winklera')->assertDontSee('Warta Zawiercie')
+        ->set('search', 'kadetki')->assertSee('Memoriał Winklera');
+
+    Livewire::test(GamesBrowser::class)->call('setPeriod', 'results')
+        ->set('search', 'wygrana')->assertSee('Gwardia Wrocław');
 });

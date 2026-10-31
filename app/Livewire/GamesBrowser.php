@@ -82,7 +82,7 @@ class GamesBrowser extends Component
     #[Computed]
     public function seasonGames(): Collection
     {
-        return Game::with(['team', 'competition.teams', 'opponentTeam', 'articles', 'tournament'])
+        return Game::with(['team', 'competition.teams', 'opponentTeam.club', 'articles', 'tournament'])
             ->when($this->selectedSeason, fn ($query, Season $season) => $query->where('season_id', $season->id))
             // Odwołane mecze (np. rywal wycofał się z rozgrywek) nie trafiają do kalendarza.
             ->where('status', '!=', 'cancelled')
@@ -98,7 +98,7 @@ class GamesBrowser extends Component
     #[Computed]
     public function seasonTournaments(): Collection
     {
-        return Tournament::with('teams')
+        return Tournament::with(['teams', 'categories.participants.competitor'])
             ->when($this->selectedSeason, fn ($query, Season $season) => $query->where('season_id', $season->id))
             ->orderBy('start_date')
             ->get();
@@ -141,7 +141,26 @@ class GamesBrowser extends Component
             ->when($this->place === 'home', fn (Collection $trips) => $trips->filter->isHome())
             ->when($this->place === 'away', fn (Collection $trips) => $trips->reject->isHome())
             ->when($terms, fn (Collection $trips) => $trips->filter(function (MiniTrip $trip) use ($terms) {
-                $haystack = SearchIndex::normalize(implode(' ', ['minisiatkowka mini', $trip->title, $trip->city, $trip->venue, $trip->teams->pluck('name')->implode(' '), $trip->starts_on->format('d.m.Y')]));
+                // Wszystko, co widać na kafelku: grupy (czwórki…), drużyny, miejsca, dzieci w składach, relacje.
+                $haystack = SearchIndex::normalize(implode(' ', [
+                    'minisiatkowka mini turniej',
+                    $trip->title,
+                    $trip->city,
+                    $trip->venue,
+                    $trip->organizer,
+                    $trip->description,
+                    $trip->isHome() ? 'u siebie dom' : 'wyjazd',
+                    $trip->teams->map(fn ($team) => implode(' ', [
+                        $team->name,
+                        $team->group?->name,
+                        $team->place ? $team->place.'. miejsce '.$team->resultLabel() : '',
+                        in_array($team->place, [1, 2, 3], true) ? 'medal podium' : '',
+                        $team->players->map->displayName()->implode(' '),
+                    ]))->implode(' '),
+                    $trip->articles->isNotEmpty() ? 'relacja '.$trip->articles->pluck('title')->implode(' ') : '',
+                    $trip->starts_on->format('d.m.Y'),
+                    $trip->starts_on->translatedFormat('j F l'),
+                ]));
 
                 return collect($terms)->every(fn (string $term) => str_contains($haystack, $term));
             }));
@@ -168,10 +187,16 @@ class GamesBrowser extends Component
                 $haystack = SearchIndex::normalize(implode(' ', [
                     'turniej',
                     $tournament->fullName(),
+                    $tournament->series,
                     $tournament->city,
                     $tournament->venue,
+                    $tournament->is_organizer ? 'u siebie dom organizator' : 'wyjazd',
                     $tournament->teams->pluck('name')->implode(' '),
+                    // Kategorie i wszystkie drużyny turnieju, także rywale.
+                    $tournament->categories->pluck('name')->implode(' '),
+                    $tournament->categories->flatMap->participants->map->name()->implode(' '),
                     $tournament->start_date->format('d.m.Y'),
+                    $tournament->start_date->translatedFormat('j F l'),
                 ]));
 
                 return collect($terms)->every(fn (string $term) => str_contains($haystack, $term));
@@ -208,6 +233,18 @@ class GamesBrowser extends Component
                     $game->game_date?->format('d.m.Y'),
                     $game->game_date?->translatedFormat('j F l'),
                     $game->isFinished() ? "wynik {$game->home_score}:{$game->away_score}" : 'nadchodzacy',
+                    implode(' ', $game->sidesNames()),
+                    $game->opponentTeam?->club?->name,
+                    $game->game_date?->format('H:i'),
+                    is_array($game->sets_score) ? collect($game->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(' ') : '',
+                    match ($game->outcome()) {
+                        'win' => 'wygrana zwyciestwo',
+                        'loss' => 'porazka przegrana',
+                        'derby' => 'derby',
+                        default => '',
+                    },
+                    $game->articles->isNotEmpty() ? 'relacja '.$game->articles->pluck('title')->implode(' ') : '',
+                    $game->tournament?->fullName(),
                 ]));
 
                 return collect($terms)->every(fn (string $term) => str_contains($haystack, $term));
