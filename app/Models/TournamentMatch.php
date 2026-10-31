@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\HasMatchMedia;
 use App\Models\Concerns\Likeable;
+use App\Support\TournamentSchedule;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -190,6 +191,60 @@ class TournamentMatch extends Model
         $minutes = (int) $this->planned_starts_at->diffInMinutes($this->starts_at, false);
 
         return abs($minutes) >= 5 ? $minutes : null;
+    }
+
+    /**
+     * Możliwe opóźnienie meczu, który jeszcze się nie zaczął: tyle, ile spóźnił się ostatni rozpoczęty mecz
+     * na tym samym boisku tego dnia. Godziny w harmonogramie się nie zmieniają; gdy turniej nadrobi, informacja znika.
+     */
+    public function possibleDelay(): ?int
+    {
+        if ($this->is_live || $this->home_sets !== null || $this->delayMinutes() !== null) {
+            return null;
+        }
+
+        $tournamentId = $this->category?->tournament_id;
+
+        if (! $tournamentId) {
+            return null;
+        }
+
+        return self::possibleDelays($tournamentId)[$this->id] ?? null;
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    public static function possibleDelays(int $tournamentId): array
+    {
+        return once(fn () => self::computePossibleDelays($tournamentId));
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private static function computePossibleDelays(int $tournamentId): array
+    {
+        $matches = static::query()
+            ->whereIn('tournament_category_id', TournamentCategory::where('tournament_id', $tournamentId)->select('id'))
+            ->whereNotNull('planned_starts_at')
+            ->get(['id', 'court', 'starts_at', 'planned_starts_at', 'is_live', 'home_sets', 'away_sets']);
+
+        $delays = [];
+
+        foreach ($matches->groupBy(fn (self $match) => $match->planned_starts_at->toDateString().'|'.TournamentSchedule::sector($match->court)) as $queue) {
+            $last = 0;
+
+            foreach ($queue->sortBy(fn (self $match) => [$match->planned_starts_at->getTimestamp(), $match->id]) as $match) {
+                if (($match->is_live || $match->home_sets !== null) && $match->starts_at) {
+                    $last = (int) $match->planned_starts_at->diffInMinutes($match->starts_at, false);
+                } elseif ($last >= 5) {
+                    $delays[$match->id] = $last;
+                }
+            }
+        }
+
+        return $delays;
     }
 
     public function setsLabel(): ?string

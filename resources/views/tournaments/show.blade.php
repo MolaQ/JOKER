@@ -19,7 +19,10 @@
         @if($tournament->description)
             <p class="mt-5 max-w-2xl text-lg text-white/80">{{ $tournament->description }}</p>
         @endif
-        <div class="mt-6">
+        <div class="mt-6 flex flex-wrap items-center gap-3">
+            @if($tournament->canBeScoredBy(auth()->user()))
+                <a href="{{ route('tournaments.score', $tournament) }}" class="btn-primary">✍️ {{ __('Wpisz wyniki') }}</a>
+            @endif
             @livewire('like-button', ['type' => 'tournament', 'id' => $tournament->id, 'dark' => true], key('tournament-like-'.$tournament->id))
         </div>
     </div>

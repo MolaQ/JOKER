@@ -71,6 +71,34 @@ class Tournament extends Model
         return $this->hasMany(Game::class)->orderBy('game_date');
     }
 
+    /**
+     * Osoby wpisujące wyniki tego turnieju (panel turnieju → „Wpisujący wyniki”).
+     */
+    public function scorers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'tournament_scorers')->withTimestamps();
+    }
+
+    /**
+     * Wpisujący wyniki mają dostęp od dnia przed turniejem do końca dnia po nim.
+     */
+    public function scoringOpen(): bool
+    {
+        return now()->between($this->start_date->copy()->subDay()->startOfDay(), ($this->end_date ?? $this->start_date)->copy()->addDay()->endOfDay());
+    }
+
+    /**
+     * Czy osoba może wpisywać wyniki: zarządzający turniejami zawsze, wpisujący tylko w dniach turnieju.
+     */
+    public function canBeScoredBy(?User $user): bool
+    {
+        if (! $user) {
+            return false;
+        }
+
+        return $user->can('tournaments.manage') || ($this->scoringOpen() && $this->scorers()->whereKey($user->id)->exists());
+    }
+
     public function categories(): HasMany
     {
         return $this->hasMany(TournamentCategory::class)->orderBy('display_order')->orderBy('id');

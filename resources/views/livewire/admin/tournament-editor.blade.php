@@ -3,7 +3,7 @@
     $label = 'block text-sm font-medium text-gray-700 mb-1';
     $primary = 'inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700';
     $secondary = 'inline-flex items-center justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50';
-    $sections = ['strona' => 'Strona i informator', 'kategorie' => 'Kategorie', 'druzyny' => 'Drużyny', 'grupy' => 'Grupy', 'mecze' => 'Mecze i wyniki', 'wyroznienia' => 'Wyróżnienia'];
+    $sections = ['strona' => 'Strona i informator', 'kategorie' => 'Kategorie', 'druzyny' => 'Drużyny', 'grupy' => 'Grupy', 'mecze' => 'Mecze i wyniki', 'wyroznienia' => 'Wyróżnienia', 'wpisujacy' => 'Wpisujący wyniki'];
 @endphp
 
 <div class="space-y-6">
@@ -21,7 +21,7 @@
         @endif
     </div>
 
-    @if($section !== 'strona' && $section !== 'kategorie')
+    @if(! in_array($section, ['strona', 'kategorie', 'wpisujacy'], true))
         <div class="flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 p-3">
             <span class="text-sm font-medium text-gray-700">Kategoria:</span>
             @forelse($categories as $cat)
@@ -396,6 +396,10 @@
     @endif
 
     {{-- Mecze i wyniki --}}
+    @if($section === 'wpisujacy')
+        <livewire:admin.tournament-scorers :tournament-id="$tournament->id" :key="'scorers-'.$tournament->id" />
+    @endif
+
     @if($section === 'wyroznienia' && $category)
         <livewire:admin.tournament-awards :category-id="$category->id" :key="'awards-'.$category->id" />
     @endif
