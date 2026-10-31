@@ -33,7 +33,7 @@
                 </div>
 
                 <div class="flex w-full flex-wrap gap-2 sm:w-auto">
-                    @if($competitions->count() > 1 || $hasTournaments || $hasFriendlies)
+                    @if($competitions->count() > 1 || $hasTournaments || $hasFriendlies || $hasMini)
                         <select wire:model.live="competition" class="h-9 min-w-0 flex-1 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700 sm:flex-none" aria-label="{{ __('Rozgrywki') }}">
                             <option value="">{{ __('Wszystkie rozgrywki') }}</option>
                             @foreach($competitions as $competitionOption)
@@ -44,6 +44,9 @@
                             @endif
                             @if($hasFriendlies)
                                 <option value="{{ \App\Livewire\GamesBrowser::FILTER_FRIENDLIES }}">{{ __('Sparingi') }}</option>
+                            @endif
+                            @if($hasMini)
+                                <option value="{{ \App\Livewire\GamesBrowser::FILTER_MINI }}">{{ __('Minisiatkówka') }}</option>
                             @endif
                         </select>
                     @endif
@@ -96,7 +99,7 @@
                             <span class="mt-1 block text-lg tracking-[0.3em] text-sky-club-light">{{ $month['month']->year }}</span>
                         </h2>
                         <p class="text-sm text-white/85">
-                            {{ trans_choice(':count mecz|:count mecze|:count meczów', $count) }}@if($month['tournaments']->isNotEmpty()) · {{ trans_choice('{1} :count turniej|[2,4] :count turnieje|[0,*] :count turniejów', $month['tournaments']->count()) }}@endif @if($finished->isNotEmpty()) · <span class="font-semibold text-emerald-300">{{ trans_choice('{1} :count wygrana|[0,*] :count wygranych', $wins) }}</span>@endif
+                            {{ trans_choice(':count mecz|:count mecze|:count meczów', $count) }}@if($month['tournaments']->isNotEmpty()) · {{ trans_choice('{1} :count turniej|[2,4] :count turnieje|[0,*] :count turniejów', $month['tournaments']->count()) }}@endif @if($month['mini']->isNotEmpty()) · {{ trans_choice('{1} :count wyjazd mini|[2,4] :count wyjazdy mini|[0,*] :count wyjazdów mini', $month['mini']->count()) }}@endif @if($finished->isNotEmpty()) · <span class="font-semibold text-emerald-300">{{ trans_choice('{1} :count wygrana|[0,*] :count wygranych', $wins) }}</span>@endif
                         </p>
                     </header>
 
@@ -125,7 +128,7 @@
                                             <span @class(['inline-flex h-7 min-w-7 items-center justify-center rounded-full sm:h-9 sm:min-w-9', 'bg-sky-club text-white' => $day['isToday']])>{{ $day['date']->day }}</span>
                                         </p>
 
-                                        @if($day['inMonth'] && ($day['games']->isNotEmpty() || $day['tournaments']->isNotEmpty() || $day['birthdays']->isNotEmpty()))
+                                        @if($day['inMonth'] && ($day['games']->isNotEmpty() || $day['tournaments']->isNotEmpty() || $day['mini']->isNotEmpty() || $day['birthdays']->isNotEmpty()))
                                             {{-- Telefon i tablet: znaczniki (granat = u siebie, szary = wyjazd, V/X = wynik), dotknięcie przewija do meczu na liście --}}
                                             <div class="mt-1 flex flex-wrap gap-1 lg:hidden">
                                                 @foreach($day['games'] as $game)
@@ -144,6 +147,9 @@
                                                         @endif
                                                     </a>
                                                 @endforeach
+                                                @foreach($day['mini'] as $trip)
+                                                    <a href="#mini-{{ $trip->id }}" class="text-xs leading-4 sm:text-sm" aria-label="{{ __('Minisiatkówka') }}: {{ $trip->title }}">🏐</a>
+                                                @endforeach
                                                 @foreach($day['tournaments'] as $tournament)
                                                     <a href="#turniej-{{ $tournament->id }}" class="text-xs leading-4 sm:text-sm" aria-label="{{ __('Turniej') }}: {{ $tournament->fullName() }}">🏆</a>
                                                 @endforeach
@@ -154,6 +160,15 @@
 
                                             {{-- Komputer: mecze wpisane w kartkę; granat = u siebie, szary = wyjazd --}}
                                             <ul class="mt-1.5 hidden space-y-1 lg:block">
+                                                @foreach($day['mini'] as $trip)
+                                                    <li wire:key="cell-mini-{{ $trip->id }}" class="rounded-lg bg-gradient-to-br from-emerald-100 to-emerald-50 px-1.5 py-1 text-[11px] leading-tight text-emerald-950 ring-1 ring-emerald-300" title="{{ __('Minisiatkówka') }} · {{ $trip->title }}{{ $trip->city ? ' · '.$trip->city : '' }}">
+                                                        <p class="font-semibold"><a href="{{ route('mini.index') }}" class="hover:underline">🏐 {{ $trip->title }}</a></p>
+                                                        <p class="text-emerald-800">{{ __('Minisiatkówka') }}{{ $trip->city ? ' · '.$trip->city : '' }}</p>
+                                                        @foreach($trip->teams as $miniTeam)
+                                                            <p class="truncate">{{ $miniTeam->name }}@if($miniTeam->place) · <strong>{{ $miniTeam->place }}.</strong>@if($miniTeam->teams_count)<span class="text-emerald-700">/{{ $miniTeam->teams_count }}</span>@endif @endif</p>
+                                                        @endforeach
+                                                    </li>
+                                                @endforeach
                                                 @foreach($day['tournaments'] as $tournament)
                                                     <li wire:key="cell-tournament-{{ $tournament->id }}-{{ $day['date']->format('d') }}" class="rounded-lg bg-gradient-to-br from-amber-100 to-amber-50 px-1.5 py-1 text-[11px] leading-tight text-amber-950 ring-1 ring-amber-300" title="{{ $tournament->fullName() }} · {{ $tournament->dateRangeLabel() }}{{ $tournament->city ? ' · '.$tournament->city : '' }}">
                                                         <p class="font-semibold">@if($tournament->has_page)<a href="{{ route('tournaments.show', $tournament) }}" class="hover:underline">🏆 {{ $tournament->fullName() }}</a>@else🏆 {{ $tournament->fullName() }}@endif</p>
@@ -296,6 +311,21 @@
                                 <a href="{{ route('games.calendar', $game) }}" class="inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-sky-club-dark hover:underline">+ {{ __('Do kalendarza') }}</a>
                             @endif
                         </div>
+                    </li>
+                @endforeach
+                @foreach($month['mini'] as $trip)
+                    <li id="mini-{{ $trip->id }}" wire:key="list-mini-{{ $trip->id }}" class="card scroll-mt-24 lg:scroll-mt-48 bg-emerald-50 p-4 text-sm text-emerald-950 ring-emerald-200">
+                        <p class="text-xs font-semibold tracking-wide text-emerald-700 uppercase">{{ __('Minisiatkówka') }} · {{ $trip->dateLabel() }}</p>
+                        <p class="mt-1 font-display text-lg font-semibold uppercase">🏐 {{ $trip->title }}</p>
+                        @if($trip->venue || $trip->city)
+                            <p class="text-xs text-emerald-800">{{ collect([$trip->venue, $trip->city])->filter()->implode(', ') }}</p>
+                        @endif
+                        <ul class="mt-2 space-y-0.5">
+                            @foreach($trip->teams as $miniTeam)
+                                <li>{{ $miniTeam->name }}@if($miniTeam->group) <span class="text-emerald-700">({{ $miniTeam->group->name }})</span>@endif @if($miniTeam->place) · <strong>{{ $miniTeam->place }}. {{ __('miejsce') }}</strong>@if($miniTeam->teams_count) {{ __('na') }} {{ $miniTeam->teams_count }}@endif @endif</li>
+                            @endforeach
+                        </ul>
+                        <a href="{{ route('mini.index') }}" class="mt-2 inline-block text-xs font-semibold text-emerald-800 underline">{{ __('Strona minisiatkówki') }} →</a>
                     </li>
                 @endforeach
                 @foreach($month['tournaments'] as $tournament)

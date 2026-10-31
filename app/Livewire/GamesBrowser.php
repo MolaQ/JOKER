@@ -4,12 +4,14 @@ namespace App\Livewire;
 
 use App\BirthdayDisplay;
 use App\Models\Game;
+use App\Models\MiniTrip;
 use App\Models\Player;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\User;
 use App\Support\SearchIndex;
+use App\Support\SiteSettings;
 use App\UserRole;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
@@ -29,6 +31,8 @@ class GamesBrowser extends Component
     public const FILTER_TOURNAMENTS = 'turnieje';
 
     public const FILTER_FRIENDLIES = 'sparingi';
+
+    public const FILTER_MINI = 'minisiatkowka';
 
     #[Url(as: 'search', except: '')]
     public string $search = '';
@@ -101,6 +105,44 @@ class GamesBrowser extends Component
     }
 
     /**
+     * Wyjazdy minisiatkówki w sezonie (gdy moduł jest włączony), z miejscami naszych zespołów.
+     *
+     * @return Collection<int, MiniTrip>
+     */
+    #[Computed]
+    public function seasonMiniTrips(): Collection
+    {
+        if (! app(SiteSettings::class)['module_mini']) {
+            return collect();
+        }
+
+        return MiniTrip::with('teams.group')
+            ->when($this->selectedSeason, fn ($query, Season $season) => $query->whereBetween('starts_on', [$season->start_date, $season->end_date]))
+            ->orderBy('starts_on')
+            ->get();
+    }
+
+    /**
+     * Wyjazdy minisiatkówki pasujące do filtrów (filtr drużyny i ligi je ukrywa, wyszukiwanie przeszukuje miasto i zespoły).
+     *
+     * @return Collection<int, MiniTrip>
+     */
+    private function filteredMiniTrips(): Collection
+    {
+        if (($this->competition !== '' && $this->competition !== self::FILTER_MINI) || $this->team !== '' || $this->place !== '') {
+            return collect();
+        }
+
+        $terms = array_filter(explode(' ', SearchIndex::normalize($this->search)));
+
+        return $this->seasonMiniTrips->when($terms, fn (Collection $trips) => $trips->filter(function (MiniTrip $trip) use ($terms) {
+            $haystack = SearchIndex::normalize(implode(' ', ['minisiatkowka mini', $trip->title, $trip->city, $trip->venue, $trip->teams->pluck('name')->implode(' '), $trip->starts_on->format('d.m.Y')]));
+
+            return collect($terms)->every(fn (string $term) => str_contains($haystack, $term));
+        }));
+    }
+
+    /**
      * Turnieje pasujące do filtrów (rozgrywki „Turnieje”, drużyna, dom/wyjazd, wyszukiwanie).
      *
      * @return Collection<int, Tournament>
@@ -141,6 +183,7 @@ class GamesBrowser extends Component
         return $this->seasonGames
             ->when($this->team !== '', fn (Collection $games) => $games->filter(fn (Game $game) => $game->team?->slug === $this->team))
             ->when($this->competition !== '', fn (Collection $games) => match ($this->competition) {
+                self::FILTER_MINI => collect(),
                 self::FILTER_TOURNAMENTS => $games->whereNotNull('tournament_id'),
                 self::FILTER_FRIENDLIES => $games->where('kind', Game::KIND_FRIENDLY),
                 default => $games->where('competition_id', (int) $this->competition),
@@ -189,13 +232,20 @@ class GamesBrowser extends Component
             default => $tournament->lastDay()->gte($today),
         });
 
+        $miniTrips = $this->filteredMiniTrips()->filter(fn (MiniTrip $trip) => match ($this->period) {
+            'results' => $trip->isPast(),
+            'all' => true,
+            default => ! $trip->isPast(),
+        });
+
         return view('livewire.games-browser', [
-            'months' => $this->calendarMonths($games, $tournaments, $this->search === '' && $this->competition === '' && $this->place === '', $this->period === 'results'),
+            'months' => $this->calendarMonths($games, $tournaments, $miniTrips, $this->search === '' && $this->competition === '' && $this->place === '', $this->period === 'results'),
             'total' => $games->count(),
             'periodCounts' => $periodCounts,
             'teams' => $this->seasonGames->pluck('team')->filter()->unique('id')->sortBy('display_order')->values(),
             'competitions' => $this->seasonGames->pluck('competition')->filter()->unique('id')->sortBy('name')->values(),
             'hasTournaments' => $this->seasonTournaments->isNotEmpty() || $this->seasonGames->whereNotNull('tournament_id')->isNotEmpty(),
+            'hasMini' => $this->seasonMiniTrips->isNotEmpty(),
             'hasFriendlies' => $this->seasonGames->where('kind', Game::KIND_FRIENDLY)->isNotEmpty(),
             'seasons' => Season::orderByDesc('start_date')->get(),
             'hasFilters' => $this->search !== '' || $this->team !== '' || $this->competition !== '' || $this->place !== '',
@@ -211,15 +261,16 @@ class GamesBrowser extends Component
      * @param  Collection<int, Tournament>  $tournaments
      * @return Collection<int, array{key: string, month: Carbon, games: Collection<int, Game>, tournaments: Collection<int, Tournament>, birthdays: Collection<int, array{name: string, age: int, ageLabel: string, role: string, date: Carbon, url: ?string, showAge: bool}>, weeks: array<int, array<int, array{date: Carbon, inMonth: bool, isToday: bool, games: Collection<int, Game>, tournaments: Collection<int, Tournament>, birthdays: Collection<int, array{name: string, age: int, ageLabel: string, role: string, date: Carbon, url: ?string, showAge: bool}>}>>}>
      */
-    private function calendarMonths(Collection $games, Collection $tournaments, bool $withBirthdays = true, bool $newestFirst = false): Collection
+    private function calendarMonths(Collection $games, Collection $tournaments, Collection $miniTrips, bool $withBirthdays = true, bool $newestFirst = false): Collection
     {
         $birthdays = $withBirthdays ? $this->birthdays() : collect();
         $gamesByMonth = $games->filter(fn (Game $game) => $game->game_date)->groupBy(fn (Game $game) => $game->game_date->format('Y-m'));
         $tournamentMonths = $tournaments->flatMap(fn (Tournament $tournament) => collect(Carbon::parse($tournament->start_date)->toPeriod($tournament->lastDay()))->map(fn (Carbon $day) => $day->format('Y-m')))->unique();
-        $keys = $gamesByMonth->keys()->concat($tournamentMonths)->unique()->sort()->values();
+        $miniMonths = $miniTrips->map(fn (MiniTrip $trip) => $trip->starts_on->format('Y-m'));
+        $keys = $gamesByMonth->keys()->concat($tournamentMonths)->concat($miniMonths)->unique()->sort()->values();
 
         return ($newestFirst ? $keys->reverse() : $keys)
-            ->map(function (string $key) use ($birthdays, $gamesByMonth, $tournaments) {
+            ->map(function (string $key) use ($birthdays, $gamesByMonth, $tournaments, $miniTrips) {
                 $monthGames = $gamesByMonth->get($key, collect());
                 $month = Carbon::createFromFormat('Y-m-d', $key.'-01')->startOfDay();
                 $byDay = $monthGames->sortBy('game_date')->groupBy(fn (Game $game) => $game->game_date->toDateString());
@@ -227,6 +278,7 @@ class GamesBrowser extends Component
                     ->filter(fn (Tournament $tournament) => $tournament->start_date->lte($month->copy()->endOfMonth()) && $tournament->lastDay()->gte($month))
                     ->sortBy('start_date')
                     ->values();
+                $monthMini = $miniTrips->filter(fn (MiniTrip $trip) => $trip->starts_on->format('Y-m') === $key)->sortBy('starts_on')->values();
                 $monthBirthdays = $birthdays
                     ->filter(fn (array $person) => $person['birth_date']->month === $month->month)
                     ->map(fn (array $person) => [
@@ -250,11 +302,12 @@ class GamesBrowser extends Component
                         'isToday' => $day->isToday(),
                         'games' => $byDay->get($day->toDateString(), collect()),
                         'tournaments' => $day->month === $month->month ? $monthTournaments->filter(fn (Tournament $tournament) => $day->between($tournament->start_date, $tournament->lastDay()->endOfDay()))->values() : collect(),
+                        'mini' => $day->month === $month->month ? $monthMini->filter(fn (MiniTrip $trip) => $trip->starts_on->isSameDay($day))->values() : collect(),
                         'birthdays' => $day->month === $month->month ? $monthBirthdays->filter(fn (array $person) => $person['date']->isSameDay($day))->values() : collect(),
                     ];
                 }
 
-                return ['key' => $key, 'month' => $month, 'games' => $monthGames, 'tournaments' => $monthTournaments, 'birthdays' => $monthBirthdays, 'weeks' => array_chunk($days, 7)];
+                return ['key' => $key, 'month' => $month, 'games' => $monthGames, 'tournaments' => $monthTournaments, 'mini' => $monthMini, 'birthdays' => $monthBirthdays, 'weeks' => array_chunk($days, 7)];
             })
             ->values();
     }
