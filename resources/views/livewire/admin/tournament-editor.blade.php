@@ -128,7 +128,11 @@
                                 </div>
                                 <button type="submit" class="{{ $primary }}">Zapisz szablon</button>
                                 <button type="button" wire:click="cancelTemplate" class="text-sm text-gray-600 hover:text-gray-900">Anuluj</button>
-                                <p class="text-xs text-gray-600 sm:col-span-4">Szablon zapamięta grupy z sektorami i punktacją, wszystkie mecze z numerami, godzinami i sektorami, drabinkę, mecze o miejsca oraz dni i odstęp między meczami. Bez drużyn i wyników.</p>
+                                <label class="flex items-center gap-2 text-sm text-gray-800 sm:col-span-4">
+                                    <input type="checkbox" wire:model="templateTeams" class="rounded border-gray-300 text-sky-600">
+                                    Zapisz też drużyny (stały skład, np. co roku te same zespoły)
+                                </label>
+                                <p class="text-xs text-gray-600 sm:col-span-4">Szablon zapamięta grupy z sektorami i punktacją, wszystkie mecze z numerami, godzinami i sektorami, drabinkę, mecze o miejsca oraz dni i odstęp między meczami. Daty liczą się od pierwszego dnia turnieju, więc szablon pasuje do turnieju w innym terminie. Wyników nie zapisuje.</p>
                                 @error('templateName') <p class="text-sm text-red-600 sm:col-span-4">{{ $message }}</p> @enderror
                             </form>
                         </li>
@@ -608,5 +612,38 @@
                 @endif
             @endforeach
         </div>
+
+        {{-- Ukryte na dole, żeby w trakcie turnieju nie wyczyścić wyników przypadkiem --}}
+        @php($backups = $category->resultBackups()->get())
+        <details class="mt-10 rounded-lg border border-red-200 bg-red-50/40" @if($backups->isNotEmpty() || $errors->has('clearConfirm')) open @endif>
+            <summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-red-800">Strefa niebezpieczna: wyczyść wyniki kategorii {{ $category->name }}</summary>
+            <div class="space-y-4 border-t border-red-200 px-4 py-4">
+                <p class="text-sm text-gray-700">Usuwa wszystkie wyniki, zaznaczenia „Trwa”, miejsca końcowe i ręczną kolejność tabel w tej kategorii. Mecze, godziny, sektory, drużyny i grupy zostają. Przed wyczyszczeniem zapisuje się kopia, którą można przywrócić.</p>
+                <form wire:submit="clearResults" class="flex flex-wrap items-end gap-2">
+                    <div>
+                        <label class="{{ $label }}">Przepisz nazwę kategorii, żeby potwierdzić</label>
+                        <input type="text" wire:model="clearConfirm" class="{{ $input }} max-w-xs" placeholder="{{ $category->name }}" autocomplete="off">
+                    </div>
+                    <button type="submit" wire:confirm="Na pewno wyczyścić wszystkie wyniki kategorii {{ $category->name }}?" class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700">Wyczyść wyniki</button>
+                </form>
+                @error('clearConfirm') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
+                @if($backups->isNotEmpty())
+                    <div>
+                        <h4 class="text-sm font-semibold text-gray-900">Kopie wyników</h4>
+                        <ul class="mt-2 divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white">
+                            @foreach($backups as $backup)
+                                <li class="flex flex-wrap items-center gap-3 px-4 py-2 text-sm" wire:key="backup-{{ $backup->id }}">
+                                    <span>{{ $backup->created_at->format('d.m.Y H:i') }} · wyników: {{ $backup->results_count }}</span>
+                                    <span class="ml-auto flex gap-3">
+                                        <button type="button" wire:click="restoreResults({{ $backup->id }})" wire:confirm="Przywrócić wyniki z {{ $backup->created_at->format('d.m.Y H:i') }}? Wyniki wpisane później w tych meczach zostaną zastąpione." class="text-sky-700 hover:text-blue-800">Przywróć</button>
+                                        <button type="button" wire:click="deleteResultBackup({{ $backup->id }})" wire:confirm="Usunąć tę kopię? Nie da się jej potem przywrócić." class="text-red-600 hover:text-red-800">Usuń kopię</button>
+                                    </span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+            </div>
+        </details>
     @endif
 </div>

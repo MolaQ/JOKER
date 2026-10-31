@@ -7,6 +7,7 @@ use App\Models\TournamentGroup;
 use App\Models\TournamentMatch;
 use App\Models\TournamentParticipant;
 use App\Models\TournamentTemplate;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -20,7 +21,7 @@ use Illuminate\Support\Collection;
  */
 class TournamentTemplates
 {
-    public static function capture(TournamentCategory $category, string $name, ?string $description): TournamentTemplate
+    public static function capture(TournamentCategory $category, string $name, ?string $description, bool $withTeams = false): TournamentTemplate
     {
         $category->loadMissing(['groups', 'participants', 'matches', 'tournament']);
         $groups = $category->groups->sortBy([['display_order', 'asc'], ['id', 'asc']])->values();
@@ -98,6 +99,19 @@ class TournamentTemplates
             ])->all(),
         ];
 
+        if ($withTeams) {
+            // Drużyny w kolejności grup i pozycji, żeby po wstawieniu zajęły te same miejsca w meczach.
+            $structure['teams'] = $category->participants
+                ->sortBy(fn (TournamentParticipant $participant) => [$positions[$participant->id] ?? [PHP_INT_MAX, 0], $participant->id])
+                ->map(fn (TournamentParticipant $participant) => [
+                    'group' => $positions[$participant->id][0] ?? null,
+                    'type' => $participant->competitor_type,
+                    'id' => $participant->competitor_id,
+                    'display_name' => $participant->display_name,
+                    'roster' => $participant->roster,
+                ])->values()->all();
+        }
+
         return TournamentTemplate::create(['name' => $name, 'description' => $description, 'structure' => $structure]);
     }
 
@@ -128,6 +142,23 @@ class TournamentTemplates
                 'from' => (string) ($day['from'] ?? ''),
             ])->values()->all() ?: null,
         ]);
+
+        foreach ($structure['teams'] ?? [] as $team) {
+            $model = Relation::getMorphedModel((string) $team['type']);
+
+            if (! $model || ! class_exists($model) || ! $model::whereKey($team['id'])->exists()
+                || $category->participants()->where('competitor_type', $team['type'])->where('competitor_id', $team['id'])->exists()) {
+                continue;
+            }
+
+            $category->participants()->create([
+                'tournament_group_id' => $team['group'] !== null ? $groups->get($team['group'])?->id : null,
+                'competitor_type' => $team['type'],
+                'competitor_id' => $team['id'],
+                'display_name' => $team['display_name'] ?? null,
+                'roster' => $team['roster'] ?? null,
+            ]);
+        }
 
         // Najpierw mecze, potem odwołania „zwycięzca/przegrany meczu” (mogą wskazywać mecz z dalszej części listy).
         $created = collect($structure['matches'] ?? [])->values()->map(fn (array $match) => $category->matches()->create([

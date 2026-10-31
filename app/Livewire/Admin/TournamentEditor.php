@@ -12,6 +12,7 @@ use App\Models\TournamentParticipant;
 use App\Models\TournamentTemplate;
 use App\Models\TrainingSession;
 use App\Support\TournamentBracket;
+use App\Support\TournamentResults;
 use App\Support\TournamentSchedule;
 use App\Support\TournamentTable;
 use App\Support\TournamentTemplates;
@@ -60,6 +61,12 @@ class TournamentEditor extends Component
     public string $templateName = '';
 
     public string $templateDescription = '';
+
+    /** Czy szablon ma zapamiętać też drużyny (stały skład turnieju). */
+    public bool $templateTeams = false;
+
+    /** Nazwa kategorii przepisana przy czyszczeniu wyników (potwierdzenie). */
+    public string $clearConfirm = '';
 
     public string $newGroup = '';
 
@@ -210,20 +217,52 @@ class TournamentEditor extends Component
         ], ['templateName.required' => 'Wpisz nazwę szablonu.']);
 
         $category = $this->tournament->categories()->findOrFail($this->templateFrom);
-        TournamentTemplates::capture($category, trim($this->templateName), trim($this->templateDescription) ?: null);
+        TournamentTemplates::capture($category, trim($this->templateName), trim($this->templateDescription) ?: null, $this->templateTeams);
 
-        $this->reset('templateFrom', 'templateName', 'templateDescription');
+        $this->reset('templateFrom', 'templateName', 'templateDescription', 'templateTeams');
         $this->toast('Zapisano szablon. Wybierzesz go przy dodawaniu kategorii.');
     }
 
     public function cancelTemplate(): void
     {
-        $this->reset('templateFrom', 'templateName', 'templateDescription');
+        $this->reset('templateFrom', 'templateName', 'templateDescription', 'templateTeams');
     }
 
     public function deleteTemplate(int $id): void
     {
         TournamentTemplate::whereKey($id)->delete();
+    }
+
+    /**
+     * Czyści wyniki kategorii po przepisaniu jej nazwy; przedtem zapisuje kopię do przywrócenia.
+     */
+    public function clearResults(): void
+    {
+        $category = $this->category();
+        $this->resetErrorBag('clearConfirm');
+
+        if (mb_strtolower(trim($this->clearConfirm)) !== mb_strtolower(trim($category->name))) {
+            $this->addError('clearConfirm', 'Przepisz dokładnie nazwę kategorii: '.$category->name.'.');
+
+            return;
+        }
+
+        $backup = TournamentResults::clear($category);
+        $this->reset('clearConfirm');
+        $this->loadCategoryState();
+        $this->toast("Wyczyszczono wyniki ({$backup->results_count}). Kopia jest niżej, możesz ją przywrócić.");
+    }
+
+    public function restoreResults(int $backupId): void
+    {
+        TournamentResults::restore($this->category()->resultBackups()->findOrFail($backupId));
+        $this->loadCategoryState();
+        $this->toast('Przywrócono wyniki z kopii.');
+    }
+
+    public function deleteResultBackup(int $backupId): void
+    {
+        $this->category()->resultBackups()->whereKey($backupId)->delete();
     }
 
     public function deleteCategory(int $id): void

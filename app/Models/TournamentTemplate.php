@@ -33,6 +33,7 @@ class TournamentTemplate extends Model
             self::count(count($structure['groups'] ?? []), 'grupa', 'grupy', 'grup'),
             self::count(count($structure['matches'] ?? []), 'mecz', 'mecze', 'meczów'),
             self::count(count($structure['days'] ?? []), 'dzień', 'dni', 'dni'),
+            self::count(count($structure['teams'] ?? []), 'drużyna', 'drużyny', 'drużyn'),
         ])->filter()->implode(' · ');
     }
 

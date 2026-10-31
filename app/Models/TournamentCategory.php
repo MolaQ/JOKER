@@ -72,4 +72,9 @@ class TournamentCategory extends Model
     {
         return $this->hasMany(TournamentMatch::class)->orderBy('starts_at')->orderBy('id');
     }
+
+    public function resultBackups(): HasMany
+    {
+        return $this->hasMany(TournamentResultBackup::class)->latest('id');
+    }
 }
