@@ -166,7 +166,7 @@
             <h2 class="text-lg font-semibold text-gray-900">{{ $editingGroupId ? 'Edytuj grupę' : 'Dodaj grupę' }}</h2>
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div><label class="{{ $label }}">Nazwa</label><input type="text" wire:model="group.name" placeholder="np. Czwórki" class="{{ $input }}">@error('group.name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div>
-                <div><label class="{{ $label }}">Graczy na boisku</label><select wire:model="group.players_on_court" class="{{ $input }}">@foreach([4, 3, 2, 1] as $value)<option value="{{ $value }}">{{ \App\Models\MiniGroup::formatName($value) }} ({{ $value }})</option>@endforeach</select></div>
+                <div><label class="{{ $label }}">Graczy na boisku</label><select wire:model="group.players_on_court" class="{{ $input }}">@foreach([4 => 'czwórki (4)', 3 => 'trójki (3)', 2 => 'dwójki (2)', 1 => 'singielki (1)'] as $value => $name)<option value="{{ $value }}">{{ $name }}</option>@endforeach</select></div>
                 <div><label class="{{ $label }}">Kategoria wiekowa</label><input type="text" wire:model="group.age_label" placeholder="np. U-13" class="{{ $input }}"></div>
                 <div><label class="{{ $label }}">Płeć (opcjonalnie)</label><select wire:model="group.gender" class="{{ $input }}"><option value="">nie pokazuj</option>@foreach(\App\Models\MiniGroup::GENDERS as $value => $name)<option value="{{ $value }}">{{ $name }}</option>@endforeach</select></div>
                 <div><label class="{{ $label }}">Rocznik od</label><input type="number" wire:model="group.birth_year_from" class="{{ $input }}"></div>

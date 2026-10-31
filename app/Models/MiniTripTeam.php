@@ -37,6 +37,22 @@ class MiniTripTeam extends Model
         return $this->belongsToMany(MiniPlayer::class)->orderBy('last_name')->orderBy('first_name');
     }
 
+    /**
+     * Liczba rywali: „10 drużyn”, a w singlach (1 gracz na boisku) „15 zawodników”.
+     */
+    public function fieldLabel(): ?string
+    {
+        if (! $this->teams_count) {
+            return null;
+        }
+
+        $n = (int) $this->teams_count;
+        $few = $n % 10 >= 2 && $n % 10 <= 4 && ($n % 100 < 10 || $n % 100 >= 20);
+        [$one, $fewWord, $many] = (int) $this->group?->players_on_court === 1 ? ['zawodnik', 'zawodników', 'zawodników'] : ['drużyna', 'drużyny', 'drużyn'];
+
+        return $n.' '.__($n === 1 ? $one : ($few ? $fewWord : $many));
+    }
+
     public function photoUrl(): ?string
     {
         return Media::url($this->photo_path);

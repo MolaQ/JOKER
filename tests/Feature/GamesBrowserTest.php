@@ -72,12 +72,11 @@ test('minivolleyball tournaments show in the calendar with category names, place
     $home = MiniTrip::create(['title' => 'Faza powiatowa', 'starts_on' => now()->addWeek()->toDateString(), 'city' => 'Piła']);
     $home->teams()->create(['mini_group_id' => $group->id, 'name' => 'Joker 1', 'place' => 1, 'teams_count' => 10])->players()->attach($child);
     MiniTrip::create(['title' => 'Turniej w Wałczu', 'starts_on' => now()->addWeeks(2)->toDateString(), 'city' => 'Wałcz']);
-    app(SiteSettings::class)->set(['mini_format_4' => 'Quattro']);
 
     Livewire::test(GamesBrowser::class)
         ->assertSee('Faza powiatowa')
-        ->assertSee('u siebie · Piła')
-        ->assertSee('Quattro')
+        ->assertSee('Piła')
+        ->assertSee('Czwórki dziewcząt | 10 drużyn')
         ->assertSee('Zosia Nowak')
         ->set('place', 'away')
         ->assertDontSee('Faza powiatowa')

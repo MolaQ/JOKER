@@ -163,10 +163,10 @@
                                                 @foreach($day['mini'] as $trip)
                                                     <li wire:key="cell-mini-{{ $trip->id }}" class="rounded-lg bg-gradient-to-br from-emerald-100 to-emerald-50 px-1.5 py-1 text-[11px] leading-tight text-emerald-950 ring-1 ring-emerald-300" title="{{ $trip->title }}{{ $trip->venue ? ' · '.$trip->venue : '' }}">
                                                         <p class="font-semibold"><a href="{{ route('mini.index') }}" class="hover:underline">🏐 {{ $trip->title }}</a></p>
-                                                        <p class="text-emerald-800">{{ $trip->isHome() ? __('u siebie').' · ' : '' }}{{ $trip->city }}</p>
+                                                        <p class="text-emerald-800">{{ $trip->city }}</p>
                                                         @foreach($trip->teams as $miniTeam)
                                                             <details class="group/mini">
-                                                                <summary class="cursor-pointer list-none truncate hover:underline [&::-webkit-details-marker]:hidden"><span class="text-emerald-700">{{ $miniTeam->group?->formatLabel() }}</span> {{ $miniTeam->name }}@if($miniTeam->place) · <strong>{{ $miniTeam->place }}.</strong>@if($miniTeam->teams_count)<span class="text-emerald-700">/{{ $miniTeam->teams_count }}</span>@endif @endif</summary>
+                                                                <summary class="cursor-pointer list-none truncate hover:underline [&::-webkit-details-marker]:hidden"><span class="text-emerald-700">{{ $miniTeam->group?->name }}</span> {{ $miniTeam->name }}@if($miniTeam->place) · <strong>{{ $miniTeam->place }}.</strong>@if($miniTeam->teams_count)<span class="text-emerald-700">/{{ $miniTeam->teams_count }}</span>@endif @endif</summary>
                                                                 @if($site['mini_show_lineups'] && $miniTeam->players->isNotEmpty())
                                                                     <p class="mt-0.5 rounded bg-white/70 px-1 py-0.5 text-emerald-900">{{ $miniTeam->players->map->displayName()->implode(', ') }}</p>
                                                                 @endif
@@ -320,7 +320,7 @@
                 @endforeach
                 @foreach($month['mini'] as $trip)
                     <li id="mini-{{ $trip->id }}" wire:key="list-mini-{{ $trip->id }}" class="card scroll-mt-24 lg:scroll-mt-48 bg-emerald-50 p-4 text-sm text-emerald-950 ring-emerald-200">
-                        <p class="text-xs font-semibold tracking-wide text-emerald-700 uppercase">{{ $trip->dateLabel() }} · {{ $trip->isHome() ? __('u siebie').' · ' : '' }}{{ $trip->city }}</p>
+                        <p class="text-xs font-semibold tracking-wide text-emerald-700 uppercase">{{ $trip->dateLabel() }}{{ $trip->city ? ' · '.$trip->city : '' }}</p>
                         <p class="mt-1 font-display text-lg font-semibold uppercase">🏐 {{ $trip->title }}</p>
                         @if($trip->venue)
                             <p class="text-xs text-emerald-800">{{ $trip->venue }}</p>
@@ -336,7 +336,7 @@
                                                 <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">–</span>
                                             @endif
                                             <span class="min-w-0 flex-1">
-                                                <span class="block text-xs font-semibold tracking-wide text-emerald-700 uppercase">{{ $miniTeam->group?->formatLabel() }}{{ $miniTeam->teams_count ? ' · '.__('na :count drużyn', ['count' => $miniTeam->teams_count]) : '' }}</span>
+                                                <span class="block text-xs font-semibold tracking-wide text-emerald-700 uppercase">{{ $miniTeam->group?->name }}{{ $miniTeam->teams_count ? ' | '.$miniTeam->fieldLabel() : '' }}</span>
                                                 <span class="block font-semibold">{{ $miniTeam->name }}</span>
                                             </span>
                                             @if($site['mini_show_lineups'] && $miniTeam->players->isNotEmpty())
