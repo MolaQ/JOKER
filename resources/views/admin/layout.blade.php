@@ -19,6 +19,7 @@
                 ['label' => 'Do zatwierdzenia', 'route' => 'admin.approvals.index', 'icon' => 'inbox', 'can' => fn () => \App\Support\Approvals::sectionsFor(auth()->user())->isNotEmpty(), 'badge' => fn () => \App\Support\Approvals::pendingCountFor(auth()->user()), 'active' => ['admin.approvals.*', 'admin.parents.*', 'admin.accounts.*', 'admin.content-proposals.*', 'admin.comments.*', 'admin.reported-messages.*', 'admin.photo-tags.*', 'admin.player-change-requests.*', 'admin.profile-change-requests.*']],
                 ['label' => 'Statystyki odwiedzin', 'route' => 'admin.statistics.index', 'icon' => 'chart', 'can' => 'statistics.view'],
                 ['label' => 'Aktualności', 'route' => 'admin.articles.index', 'icon' => 'newspaper', 'can' => 'articles.manage'],
+                ['label' => 'Powiadomienia', 'route' => 'admin.push.index', 'icon' => 'bell', 'can' => fn () => app(\App\Support\SiteSettings::class)['push_enabled'] && auth()->user()->can('articles.manage')],
                 ['label' => 'Plan treningów', 'route' => 'admin.trainings.index', 'icon' => 'clock', 'can' => 'trainings.manage'],
                 ['label' => 'Mecze i wyniki', 'route' => 'admin.games.index', 'icon' => 'ball', 'can' => 'games.manage'],
                 ['label' => 'Turnieje', 'route' => 'admin.tournaments.index', 'icon' => 'flag', 'can' => 'tournaments.manage'],

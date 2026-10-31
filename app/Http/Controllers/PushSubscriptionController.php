@@ -41,6 +41,40 @@ class PushSubscriptionController extends Controller
         return response()->json(['ok' => true], 201);
     }
 
+    /**
+     * Wybór kibica w okienku dzwonka: tematy, drużyny klubu i obserwowane drużyny turniejowe.
+     * Bez pól tylko zwraca zapisany wybór; null w polu = wszystko.
+     */
+    public function preferences(Request $request, PushNotifier $push): JsonResponse
+    {
+        abort_unless($push->enabled(), 404);
+
+        $data = $request->validate([
+            'endpoint' => ['required', 'string', 'max:1000'],
+            'topics' => ['nullable', 'array'],
+            'topics.*' => ['string', 'in:'.implode(',', array_keys(PushSubscription::TOPICS))],
+            'teams' => ['nullable', 'array', 'max:50'],
+            'teams.*' => ['integer'],
+            'participants' => ['nullable', 'array', 'max:50'],
+            'participants.*' => ['integer'],
+        ]);
+
+        $subscription = PushSubscription::where('endpoint_hash', PushSubscription::hashEndpoint($data['endpoint']))->firstOrFail();
+        $changes = [];
+
+        foreach (['topics', 'teams', 'participants'] as $field) {
+            if ($request->exists($field)) {
+                $changes[$field] = $data[$field] === null ? null : array_values(array_unique($field === 'topics' ? $data[$field] : array_map('intval', $data[$field])));
+            }
+        }
+
+        if ($changes !== []) {
+            $subscription->update($changes);
+        }
+
+        return response()->json($subscription->only(['topics', 'teams', 'participants']));
+    }
+
     public function destroy(Request $request): JsonResponse
     {
         $endpoint = (string) $request->validate(['endpoint' => ['required', 'string', 'max:1000']])['endpoint'];

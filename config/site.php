@@ -176,6 +176,27 @@ return [
                 'push_articles' => ['type' => 'toggle', 'label' => 'Powiadamiaj o nowych aktualnościach', 'default' => true],
                 'push_results' => ['type' => 'toggle', 'label' => 'Powiadamiaj o wynikach meczów', 'default' => true],
                 'push_galleries' => ['type' => 'toggle', 'label' => 'Powiadamiaj o nowych galeriach', 'default' => true],
+                'push_tournaments' => ['type' => 'toggle', 'label' => 'Powiadamiaj o wynikach meczów w turniejach', 'help' => 'Mecze naszych drużyn oraz drużyn, które kibic obserwuje na stronie turnieju.', 'default' => true],
+                'push_upcoming' => ['type' => 'toggle', 'label' => 'Przypominaj przed meczem', 'help' => 'Mecze ligowe i turniejowe naszych drużyn oraz obserwowanych drużyn turniejowych. Wymaga harmonogramu (cron) na serwerze.', 'default' => true],
+                'push_upcoming_minutes' => ['type' => 'select', 'label' => 'Ile minut przed meczem', 'default' => '15', 'options' => ['10' => '10 minut', '15' => '15 minut', '30' => '30 minut', '60' => '1 godzina']],
+            ],
+        ],
+
+        'push_tresc' => [
+            'label' => 'Powiadomienia: treść',
+            'icon' => 'bell',
+            'fields' => [
+                'push_tpl_article_title' => ['type' => 'text', 'label' => 'Aktualność: tytuł', 'help' => 'Pola: {tytul}, {zajawka}', 'default' => '{tytul}'],
+                'push_tpl_article_body' => ['type' => 'text', 'label' => 'Aktualność: treść', 'default' => '{zajawka}'],
+                'push_tpl_win_title' => ['type' => 'text', 'label' => 'Wygrany mecz: tytuł', 'help' => 'Pola: {druzyna}, {gospodarz}, {gosc}, {wynik}, {rywal}', 'default' => 'Wygrana! {druzyna}'],
+                'push_tpl_loss_title' => ['type' => 'text', 'label' => 'Przegrany mecz: tytuł', 'default' => 'Wynik meczu {druzyna}'],
+                'push_tpl_game_body' => ['type' => 'text', 'label' => 'Wynik meczu: treść', 'default' => '{gospodarz} {wynik} {gosc}'],
+                'push_tpl_gallery_title' => ['type' => 'text', 'label' => 'Galeria: tytuł', 'help' => 'Pola: {tytul}', 'default' => 'Nowa galeria zdjęć'],
+                'push_tpl_gallery_body' => ['type' => 'text', 'label' => 'Galeria: treść', 'default' => '{tytul}'],
+                'push_tpl_tournament_title' => ['type' => 'text', 'label' => 'Wynik w turnieju: tytuł', 'help' => 'Pola: {turniej}, {kategoria}, {mecz}, {gospodarz}, {gosc}, {wynik}, {zwyciezca}', 'default' => '{turniej} · {kategoria}'],
+                'push_tpl_tournament_body' => ['type' => 'text', 'label' => 'Wynik w turnieju: treść', 'default' => '{gospodarz} {wynik} {gosc}'],
+                'push_tpl_upcoming_title' => ['type' => 'text', 'label' => 'Przypomnienie przed meczem: tytuł', 'help' => 'Pola: {minuty}, {godzina}, {gospodarz}, {gosc}, {miejsce}, {nazwa} (drużyna albo turniej i kategoria)', 'default' => 'Za {minuty} min: {nazwa}'],
+                'push_tpl_upcoming_body' => ['type' => 'text', 'label' => 'Przypomnienie przed meczem: treść', 'default' => '{gospodarz} – {gosc} · {godzina} {miejsce}'],
             ],
         ],
 

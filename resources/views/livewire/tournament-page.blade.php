@@ -22,6 +22,21 @@
     </div>
 
     <section class="container-site py-10 transition-opacity" wire:loading.class="opacity-50">
+        {{-- Kibic wybiera drużynę i dostaje powiadomienia o jej wynikach i meczach za chwilę (obsługa w resources/js/push.js) --}}
+        @if($current && $current->participants->isNotEmpty() && $site['push_enabled'] && ($site['push_tournaments'] || $site['push_upcoming']))
+            <div wire:ignore wire:key="push-follow-{{ $current->id }}" data-push-follow hidden data-unfollow-label="{{ __('Przestań obserwować') }}" class="mb-8 flex flex-wrap items-center gap-2 rounded-2xl bg-sky-50 px-4 py-3 text-sm ring-1 ring-sky-100">
+                <span class="w-full font-semibold text-sky-950 sm:w-auto">🔔 {{ __('Powiadamiaj mnie o meczach drużyny') }}</span>
+                <select class="min-w-0 flex-1 rounded-full border-sky-200 bg-white py-1.5 text-sm sm:max-w-xs" aria-label="{{ __('Drużyna') }}">
+                    <option value="">{{ __('wybierz drużynę') }}</option>
+                    @foreach($current->participants->sortBy(fn ($participant) => $participant->name()) as $participant)
+                        <option value="{{ $participant->id }}">{{ $participant->name() }}</option>
+                    @endforeach
+                </select>
+                <button type="button" data-push-follow-add class="rounded-full bg-sky-club px-4 py-1.5 font-semibold text-white hover:bg-sky-club-dark">{{ __('Obserwuj') }}</button>
+                <div data-push-followed class="flex w-full flex-wrap gap-2 empty:hidden"></div>
+            </div>
+        @endif
+
         @if($tabs->isEmpty())
             <div class="card p-12 text-center text-zinc-500">{{ __('Szczegóły turnieju pojawią się wkrótce.') }}</div>
         @endif

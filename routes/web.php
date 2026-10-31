@@ -108,6 +108,7 @@ Route::middleware('throttle:30,1')->group(function () {
     Route::get('/notifications/key', [PushSubscriptionController::class, 'key'])->name('push.key');
     Route::post('/notifications/subscription', [PushSubscriptionController::class, 'store'])->name('push.subscribe');
     Route::delete('/notifications/subscription', [PushSubscriptionController::class, 'destroy'])->name('push.unsubscribe');
+    Route::post('/notifications/preferences', [PushSubscriptionController::class, 'preferences'])->name('push.preferences');
 });
 
 // Auth routes

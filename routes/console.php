@@ -3,6 +3,7 @@
 use App\Console\Commands\ExpireRoles;
 use App\Console\Commands\SendApprovalReminders;
 use App\Console\Commands\SendMessageEmails;
+use App\Console\Commands\SendUpcomingReminders;
 use App\Console\Commands\SyncSchedules;
 use App\Models\AuditLog;
 use App\Models\PageView;
@@ -28,3 +29,6 @@ Schedule::command('model:prune', ['--model' => [AuditLog::class]])->daily();
 
 // Zbiorczy e-mail o wiadomościach nieprzeczytanych od kwadransa (cron na serwerze uruchamia harmonogram co 5 minut).
 Schedule::command(SendMessageEmails::class)->everyFiveMinutes()->withoutOverlapping();
+
+// Powiadomienia push „mecz za chwilę”: przy każdym uruchomieniu harmonogramu (cron co kilka minut).
+Schedule::command(SendUpcomingReminders::class)->everyMinute()->withoutOverlapping();

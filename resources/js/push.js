@@ -104,9 +104,122 @@ export function initPush() {
         await subscription.unsubscribe();
     };
 
+    const json = (method, url, body) => fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(body),
+    }).then((response) => (response.ok ? response.json() : null));
+
+    // Wybór kibica (tematy, drużyny, obserwowane drużyny z turniejów) zapisany przy jego przeglądarce na serwerze.
+    const preferences = async (changes = {}) => {
+        const subscription = await currentSubscription();
+
+        return subscription ? json('POST', config.dataset.preferencesUrl, { endpoint: subscription.endpoint, ...changes }) : null;
+    };
+
+    // Okienko dzwonka: włączenie, wybór tematów i drużyn, wyłączenie.
+    const panel = document.querySelector('[data-push-panel]');
+    const allTopics = (panel?.dataset.allTopics || '').split(',').filter(Boolean);
+    const topicBoxes = () => [...(panel?.querySelectorAll('[data-push-topic]') || [])];
+    const teamBoxes = () => [...(panel?.querySelectorAll('[data-push-team]') || [])];
+    let saved = null;
+
+    const showPanel = async () => {
+        if (!panel) {
+            return;
+        }
+
+        const on = Boolean(await currentSubscription());
+        saved = on ? await preferences() : null;
+        const topics = saved?.topics ?? allTopics;
+        topicBoxes().forEach((box) => (box.checked = topics.includes(box.value)));
+        teamBoxes().forEach((box) => (box.checked = (saved?.teams ?? []).includes(Number(box.value))));
+        panel.querySelectorAll('[data-push-when-on]').forEach((element) => element.classList.toggle('hidden', !on));
+        panel.querySelectorAll('[data-push-when-off]').forEach((element) => element.classList.toggle('hidden', on));
+        panel.classList.remove('hidden');
+    };
+
+    const panelChoices = () => {
+        // Tematy wyłączone teraz przez administratora nie są w okienku, ale wybór kibica dla nich zostaje.
+        const topics = new Set(saved?.topics ?? allTopics);
+        topicBoxes().forEach((box) => (box.checked ? topics.add(box.value) : topics.delete(box.value)));
+        const teams = teamBoxes().filter((box) => box.checked).map((box) => Number(box.value));
+
+        return {
+            topics: allTopics.every((topic) => topics.has(topic)) ? null : [...topics],
+            teams: teams.length ? teams : null,
+        };
+    };
+
+    panel?.querySelector('[data-push-close]')?.addEventListener('click', () => panel.classList.add('hidden'));
+    panel?.querySelectorAll('[data-push-save]').forEach((button) => button.addEventListener('click', async () => {
+        button.disabled = true;
+        try {
+            if (!(await currentSubscription()) && !(await subscribe())) {
+                setState(false);
+
+                return;
+            }
+            setState(true);
+            await preferences(panelChoices());
+            panel.classList.add('hidden');
+        } catch (error) {
+            setState(false);
+        } finally {
+            button.disabled = false;
+        }
+    }));
+    panel?.querySelector('[data-push-disable]')?.addEventListener('click', async () => {
+        await unsubscribe();
+        setState(false);
+        panel.classList.add('hidden');
+    });
+
+    // Strona turnieju: „Powiadamiaj mnie o meczach drużyny”.
+    document.querySelectorAll('[data-push-follow]').forEach((box) => {
+        box.hidden = false;
+        const select = box.querySelector('select');
+        const list = box.querySelector('[data-push-followed]');
+        const names = Object.fromEntries([...select.options].map((option) => [option.value, option.textContent]));
+
+        const render = (ids) => {
+            list.replaceChildren(...ids.filter((id) => names[id]).map((id) => {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                chip.className = 'rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-900 hover:bg-sky-200';
+                chip.textContent = `🔔 ${names[id]} ×`;
+                chip.title = box.dataset.unfollowLabel;
+                chip.addEventListener('click', async () => render((await preferences({ participants: ids.filter((other) => other !== id) }))?.participants ?? []));
+
+                return chip;
+            }));
+        };
+
+        preferences().then((current) => render(current?.participants ?? [])).catch(() => {});
+
+        box.querySelector('[data-push-follow-add]').addEventListener('click', async () => {
+            const id = Number(select.value);
+            if (!id) {
+                return;
+            }
+            if (!(await currentSubscription()) && !(await subscribe())) {
+                return;
+            }
+            setState(true);
+            const current = (await preferences())?.participants ?? [];
+            render((await preferences({ participants: [...new Set([...current, id])] }))?.participants ?? []);
+        });
+    });
+
     currentSubscription().then((subscription) => setState(Boolean(subscription))).catch(() => setState(false));
 
     toggles.forEach((button) => button.addEventListener('click', async () => {
+        if (panel) {
+            showPanel();
+
+            return;
+        }
+
         button.disabled = true;
         try {
             if (await currentSubscription()) {
@@ -133,7 +246,12 @@ export function initPush() {
         prompt.querySelector('[data-push-accept]')?.addEventListener('click', async () => {
             prompt.classList.add('hidden');
             try {
-                setState(await subscribe());
+                const on = await subscribe();
+                setState(on);
+                // Od razu okienko z wyborem tematów i drużyn (domyślnie wszystko).
+                if (on) {
+                    showPanel();
+                }
             } catch (error) {
                 setState(false);
             }

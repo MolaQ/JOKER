@@ -147,7 +147,7 @@
                 </a>
 
                 @if($site['push_enabled'])
-                    <button type="button" data-push-toggle hidden aria-pressed="false" data-label-on="{{ __('Powiadomienia włączone (kliknij, aby wyłączyć)') }}" data-label-off="{{ __('Włącz powiadomienia o wynikach i aktualnościach') }}" title="{{ __('Włącz powiadomienia o wynikach i aktualnościach') }}" class="hidden h-11 w-11 items-center sm:flex justify-center rounded-full text-zinc-300 transition hover:bg-white/10 hover:text-white aria-pressed:text-sky-club">
+                    <button type="button" data-push-toggle hidden aria-pressed="false" data-label-on="{{ __('Powiadomienia włączone (kliknij, aby zmienić)') }}" data-label-off="{{ __('Włącz powiadomienia o wynikach i aktualnościach') }}" title="{{ __('Włącz powiadomienia o wynikach i aktualnościach') }}" class="hidden h-11 w-11 items-center sm:flex justify-center rounded-full text-zinc-300 transition hover:bg-white/10 hover:text-white aria-pressed:text-sky-club">
                         <svg data-push-off class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/></svg>
                         <svg data-push-on class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5.85 3.5a.75.75 0 0 0-1.117-1 9.719 9.719 0 0 0-2.348 4.876.75.75 0 0 0 1.479.248A8.219 8.219 0 0 1 5.85 3.5ZM19.267 2.5a.75.75 0 1 0-1.118 1 8.22 8.22 0 0 1 1.987 4.124.75.75 0 0 0 1.48-.248A9.72 9.72 0 0 0 19.266 2.5Z"/><path fill-rule="evenodd" d="M12 2.25A6.75 6.75 0 0 0 5.25 9v.75a8.217 8.217 0 0 1-2.119 5.52.75.75 0 0 0 .298 1.206c1.544.57 3.16.99 4.831 1.243a3.75 3.75 0 1 0 7.48 0 24.583 24.583 0 0 0 4.83-1.244.75.75 0 0 0 .298-1.205 8.217 8.217 0 0 1-2.118-5.52V9A6.75 6.75 0 0 0 12 2.25ZM9.75 18c0-.034 0-.067.002-.1a25.05 25.05 0 0 0 4.496 0l.002.1a2.25 2.25 0 1 1-4.5 0Z" clip-rule="evenodd"/></svg>
                         <span class="sr-only">{{ __('Powiadomienia') }}</span>
@@ -191,9 +191,9 @@
                     <x-language-switch />
                 </div>
                 @if($site['push_enabled'])
-                    <button type="button" data-push-toggle hidden aria-pressed="false" data-label-on="{{ __('Powiadomienia włączone (kliknij, aby wyłączyć)') }}" data-label-off="{{ __('Włącz powiadomienia o wynikach i aktualnościach') }}" class="mt-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2.5 text-sm font-semibold text-white">
+                    <button type="button" data-push-toggle hidden aria-pressed="false" data-label-on="{{ __('Powiadomienia włączone (kliknij, aby zmienić)') }}" data-label-off="{{ __('Włącz powiadomienia o wynikach i aktualnościach') }}" class="mt-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2.5 text-sm font-semibold text-white">
                         <span data-push-off>🔔 {{ __('Włącz powiadomienia') }}</span>
-                        <span data-push-on class="hidden">🔕 {{ __('Wyłącz powiadomienia') }}</span>
+                        <span data-push-on class="hidden">🔔 {{ __('Ustawienia powiadomień') }}</span>
                     </button>
                 @endif
                 <div class="mt-6 flex flex-wrap gap-3">
@@ -368,7 +368,40 @@
     </nav>
 
     @if($site['push_enabled'])
-        <div hidden data-push-config data-sw="{{ asset('sw.js') }}" data-scope="{{ rtrim(url('/'), '/') }}/" data-key-url="{{ route('push.key') }}" data-subscribe-url="{{ route('push.subscribe') }}"></div>
+        <div hidden data-push-config data-sw="{{ asset('sw.js') }}" data-scope="{{ rtrim(url('/'), '/') }}/" data-key-url="{{ route('push.key') }}" data-subscribe-url="{{ route('push.subscribe') }}" data-preferences-url="{{ route('push.preferences') }}"></div>
+        @php($pushTeams = \App\Models\Team::orderBy('display_order')->orderBy('name')->get(['id', 'name']))
+        <div data-push-panel data-all-topics="{{ implode(',', array_keys(\App\Models\PushSubscription::TOPICS)) }}" class="fixed inset-x-3 bottom-3 z-50 hidden max-h-[85dvh] overflow-y-auto rounded-2xl bg-white p-5 text-zinc-800 shadow-2xl ring-1 ring-zinc-200 sm:inset-x-auto sm:right-5 sm:bottom-5 sm:w-96" role="dialog" aria-label="{{ __('Powiadomienia') }}">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <p class="font-display text-xl font-semibold uppercase">{{ __('Powiadomienia') }}</p>
+                    <p data-push-when-on class="hidden text-sm text-emerald-700">{{ __('Włączone na tym urządzeniu.') }}</p>
+                    <p data-push-when-off class="text-sm text-zinc-500">{{ __('Wybierz, o czym chcesz wiedzieć, i włącz.') }}</p>
+                </div>
+                <button type="button" data-push-close class="-mt-1 -mr-1 rounded-full p-2 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700" aria-label="{{ __('Zamknij') }}">✕</button>
+            </div>
+            <fieldset class="mt-4 space-y-2">
+                <legend class="text-xs font-semibold tracking-wide text-zinc-500 uppercase">{{ __('O czym powiadamiać') }}</legend>
+                @foreach(app(\App\Services\PushNotifier::class)->topics() as $topic => $topicLabel)
+                    <label class="flex items-center gap-3 text-sm"><input type="checkbox" data-push-topic value="{{ $topic }}" checked class="size-4 rounded border-zinc-300 text-sky-600"> {{ __($topicLabel) }}</label>
+                @endforeach
+            </fieldset>
+            @if($pushTeams->count() > 1)
+                <fieldset class="mt-4">
+                    <legend class="text-xs font-semibold tracking-wide text-zinc-500 uppercase">{{ __('Wyniki i przypomnienia tylko dla drużyn') }}</legend>
+                    <p class="text-xs text-zinc-500">{{ __('Nic nie zaznaczone: wszystkie drużyny.') }}</p>
+                    <div class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5">
+                        @foreach($pushTeams as $pushTeam)
+                            <label class="flex items-center gap-2 text-sm"><input type="checkbox" data-push-team value="{{ $pushTeam->id }}" class="size-4 rounded border-zinc-300 text-sky-600"> {{ $pushTeam->name }}</label>
+                        @endforeach
+                    </div>
+                </fieldset>
+            @endif
+            <div class="mt-5 flex flex-wrap items-center justify-end gap-2">
+                <button type="button" data-push-disable data-push-when-on class="mr-auto hidden text-sm font-medium text-red-600 hover:text-red-800">{{ __('Wyłącz powiadomienia') }}</button>
+                <button type="button" data-push-save data-push-when-on class="hidden rounded-full bg-sky-club px-4 py-2 text-sm font-semibold text-white hover:bg-sky-club-dark">{{ __('Zapisz') }}</button>
+                <button type="button" data-push-save data-push-when-off class="rounded-full bg-sky-club px-4 py-2 text-sm font-semibold text-white hover:bg-sky-club-dark">{{ __('Włącz powiadomienia') }}</button>
+            </div>
+        </div>
         @if($site['push_prompt'])
             <div data-push-prompt class="fixed inset-x-3 bottom-3 z-50 hidden rounded-2xl bg-ink p-4 text-white shadow-2xl ring-1 ring-white/10 sm:inset-x-auto sm:right-5 sm:bottom-5 sm:max-w-sm" role="dialog" aria-label="{{ __('Powiadomienia') }}">
                 <div class="flex gap-3">
