@@ -3,7 +3,7 @@
     $label = 'block text-sm font-medium text-gray-700 mb-1';
     $primary = 'inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700';
     $secondary = 'inline-flex items-center justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50';
-    $sections = ['strona' => 'Strona i informator', 'kategorie' => 'Kategorie', 'druzyny' => 'Drużyny', 'grupy' => 'Grupy', 'mecze' => 'Mecze i wyniki'];
+    $sections = ['strona' => 'Strona i informator', 'kategorie' => 'Kategorie', 'druzyny' => 'Drużyny', 'grupy' => 'Grupy', 'mecze' => 'Mecze i wyniki', 'wyroznienia' => 'Wyróżnienia'];
 @endphp
 
 <div class="space-y-6">
@@ -396,6 +396,10 @@
     @endif
 
     {{-- Mecze i wyniki --}}
+    @if($section === 'wyroznienia' && $category)
+        <livewire:admin.tournament-awards :category-id="$category->id" :key="'awards-'.$category->id" />
+    @endif
+
     @if($section === 'mecze' && $category)
         <div class="space-y-6">
             <form wire:submit="addMatch" class="space-y-3 rounded-lg border border-dashed border-gray-300 p-4">

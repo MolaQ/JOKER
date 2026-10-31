@@ -281,18 +281,22 @@ async function drawMini(ctx, W, H, card) {
     const medal = { 1: '#f5c542', 2: '#c9d1dc', 3: '#d08a4c' };
 
     rows.forEach((row) => {
-        const hasPlayers = row.players && rowHeight >= 130;
-        roundRect(ctx, 60, y, W - 120, rowHeight - 18, 28);
+        const box = rowHeight - 18;
+        const hasPlayers = !!row.players && box >= 80;
+        const groupSize = Math.round(Math.min(26, box * 0.2));
+        const nameSize = Math.round(Math.min(46, box * (hasPlayers ? 0.34 : 0.4)));
+        const smallSize = Math.round(Math.min(24, box * 0.19));
+        roundRect(ctx, 60, y, W - 120, box, Math.min(28, box / 3));
         ctx.fillStyle = 'rgba(255,255,255,0.08)';
         ctx.fill();
 
-        const midY = y + (rowHeight - 18) / 2;
-        const circle = Math.min(46, (rowHeight - 40) / 2);
+        const midY = y + box / 2;
+        const circle = Math.min(46, (box - 22) / 2);
         ctx.beginPath();
         ctx.arc(60 + 30 + circle, midY, circle, 0, Math.PI * 2);
-        ctx.fillStyle = medal[row.place] || 'rgba(255,255,255,0.2)';
+        ctx.fillStyle = medal[row.place] || (row.place === '★' ? card.theme.accent : 'rgba(255,255,255,0.2)');
         ctx.fill();
-        ctx.fillStyle = medal[row.place] ? '#12141a' : '#ffffff';
+        ctx.fillStyle = medal[row.place] || row.place === '★' ? '#12141a' : '#ffffff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.font = `700 ${Math.round(circle * 1.1)}px ${DISPLAY}`;
@@ -300,29 +304,32 @@ async function drawMini(ctx, W, H, card) {
 
         const textX = 90 + circle * 2 + 30;
         const textWidth = W - 120 - textX;
+        const groupY = midY - box * (hasPlayers ? 0.27 : 0.17);
+        const nameY = midY + box * (hasPlayers ? 0.08 : 0.22);
         ctx.textAlign = 'left';
         ctx.textBaseline = 'alphabetic';
 
         let iconX = textX;
-        const iconSize = Math.min(30, rowHeight / 4);
+        const iconSize = Math.round(groupSize * 1.15);
         for (let i = 0; i < (row.icons || 0); i++) {
-            drawPlayerIcon(ctx, iconX, midY - (hasPlayers ? 52 : 36) - iconSize + 6, iconSize, row.color || '#f5b301');
+            drawPlayerIcon(ctx, iconX, groupY - iconSize + 4, iconSize, row.color || '#f5b301');
             iconX += iconSize + 2;
         }
 
+        const groupX = iconX > textX ? iconX + 10 : textX;
         ctx.fillStyle = 'rgba(255,255,255,0.75)';
-        fitText(ctx, String(row.group || '').toUpperCase(), textWidth - (iconX - textX) - 14, 26, 700, SANS, 16);
-        ctx.fillText(String(row.group || '').toUpperCase(), iconX + 12, midY - (hasPlayers ? 52 : 36));
+        fitText(ctx, String(row.group || '').toUpperCase(), textWidth - (groupX - textX), groupSize, 700, SANS, 14);
+        ctx.fillText(String(row.group || '').toUpperCase(), groupX, groupY);
 
         ctx.fillStyle = '#ffffff';
-        fitText(ctx, row.name || '', textWidth, 46, 700, DISPLAY, 24);
-        ctx.fillText(row.name || '', textX, midY + (hasPlayers ? 6 : 22));
+        fitText(ctx, row.name || '', textWidth, nameSize, 700, DISPLAY, 20);
+        ctx.fillText(row.name || '', textX, nameY);
 
         if (hasPlayers) {
             ctx.fillStyle = 'rgba(255,255,255,0.65)';
-            ctx.font = `500 24px ${SANS}`;
-            const lines = wrapLines(ctx, row.players, textWidth, 2);
-            lines.forEach((line, index) => ctx.fillText(line, textX, midY + 42 + index * 28));
+            ctx.font = `500 ${smallSize}px ${SANS}`;
+            const lines = wrapLines(ctx, row.players, textWidth, box >= 140 ? 2 : 1);
+            lines.forEach((line, index) => ctx.fillText(line, textX, midY + box * 0.33 + index * (smallSize + 4)));
         }
 
         y += rowHeight;

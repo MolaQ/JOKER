@@ -288,6 +288,13 @@
                                     <label class="block text-sm font-medium text-gray-700">Osiągnięcia</label>
                                     <button type="button" wire:click="addAchievement" class="text-sm font-semibold text-sky-700 hover:underline">+ Dodaj</button>
                                 </div>
+                                @if($editingId && ($fromTournaments = \App\Models\PlayerAchievement::where('player_id', $editingId)->whereNotNull('tournament_award_id')->get())->isNotEmpty())
+                                    <ul class="mt-1 space-y-1 text-sm text-gray-700">
+                                        @foreach($fromTournaments as $auto)
+                                            <li class="flex gap-2 rounded-md bg-amber-50 px-2 py-1"><span class="text-amber-600">★</span><span class="w-20 shrink-0 text-gray-500">{{ $auto->season }}</span><span class="min-w-0 flex-1">{{ $auto->title }}</span><span class="text-xs text-gray-500">z turnieju</span></li>
+                                        @endforeach
+                                    </ul>
+                                @endif
                                 <div class="mt-1 space-y-2">
                                     @foreach($achievements as $index => $achievement)
                                         <div class="flex gap-2" wire:key="achievement-{{ $index }}">

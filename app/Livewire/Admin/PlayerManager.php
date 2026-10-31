@@ -232,7 +232,7 @@ class PlayerManager extends Component
         $this->birthday_display = $player->birthday_display?->value ?? 'age';
         $this->user_id = $player->user_id;
         $this->guardian_ids = $player->guardians()->pluck('users.id')->all();
-        $this->achievements = $player->achievements->map(fn (PlayerAchievement $achievement) => ['season' => (string) $achievement->season, 'title' => $achievement->title])->all();
+        $this->achievements = $player->achievements->whereNull('tournament_award_id')->map(fn (PlayerAchievement $achievement) => ['season' => (string) $achievement->season, 'title' => $achievement->title])->all();
         $this->bio = (string) $player->bio;
         $this->team_id = $player->team_id;
         $this->is_active = $player->is_active;
@@ -285,7 +285,7 @@ class PlayerManager extends Component
         foreach ($newGuardians as $row) {
             ClubAccounts::connectGuardian($player, $row['email'], trim($row['name'] ?? '') ?: null);
         }
-        $player->achievements()->delete();
+        $player->achievements()->whereNull('tournament_award_id')->delete();
 
         foreach (array_values(array_filter($this->achievements, fn (array $row) => trim($row['title'] ?? '') !== '')) as $order => $row) {
             $player->achievements()->create([

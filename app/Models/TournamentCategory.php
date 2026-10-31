@@ -53,6 +53,11 @@ class TournamentCategory extends Model
         return self::COLORS[(int) $index % count(self::COLORS)];
     }
 
+    public function awards(): HasMany
+    {
+        return $this->hasMany(TournamentAward::class)->orderBy('display_order')->orderBy('id');
+    }
+
     public function tournament(): BelongsTo
     {
         return $this->belongsTo(Tournament::class);

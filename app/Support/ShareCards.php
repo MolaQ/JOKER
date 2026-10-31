@@ -6,6 +6,8 @@ use App\Models\Article;
 use App\Models\Game;
 use App\Models\MiniTrip;
 use App\Models\MiniTripTeam;
+use App\Models\TournamentAward;
+use App\Models\TournamentCategory;
 use App\Models\TournamentMatch;
 
 /**
@@ -101,6 +103,37 @@ class ShareCards
             ])->values()->all(),
             'url' => route('mini.index'),
             'file' => 'minisiatkowka-'.$trip->id,
+        ];
+    }
+
+    /**
+     * Wyróżnienia indywidualne kategorii turnieju (ta sama grafika co wyniki mini: wiersze z gwiazdką).
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function awards(TournamentCategory $category): ?array
+    {
+        if (! self::enabled('share_tournaments') || $category->awards->isEmpty()) {
+            return null;
+        }
+
+        $tournament = $category->tournament;
+
+        return [
+            'kind' => 'mini',
+            'eyebrow' => __('Wyróżnienia').' · '.$category->name,
+            'title' => $tournament->fullName(),
+            'date' => collect([$tournament->dateRangeLabel().'.'.$tournament->start_date?->format('Y'), $tournament->city])->filter()->implode(' · '),
+            'rows' => $category->awards->take(8)->map(fn (TournamentAward $award) => [
+                'place' => '★',
+                'group' => $award->name,
+                'name' => $award->personLabel(),
+                'icons' => 0,
+                'color' => '',
+                'players' => (string) $award->teamLabel(),
+            ])->values()->all(),
+            'url' => route('tournaments.show', $tournament),
+            'file' => 'wyroznienia-'.$category->id,
         ];
     }
 

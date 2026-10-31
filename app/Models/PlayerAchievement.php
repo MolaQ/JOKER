@@ -9,10 +9,16 @@ class PlayerAchievement extends Model
 {
     protected $fillable = [
         'player_id',
+        'tournament_award_id',
         'season',
         'title',
         'display_order',
     ];
+
+    public function tournamentAward(): BelongsTo
+    {
+        return $this->belongsTo(TournamentAward::class);
+    }
 
     public function player(): BelongsTo
     {

@@ -34,7 +34,7 @@ class TournamentPage extends Component
     public function render(): View
     {
         $categories = $this->tournament->categories()
-            ->with(['groups.participants.competitor', 'groups.matches.home.competitor', 'groups.matches.away.competitor', 'participants.competitor', 'participants.group', 'matches.home.competitor', 'matches.away.competitor', 'matches.group', 'matches.category.tournament'])
+            ->with(['groups.participants.competitor', 'groups.matches.home.competitor', 'groups.matches.away.competitor', 'participants.competitor', 'participants.group', 'matches.home.competitor', 'matches.away.competitor', 'matches.group', 'matches.category.tournament', 'awards.player', 'awards.participant.competitor'])
             ->get();
 
         /** @var TournamentCategory|null $current */
@@ -55,7 +55,7 @@ class TournamentPage extends Component
             'groups' => [__('Grupy'), $current?->groups->isNotEmpty()],
             'matches' => [__('Mecze'), $matches->isNotEmpty()],
             'bracket' => [__('Drabinka i miejsca'), $knockout->isNotEmpty()],
-            'ranking' => [__('Klasyfikacja'), $standings->isNotEmpty()],
+            'ranking' => [__('Klasyfikacja'), $standings->isNotEmpty() || $current?->awards->isNotEmpty()],
             'rules' => [__('Zasady'), filled($this->tournament->rules)],
             'info' => [__('Informator'), filled($this->tournament->guest_info)],
         ])->filter(fn (array $entry) => $entry[1])->map(fn (array $entry) => $entry[0]);

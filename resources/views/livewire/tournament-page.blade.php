@@ -252,8 +252,32 @@
 
         {{-- KLASYFIKACJA KOŃCOWA --}}
         @if($currentTab === 'ranking' && $current)
-            <h2 class="heading-md">{{ __('Klasyfikacja końcowa') }} <span class="text-zinc-400">· {{ $current->name }}</span></h2>
-            <x-tournament-podium :standings="$standings" class="mt-8" />
+            @if($standings->isNotEmpty())
+                <h2 class="heading-md">{{ __('Klasyfikacja końcowa') }} <span class="text-zinc-400">· {{ $current->name }}</span></h2>
+                <x-tournament-podium :standings="$standings" class="mt-8" />
+            @endif
+            @if($current->awards->isNotEmpty())
+                <div @class(['flex flex-wrap items-center justify-between gap-3', 'mt-14' => $standings->isNotEmpty()])>
+                    <h2 class="heading-md">{{ __('Wyróżnienia') }}</h2>
+                    <x-share-card :card="\App\Support\ShareCards::awards($current)" />
+                </div>
+                <ul class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach($current->awards as $award)
+                        <li class="flex items-center gap-4 rounded-2xl bg-white p-4 ring-1 ring-zinc-200">
+                            <span class="inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600" aria-hidden="true"><svg class="size-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 21h8m-4-4v4M7 4h10v5a5 5 0 0 1-10 0V4Zm0 2H4v1a3 3 0 0 0 3 3m10-4h3v1a3 3 0 0 1-3 3"/></svg></span>
+                            <span class="min-w-0">
+                                <span class="block text-xs font-semibold tracking-wide text-sky-club-dark uppercase">{{ $award->name }}</span>
+                                @if($award->player)
+                                    <a href="{{ route('players.show', $award->player) }}" class="block font-display text-lg font-semibold uppercase hover:underline">{{ $award->personLabel() }}</a>
+                                @else
+                                    <span class="block font-display text-lg font-semibold uppercase">{{ $award->personLabel() }}</span>
+                                @endif
+                                @if($award->teamLabel())<span class="block text-sm text-zinc-500">{{ $award->teamLabel() }}</span>@endif
+                            </span>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
         @endif
 
         {{-- ZASADY I INFORMATOR --}}

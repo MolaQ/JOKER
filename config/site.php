@@ -233,6 +233,7 @@ return [
                 'tm_number_text' => ['type' => 'color', 'label' => 'Numer meczu: tekst', 'default' => '#0f172a'],
                 'tm_card_from' => ['type' => 'color', 'label' => 'Karty drużyn: kolor górny (gradient)', 'default' => '#1b3f86'],
                 'tm_card_to' => ['type' => 'color', 'label' => 'Karty drużyn: kolor dolny (gradient)', 'default' => '#12141a'],
+                'tournament_award_names' => ['type' => 'textarea', 'label' => 'Wyróżnienia indywidualne (każde w osobnej linii)', 'help' => 'Lista do wyboru w panelu turnieju (zakładka „Wyróżnienia”). Wyróżnienie dla zawodnika klubu trafia też do osiągnięć w jego profilu.', 'default' => "MVP turnieju\nNajlepsza atakująca\nNajlepsza przyjmująca\nNajlepsza rozgrywająca\nNajlepsza libero\nNajlepsza zagrywająca\nNajlepsza blokująca\nNajlepszy zawodnik\nNajlepszy atakujący\nNajlepszy rozgrywający\nNajlepszy libero"],
             ],
         ],
 
