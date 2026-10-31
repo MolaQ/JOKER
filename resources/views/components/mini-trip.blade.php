@@ -1,6 +1,6 @@
 @props(['trip', 'showParentInfo' => false, 'showGroup' => true])
 {{-- Wyjazd na turniej: data jak kartka z kalendarza, miejsce, drużyny ze składami, wynik i (dla rodziców) szczegóły --}}
-<article {{ $attributes->merge(['class' => 'flex gap-4 rounded-2xl bg-white p-4 ring-1 ring-zinc-200']) }}>
+<article {{ $attributes->merge(['class' => 'flex gap-4 rounded-2xl bg-white p-4 ring-1 ring-zinc-200']) }} @if($tint = $trip->tintStyle()) style="{{ $tint }}" @endif>
     <div class="flex w-14 shrink-0 flex-col self-start overflow-hidden rounded-xl text-center shadow-sm ring-1 ring-zinc-200">
         <span class="bg-club-navy py-0.5 text-[10px] font-bold tracking-widest text-white uppercase">{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($trip->starts_on->translatedFormat('M'), 0, 3)) }}</span>
         <span class="bg-white py-1 font-display text-2xl leading-none font-bold text-zinc-900 tabular-nums">{{ $trip->starts_on->format('j') }}</span>

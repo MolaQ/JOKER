@@ -75,7 +75,7 @@
                     @if($child->photoUrl())
                         <img src="{{ $child->photoUrl() }}" alt="{{ $child->displayName() }}" loading="lazy" class="absolute inset-0 h-full w-full object-cover" onerror="this.remove()">
                     @else
-                        <span class="absolute inset-0 flex items-center justify-center pb-10 font-display text-6xl font-bold text-(--mini-accent)" aria-hidden="true">{{ $initials($child) }}</span>
+                        <span class="absolute inset-0 flex items-center justify-center pb-10 font-display text-6xl font-bold text-(--mini-accent)" aria-hidden="true">{{ $child->number ?? $initials($child) }}</span>
                     @endif
                     <span class="absolute inset-x-0 top-0 h-1 bg-(--mini-accent)" aria-hidden="true"></span>
                     @if($site['mini_show_birth_year'] && $child->birth_year)

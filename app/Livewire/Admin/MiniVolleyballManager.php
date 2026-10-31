@@ -264,6 +264,7 @@ class MiniVolleyballManager extends Component
             'first_name' => $player->first_name,
             'last_name' => $player->last_name,
             'birth_year' => (string) $player->birth_year,
+            'number' => (string) $player->number,
             'group' => (string) $player->mini_group_id,
             'image_consent' => $player->image_consent,
             'is_active' => $player->is_active,
@@ -278,6 +279,7 @@ class MiniVolleyballManager extends Component
             'player.first_name' => 'required|string|max:60',
             'player.last_name' => 'required|string|max:80',
             'player.birth_year' => 'nullable|integer|min:2000|max:2100',
+            'player.number' => 'nullable|integer|min:0|max:99',
             'player.group' => 'nullable|exists:mini_groups,id',
             'player.image_consent' => 'boolean',
             'player.is_active' => 'boolean',
@@ -289,6 +291,7 @@ class MiniVolleyballManager extends Component
             'first_name' => trim($player['first_name']),
             'last_name' => trim($player['last_name']),
             'birth_year' => filled($player['birth_year'] ?? null) ? (int) $player['birth_year'] : null,
+            'number' => filled($player['number'] ?? null) ? (int) $player['number'] : null,
             'mini_group_id' => filled($player['group'] ?? null) ? (int) $player['group'] : null,
             'image_consent' => (bool) $player['image_consent'],
             'is_active' => (bool) $player['is_active'],
@@ -314,7 +317,7 @@ class MiniVolleyballManager extends Component
     {
         $this->editingPlayerId = null;
         $this->playerPhoto = null;
-        $this->player = ['first_name' => '', 'last_name' => '', 'birth_year' => '', 'group' => (string) ($group ?? ($this->playerGroup ?: '')), 'image_consent' => false, 'is_active' => true, 'photo_path' => null];
+        $this->player = ['first_name' => '', 'last_name' => '', 'birth_year' => '', 'number' => '', 'group' => (string) ($group ?? ($this->playerGroup ?: '')), 'image_consent' => false, 'is_active' => true, 'photo_path' => null];
         $this->resetErrorBag();
     }
 

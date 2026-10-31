@@ -18,6 +18,7 @@ class MiniPlayer extends Model
         'first_name',
         'last_name',
         'birth_year',
+        'number',
         'photo_path',
         'image_consent',
         'is_active',

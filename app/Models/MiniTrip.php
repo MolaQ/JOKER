@@ -112,4 +112,34 @@ class MiniTrip extends Model
     {
         return app(SiteSettings::class)['mini_show_parent_info'] && $user !== null && ($user->hasRole(UserRole::Parent) || $user->canAccessPanel());
     }
+
+    /**
+     * Kolory grup, które jadą na turniej (bez powtórzeń); pusty, gdy wyjazd nie ma jeszcze drużyn.
+     *
+     * @return list<string>
+     */
+    public function groupColors(): array
+    {
+        return $this->teams->map(fn (MiniTripTeam $team) => $team->group?->iconColor())->filter()->unique()->values()->all();
+    }
+
+    /**
+     * Styl kafelka w kolorach grup: jasny odcień tła (siła z ustawienia „Odcień koloru grupy”)
+     * i pasek z lewej (kilka grup: kilka kolorów). Bez grup zostaje domyślny wygląd.
+     */
+    public function tintStyle(): ?string
+    {
+        $colors = $this->groupColors();
+        $strength = (int) (app(SiteSettings::class)['mini_tint'] ?? 12);
+
+        if ($colors === [] || $strength === 0) {
+            return null;
+        }
+
+        $step = 100 / count($colors);
+        $stripes = collect($colors)->map(fn (string $color, int $index) => $color.' '.round($index * $step, 2).'% '.round(($index + 1) * $step, 2).'%')->implode(', ');
+
+        return '--mini-tint: '.$colors[0].'; --tw-ring-color: color-mix(in srgb, '.$colors[0].' 45%, white); '
+            .'background: linear-gradient(to bottom, '.$stripes.') left / 5px 100% no-repeat, color-mix(in srgb, '.$colors[0].' '.$strength.'%, white);';
+    }
 }

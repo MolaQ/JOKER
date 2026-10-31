@@ -181,6 +181,11 @@
                         @error('child.birth_year') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
+                        <label class="{{ $labelClass }}" for="mini-child-number">{{ __('Numer na koszulce (opcjonalnie)') }}</label>
+                        <input id="mini-child-number" type="number" inputmode="numeric" min="0" max="99" wire:model="child.number" class="{{ $field }}" placeholder="{{ __('np. 7') }}">
+                        @error('child.number') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
                         <label class="{{ $labelClass }}" for="mini-child-group">{{ __('Grupa') }}</label>
                         <select id="mini-child-group" wire:model="child.group" class="{{ $field }}">
                             <option value="">{{ __('wybierz') }}</option>
@@ -198,7 +203,7 @@
                     <ul class="mt-2 divide-y divide-zinc-100">
                         @forelse($groupOption->players as $kid)
                             <li wire:key="kid-{{ $kid->id }}" class="flex flex-wrap items-center gap-2 py-2 text-sm">
-                                <span class="min-w-0 flex-1 font-medium">{{ $kid->first_name }} {{ $kid->last_name }}@if($kid->birth_year) <span class="text-zinc-500">· {{ $kid->birth_year }}</span>@endif</span>
+                                <span class="min-w-0 flex-1 font-medium">@if($kid->number !== null)<span class="mr-1 font-bold text-sky-club-dark">#{{ $kid->number }}</span>@endif{{ $kid->first_name }} {{ $kid->last_name }}@if($kid->birth_year) <span class="text-zinc-500">· {{ $kid->birth_year }}</span>@endif</span>
                                 <select wire:change="moveChild({{ $kid->id }}, $event.target.value)" class="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-xs" aria-label="{{ __('Przenieś do grupy') }}">
                                     @foreach($groups as $target)<option value="{{ $target->id }}" @selected($target->id === $groupOption->id)>{{ $target->name }}</option>@endforeach
                                 </select>

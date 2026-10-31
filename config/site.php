@@ -84,6 +84,7 @@ return [
                 'mini_show_birth_year' => ['type' => 'toggle', 'label' => 'Pokazuj rocznik dziecka', 'default' => true],
                 'mini_show_photos' => ['type' => 'toggle', 'label' => 'Pokazuj zdjęcia dzieci (tylko ze zgodą rodzica)', 'help' => 'Wyłączone: wszystkie dzieci mają sylwetkę.', 'default' => true],
                 'mini_show_trips' => ['type' => 'toggle', 'label' => 'Pokazuj najbliższe wyjazdy', 'default' => true],
+                'mini_tint' => ['type' => 'select', 'label' => 'Odcień koloru grupy w ogłoszeniach i kalendarzu', 'help' => 'Turnieje mini dostają jasne tło w kolorze grupy (kolor ustawia się w panelu grupy) i kolorowy pasek z lewej.', 'default' => '12', 'options' => ['0' => 'bez koloru', '8' => 'bardzo jasny', '12' => 'jasny', '18' => 'wyraźniejszy']],
                 'mini_show_lineups' => ['type' => 'toggle', 'label' => 'Pokazuj składy drużyn na wyjazdach', 'default' => true],
                 'mini_show_parent_info' => ['type' => 'toggle', 'label' => 'Szczegóły wyjazdu dla zalogowanych rodziców', 'help' => 'Zbiórka, transport, koszt. Widzą je tylko rodzice i osoby z panelu.', 'default' => true],
                 'mini_show_results' => ['type' => 'toggle', 'label' => 'Pokazuj wyniki', 'default' => true],

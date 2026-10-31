@@ -39,8 +39,8 @@ class MiniSubmissions extends Component
     /** @var list<array{id: ?int, group: string, name: string, place: string, teams_count: string, players: list<int>}> */
     public array $rows = [];
 
-    /** @var array{first_name: string, last_name: string, birth_year: string, group: string} */
-    public array $child = ['first_name' => '', 'last_name' => '', 'birth_year' => '', 'group' => ''];
+    /** @var array{first_name: string, last_name: string, birth_year: string, number: string, group: string} */
+    public array $child = ['first_name' => '', 'last_name' => '', 'birth_year' => '', 'number' => '', 'group' => ''];
 
     public string $reportTrip = '';
 
@@ -69,18 +69,20 @@ class MiniSubmissions extends Component
             'child.first_name' => 'required|string|max:60',
             'child.last_name' => 'required|string|max:60',
             'child.birth_year' => 'nullable|integer|min:2000|max:2100',
+            'child.number' => 'nullable|integer|min:0|max:99',
             'child.group' => 'required|exists:mini_groups,id',
-        ], ['child.group.required' => __('Wybierz grupę.')], ['child.first_name' => __('imię'), 'child.last_name' => __('nazwisko'), 'child.birth_year' => __('rocznik')])['child'];
+        ], ['child.group.required' => __('Wybierz grupę.')], ['child.first_name' => __('imię'), 'child.last_name' => __('nazwisko'), 'child.birth_year' => __('rocznik'), 'child.number' => __('numer')])['child'];
 
         MiniPlayer::create([
             'mini_group_id' => (int) $data['group'],
             'first_name' => trim($data['first_name']),
             'last_name' => trim($data['last_name']),
             'birth_year' => $data['birth_year'] ?: null,
+            'number' => ($data['number'] ?? '') === '' ? null : (int) $data['number'],
             'is_active' => true,
         ]);
 
-        $this->child = ['first_name' => '', 'last_name' => '', 'birth_year' => '', 'group' => $data['group']];
+        $this->child = ['first_name' => '', 'last_name' => '', 'birth_year' => '', 'number' => '', 'group' => $data['group']];
         $this->toast(__('Dziecko dopisane do grupy.'));
     }
 

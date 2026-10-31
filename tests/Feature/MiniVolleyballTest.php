@@ -115,3 +115,17 @@ test('each group has its own tab with an editor page and its children, and can b
     $this->get(route('mini.show', $group))->assertOk()->assertSee('O grupie')->assertSee('<strong>wtorki</strong>', false)->assertDontSee('<script>alert(1)</script>', false);
     $this->get('/')->assertSee('Czwórki');
 });
+
+test('children show their number instead of initials and trips take the light colour of their groups', function () {
+    $group = MiniGroup::create(['name' => 'Trójki testowe', 'players_on_court' => 3, 'color' => '#ff0000']);
+    MiniPlayer::create(['mini_group_id' => $group->id, 'first_name' => 'Jan', 'last_name' => 'Kowalski', 'number' => 7, 'is_active' => true]);
+    MiniPlayer::create(['mini_group_id' => $group->id, 'first_name' => 'Ola', 'last_name' => 'Nowak', 'is_active' => true]);
+    $trip = MiniTrip::create(['title' => 'Turniej', 'starts_on' => now()->addWeek()->toDateString()]);
+    $trip->teams()->create(['mini_group_id' => $group->id, 'name' => 'Joker 1']);
+
+    $this->get(route('mini.show', $group))->assertSee('>7</span>', false)->assertSee('>ON</span>', false);
+    expect($trip->fresh()->tintStyle())->toContain('color-mix(in srgb, #ff0000 12%, white)');
+
+    app(SiteSettings::class)->set(['mini_tint' => '0']);
+    expect($trip->fresh()->tintStyle())->toBeNull();
+});

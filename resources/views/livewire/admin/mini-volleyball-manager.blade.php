@@ -196,7 +196,7 @@
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div><label class="{{ $label }}">Imię</label><input type="text" wire:model="player.first_name" class="{{ $input }}">@error('player.first_name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div>
                 <div><label class="{{ $label }}">Nazwisko</label><input type="text" wire:model="player.last_name" class="{{ $input }}">@error('player.last_name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div>
-                <div><label class="{{ $label }}">Rocznik</label><input type="number" wire:model="player.birth_year" placeholder="np. 2014" class="{{ $input }}"></div>
+                <div class="grid grid-cols-2 gap-2"><div><label class="{{ $label }}">Rocznik</label><input type="number" wire:model="player.birth_year" placeholder="np. 2014" class="{{ $input }}"></div><div><label class="{{ $label }}">Numer</label><input type="number" min="0" max="99" wire:model="player.number" placeholder="bez" class="{{ $input }}">@error('player.number')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div></div>
                 <div><label class="{{ $label }}">Grupa</label><select wire:model="player.group" class="{{ $input }}"><option value="">bez grupy</option>@foreach($groups as $miniGroup)<option value="{{ $miniGroup->id }}">{{ $miniGroup->name }}</option>@endforeach</select></div>
                 <div class="sm:col-span-2">
                     <label class="{{ $label }}">Zdjęcie</label>
@@ -221,7 +221,7 @@
                     @if($child->photo_path)<img src="{{ \App\Support\Media::url($child->photo_path) }}" alt="" class="size-10 rounded-full object-cover">@else<span class="flex size-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-400"><x-admin-icon name="user" /></span>@endif
                     <div class="min-w-0 flex-1">
                         <p @class(['truncate font-semibold', 'text-gray-900' => $child->is_active, 'text-gray-400' => ! $child->is_active])>{{ $child->name() }}</p>
-                        <p class="text-xs text-gray-500">{{ collect([$child->birth_year, $child->group?->name])->filter()->implode(' · ') }} @unless($child->image_consent)<span class="text-amber-700">· bez zgody na zdjęcia</span>@endunless</p>
+                        <p class="text-xs text-gray-500">{{ collect([$child->number !== null ? '#'.$child->number : null, $child->birth_year, $child->group?->name])->filter()->implode(' · ') }} @unless($child->image_consent)<span class="text-amber-700">· bez zgody na zdjęcia</span>@endunless</p>
                     </div>
                     <button type="button" wire:click="editPlayer({{ $child->id }})" class="admin-action">Edytuj</button>
                     <button type="button" wire:click="deletePlayer({{ $child->id }})" wire:confirm="Usunąć {{ $child->name() }} z listy?" class="admin-action admin-action-danger">Usuń</button>
@@ -240,7 +240,7 @@
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div><label class="{{ $label }}">Imię</label><input type="text" wire:model="player.first_name" class="{{ $input }}">@error('player.first_name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div>
                 <div><label class="{{ $label }}">Nazwisko</label><input type="text" wire:model="player.last_name" class="{{ $input }}">@error('player.last_name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div>
-                <div><label class="{{ $label }}">Rocznik</label><input type="number" wire:model="player.birth_year" placeholder="np. 2014" class="{{ $input }}"></div>
+                <div class="grid grid-cols-2 gap-2"><div><label class="{{ $label }}">Rocznik</label><input type="number" wire:model="player.birth_year" placeholder="np. 2014" class="{{ $input }}"></div><div><label class="{{ $label }}">Numer</label><input type="number" min="0" max="99" wire:model="player.number" placeholder="bez" class="{{ $input }}">@error('player.number')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div></div>
                 <div><label class="{{ $label }}">Grupa</label><select wire:model="player.group" class="{{ $input }}"><option value="">bez grupy</option>@foreach($groups as $miniGroup)<option value="{{ $miniGroup->id }}">{{ $miniGroup->name }}</option>@endforeach</select></div>
                 <div class="sm:col-span-2">
                     <label class="{{ $label }}">Zdjęcie</label>
@@ -271,7 +271,7 @@
                     @if($child->photo_path)<img src="{{ \App\Support\Media::url($child->photo_path) }}" alt="" class="size-10 rounded-full object-cover">@else<span class="flex size-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-400"><x-admin-icon name="user" /></span>@endif
                     <div class="min-w-0 flex-1">
                         <p @class(['truncate font-semibold', 'text-gray-900' => $child->is_active, 'text-gray-400' => ! $child->is_active])>{{ $child->name() }}</p>
-                        <p class="text-xs text-gray-500">{{ collect([$child->birth_year, $child->group?->name])->filter()->implode(' · ') }} @unless($child->image_consent)<span class="text-amber-700">· bez zgody na zdjęcia</span>@endunless</p>
+                        <p class="text-xs text-gray-500">{{ collect([$child->number !== null ? '#'.$child->number : null, $child->birth_year, $child->group?->name])->filter()->implode(' · ') }} @unless($child->image_consent)<span class="text-amber-700">· bez zgody na zdjęcia</span>@endunless</p>
                     </div>
                     <button type="button" wire:click="editPlayer({{ $child->id }})" class="admin-action">Edytuj</button>
                     <button type="button" wire:click="deletePlayer({{ $child->id }})" wire:confirm="Usunąć {{ $child->name() }} z listy?" class="admin-action admin-action-danger">Usuń</button>
