@@ -36,14 +36,14 @@
 @section('content')
 {{-- HERO --}}
 <section data-hero-slider class="relative isolate -mt-16 overflow-hidden bg-ink text-white lg:-mt-20">
-    <div class="relative min-h-[80svh] lg:min-h-[92svh]">
+    <div class="relative grid min-h-[80svh] lg:min-h-[92svh]">
     @foreach($slides as $slide)
-        <div data-slide aria-hidden="{{ $loop->first ? 'false' : 'true' }}" class="absolute inset-0 transition-opacity duration-1000 {{ $loop->first ? 'opacity-100' : 'opacity-0' }}">
+        <div data-slide aria-hidden="{{ $loop->first ? 'false' : 'true' }}" class="relative col-start-1 row-start-1 transition-opacity duration-1000 {{ $loop->first ? 'opacity-100' : 'opacity-0' }}">
             <x-photo :src="$slide['image']" :alt="$slide['title']" :eager="$loop->first" width="1800" height="1200" class="absolute inset-0 h-full w-full scale-105" />
             <div class="absolute inset-0 bg-gradient-to-t from-ink via-ink/60 to-ink/20"></div>
             <div class="absolute inset-0 bg-gradient-to-r from-ink/80 via-transparent to-transparent"></div>
 
-            <div class="container-site relative flex min-h-[80svh] flex-col justify-end pt-32 pb-12 lg:min-h-[92svh] lg:pb-48">
+            <div class="container-site relative flex min-h-[80svh] flex-col justify-end pt-32 pb-12 lg:min-h-[92svh] lg:pb-[calc(var(--hero-panel,9rem)+3rem)]">
                 <p class="eyebrow">{{ $site['club_name'] }} · {{ __('Sezon') }} {{ $seasonName ?? date('Y') }}</p>
                 <h1 class="heading-xl mt-4 max-w-4xl text-balance">{{ $slide['title'] }}</h1>
                 @if($slide['subtitle'])
@@ -62,7 +62,7 @@
     @endforeach
 
     @if($slides->count() > 1)
-        <div class="absolute bottom-56 left-1/2 z-10 hidden -translate-x-1/2 sm:flex gap-2 sm:bottom-64 lg:bottom-36">
+        <div class="absolute bottom-56 left-1/2 z-10 hidden -translate-x-1/2 sm:flex gap-2 sm:bottom-64 lg:bottom-[calc(var(--hero-panel,8rem)+1rem)]">
             @foreach($slides as $slide)
                 <button type="button" data-dot class="{{ $loop->first ? 'is-active' : '' }} h-1.5 w-8 rounded-full bg-white/30 transition-all [&.is-active]:w-14 [&.is-active]:bg-sky-club" aria-label="{{ __('Slajd') }} {{ $loop->iteration }}"></button>
             @endforeach
@@ -72,7 +72,7 @@
     </div>
 
     {{-- Najbliższy mecz + liczby klubu (na telefonie pod zdjęciem, na komputerze na zdjęciu) --}}
-    <div class="relative z-10 lg:absolute lg:inset-x-0 lg:bottom-0">
+    <div data-hero-panel class="relative z-10 lg:absolute lg:inset-x-0 lg:bottom-0">
         <div class="container-site">
             <div class="grid gap-px overflow-hidden rounded-t-3xl bg-white/10 backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-4">
                 <div class="bg-ink/70 p-5 sm:col-span-2 lg:p-6">

@@ -73,6 +73,13 @@ if (header) {
 const slider = document.querySelector('[data-hero-slider]');
 
 if (slider) {
+    // Pasek „Najbliższy mecz” leży na zdjęciu: tekst i przyciski slajdu zawsze kończą się nad nim,
+    // nawet gdy licznik zejdzie do drugiej linii i pasek urośnie.
+    const panel = slider.querySelector('[data-hero-panel]');
+    if (panel && 'ResizeObserver' in window) {
+        new ResizeObserver(() => slider.style.setProperty('--hero-panel', `${panel.offsetHeight}px`)).observe(panel);
+    }
+
     const slides = [...slider.querySelectorAll('[data-slide]')];
     const dots = [...slider.querySelectorAll('[data-dot]')];
     let current = 0;
