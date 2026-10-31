@@ -86,7 +86,7 @@ return [
                 'mini_show_results' => ['type' => 'toggle', 'label' => 'Pokazuj wyniki', 'default' => true],
                 'mini_show_history' => ['type' => 'toggle', 'label' => 'Pokazuj historię i medale', 'default' => true],
                 'mini_show_rules' => ['type' => 'toggle', 'label' => 'Pokazuj zasady gry', 'default' => true],
-                'mini_tile_dots' => ['type' => 'toggle', 'label' => 'Kafel: kropki z liczbą graczy na boisku', 'default' => true],
+                'mini_tile_dots' => ['type' => 'toggle', 'label' => 'Kafel: ikonki zawodników (liczba graczy na boisku)', 'default' => true],
                 'mini_tile_count' => ['type' => 'toggle', 'label' => 'Kafel: liczba dzieci', 'default' => true],
                 'mini_tile_medal' => ['type' => 'toggle', 'label' => 'Kafel: złoty medal', 'default' => true],
                 'mini_tile_live' => ['type' => 'toggle', 'label' => 'Kafel: najbliższy wyjazd albo ostatni wynik', 'default' => true],
@@ -233,6 +233,23 @@ return [
                 'tm_number_text' => ['type' => 'color', 'label' => 'Numer meczu: tekst', 'default' => '#0f172a'],
                 'tm_card_from' => ['type' => 'color', 'label' => 'Karty drużyn: kolor górny (gradient)', 'default' => '#1b3f86'],
                 'tm_card_to' => ['type' => 'color', 'label' => 'Karty drużyn: kolor dolny (gradient)', 'default' => '#12141a'],
+            ],
+        ],
+
+        'udostepnianie' => [
+            'label' => 'Grafiki do mediów społecznościowych',
+            'icon' => 'photo',
+            'fields' => [
+                'share_games' => ['type' => 'toggle', 'label' => 'Przycisk „Grafika” przy wynikach meczów ligowych', 'help' => 'Kibic albo trener tworzy kwadratową grafikę z wynikiem i udostępnia ją z telefonu (Facebook, Instagram, Messenger) albo pobiera.', 'default' => true],
+                'share_tournaments' => ['type' => 'toggle', 'label' => 'Przycisk „Grafika” przy meczach turniejowych', 'help' => 'Z nazwą turnieju, kategorią i fazą (grupa, półfinał, finał).', 'default' => true],
+                'share_mini' => ['type' => 'toggle', 'label' => 'Przycisk „Grafika” przy wynikach minisiatkówki', 'default' => true],
+                'share_mini_names' => ['type' => 'toggle', 'label' => 'Minisiatkówka: imiona dzieci na grafice', 'help' => 'Wyłączone: na grafice są tylko drużyny i miejsca. Imiona zgodnie z ustawieniem „Podpis dziecka”.', 'default' => false],
+                'share_articles' => ['type' => 'toggle', 'label' => 'Przycisk „Grafika” przy aktualnościach i relacjach', 'help' => 'Zdjęcie artykułu z tytułem i herbem.', 'default' => true],
+                'share_format' => ['type' => 'select', 'label' => 'Format grafiki', 'default' => 'square', 'options' => ['square' => 'Kwadrat 1080×1080 (Facebook, Instagram)', 'portrait' => 'Pion 1080×1350 (Instagram)', 'story' => 'Relacja 1080×1920 (Instagram, Facebook Stories)']],
+                'share_bg' => ['type' => 'color', 'label' => 'Tło grafiki', 'default' => '#0f2d6b'],
+                'share_bg_to' => ['type' => 'color', 'label' => 'Tło grafiki: drugi kolor (gradient)', 'default' => '#12141a'],
+                'share_accent' => ['type' => 'color', 'label' => 'Kolor wyróżnień (wynik, miejsca)', 'default' => '#ffd600'],
+                'share_footer' => ['type' => 'text', 'label' => 'Podpis na dole grafiki', 'help' => 'Np. „jokerpila.pl · #JokerPiła”. Puste: adres strony.', 'default' => ''],
             ],
         ],
 

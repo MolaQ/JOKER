@@ -8,6 +8,7 @@ import { registerPhotoCropper } from './photo-cropper';
 import { registerRichEditor } from './rich-editor';
 import { initSearch } from './search';
 import { registerSearchSelect } from './search-select';
+import { initShareCards } from './share-card';
 import { initTableSort } from './table-sort';
 import { registerToasts } from './toasts';
 
@@ -23,6 +24,7 @@ initPush();
 initAdminTables();
 initTableSort();
 initDailyLineup();
+initShareCards();
 
 // Pojawianie się sekcji przy przewijaniu.
 const revealObserver = 'IntersectionObserver' in window

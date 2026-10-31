@@ -23,6 +23,7 @@
             @if($article->hasEnglish())
                 <p class="mt-4 inline-flex items-center gap-2 text-sm text-zinc-300"><x-english-badge /> {{ __('Dostępna wersja angielska') }}</p>
             @endif
+            <x-share-card :card="\App\Support\ShareCards::article($article)" dark class="mt-6" />
         </div>
     </header>
 

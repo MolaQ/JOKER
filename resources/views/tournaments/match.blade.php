@@ -46,8 +46,9 @@
             <p class="mt-6 text-center text-sm text-white/70 tabular-nums">({{ $match->setsLabel() }})</p>
         @endif
 
-        <div class="mt-8 flex justify-center">
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
             @livewire('like-button', ['type' => 'tournament_match', 'id' => $match->id, 'dark' => true], key('tournament-match-like-'.$match->id))
+            <x-share-card :card="\App\Support\ShareCards::tournamentMatch($match)" dark class="py-1! text-sm" />
         </div>
     </div>
 </section>

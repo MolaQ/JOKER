@@ -12,7 +12,7 @@
         <a href="{{ route('mini.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ __($site['mini_title']) }}</a>
         @if($group->ageLine())<p class="eyebrow mt-6">{{ $group->ageLine() }}</p>@endif
         <h1 class="heading-xl mt-3">{{ $group->name }}</h1>
-        <span class="mt-4 flex gap-2">@for($i = 0; $i < $group->players_on_court; $i++)<span class="size-4 rounded-full bg-amber-400"></span>@endfor</span>
+        <x-mini-players :group="$group" size="lg" class="mt-4" />
         <dl class="mt-10 flex flex-wrap gap-x-10 gap-y-4">
             <div><dt class="text-xs text-zinc-400 uppercase">{{ __('Dzieci') }}</dt><dd class="font-display text-4xl font-bold">{{ $players->count() }}</dd></div>
             @if($site['mini_show_history'])<div><dt class="text-xs text-zinc-400 uppercase">{{ __('Medale') }}</dt><dd class="font-display text-4xl font-bold">{{ $medals->count() }}</dd></div>@endif
@@ -28,9 +28,9 @@
         'dzieci' => [__('Dzieci'), $site['mini_show_children']],
         'wyjazdy' => [__('Wyjazdy'), $site['mini_show_trips'] && $upcoming->isNotEmpty()],
         'wyniki' => [__('Wyniki'), $site['mini_show_results'] && $past->isNotEmpty()],
-        'historia' => [__('Historia'), $site['mini_show_history'] && ($medals->isNotEmpty() || filled($group->history))],
+        'historia' => [__('Historia i sukcesy'), $site['mini_show_history'] && ($medals->isNotEmpty() || filled($group->history))],
         'zasady' => [__('Zasady'), $site['mini_show_rules'] && filled($group->rules)],
-        'zglos' => ['＋ '.__('Dodaj turniej i wyniki'), \App\Livewire\MiniSubmissions::canSubmit()],
+        'zglos' => ['＋ '.__('Turnieje, wyniki, dzieci'), \App\Livewire\MiniSubmissions::canSubmit()],
     ])->filter(fn ($tab) => $tab[1]);
 @endphp
 {{-- Grupy jako zakładki: kliknięcie przechodzi do składu, dzieci i zasad danej grupy --}}
@@ -42,7 +42,7 @@
                 'bg-club-navy text-white shadow' => $tabGroup->is($group),
                 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => ! $tabGroup->is($group),
             ])>
-                <span class="flex gap-0.5" aria-hidden="true">@for($i = 0; $i < $tabGroup->players_on_court; $i++)<span class="size-1.5 rounded-full bg-amber-400"></span>@endfor</span>
+                <x-mini-players :group="$tabGroup" size="xs" aria-hidden="true" />
                 {{ $tabGroup->name }}
             </a>
         @endforeach

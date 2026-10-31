@@ -73,6 +73,7 @@
             <a href="#komentarze" class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white ring-1 ring-white/20 hover:bg-white/20" title="{{ __('Komentarze') }}">
                 <span aria-hidden="true">💬</span> <span class="tabular-nums">{{ $game->approvedComments->count() }}</span>
             </a>
+            <x-share-card :card="\App\Support\ShareCards::game($game)" dark class="py-1! text-sm" />
             @if($game->isUpcoming())
                 <a href="{{ route('games.calendar', $game) }}" class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white ring-1 ring-white/20 hover:bg-white/20">📅 {{ __('Do kalendarza') }}</a>
             @endif

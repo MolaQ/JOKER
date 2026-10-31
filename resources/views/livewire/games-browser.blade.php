@@ -336,7 +336,7 @@
                                                 <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">–</span>
                                             @endif
                                             <span class="min-w-0 flex-1">
-                                                <span class="block text-xs font-semibold tracking-wide text-emerald-700 uppercase">{{ $miniTeam->group?->name }}{{ $miniTeam->teams_count ? ' | '.$miniTeam->fieldLabel() : '' }}</span>
+                                                <span class="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-emerald-700 uppercase">@if($miniTeam->group)<x-mini-players :group="$miniTeam->group" size="xs" />@endif{{ $miniTeam->group?->name }}{{ $miniTeam->teams_count ? ' | '.$miniTeam->fieldLabel() : '' }}</span>
                                                 <span class="block font-semibold">{{ $miniTeam->name }}</span>
                                             </span>
                                             @if($site['mini_show_lineups'] && $miniTeam->players->isNotEmpty())

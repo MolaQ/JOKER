@@ -11,8 +11,8 @@
         @endif
     </p>
 
-    <nav class="mt-6 grid grid-cols-3 gap-1 rounded-2xl bg-zinc-100 p-1" role="tablist">
-        @foreach(['turniej' => __('Nowy turniej'), 'wyniki' => __('Wyniki'), 'relacja' => __('Relacja')] as $key => $name)
+    <nav class="mt-6 grid grid-cols-4 gap-1 rounded-2xl bg-zinc-100 p-1" role="tablist">
+        @foreach(['turniej' => __('Turniej'), 'wyniki' => __('Wyniki'), 'relacja' => __('Relacja'), 'dzieci' => __('Dzieci')] as $key => $name)
             <button type="button" role="tab" wire:click="$set('section', '{{ $key }}')" @class(['rounded-xl px-3 py-2.5 text-sm font-semibold transition', 'bg-white text-zinc-900 shadow' => $section === $key, 'text-zinc-600 hover:text-zinc-900' => $section !== $key])>{{ $name }}</button>
         @endforeach
     </nav>
@@ -159,5 +159,57 @@
             </div>
             <button type="submit" class="btn-primary w-full sm:w-auto">{{ __('Wyślij do zatwierdzenia') }}</button>
         </form>
+    @endif
+    @if($section === 'dzieci')
+        <div class="card mt-6 space-y-5 p-5 sm:p-6">
+            <form wire:submit="addChild" class="space-y-4">
+                <p class="text-sm text-zinc-600">{{ __('Na stronie dziecko ma tylko imię, nazwisko i rocznik, bez profilu i bez linku. Zdjęcie dodaje administrator po zgodzie rodzica.') }}</p>
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="{{ $labelClass }}" for="mini-child-first">{{ __('Imię') }}</label>
+                        <input id="mini-child-first" type="text" wire:model="child.first_name" class="{{ $field }}" autocomplete="off">
+                        @error('child.first_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="{{ $labelClass }}" for="mini-child-last">{{ __('Nazwisko') }}</label>
+                        <input id="mini-child-last" type="text" wire:model="child.last_name" class="{{ $field }}" autocomplete="off">
+                        @error('child.last_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="{{ $labelClass }}" for="mini-child-year">{{ __('Rocznik (opcjonalnie)') }}</label>
+                        <input id="mini-child-year" type="number" inputmode="numeric" wire:model="child.birth_year" class="{{ $field }}" placeholder="{{ now()->year - 10 }}">
+                        @error('child.birth_year') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="{{ $labelClass }}" for="mini-child-group">{{ __('Grupa') }}</label>
+                        <select id="mini-child-group" wire:model="child.group" class="{{ $field }}">
+                            <option value="">{{ __('wybierz') }}</option>
+                            @foreach($groups as $groupOption)<option value="{{ $groupOption->id }}">{{ $groupOption->name }}</option>@endforeach
+                        </select>
+                        @error('child.group') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary w-full sm:w-auto">{{ __('Dopisz dziecko') }}</button>
+            </form>
+
+            @foreach($groups as $groupOption)
+                <div wire:key="kids-{{ $groupOption->id }}" class="border-t border-zinc-100 pt-4">
+                    <h3 class="flex items-center gap-2 font-display text-lg font-semibold uppercase"><x-mini-players :group="$groupOption" size="xs" /> {{ $groupOption->name }} <span class="text-sm font-normal text-zinc-500">({{ $groupOption->players->count() }})</span></h3>
+                    <ul class="mt-2 divide-y divide-zinc-100">
+                        @forelse($groupOption->players as $kid)
+                            <li wire:key="kid-{{ $kid->id }}" class="flex flex-wrap items-center gap-2 py-2 text-sm">
+                                <span class="min-w-0 flex-1 font-medium">{{ $kid->first_name }} {{ $kid->last_name }}@if($kid->birth_year) <span class="text-zinc-500">· {{ $kid->birth_year }}</span>@endif</span>
+                                <select wire:change="moveChild({{ $kid->id }}, $event.target.value)" class="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-xs" aria-label="{{ __('Przenieś do grupy') }}">
+                                    @foreach($groups as $target)<option value="{{ $target->id }}" @selected($target->id === $groupOption->id)>{{ $target->name }}</option>@endforeach
+                                </select>
+                                <button type="button" wire:click="retireChild({{ $kid->id }})" wire:confirm="{{ __('Zdjąć dziecko z listy grupy? Zostanie w składach z dawnych turniejów.') }}" class="text-xs text-red-600 hover:underline">{{ __('Zdejmij') }}</button>
+                            </li>
+                        @empty
+                            <li class="py-2 text-sm text-zinc-500">{{ __('Brak dzieci w tej grupie.') }}</li>
+                        @endforelse
+                    </ul>
+                </div>
+            @endforeach
+        </div>
     @endif
 </div>

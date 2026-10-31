@@ -25,6 +25,9 @@
         @foreach($trip->articles as $article)
             <a href="{{ route('articles.show', $article) }}" class="mt-2 mr-4 inline-block text-sm font-semibold text-sky-club-dark hover:underline">📰 {{ __('Relacja') }}: {{ $article->title }} →</a>
         @endforeach
+        @if($share = \App\Support\ShareCards::miniTrip($trip))
+            <x-share-card :card="$share" class="mt-3 mr-2" />
+        @endif
         @if($trip->tournament)
             <a href="{{ route('tournaments.show', $trip->tournament) }}" class="mt-2 inline-block text-sm font-semibold text-sky-club-dark hover:underline">{{ __('Pełne wyniki turnieju') }} →</a>
         @endif

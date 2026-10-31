@@ -233,6 +233,7 @@
                                             @endif
                                             <span class="ml-auto flex shrink-0 items-center gap-2">
                                                 <x-match-delay :match="$match" />
+                                                @if(! $row['live'])<x-share-card :card="\App\Support\ShareCards::tournamentMatch($match)" compact />@endif
                                                 @if($row['live'])
                                                     <span class="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-600 ring-1 ring-red-200">
                                                         <span class="relative flex size-2"><span class="absolute inset-0 animate-ping rounded-full bg-red-500/70"></span><span class="relative size-2 rounded-full bg-red-500"></span></span>

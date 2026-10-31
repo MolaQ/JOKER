@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\ContentProposal;
 use App\Models\MiniGroup;
+use App\Models\MiniPlayer;
 use App\Models\MiniTrip;
 use App\Support\MiniResults;
 use App\Support\SiteSettings;
@@ -38,6 +39,9 @@ class MiniSubmissions extends Component
     /** @var list<array{id: ?int, group: string, name: string, place: string, teams_count: string, players: list<int>}> */
     public array $rows = [];
 
+    /** @var array{first_name: string, last_name: string, birth_year: string, group: string} */
+    public array $child = ['first_name' => '', 'last_name' => '', 'birth_year' => '', 'group' => ''];
+
     public string $reportTrip = '';
 
     public string $reportTitle = '';
@@ -52,6 +56,48 @@ class MiniSubmissions extends Component
         abort_unless(self::canSubmit(), 403);
         $this->groupId = $groupId;
         $this->tripGroups = $groupId ? [(string) $groupId] : [];
+        $this->child['group'] = (string) ($groupId ?? '');
+    }
+
+    /**
+     * Dziecko na liście grupy: tylko imię, nazwisko i rocznik, bez konta i bez profilu.
+     * Zgodę na zdjęcie i zdjęcie ustawia administrator w panelu.
+     */
+    public function addChild(): void
+    {
+        $data = $this->validate([
+            'child.first_name' => 'required|string|max:60',
+            'child.last_name' => 'required|string|max:60',
+            'child.birth_year' => 'nullable|integer|min:2000|max:2100',
+            'child.group' => 'required|exists:mini_groups,id',
+        ], ['child.group.required' => __('Wybierz grupę.')], ['child.first_name' => __('imię'), 'child.last_name' => __('nazwisko'), 'child.birth_year' => __('rocznik')])['child'];
+
+        MiniPlayer::create([
+            'mini_group_id' => (int) $data['group'],
+            'first_name' => trim($data['first_name']),
+            'last_name' => trim($data['last_name']),
+            'birth_year' => $data['birth_year'] ?: null,
+            'is_active' => true,
+        ]);
+
+        $this->child = ['first_name' => '', 'last_name' => '', 'birth_year' => '', 'group' => $data['group']];
+        $this->toast(__('Dziecko dopisane do grupy.'));
+    }
+
+    public function moveChild(int $id, string $groupId): void
+    {
+        abort_unless(MiniGroup::whereKey($groupId)->exists(), 422);
+        MiniPlayer::where('is_active', true)->findOrFail($id)->update(['mini_group_id' => (int) $groupId]);
+        $this->toast(__('Dziecko przeniesione.'));
+    }
+
+    /**
+     * Dziecko, które skończyło treningi, znika z listy grupy, ale zostaje w składach z dawnych turniejów.
+     */
+    public function retireChild(int $id): void
+    {
+        MiniPlayer::where('is_active', true)->findOrFail($id)->update(['is_active' => false]);
+        $this->toast(__('Dziecko zdjęte z listy grupy.'));
     }
 
     public static function canSubmit(): bool

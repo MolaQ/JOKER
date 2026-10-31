@@ -289,7 +289,7 @@ class MiniVolleyballManager extends Component
     {
         $group = MiniGroup::findOrFail($id);
         $this->editingGroupId = $group->id;
-        $this->group = collect($group->only(['name', 'slug', 'players_on_court', 'age_label', 'birth_year_from', 'birth_year_to', 'gender', 'lead', 'rules', 'history', 'display_order']))
+        $this->group = collect($group->only(['name', 'slug', 'players_on_court', 'age_label', 'birth_year_from', 'birth_year_to', 'gender', 'color', 'lead', 'rules', 'history', 'display_order']))
             ->map(fn ($value) => (string) $value)->all() + ['is_active' => $group->is_active, 'photo_path' => $group->photo_path];
         $this->groupPhoto = null;
     }
@@ -305,6 +305,7 @@ class MiniVolleyballManager extends Component
             'group.birth_year_to' => 'nullable|integer|min:2000|max:2100',
             'group.gender' => ['nullable', Rule::in(array_keys(MiniGroup::GENDERS))],
             'group.lead' => 'nullable|string|max:255',
+            'group.color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'group.rules' => 'nullable|string|max:20000',
             'group.history' => 'nullable|string|max:20000',
             'group.display_order' => 'nullable|integer|min:0',
@@ -336,7 +337,7 @@ class MiniVolleyballManager extends Component
     {
         $this->editingGroupId = null;
         $this->groupPhoto = null;
-        $this->group = ['name' => '', 'slug' => '', 'players_on_court' => '4', 'age_label' => '', 'birth_year_from' => '', 'birth_year_to' => '', 'gender' => '', 'lead' => '', 'rules' => '', 'history' => '', 'display_order' => '0', 'is_active' => true, 'photo_path' => null];
+        $this->group = ['name' => '', 'slug' => '', 'players_on_court' => '4', 'age_label' => '', 'birth_year_from' => '', 'birth_year_to' => '', 'gender' => '', 'color' => '', 'lead' => '', 'rules' => '', 'history' => '', 'display_order' => '0', 'is_active' => true, 'photo_path' => null];
         $this->resetErrorBag();
     }
 

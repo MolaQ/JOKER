@@ -173,6 +173,14 @@
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div><label class="{{ $label }}">Nazwa</label><input type="text" wire:model="group.name" placeholder="np. Czwórki" class="{{ $input }}">@error('group.name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div>
                 <div><label class="{{ $label }}">Graczy na boisku</label><select wire:model="group.players_on_court" class="{{ $input }}">@foreach([4 => 'czwórki (4)', 3 => 'trójki (3)', 2 => 'dwójki (2)', 1 => 'singielki (1)'] as $value => $name)<option value="{{ $value }}">{{ $name }}</option>@endforeach</select></div>
+                <div><label class="{{ $label }}">Kolor ikonek zawodników</label>
+                    <div class="mt-1 flex items-center gap-2">
+                        <input type="color" wire:model.live="group.color" value="{{ $group['color'] ?: (\App\Models\MiniGroup::DEFAULT_COLORS[(int) ($group['players_on_court'] ?? 4)] ?? '#f5b301') }}" class="h-10 w-14 cursor-pointer rounded border border-gray-300 bg-white p-1">
+                        <span class="flex gap-0.5" style="color: {{ $group['color'] ?: (\App\Models\MiniGroup::DEFAULT_COLORS[(int) ($group['players_on_court'] ?? 4)] ?? '#f5b301') }}">@for($i = 0; $i < (int) ($group['players_on_court'] ?? 4); $i++)<svg viewBox="0 0 24 24" class="size-6" fill="currentColor" aria-hidden="true"><circle cx="12" cy="7.2" r="4.6"/><path d="M3.5 22c0-5 3.8-8.6 8.5-8.6s8.5 3.6 8.5 8.6z"/></svg>@endfor</span>
+                        @if($group['color'])<button type="button" wire:click="$set('group.color', '')" class="text-xs text-gray-500 underline">domyślny</button>@endif
+                    </div>
+                    @error('group.color') <p class="mt-1 text-xs text-red-600">Podaj kolor w formacie #RRGGBB.</p> @enderror
+                </div>
                 <div><label class="{{ $label }}">Kategoria wiekowa</label><input type="text" wire:model="group.age_label" placeholder="np. U-13" class="{{ $input }}"></div>
                 <div><label class="{{ $label }}">Płeć (opcjonalnie)</label><select wire:model="group.gender" class="{{ $input }}"><option value="">nie pokazuj</option>@foreach(\App\Models\MiniGroup::GENDERS as $value => $name)<option value="{{ $value }}">{{ $name }}</option>@endforeach</select></div>
                 <div><label class="{{ $label }}">Rocznik od</label><input type="number" wire:model="group.birth_year_from" class="{{ $input }}"></div>
@@ -200,7 +208,7 @@
         <ul class="divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow ring-1 ring-zinc-200">
             @forelse($groups as $miniGroup)
                 <li class="flex flex-wrap items-center gap-3 p-4" wire:key="mini-group-{{ $miniGroup->id }}">
-                    <span class="flex gap-1">@for($i = 0; $i < $miniGroup->players_on_court; $i++)<span class="size-2.5 rounded-full bg-amber-400"></span>@endfor</span>
+                    <x-mini-players :group="$miniGroup" size="sm" />
                     <div class="min-w-0 flex-1">
                         <p class="font-semibold text-gray-900">{{ $miniGroup->name }} @unless($miniGroup->is_active)<span class="text-xs font-normal text-gray-400">(ukryta)</span>@endunless</p>
                         <p class="text-sm text-gray-500">{{ $miniGroup->ageLine() ?? 'bez kategorii' }} · dzieci: {{ $miniGroup->players_count }}</p>

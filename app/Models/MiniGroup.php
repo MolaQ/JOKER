@@ -25,6 +25,7 @@ class MiniGroup extends Model
         'birth_year_from',
         'birth_year_to',
         'gender',
+        'color',
         'photo_path',
         'lead',
         'rules',
@@ -56,6 +57,17 @@ class MiniGroup extends Model
     public function scopeOrdered(Builder $query): void
     {
         $query->orderBy('display_order')->orderByDesc('players_on_court')->orderBy('name');
+    }
+
+    /** @var array<int, string> domyślne kolory ikonek według liczby graczy na boisku */
+    public const DEFAULT_COLORS = [4 => '#f5b301', 3 => '#4fa3e0', 2 => '#22c55e', 1 => '#f472b6'];
+
+    /**
+     * Kolor ikonek zawodników (z panelu albo domyślny dla czwórek, trójek, dwójek i singielek).
+     */
+    public function iconColor(): string
+    {
+        return $this->color ?: (self::DEFAULT_COLORS[(int) $this->players_on_court] ?? '#f5b301');
     }
 
     public function players(): HasMany

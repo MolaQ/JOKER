@@ -79,11 +79,33 @@ test('a report about a mini tournament becomes an article linked to that tournam
 });
 
 test('the submission tab is only for mini roles and staff, and groups are tabs and miniatures', function () {
-    $this->get(route('mini.show', $this->group))->assertOk()->assertSee('Trójki')->assertDontSee('Dodaj turniej i wyniki');
-    $this->actingAs(User::factory()->parent()->create())->get(route('mini.show', $this->group))->assertDontSee('Dodaj turniej i wyniki');
-    $this->actingAs(User::factory()->create(['role' => UserRole::MiniTrainer]))->get(route('mini.show', $this->group))->assertSee('Dodaj turniej i wyniki');
+    $this->get(route('mini.show', $this->group))->assertOk()->assertSee('Trójki')->assertDontSee('Turnieje, wyniki, dzieci');
+    $this->actingAs(User::factory()->parent()->create())->get(route('mini.show', $this->group))->assertDontSee('Turnieje, wyniki, dzieci');
+    $this->actingAs(User::factory()->create(['role' => UserRole::MiniTrainer]))->get(route('mini.show', $this->group))->assertSee('Turnieje, wyniki, dzieci');
     $this->actingAs(User::factory()->parent()->create());
     Livewire::test(MiniSubmissions::class)->assertForbidden();
 
     $this->get(route('teams.index'))->assertOk()->assertSee(route('mini.show', $this->group));
+});
+
+test('a mini coordinator adds, moves and retires children without profiles', function () {
+    $threes = MiniGroup::firstWhere('slug', 'trojki');
+    $this->actingAs(User::factory()->create(['role' => UserRole::MiniCoordinator]));
+
+    $component = Livewire::test(MiniSubmissions::class, ['groupId' => $this->group->id])
+        ->set('section', 'dzieci')
+        ->set('child.first_name', 'Hania')->set('child.last_name', 'Kot')->set('child.birth_year', '2015')
+        ->call('addChild')->assertHasNoErrors();
+
+    $hania = MiniPlayer::firstWhere('first_name', 'Hania');
+    expect($hania->mini_group_id)->toBe($this->group->id)->and($hania->image_consent)->toBeFalse();
+
+    $component->call('moveChild', $hania->id, (string) $threes->id)->call('retireChild', $this->child->id);
+    expect($hania->fresh()->mini_group_id)->toBe($threes->id)->and($this->child->fresh()->is_active)->toBeFalse();
+});
+
+test('group icons use the colour set in the panel', function () {
+    $this->group->update(['color' => '#123abc']);
+    $this->get(route('mini.show', $this->group))->assertOk()->assertSee('color: #123abc', false);
+    expect(MiniGroup::firstWhere('slug', 'trojki')->iconColor())->toBe(MiniGroup::DEFAULT_COLORS[3]);
 });
