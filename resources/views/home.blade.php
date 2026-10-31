@@ -43,13 +43,13 @@
             <div class="absolute inset-0 bg-gradient-to-t from-ink via-ink/60 to-ink/20"></div>
             <div class="absolute inset-0 bg-gradient-to-r from-ink/80 via-transparent to-transparent"></div>
 
-            <div class="container-site relative flex min-h-[80svh] flex-col justify-end pt-32 pb-12 lg:min-h-[92svh] lg:pb-[calc(var(--hero-panel,9rem)+3rem)]">
+            <div class="container-site relative flex min-h-[80svh] flex-col justify-end pt-32 pb-12 lg:min-h-[92svh] [@media(max-height:820px)]:lg:pt-24 lg:pb-[calc(var(--hero-panel,9rem)+3rem)]">
                 <p class="eyebrow">{{ $site['club_name'] }} · {{ __('Sezon') }} {{ $seasonName ?? date('Y') }}</p>
-                <h1 class="heading-xl mt-4 max-w-4xl text-balance">{{ $slide['title'] }}</h1>
+                <h1 class="heading-xl mt-4 max-w-4xl text-balance [@media(max-height:820px)]:lg:text-7xl">{{ $slide['title'] }}</h1>
                 @if($slide['subtitle'])
-                    <p class="mt-6 max-w-xl text-lg text-zinc-300">{{ $slide['subtitle'] }}</p>
+                    <p class="mt-6 max-w-xl text-lg text-zinc-300 [@media(max-height:820px)]:lg:mt-4">{{ $slide['subtitle'] }}</p>
                 @endif
-                <div class="mt-8 flex flex-wrap gap-3">
+                <div class="mt-8 flex flex-wrap gap-3 [@media(max-height:820px)]:lg:mt-6">
                     @if($slide['cta_label'] && $slide['cta_url'])
                         <a href="{{ $slide['cta_url'] }}" class="btn-primary">{{ $slide['cta_label'] }} <span aria-hidden="true">→</span></a>
                     @endif
@@ -74,10 +74,10 @@
     {{-- Najbliższy mecz + liczby klubu (na telefonie pod zdjęciem, na komputerze na zdjęciu) --}}
     <div data-hero-panel class="relative z-10 lg:absolute lg:inset-x-0 lg:bottom-0">
         <div class="container-site">
-            <div class="grid gap-px overflow-hidden rounded-t-3xl bg-white/10 backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-4">
-                <div class="bg-ink/70 p-5 sm:col-span-2 lg:p-6">
+            <div class="grid gap-px overflow-hidden rounded-t-3xl bg-white/10 backdrop-blur-xl sm:grid-cols-2 lg:grid-cols-5">
+                <div class="bg-ink/70 p-5 sm:col-span-2 lg:col-span-3 lg:p-6">
                     @if($nextGame)
-                        <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 lg:flex-nowrap">
                             <div class="min-w-0">
                                 <p class="text-xs font-semibold tracking-widest text-sky-club uppercase">{{ __('Najbliższy mecz') }} · {{ $nextGame->kickoffLabel() }}@if($nextGame->ourLabel()['badge']) <x-team-chip :name="$nextGame->ourLabel()['badge']" class="ml-1" />@endif</p>
                                 <p class="mt-2 font-display text-xl font-semibold uppercase lg:text-2xl">
@@ -86,7 +86,7 @@
                                 <a href="{{ route('games.calendar', $nextGame) }}" class="mt-1 inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-sky-club-light">+ {{ __('Dodaj do kalendarza') }}</a>
                             </div>
                             @if($site['home_show_countdown'])
-                                <div>
+                                <div class="shrink-0">
                                     <div data-countdown="{{ $nextGame->game_date?->toIso8601String() }}" role="timer" aria-hidden="true"></div>
                                     <p data-countdown-text class="sr-only" aria-live="off"></p>
                                 </div>
