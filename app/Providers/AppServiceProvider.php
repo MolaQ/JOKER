@@ -18,6 +18,7 @@ use App\Support\PushTriggers;
 use App\Support\SearchIndex;
 use App\Support\Sitemap;
 use App\Support\SiteSettings;
+use App\Support\Trash;
 use App\UserRole;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Notifications\ResetPassword;
@@ -64,6 +65,7 @@ class AppServiceProvider extends ServiceProvider
         // Uprawnienia z App\Permission (np. can:teams.manage) liczone z ról konta i jego wyjątków.
         Gate::before(fn (User $user, string $ability) => ($permission = Permission::tryFrom($ability)) ? $user->hasPermission($permission) : null);
         Gate::define('panel', fn (User $user) => $user->canAccessPanel());
+        Gate::define('trash', fn (User $user) => collect(Trash::TYPES)->contains(fn (array $type) => $user->can($type[2])));
         // Zakładka „System” (ustawienia całej strony): administrator i szef.
         Gate::define('system', fn (User $user) => $user->hasRole(UserRole::Admin, UserRole::Boss));
 

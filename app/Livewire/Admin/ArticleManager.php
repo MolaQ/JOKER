@@ -10,6 +10,7 @@ use App\Models\Game;
 use App\Models\User;
 use App\Support\SearchIndex;
 use App\Support\Slug;
+use App\Support\Trash;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -219,8 +220,8 @@ class ArticleManager extends Component
 
     public function delete(int $id): void
     {
-        Article::findOrFail($id)->delete();
-        $this->toast('Artykuł został usunięty.');
+        Trash::delete(Article::findOrFail($id));
+        $this->toast('Artykuł trafił do kosza. Przywrócisz go w: System → Kosz.');
     }
 
     public function closeModal(): void

@@ -100,6 +100,7 @@ class ChangeLog
         'model.created' => 'Dodano',
         'model.updated' => 'Zmieniono',
         'model.deleted' => 'Usunięto',
+        'model.reverted' => 'Cofnięto',
     ];
 
     /** Pola, których zmiana nic nie mówi (liczniki, znaczniki czasu) albo nie może trafić do dziennika. */
@@ -192,6 +193,86 @@ class ChangeLog
         }
 
         return $changes;
+    }
+
+    /**
+     * Rekord, którego zmianę z wpisu dziennika da się cofnąć: tylko gdy pola wciąż mają wartości „po”
+     * (nikt ich później nie zmienił), żadna wartość nie była skrócona w dzienniku i nie chodzi o hasło.
+     */
+    public static function undoable(AuditLog $entry): ?Model
+    {
+        $changes = $entry->changes();
+
+        if ($entry->action !== 'model.updated' || $changes === [] || ! $entry->subject_type || ! $entry->subject_id || isset($changes['password'])) {
+            return null;
+        }
+
+        $class = Model::getActualClassNameForMorph($entry->subject_type);
+
+        if (! isset(self::MODELS[$class])) {
+            return null;
+        }
+
+        $record = $class::query()->withoutGlobalScopes()->find($entry->subject_id);
+
+        if (! $record) {
+            return null;
+        }
+
+        foreach ($changes as $field => [$before, $after]) {
+            if (! array_key_exists($field, $record->getAttributes()) || self::truncated($before) || self::truncated($after)) {
+                return null;
+            }
+
+            $current = self::value($record->getRawOriginal($field), $record->hasCast($field, ['bool', 'boolean']));
+
+            if (self::comparable($current) !== self::comparable($after)) {
+                return null;
+            }
+        }
+
+        return $record;
+    }
+
+    /**
+     * Przywraca wartości „przed” z wpisu dziennika i zapisuje cofnięcie jako nowy wpis.
+     */
+    public static function undo(AuditLog $entry): bool
+    {
+        $record = self::undoable($entry);
+
+        if (! $record) {
+            return false;
+        }
+
+        $changes = $entry->changes();
+        $values = collect($changes)->map(fn (array $change, string $field) => is_bool($change[0]) ? (int) $change[0] : $change[0])->all();
+
+        $record->newQuery()->withoutGlobalScopes()->whereKey($record->getKey())->update($values);
+
+        AuditLog::record('model.reverted', 'Cofnięto zmianę: '.Str::lower(self::MODELS[$record::class]).' „'.self::name($record).'”', $record, [
+            'zmiany' => collect($changes)->map(fn (array $change) => [$change[1], $change[0]])->all(),
+            'cofnieto_wpis' => $entry->id,
+        ]);
+
+        Sitemap::forget();
+        SearchIndex::forget();
+
+        return true;
+    }
+
+    private static function truncated(mixed $value): bool
+    {
+        return is_string($value) && mb_strlen($value) >= self::MAX_LENGTH;
+    }
+
+    private static function comparable(mixed $value): ?string
+    {
+        return match (true) {
+            $value === null => null,
+            is_bool($value) => $value ? '1' : '0',
+            default => (string) $value,
+        };
     }
 
     private static function value(mixed $value, bool $boolean = false): mixed

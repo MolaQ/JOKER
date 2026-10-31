@@ -8,6 +8,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Support\SearchIndex;
 use App\Support\Slug;
+use App\Support\Trash;
 use App\UserRole;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -162,8 +163,8 @@ class TeamList extends Component
             return;
         }
 
-        $team->delete();
-        $this->toast('Drużyna została usunięta.');
+        Trash::delete($team);
+        $this->toast('Drużyna trafiła do kosza. Przywrócisz ją w: System → Kosz.');
     }
 
     public function closeModal(): void

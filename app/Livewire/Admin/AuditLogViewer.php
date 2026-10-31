@@ -2,14 +2,19 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\AuditLog;
+use App\Models\TrashItem;
 use App\Models\User;
 use App\Support\ChangeLog;
+use App\Support\Trash;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -17,7 +22,7 @@ use Throwable;
  */
 class AuditLogViewer extends Component
 {
-    use WithPagination;
+    use ShowsToasts, WithPagination;
 
     #[Url(as: 'search', except: '')]
     public string $search = '';
@@ -42,6 +47,53 @@ class AuditLogViewer extends Component
         if (in_array($property, ['search', 'actor', 'type', 'action', 'from', 'to'], true)) {
             $this->resetPage();
         }
+    }
+
+    /**
+     * Cofa zmianę z wpisu (wartości „było” wracają), gdy od tamtej pory nikt tych pól nie zmienił.
+     */
+    public function undo(int $id): void
+    {
+        $entry = AuditLog::findOrFail($id);
+        $record = ChangeLog::undoable($entry);
+
+        if (! $record || ! self::mayChange($record::class)) {
+            $this->toast('Tej zmiany nie da się już cofnąć: ktoś później zmienił te pola albo nie masz do nich uprawnień.', 'error');
+
+            return;
+        }
+
+        ChangeLog::undo($entry);
+        $this->toast('Cofnięto zmianę. Cofnięcie też jest w dzienniku, więc i je możesz cofnąć.');
+    }
+
+    /**
+     * Przywraca z kosza rekord usunięty we wpisie dziennika.
+     */
+    public function restoreDeleted(int $id): void
+    {
+        $item = TrashItem::findOrFail($id);
+        abort_unless(Auth::user()->can(Trash::permission($item->type) ?? 'system'), 403);
+
+        try {
+            Trash::restore($item);
+        } catch (RuntimeException $exception) {
+            $this->toast($exception->getMessage(), 'error');
+
+            return;
+        }
+
+        $this->toast(Trash::label($item->type).' „'.$item->label.'” wróciło z kosza.');
+    }
+
+    /**
+     * Cofać można zmiany rekordów, którymi się zarządza; pozostałych rodzajów (ustawienia, sponsorzy…) tylko administrator.
+     */
+    public static function mayChange(string $class): bool
+    {
+        $type = collect(Trash::TYPES)->search(fn (array $type) => $type[0] === $class);
+
+        return Auth::user()->can($type ? Trash::permission($type) : 'system');
     }
 
     public function resetFilters(): void
@@ -95,8 +147,14 @@ class AuditLogViewer extends Component
     {
         $actors = User::whereIn('id', AuditLog::query()->whereNotNull('actor_id')->distinct()->select('actor_id'))->orderBy('name')->get(['id', 'name']);
 
+        $entries = $this->query()->with('actor:id,name')->latest('id')->paginate(30);
+        $deleted = $entries->getCollection()->where('action', 'model.deleted');
+        $trash = $deleted->isEmpty() ? collect() : TrashItem::whereIn('item_id', $deleted->pluck('subject_id')->filter())->get(['id', 'type', 'item_id', 'label'])
+            ->keyBy(fn (TrashItem $item) => (Trash::TYPES[$item->type][0] ?? '').':'.$item->item_id);
+
         return view('livewire.admin.audit-log-viewer', [
-            'entries' => $this->query()->with('actor:id,name')->latest('id')->paginate(30),
+            'entries' => $entries,
+            'trash' => $trash->filter(fn (TrashItem $item) => Auth::user()->can(Trash::permission($item->type))),
             'actorOptions' => collect([['value' => 'system', 'label' => 'System (zadania automatyczne)']])
                 ->concat($actors->map(fn (User $user) => ['value' => (string) $user->id, 'label' => $user->name]))
                 ->all(),

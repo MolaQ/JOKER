@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Page;
+use App\Support\Trash;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -145,8 +146,8 @@ class PageManager extends Component
 
     public function delete(int $id): void
     {
-        Page::findOrFail($id)->delete();
-        $this->toast('Podstrona została usunięta.');
+        Trash::delete(Page::findOrFail($id));
+        $this->toast('Podstrona trafiła do kosza. Przywrócisz ją w: System → Kosz.');
     }
 
     public function closeModal(): void

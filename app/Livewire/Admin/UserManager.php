@@ -6,10 +6,13 @@ use App\AccountStatus;
 use App\Livewire\Concerns\EditsPermissionOverrides;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Livewire\Concerns\SortsTable;
+use App\Models\AccessSnapshot;
 use App\Models\AuditLog;
 use App\Models\Player;
 use App\Models\Team;
 use App\Models\User;
+use App\Support\AccessHistory;
+use App\Support\Trash;
 use App\UserRole;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -178,6 +181,7 @@ class UserManager extends Component
         if ($this->editingId) {
             $user = User::findOrFail($this->editingId);
             abort_unless($this->mayEdit($user), 403);
+            AccessHistory::remember($user, 'Przed zapisem w oknie konta');
             $user->update($validated);
             $user->syncRoles($roles);
             $this->saveRoleExpiries($user, $roles, $expiries);
@@ -227,6 +231,27 @@ class UserManager extends Component
         }
     }
 
+    /**
+     * „Przywróć ten stan” w historii uprawnień konta.
+     */
+    public function restoreAccess(int $snapshotId): void
+    {
+        $user = User::findOrFail($this->editingId);
+        abort_unless($this->mayEdit($user) && $this->mayEditUser($user), 403);
+        $snapshot = AccessSnapshot::where('user_id', $user->id)->findOrFail($snapshotId);
+
+        if ($user->id === Auth::id() && $user->isAdmin() && ! array_key_exists(UserRole::Admin->value, $snapshot->data['roles'] ?? [])) {
+            $this->toast('Nie możesz odebrać sobie roli administratora.', 'error');
+
+            return;
+        }
+
+        AccessHistory::restore($snapshot);
+        $this->openEditModal($user->id);
+        $this->modalTab = 'uprawnienia';
+        $this->toast('Przywrócono uprawnienia ze stanu z '.$snapshot->created_at->format('d.m.Y H:i').'.');
+    }
+
     public function setOverride(string $permission, string $mode): void
     {
         $user = User::findOrFail($this->editingId);
@@ -257,8 +282,8 @@ class UserManager extends Component
             return;
         }
 
-        $user->delete();
-        $this->toast('Użytkownik został usunięty.');
+        Trash::delete($user);
+        $this->toast('Konto trafiło do kosza. Przywrócisz je w: System → Kosz.');
     }
 
     public function closeModal(): void

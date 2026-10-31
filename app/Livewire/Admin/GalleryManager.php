@@ -10,6 +10,7 @@ use App\Models\Player;
 use App\Models\Team;
 use App\Models\User;
 use App\Support\MatchPicker;
+use App\Support\Trash;
 use App\UserRole;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -177,10 +178,10 @@ class GalleryManager extends Component
 
     public function deleteGallery(int $id): void
     {
-        Gallery::findOrFail($id)->delete();
+        Trash::delete(Gallery::findOrFail($id));
         $this->resetForm();
 
-        $this->toast('Galeria usunięta.');
+        $this->toast('Galeria trafiła do kosza razem ze zdjęciami. Przywrócisz ją w: System → Kosz.');
     }
 
     public function startTagging(int $photoId): void

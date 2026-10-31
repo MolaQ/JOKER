@@ -12,6 +12,7 @@ use App\Models\User;
 use App\PlayerPosition;
 use App\Support\ClubAccounts;
 use App\Support\SiteSettings;
+use App\Support\Trash;
 use App\UserRole;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -338,8 +339,8 @@ class PlayerManager extends Component
 
     public function delete(int $id): void
     {
-        Player::managedBy(Auth::user())->findOrFail($id)->delete();
-        $this->toast('Zawodnik został usunięty.');
+        Trash::delete(Player::managedBy(Auth::user())->findOrFail($id));
+        $this->toast('Zawodnik trafił do kosza. Przywrócisz go w: System → Kosz.');
     }
 
     public function closeModal(): void

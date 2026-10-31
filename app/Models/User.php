@@ -715,6 +715,14 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Drużyny, które koordynuje (rola Koordynator drużyny). Koordynator nie jest w sztabie.
      */
+    /**
+     * Historia uprawnień: stany sprzed zmian, najnowsze pierwsze.
+     */
+    public function accessSnapshots(): HasMany
+    {
+        return $this->hasMany(AccessSnapshot::class)->latest('id');
+    }
+
     public function coordinatedTeams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class, 'team_coordinators')->withTimestamps();

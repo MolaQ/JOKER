@@ -7,6 +7,7 @@ use App\Livewire\Concerns\SortsTable;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\Tournament;
+use App\Support\Trash;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -128,8 +129,8 @@ class TournamentManager extends Component
 
     public function delete(int $id): void
     {
-        Tournament::findOrFail($id)->delete();
-        $this->toast('Turniej został usunięty.');
+        Trash::delete(Tournament::findOrFail($id));
+        $this->toast('Turniej trafił do kosza. Przywrócisz go w: System → Kosz.');
     }
 
     public function closeModal(): void

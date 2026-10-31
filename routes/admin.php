@@ -65,6 +65,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
 
     Route::view('/statistics', 'admin.statistics.index')->middleware('can:statistics.view')->name('statistics.index');
     Route::view('/audit-log', 'admin.audit.index')->middleware('can:audit.view')->name('audit.index');
+    Route::view('/trash', 'admin.trash.index')->middleware('can:trash')->name('trash.index');
 
     Route::middleware('can:import.run')->group(function () {
         Route::view('/import', 'admin.import.index')->name('import.index');

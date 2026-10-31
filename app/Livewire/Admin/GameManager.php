@@ -13,6 +13,7 @@ use App\Models\Team;
 use App\Models\Tournament;
 use App\Services\ScheduleImporter;
 use App\Services\StandingsCalculator;
+use App\Support\Trash;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -248,13 +249,13 @@ class GameManager extends Component
     {
         $game = $this->managedGames()->findOrFail($id);
         $competitionId = $game->competition_id;
-        $game->delete();
+        Trash::delete($game);
 
         if ($competitionId && $competition = Competition::find($competitionId)) {
             StandingsCalculator::recalculate($competition);
         }
 
-        $this->toast('Mecz został usunięty.');
+        $this->toast('Mecz trafił do kosza. Przywrócisz go w: System → Kosz.');
     }
 
     public function closeModal(): void

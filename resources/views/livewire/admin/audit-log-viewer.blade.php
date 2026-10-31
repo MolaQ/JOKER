@@ -70,6 +70,7 @@
                                 'mr-1 inline-block rounded px-1.5 py-0.5 text-[11px] font-semibold',
                                 'bg-emerald-50 text-emerald-700' => $entry->action === 'model.created',
                                 'bg-sky-50 text-sky-700' => $entry->action === 'model.updated',
+                                'bg-amber-50 text-amber-700' => $entry->action === 'model.reverted',
                                 'bg-red-50 text-red-700' => $entry->action === 'model.deleted',
                                 'bg-violet-50 text-violet-700' => ! $verb,
                             ])>{{ \App\Support\ChangeLog::typeLabel($entry->subject_type) ?? 'Panel' }}</span>
@@ -87,6 +88,16 @@
                         · {{ $entry->created_at->format('d.m.Y H:i') }}
                     </p>
                 </div>
+                @php
+                    $undoable = $entry->action === 'model.updated' ? \App\Support\ChangeLog::undoable($entry) : null;
+                    $trashed = $entry->action === 'model.deleted' ? $trash->get(\Illuminate\Database\Eloquent\Model::getActualClassNameForMorph((string) $entry->subject_type).':'.$entry->subject_id) : null;
+                @endphp
+                @if($undoable && \App\Livewire\Admin\AuditLogViewer::mayChange($undoable::class))
+                    <button type="button" wire:click="undo({{ $entry->id }})" wire:confirm="Cofnąć tę zmianę? Pola wrócą do wartości z kolumny „Było”." class="mt-1 mr-3 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-900">↶ Cofnij</button>
+                @endif
+                @if($trashed)
+                    <button type="button" wire:click="restoreDeleted({{ $trashed->id }})" wire:confirm="Przywrócić „{{ $trashed->label }}” z kosza?" class="mt-1 mr-3 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-900">↶ Przywróć z kosza</button>
+                @endif
                 @if($changes)
                     <button type="button" x-on:click="open = ! open" class="mt-1 text-xs font-semibold text-sky-700 hover:text-sky-900" :aria-expanded="open">
                         <span x-text="open ? 'Ukryj szczegóły' : @js('Pokaż, co się zmieniło ('.count($changes).')')"></span>

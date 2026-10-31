@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Support\ImageOptimizer;
 use App\Support\Media;
+use App\Support\Trash;
 use Database\Factories\GalleryPhotoFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,7 +29,7 @@ class GalleryPhoto extends Model
     {
         // Każde nowe zdjęcie galerii (panel, transmisje i galerie, propozycje rodziców) jest od razu zmniejszane.
         static::created(fn (GalleryPhoto $photo) => ImageOptimizer::process($photo->path));
-        static::deleted(fn (GalleryPhoto $photo) => Storage::disk('public')->delete(ImageOptimizer::thumbPath($photo->path)));
+        static::deleted(fn (GalleryPhoto $photo) => Trash::$keepFiles || Storage::disk('public')->delete(ImageOptimizer::thumbPath($photo->path)));
     }
 
     public function gallery(): BelongsTo

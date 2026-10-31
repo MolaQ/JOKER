@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\HasReadableRouteKey;
 use App\Models\Concerns\Likeable;
+use App\Support\Trash;
 use Database\Factories\GalleryFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -46,6 +47,11 @@ class Gallery extends Model
     {
         // Pliki zdjęć usuwamy razem z galerią (rekordy usuwa klucz obcy).
         static::deleting(function (Gallery $gallery) {
+            // Galeria w koszu zachowuje pliki do ostatecznego usunięcia (App\Models\TrashItem::purgeFiles).
+            if (Trash::$keepFiles) {
+                return;
+            }
+
             $gallery->photos()->pluck('path')->each(fn (string $path) => Storage::disk('public')->delete($path));
         });
     }

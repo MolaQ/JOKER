@@ -121,6 +121,26 @@
                             <div class="px-6 py-4">
                                 <p class="mb-3 text-sm text-gray-600">Role: <span class="font-semibold text-gray-900">{{ $editingUser->roles()->map->label()->join(', ') ?: 'bez roli (jak kibic)' }}</span>. Uprawnienia wynikają z ról; tutaj możesz odebrać albo nadać pojedyncze uprawnienie tylko temu kontu. Zmiana zapisuje się od razu.</p>
                                 @include('livewire.admin.partials.permission-overrides', ['user' => $editingUser, 'editable' => $this->mayEditUser($editingUser)])
+                                @php $history = $editingUser->accessSnapshots()->with('actor:id,name')->limit(15)->get(); @endphp
+                                <div class="mt-6 border-t border-gray-200 pt-4">
+                                    <h4 class="text-sm font-semibold text-gray-900">Historia uprawnień</h4>
+                                    <p class="mt-1 text-xs text-gray-500">Stan ról, wyjątków i drużyn koordynatora sprzed każdej zmiany. Pomyłkę cofniesz przyciskiem „Przywróć ten stan”; obecny stan też trafi do historii.</p>
+                                    <ul class="mt-3 divide-y divide-gray-100 rounded-lg border border-gray-200">
+                                        @forelse($history as $snapshot)
+                                            <li wire:key="access-{{ $snapshot->id }}" class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
+                                                <div class="min-w-0">
+                                                    <p class="text-gray-900">{{ \App\Support\AccessHistory::summary($snapshot->data) }}</p>
+                                                    <p class="text-xs text-gray-500">{{ $snapshot->created_at->format('d.m.Y H:i') }} · {{ $snapshot->note }} · {{ $snapshot->actor?->name ?? 'system' }}</p>
+                                                </div>
+                                                @if($this->mayEditUser($editingUser))
+                                                    <button type="button" wire:click="restoreAccess({{ $snapshot->id }})" wire:confirm="Przywrócić role i uprawnienia z {{ $snapshot->created_at->format('d.m.Y H:i') }}?" class="shrink-0 text-xs font-semibold text-sky-700 hover:text-sky-900">Przywróć ten stan</button>
+                                                @endif
+                                            </li>
+                                        @empty
+                                            <li class="px-3 py-4 text-center text-xs text-gray-500">Historia pojawi się po pierwszej zmianie ról albo uprawnień.</li>
+                                        @endforelse
+                                    </ul>
+                                </div>
                             </div>
                         @endif
 

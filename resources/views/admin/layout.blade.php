@@ -46,6 +46,7 @@
                 ['label' => 'Role i uprawnienia', 'route' => 'admin.roles.index', 'icon' => 'shield', 'can' => 'roles.manage'],
                 ['label' => 'Pozycjonowanie (SEO)', 'route' => 'admin.seo.index', 'icon' => 'chart', 'can' => 'site.manage'],
                 ['label' => 'Dziennik zmian', 'route' => 'admin.audit.index', 'icon' => 'list', 'can' => 'audit.view'],
+                ['label' => 'Kosz', 'route' => 'admin.trash.index', 'icon' => 'trash', 'can' => 'trash'],
                 ['label' => 'Import z plików', 'route' => 'admin.import.index', 'icon' => 'upload', 'can' => 'import.run'],
             ],
             'Ustawienia rozgrywek (rzadko)' => [

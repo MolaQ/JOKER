@@ -7,6 +7,7 @@ use App\Console\Commands\SendUpcomingReminders;
 use App\Console\Commands\SyncSchedules;
 use App\Models\AuditLog;
 use App\Models\PageView;
+use App\Models\TrashItem;
 use Illuminate\Support\Facades\Schedule;
 
 /*
@@ -26,6 +27,9 @@ Schedule::command(SendApprovalReminders::class)->hourly()->between('7:00', '21:0
 
 // Dziennik zmian trzyma wpisy z ostatniego roku.
 Schedule::command('model:prune', ['--model' => [AuditLog::class]])->daily();
+
+// Kosz: rekordy usunięte w panelu dawniej niż „Kosz: ile dni” znikają na stałe (razem z plikami).
+Schedule::command('model:prune', ['--model' => [TrashItem::class]])->daily();
 
 // Zbiorczy e-mail o wiadomościach nieprzeczytanych od kwadransa (cron na serwerze uruchamia harmonogram co 5 minut).
 Schedule::command(SendMessageEmails::class)->everyFiveMinutes()->withoutOverlapping();

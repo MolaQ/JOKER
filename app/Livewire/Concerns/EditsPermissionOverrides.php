@@ -6,6 +6,7 @@ use App\Models\AuditLog;
 use App\Models\PermissionOverride;
 use App\Models\User;
 use App\Permission;
+use App\Support\AccessHistory;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -31,6 +32,7 @@ trait EditsPermissionOverrides
     {
         $permission = Permission::from($permission);
         abort_unless($this->mayEditUser($user) && in_array($mode, ['role', 'grant', 'deny'], true), 403);
+        AccessHistory::remember($user, 'Przed zmianą: '.$permission->label());
 
         if ($mode === 'role') {
             PermissionOverride::where('user_id', $user->id)->where('permission', $permission)->delete();
@@ -56,6 +58,10 @@ trait EditsPermissionOverrides
 
         if (! $override || $override->expires_at?->toDateString() === $until?->toDateString()) {
             return;
+        }
+
+        if (! $until?->isPast()) {
+            AccessHistory::remember($user, 'Przed zmianą daty: '.$permission->label());
         }
 
         if ($until?->isPast()) {
