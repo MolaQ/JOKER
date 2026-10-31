@@ -11,6 +11,19 @@ class Sponsor extends Model
     /** @use HasFactory<SponsorFactory> */
     use HasFactory;
 
+    /**
+     * Poziomy sponsoringu od najważniejszego: nazwa w panelu i podpis rzędu logotypów na stronie.
+     * Na stronie głównej im wyższy poziom, tym większe logo (jak na stronach klubów PlusLigi).
+     *
+     * @var array<string, array{admin: string, label: string}>
+     */
+    public const TIERS = [
+        'platinum' => ['admin' => 'Platynowy', 'label' => 'Sponsor główny'],
+        'gold' => ['admin' => 'Złoty', 'label' => 'Sponsorzy'],
+        'silver' => ['admin' => 'Srebrny', 'label' => 'Partnerzy'],
+        'bronze' => ['admin' => 'Brązowy', 'label' => 'Przyjaciele klubu'],
+    ];
+
     protected $fillable = [
         'name',
         'description',

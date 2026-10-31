@@ -3,18 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\UserRole;
+use App\Support\Mentions;
 
 class TrainerController extends Controller
 {
     public function show(User $trainer)
     {
-        abort_unless($trainer->role === UserRole::Trainer, 404);
+        abort_unless($trainer->isStaffMember(), 404);
 
         $trainer->load(['headCoachTeams', 'assistantTeams']);
+        $trainer->registerView();
 
-        $teams = $trainer->allCoachedTeams();
+        $roles = $trainer->headCoachTeams->toBase()
+            ->map(fn ($team) => ['team' => $team, 'role' => __('Trener główny')])
+            ->merge($trainer->assistantTeams
+                ->reject(fn ($team) => $team->trainer_id === $trainer->id)
+                ->map(fn ($team) => ['team' => $team, 'role' => __($team->pivot->role ?: 'Asystent trenera')]))
+            ->sortBy(fn ($entry) => $entry['team']->display_order)
+            ->values();
 
-        return view('trainers.show', compact('trainer', 'teams'));
+        return view('trainers.show', ['trainer' => $trainer, 'roles' => $roles, 'mentions' => Mentions::articlesAbout($trainer->name)]);
     }
 }

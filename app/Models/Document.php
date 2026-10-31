@@ -46,6 +46,38 @@ class Document extends Model
         return $query->where('category', $category);
     }
 
+    /**
+     * Kategorie w kolejności wyświetlania na stronie Dokumenty.
+     */
+    public const CATEGORIES = [
+        'regulations' => 'Regulaminy',
+        'club_requirements' => 'Wymagania klubu (badania, składki, sprzęt)',
+        'rodo' => 'RODO i ochrona danych',
+        'consent_image' => 'Zgoda na wizerunek',
+        'consent_trip' => 'Zgody na wyjazdy',
+        'forms' => 'Formularze',
+        'reports' => 'Sprawozdania',
+        'other' => 'Inne',
+    ];
+
+    public function categoryLabel(): string
+    {
+        return __(self::CATEGORIES[$this->category] ?? self::CATEGORIES['other']);
+    }
+
+    /**
+     * Dokument "dla zalogowanych" widzą tylko aktywne konta.
+     */
+    public function isAvailableTo(?User $user): bool
+    {
+        return $this->is_public || (bool) $user?->is_active;
+    }
+
+    public function downloadUrl(): string
+    {
+        return route('documents.download', $this);
+    }
+
     public function fileSizeFormatted(): string
     {
         $bytes = $this->file_size;

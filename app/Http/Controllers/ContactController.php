@@ -24,6 +24,6 @@ class ContactController extends Controller
         // TODO: Implementacja wysyłania maila
         // Mail::to('kontakt@jokerpila.pl')->send(new ContactMail($validated));
 
-        return redirect()->back()->with('success', 'Wiadomość została wysłana!');
+        return redirect()->back()->with('success', __('Wiadomość została wysłana!'));
     }
 }

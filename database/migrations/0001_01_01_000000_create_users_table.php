@@ -7,7 +7,8 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Użytkownicy (z rolą, awatarem, danymi profilu i urodzinami),
+     * tokeny resetu hasła oraz sesje.
      */
     public function up(): void
     {
@@ -15,6 +16,13 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            $table->date('birth_date')->nullable();
+            $table->string('birthday_display', 8)->default('age'); // hidden | cake | age
+            $table->string('role')->default('guest');
+            $table->string('avatar_path')->nullable();
+            $table->string('instagram')->nullable();
+            $table->text('additional_info')->nullable();
+            $table->unsignedInteger('views_count')->default(0);
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();

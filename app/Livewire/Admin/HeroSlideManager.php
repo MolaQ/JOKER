@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ShowsToasts;
 use App\Models\HeroSlide;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -9,7 +10,7 @@ use Livewire\WithPagination;
 
 class HeroSlideManager extends Component
 {
-    use WithFileUploads, WithPagination;
+    use ShowsToasts, WithFileUploads, WithPagination;
 
     public bool $showModal = false;
 
@@ -37,10 +38,6 @@ class HeroSlideManager extends Component
 
     public string $search = '';
 
-    public ?string $flashType = null;
-
-    public ?string $flashMessage = null;
-
     protected function rules(): array
     {
         $rules = [
@@ -67,8 +64,6 @@ class HeroSlideManager extends Component
     public function openCreateModal(): void
     {
         $this->resetForm();
-        $this->flashType = null;
-        $this->flashMessage = null;
         $this->showModal = true;
     }
 
@@ -87,8 +82,6 @@ class HeroSlideManager extends Component
         $this->publish_to = $slide->publish_to?->format('Y-m-d\TH:i');
         $this->existingImage = $slide->image_path;
         $this->image = null;
-        $this->flashType = null;
-        $this->flashMessage = null;
 
         $this->showModal = true;
     }
@@ -107,12 +100,10 @@ class HeroSlideManager extends Component
         if ($this->editingId) {
             $slide = HeroSlide::findOrFail($this->editingId);
             $slide->update($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Slajd został zaktualizowany.';
+            $this->toast('Slajd został zaktualizowany.');
         } else {
             HeroSlide::create($validated);
-            $this->flashType = 'success';
-            $this->flashMessage = 'Slajd został dodany.';
+            $this->toast('Slajd został dodany.');
         }
 
         $this->closeModal();
@@ -121,8 +112,7 @@ class HeroSlideManager extends Component
     public function delete(int $id): void
     {
         HeroSlide::findOrFail($id)->delete();
-        $this->flashType = 'success';
-        $this->flashMessage = 'Slajd został usunięty.';
+        $this->toast('Slajd został usunięty.');
     }
 
     public function closeModal(): void
@@ -153,8 +143,7 @@ class HeroSlideManager extends Component
             HeroSlide::whereKey($slideId)->update(['display_order' => $index]);
         }
 
-        $this->flashType = 'success';
-        $this->flashMessage = 'Kolejność slajdów została zaktualizowana.';
+        $this->toast('Kolejność slajdów została zaktualizowana.');
     }
 
     private function resetForm(): void

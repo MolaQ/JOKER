@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+{{-- Ekran turnieju na telewizor: plansza 1920×1080 skalowana do każdego ekranu, sama przechodzi do następnej (?s=). --}}
+<html lang="{{ app()->getLocale() }}" style="background:#071029">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>{{ $tournament->name }} · TV</title>
+    @vite(['resources/css/app.css'])
+    <style>
+        html, body { margin: 0; height: 100%; overflow: hidden; background: #071029; }
+        #tv-stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: center; }
+        @keyframes tv-progress { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+        @keyframes tv-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+        @keyframes tv-ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        .tv-in > * { animation: tv-in .6s ease-out both; }
+        .tv-in > *:nth-child(2) { animation-delay: .08s; } .tv-in > *:nth-child(3) { animation-delay: .16s; } .tv-in > *:nth-child(4) { animation-delay: .24s; }
+        .tv-in > *:nth-child(5) { animation-delay: .32s; } .tv-in > *:nth-child(6) { animation-delay: .4s; } .tv-in > *:nth-child(7) { animation-delay: .48s; } .tv-in > *:nth-child(8) { animation-delay: .56s; }
+    </style>
+</head>
+<body class="font-sans text-white">
+@php
+    $category = $slide['category'] ?? null;
+    $color = $colors['accent'] ?? $category?->color() ?? '#38bdf8';
+    $bracket = $category ? $brackets[$category->id] : null;
+    $logoUrl = $site->image('logo', asset('img/logo-256.webp'));
+@endphp
+<div id="tv-stage" class="flex flex-col overflow-hidden" style="--tv-live: {{ $colors['live'] }}; background: radial-gradient(1200px 700px at 85% -10%, {{ $color }}33, transparent 60%), linear-gradient(160deg, {{ $colors['top'] }} 0%, {{ $colors['bottom'] }} 60%)">
+    {{-- Nagłówek: turniej, kategoria, tytuł planszy, zegar i odliczanie --}}
+    <header class="flex items-center gap-8 px-16 pt-10 pb-6">
+        <img src="{{ $logoUrl }}" alt="" class="h-24 w-24 object-contain">
+        <div class="min-w-0 flex-1">
+            <p class="font-display text-2xl font-semibold tracking-[0.3em] text-sky-300 uppercase">{{ $tournament->name }}</p>
+            <h1 id="tv-title" class="mt-1 flex items-center gap-5 overflow-hidden font-display text-7xl leading-none font-bold whitespace-nowrap uppercase">
+                @if($category)
+                    <span class="shrink-0 rounded-2xl px-5 py-1 text-white" style="background: {{ $color }}">{{ $category->name }}</span>
+                @endif
+                <span>{{ $slide['title'] ?? $tournament->name }}</span>
+            </h1>
+        </div>
+        <div class="text-right">
+            <p id="tv-clock" class="font-display text-6xl font-bold tabular-nums">{{ now()->format('H:i') }}</p>
+            <p class="mt-1 text-2xl text-white/60">{{ __('plansza') }} {{ $slides->isEmpty() ? 0 : $index + 1 }}/{{ $slides->count() }}</p>
+        </div>
+        <div class="relative h-28 w-28 shrink-0" aria-label="{{ __('Następna plansza za') }}">
+            <svg viewBox="0 0 100 100" class="h-full w-full -rotate-90">
+                <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="8" />
+                <circle id="tv-ring" cx="50" cy="50" r="44" fill="none" stroke="{{ $color }}" stroke-width="8" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0" />
+            </svg>
+            <span id="tv-seconds" class="absolute inset-0 flex items-center justify-center font-display text-4xl font-bold tabular-nums">{{ $seconds }}</span>
+        </div>
+    </header>
+
+    <main class="min-h-0 flex-1 px-16 pb-6">
+        @if(! $slide)
+            <div class="flex h-full items-center justify-center font-display text-6xl text-white/60 uppercase">{{ __('Plansze pojawią się, gdy turniej będzie miał kategorie i mecze') }}</div>
+
+        @elseif($slide['type'] === 'groups')
+            <div @class(['tv-in grid h-full gap-10', 'grid-cols-2' => $slide['groups']->count() > 1])>
+                @foreach($slide['groups'] as $group)
+                    @php($rows = $bracket->groupTable($group))
+                    <section class="flex min-h-0 flex-col overflow-hidden rounded-3xl bg-white/[0.06] ring-1 ring-white/10">
+                        <h2 class="flex items-center justify-between px-8 py-5 font-display text-5xl font-bold uppercase" style="background: linear-gradient(90deg, {{ $color }}cc, transparent)">
+                            {{ $group->name }}
+                            @if($group->court)<span class="text-2xl font-semibold text-white/80">{{ \App\Models\TrainingSession::courtLabel($group->court) }}</span>@endif
+                        </h2>
+                        @php($wide = $slide['groups']->count() === 1)
+                        @php($scoring = \App\Support\TournamentTable::scoring($group, $tournament))
+                        <table @class(['w-full text-left', 'text-3xl' => $wide, 'text-2xl' => ! $wide])>
+                            <thead class="text-lg font-semibold tracking-wider whitespace-nowrap text-white/50 uppercase">
+                                <tr>
+                                    <th class="py-3 pr-2 pl-8">#</th>
+                                    <th class="py-3">{{ __('Drużyna') }}</th>
+                                    <th class="px-3 py-3 text-center" title="{{ __('Mecze') }}">M</th>
+                                    <th class="px-3 py-3 text-center" title="{{ __('Wygrane') }}">W</th>
+                                    <th class="px-3 py-3 text-center" title="{{ __('Porażki') }}">P</th>
+                                    <th class="px-3 py-3 text-center">{{ __('Sety') }}</th>
+                                    <th class="px-3 py-3 text-center">{{ __('Małe pkt') }}</th>
+                                    <th class="py-3 pr-8 pl-3 text-center">{{ __('Pkt') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($rows as $row)
+                                    <tr @class(['border-t border-white/10', 'bg-sky-400/15' => $row['participant']->isOwnTeam()])>
+                                        <td class="py-3 pr-2 pl-8 font-display text-4xl font-bold" style="color: {{ $row['position'] <= 2 ? $color : 'inherit' }}">{{ $row['position'] }}</td>
+                                        <td class="w-full max-w-0 py-3">
+                                            <span class="flex items-center gap-4">
+                                                <x-avatar logo :photo="$row['participant']->logoPath()" :name="$row['participant']->name()" @class(['shrink-0 rounded-full text-base', 'h-12 w-12' => $wide, 'h-10 w-10' => ! $wide]) />
+                                                <span class="truncate font-semibold">{{ $row['participant']->name() }}</span>
+                                            </span>
+                                        </td>
+                                        <td class="px-3 py-3 text-center tabular-nums">{{ $row['played'] }}</td>
+                                        <td class="px-3 py-3 text-center text-emerald-300 tabular-nums">{{ $row['won'] }}</td>
+                                        <td class="px-3 py-3 text-center text-red-300 tabular-nums">{{ $row['lost'] }}</td>
+                                        <td class="px-3 py-3 text-center tabular-nums">{{ $row['sets_won'] }}:{{ $row['sets_lost'] }}</td>
+                                        <td class="px-3 py-3 text-center text-white/60 tabular-nums">{{ $row['small_won'] }}:{{ $row['small_lost'] }}</td>
+                                        <td class="py-3 pr-8 pl-3 text-center font-display text-5xl font-bold tabular-nums">{{ $row['points'] }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        {{-- Zasady tabeli drobnym drukiem, jak na stronie turnieju --}}
+                        <p class="mt-auto px-8 pt-4 pb-5 text-lg leading-snug text-white/40">
+                            {{ __('Punktacja') }}: {{ \App\Support\TournamentTable::describe($scoring) }}.
+                            {{ ($scoring['criteria'][0] ?? 'points') === 'points' ? __('Przy równej liczbie punktów') : __('Kolejność w tabeli') }}: {{ \App\Support\TournamentTable::describeCriteria($scoring) }}.
+                            @if(filled($group->manual_order)) {{ __('Kolejność ustalona przez organizatora.') }} @endif
+                        </p>
+                    </section>
+                @endforeach
+            </div>
+
+        @elseif($slide['type'] === 'matches')
+            <div class="tv-in grid h-full grid-cols-2 gap-6" style="grid-template-rows: repeat({{ (int) ceil($perSlide / 2) }}, minmax(0, 1fr))">
+                @foreach($slide['matches'] as $match)
+                    <x-tv-match :match="$match" :bracket="$bracket" :compact="$perSlide > 8" :show-group="false" />
+                @endforeach
+            </div>
+
+        @elseif($slide['type'] === 'bracket')
+            <div class="tv-in flex h-full gap-6">
+                @foreach($slide['columns'] as $column)
+                    <section class="flex min-w-0 flex-1 flex-col gap-4">
+                        <h2 class="font-display text-4xl font-bold tracking-wide uppercase" style="color: {{ $color }}">{{ $column['name'] }}</h2>
+                        <div class="flex min-h-0 flex-1 flex-col justify-around gap-4">
+                            @foreach($column['matches'] as $match)
+                                <x-tv-match :match="$match" :bracket="$bracket" :compact="$slide['columns']->max(fn ($c) => $c['matches']->count()) > 4 || $slide['columns']->count() >= 3" />
+                            @endforeach
+                        </div>
+                    </section>
+                @endforeach
+            </div>
+
+        @elseif($slide['type'] === 'standings')
+            @php($rows = $slide['standings'])
+            <div class="tv-in grid h-full grid-flow-col gap-x-10 gap-y-3" style="grid-template-rows: repeat({{ min(8, max(1, (int) ceil($rows->count() / ($rows->count() > 8 ? 2 : 1)))) }}, minmax(0, 1fr))">
+                @foreach($rows as $row)
+                    <div @class(['flex min-h-0 items-center gap-6 rounded-3xl px-8 ring-1 ring-white/10', 'bg-white/[0.12]' => $row['position'] <= 3, 'bg-white/[0.05]' => $row['position'] > 3])>
+                        <span class="w-20 shrink-0 font-display text-5xl font-bold" style="color: {{ match ($row['position']) { 1 => '#facc15', 2 => '#e5e7eb', 3 => '#f59e0b', default => $color } }}">{{ $row['position'] }}.</span>
+                        @if($row['participant'])
+                            <x-avatar logo :photo="$row['participant']->logoPath()" :name="$row['text']" class="h-12 w-12 shrink-0 rounded-full text-base" />
+                        @endif
+                        <span @class(['min-w-0 flex-1 truncate text-3xl', 'font-bold' => $row['position'] <= 3, 'italic text-white/50' => ! $row['participant']])>{{ $row['text'] }}</span>
+                    </div>
+                @endforeach
+            </div>
+
+        @elseif($slide['type'] === 'sponsors')
+            <div class="tv-in grid h-full grid-cols-4 content-center gap-10">
+                @foreach($slide['sponsors'] as $sponsor)
+                    <div class="flex h-56 items-center justify-center rounded-3xl bg-white p-8">
+                        <img src="{{ \App\Support\Media::url($sponsor->logo_path) }}" alt="{{ $sponsor->name }}" class="max-h-full max-w-full object-contain">
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </main>
+
+    {{-- Pasek „Teraz gramy”: mecze w trakcie ze wszystkich kategorii --}}
+    @if($live->isNotEmpty())
+        <div class="flex h-20 items-center overflow-hidden" style="background: var(--tv-live)">
+            <span class="z-10 flex h-full shrink-0 items-center gap-3 bg-black/25 px-8 font-display text-3xl font-bold uppercase"><span class="h-4 w-4 animate-pulse rounded-full bg-white"></span>{{ __('Teraz gramy') }}</span>
+            <div class="min-w-0 flex-1 overflow-hidden">
+                {{-- Przewija się, gdy napis nie mieści się na szerokość ekranu (sprawdza skrypt na dole) --}}
+                <div id="tv-ticker" class="flex w-max gap-16 pl-10 text-3xl whitespace-nowrap">
+                    @foreach([1, 2] as $copy)
+                        @foreach($live as $match)
+                            @php($liveBracket = $brackets[$match->tournament_category_id])
+                            <span @if($copy === 2) data-copy hidden @endif><strong>{{ $match->category->name }}</strong> · {{ \App\Models\TrainingSession::courtLabel($match->court) }} · {{ $liveBracket->side($match, 'home')['text'] }} <strong class="font-display text-4xl">{{ $match->home_sets ?? 0 }}:{{ $match->away_sets ?? 0 }}</strong> {{ $liveBracket->side($match, 'away')['text'] }}</span>
+                        @endforeach
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Stopka: adres strony i pasek czasu do następnej planszy --}}
+    <footer class="relative flex h-16 items-center justify-between px-16 text-2xl text-white/70">
+        <span>{{ $footer }}</span>
+        <span class="font-semibold tracking-wider text-white/50">{{ $site['club_name'] }}</span>
+        <span class="absolute inset-x-0 bottom-0 h-2 origin-left" style="background: {{ $color }}; animation: tv-progress {{ $seconds }}s linear forwards"></span>
+    </footer>
+</div>
+<script>
+    (() => {
+        const stage = document.getElementById('tv-stage');
+        const fit = () => stage.style.transform = `translate(-50%, -50%) scale(${Math.min(innerWidth / 1920, innerHeight / 1080)})`;
+        fit();
+        addEventListener('resize', fit);
+
+        // Długa nazwa kategorii i planszy: zmniejszamy napis, aż zmieści się w jednej linii.
+        const title = document.getElementById('tv-title');
+        for (let size = 72; size > 36 && title.scrollWidth > title.clientWidth; size -= 4) {
+            title.style.fontSize = `${size - 4}px`;
+        }
+
+        const total = {{ $seconds }};
+        const started = Date.now();
+        const ring = document.getElementById('tv-ring');
+        const label = document.getElementById('tv-seconds');
+        const clock = document.getElementById('tv-clock');
+        const next = new URL(location.href);
+        let leaving = 0;
+        next.searchParams.set('s', {{ $next }});
+
+        setInterval(() => {
+            const left = Math.max(0, total - (Date.now() - started) / 1000);
+            label.textContent = Math.ceil(left);
+            ring.style.strokeDashoffset = 276.5 * (1 - left / total);
+            clock.textContent = new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+            // Raz; gdy serwer nie odpowie (np. chwilowy brak sieci), kolejna próba po 15 sekundach.
+            if (left <= 0 && (! leaving || Date.now() - leaving > 15000)) {
+                leaving = Date.now();
+                location.replace(next);
+            }
+        }, 250);
+
+        const ticker = document.getElementById('tv-ticker');
+        if (ticker && ticker.scrollWidth > ticker.parentElement.clientWidth) {
+            ticker.querySelectorAll('[data-copy]').forEach((item) => item.hidden = false);
+            ticker.style.animation = `tv-ticker ${Math.max(15, ticker.scrollWidth / 120)}s linear infinite`;
+        }
+    })();
+</script>
+</body>
+</html>

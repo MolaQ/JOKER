@@ -1,11 +1,898 @@
+@import '@fontsource-variable/inter/wght.css';
+@import '@fontsource-variable/oswald/wght.css';
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
+@source '../../app/**/*.php';
 
+/*
+ * Kolory klubowe (z herbu): grafit + błękit + biel.
+ * navy-* zostawione dla zgodności ze starszymi widokami.
+ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Oswald Variable', 'Arial Narrow', ui-sans-serif, sans-serif;
+
+    --color-ink: #12141a;
+    --color-graphite: #22252d;
+    --color-slate-850: #1a1d24;
+
+    --color-sky-club: #45a0e0;
+    --color-sky-club-light: #7cc0f0;
+    --color-sky-club-dark: #2a7fc0;
+    --color-club-navy: #0f2d6b;
+    --color-like: #45a0e0;
+
+    --color-navy-700: #2b3040;
+    --color-navy-800: #22252d;
+    --color-navy-900: #181b22;
+
+    --ease-snappy: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        @apply bg-zinc-50 font-sans text-zinc-900 antialiased;
+    }
+
+    ::selection {
+        @apply bg-sky-club text-white;
+    }
+
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-sky-club;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+}
+
+/* Panel admina: wyraźne pola formularzy (bez dodatkowych wtyczek). */
+@layer base {
+    .admin-panel :is(input:not([type='checkbox'], [type='radio'], [type='file'], [type='color']), select, textarea) {
+        @apply rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm;
+    }
+
+    .admin-panel :is(input, select, textarea):focus {
+        @apply border-sky-500 ring-2 ring-sky-500/30 outline-none;
+    }
+}
+
+@layer components {
+    .container-site {
+        @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    }
+
+    .eyebrow {
+        @apply font-display text-xs font-semibold tracking-[0.25em] text-sky-club uppercase;
+    }
+
+    .heading-xl {
+        @apply font-display text-5xl leading-[0.9] font-bold tracking-tight uppercase sm:text-7xl lg:text-8xl;
+    }
+
+    .heading-lg {
+        @apply font-display text-3xl leading-none font-bold tracking-tight uppercase sm:text-5xl;
+    }
+
+    .heading-md {
+        @apply font-display text-xl leading-tight font-semibold tracking-tight uppercase sm:text-2xl;
+    }
+
+    .btn-primary {
+        @apply btn bg-sky-club text-white shadow-lg shadow-sky-club/30 hover:-translate-y-0.5 hover:bg-sky-club-dark;
+    }
+
+    .btn-ghost {
+        @apply btn border border-white/30 text-white backdrop-blur hover:border-white hover:bg-white/10;
+    }
+
+    .btn-dark {
+        @apply btn bg-ink text-white hover:-translate-y-0.5 hover:bg-graphite;
+    }
+
+    .card-hover {
+        @apply hover:-translate-y-1 hover:shadow-2xl hover:shadow-zinc-900/10 hover:ring-sky-club/40;
+    }
+
+    .chip {
+        @apply inline-flex items-center gap-1.5 rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700;
+    }
+
+    .link-underline {
+        @apply bg-gradient-to-r from-sky-club to-sky-club bg-[length:0%_2px] bg-left-bottom bg-no-repeat transition-[background-size] duration-300 hover:bg-[length:100%_2px];
+    }
+
+    .prose-club {
+        @apply max-w-none text-lg leading-relaxed text-zinc-700;
+    }
+
+    .prose-club p {
+        @apply mb-5;
+    }
+
+    .prose-club h2,
+    .prose-club h3 {
+        @apply mt-10 mb-4 font-display text-2xl font-semibold text-zinc-900 uppercase;
+    }
+
+    .prose-club ul {
+        @apply mb-5 list-disc pl-6;
+    }
+
+    .prose-club ol {
+        @apply mb-5 list-decimal pl-6;
+    }
+
+    .prose-club a {
+        @apply font-semibold text-sky-club-dark underline;
+    }
+
+    /* Wzmianka „@Imię Nazwisko” zamieniona w link do profilu zawodnika */
+    .prose-club a.mention {
+        @apply rounded-md bg-sky-club/10 px-1 no-underline transition hover:bg-sky-club hover:text-white;
+    }
+
+    .prose-club blockquote {
+        @apply mb-5 border-l-4 border-sky-club pl-4 text-zinc-600 italic;
+    }
+
+    .prose-club mark {
+        @apply rounded-sm bg-yellow-200 px-0.5 text-inherit;
+    }
+
+    .prose-club hr {
+        @apply my-8 border-zinc-200;
+    }
+}
+
+@utility btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition duration-300 ease-snappy;
+}
+
+@utility card {
+    @apply rounded-3xl bg-white ring-1 ring-zinc-200/70 transition duration-300 ease-snappy;
+}
+
+@utility scrollbar-none {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* Delikatne pojawianie się sekcji przy przewijaniu (bez bibliotek). */
+@media (prefers-reduced-motion: no-preference) {
+    [data-reveal] {
+        opacity: 0;
+        transform: translateY(24px);
+        transition:
+            opacity 0.7s var(--ease-snappy),
+            transform 0.7s var(--ease-snappy);
+    }
+
+    [data-reveal].is-visible {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.net-pattern {
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+
+.grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at top right, rgba(69, 160, 224, 0.25), transparent 60%);
+}
+
+/*
+ * Zegar do meczu: wyświetlacz siedmiosegmentowy (resources/js/countdown.js).
+ * Kolor cyfr ustawia się w panelu: Wygląd i ustawienia → Kolory.
+ */
+.seg-display {
+    --seg-color: var(--color-countdown, #ffd600);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    color: var(--seg-color);
+}
+
+.seg-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.seg-row {
+    display: flex;
+    gap: 0.2rem;
+    padding: 0.4rem 0.45rem;
+    border-radius: 0.6rem;
+    background: rgb(0 0 0 / 0.45);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), inset 0 0 0 1px rgb(255 255 255 / 0.05);
+}
+
+.seg-digit {
+    width: clamp(1.15rem, 3.4vw, 1.75rem);
+    height: auto;
+    transform: skewX(-6deg);
+    overflow: visible;
+}
+
+.seg-digit polygon {
+    fill: currentColor;
+    opacity: 0.08;
+    transition: opacity 0.35s ease, filter 0.35s ease;
+}
+
+.seg-digit polygon.is-on {
+    opacity: 1;
+    filter: drop-shadow(0 0 3px var(--seg-color)) drop-shadow(0 0 10px color-mix(in oklab, var(--seg-color) 55%, transparent));
+}
+
+.seg-digit polygon.is-igniting {
+    animation: seg-ignite 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.seg-label {
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgb(255 255 255 / 0.5);
+}
+
+.seg-colon {
+    position: relative;
+    align-self: stretch;
+    width: 0.3rem;
+    margin-top: 0.4rem;
+    height: clamp(1.9rem, 5.6vw, 2.9rem);
+}
+
+.seg-colon::before,
+.seg-colon::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    width: 0.3rem;
+    height: 0.3rem;
+    border-radius: 9999px;
+    background: var(--seg-color);
+    box-shadow: 0 0 8px var(--seg-color);
+    transform: translateX(-50%);
+    transition: opacity 0.3s ease;
+}
+
+.seg-colon::before {
+    top: 32%;
+}
+
+.seg-colon::after {
+    top: 62%;
+}
+
+.seg-display.is-blink .seg-colon::before,
+.seg-display.is-blink .seg-colon::after {
+    opacity: 0.2;
+}
+
+.seg-display.is-booting .seg-digit polygon {
+    animation: seg-boot 0.9s steps(6) both;
+}
+
+.seg-display.is-live .seg-row {
+    animation: seg-live 1.2s ease-in-out infinite;
+}
+
+@keyframes seg-ignite {
+    0% {
+        opacity: 0.08;
+        filter: brightness(2.2) drop-shadow(0 0 14px var(--seg-color));
+    }
+
+    35% {
+        opacity: 1;
+        filter: brightness(1.8) drop-shadow(0 0 16px var(--seg-color));
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes seg-boot {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.15;
+    }
+}
+
+@keyframes seg-live {
+    50% {
+        box-shadow: 0 0 24px color-mix(in oklab, var(--seg-color) 60%, transparent);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .seg-digit polygon,
+    .seg-digit polygon.is-igniting {
+        animation: none;
+        transition: none;
+    }
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+/* Edytor treści w panelu (TipTap). */
+.rich-editor-content {
+    min-height: inherit;
+
+    & > * + * {
+        margin-top: 0.6em;
+    }
+
+    & h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    & h3 {
+        font-size: 1.05rem;
+        font-weight: 700;
+    }
+
+    & ul {
+        list-style: disc;
+        padding-left: 1.5rem;
+    }
+
+    & ol {
+        list-style: decimal;
+        padding-left: 1.5rem;
+    }
+
+    & blockquote {
+        border-left: 3px solid var(--color-gray-300);
+        padding-left: 0.75rem;
+        color: var(--color-gray-600);
+        font-style: italic;
+    }
+
+    & mark {
+        background: var(--color-yellow-200);
+        border-radius: 2px;
+        padding: 0 2px;
+    }
+
+    & a {
+        color: var(--color-sky-700);
+        text-decoration: underline;
+    }
+
+    & hr {
+        border-color: var(--color-gray-300);
+        margin: 1rem 0;
+    }
+
+    & p.is-editor-empty:first-child::before {
+        content: attr(data-placeholder);
+        color: var(--color-gray-400);
+        float: left;
+        height: 0;
+        pointer-events: none;
+    }
+}
+
+.rich-editor-emoji emoji-picker {
+    width: 100%;
+    height: 320px;
+    --border-size: 0;
+    --background: transparent;
+    --emoji-size: 1.5rem;
+}
+
+/*
+ * Wygląd panelu klubu: spokojne karty, czytelne tabele i jednolite przyciski we wszystkich
+ * sekcjach. Poza warstwami, żeby wygrywało ze starszymi klasami w widokach panelu.
+ */
+.admin-card {
+    @apply relative overflow-x-auto rounded-xl bg-white shadow-sm ring-1 ring-zinc-200;
+}
+
+/*
+ * Tabele panelu na telefonie: każdy wiersz jako karta, a nazwa kolumny (data-label, dopisywana
+ * w resources/js/admin-tables.js) przed wartością, zamiast przewijania strony w poziomie.
+ * Tabela, która ma zostać tabelą (np. podgląd importu), dostaje data-scroll-table.
+ */
+@media (width < 40rem) {
+    .admin-panel main table:not([data-scroll-table]) {
+        &, & > tbody, & > tbody > tr, & > tbody > tr > td {
+            display: block;
+            width: 100%;
+        }
+
+        & > thead:not(:has([data-sort-button])) {
+            @apply sr-only;
+        }
+
+        /* Nagłówki z sortowaniem zostają na telefonie jako rząd przycisków nad kartami. */
+        & > thead:has([data-sort-button]) {
+            display: block;
+
+            & > tr {
+                @apply flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2;
+            }
+
+            & th {
+                @apply block bg-transparent! p-0!;
+            }
+
+            & th:not(:has([data-sort-button])) {
+                display: none;
+            }
+        }
+
+        & > tbody > tr {
+            @apply border-b border-zinc-200 px-4 py-2;
+        }
+
+        & > tbody > tr > td {
+            @apply max-w-none px-0! py-1.5! text-left whitespace-normal;
+            display: flow-root;
+            overflow-wrap: break-word;
+        }
+
+        /* Nazwa kolumny po lewej, treść komórki (tekst, odznaki, przyciski) w zwykłym układzie obok. */
+        & > tbody > tr > td[data-label]:not([data-label='']) {
+            @apply pl-28!;
+        }
+
+        & > tbody > tr > td[data-label]:not([data-label=''])::before {
+            content: attr(data-label);
+            @apply float-left -ml-28 w-26 pt-0.5 text-xs font-semibold tracking-wide break-words text-zinc-400 uppercase;
+        }
+
+        & > tbody > tr > td:empty {
+            display: none;
+        }
+
+        & > tbody > tr > td[colspan] {
+            @apply text-center;
+        }
+
+        & tbody td:last-child > :is(a, button):not([class*='bg-']) {
+            @apply mr-1.5 ml-0;
+        }
+    }
+}
+
+.admin-panel main {
+    & h1.text-3xl {
+        @apply text-2xl font-semibold tracking-tight text-zinc-900;
+    }
+
+    & h1 + p.text-sm,
+    & h1 + p.mt-2 {
+        @apply text-zinc-500;
+    }
+
+    & table thead th {
+        @apply bg-zinc-50/80 py-3 text-xs font-semibold tracking-wide whitespace-nowrap text-zinc-500 uppercase;
+    }
+
+    & table thead {
+        @apply border-b border-zinc-200;
+    }
+
+    & table tbody tr {
+        @apply transition-colors;
+    }
+
+    & table tbody tr:hover {
+        @apply bg-zinc-50/70;
+    }
+
+    & table tbody td {
+        @apply text-zinc-700;
+        padding-top: 0.7rem;
+        padding-bottom: 0.7rem;
+    }
+
+    /* Akcje w ostatniej kolumnie (Edytuj / Usuń...) i w listach (.admin-action) jako małe przyciski zamiast gołych linków. */
+    & .admin-action {
+        @apply inline-flex shrink-0 items-center rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-sky-700 ring-1 ring-sky-200 transition ring-inset hover:bg-sky-50;
+    }
+
+    & .admin-action-danger {
+        @apply text-red-600 ring-red-200 hover:bg-red-50 hover:text-red-700;
+    }
+
+    & table tbody td:last-child > :is(a, button):not([class*='bg-']) {
+        @apply ml-1.5 mr-0 inline-flex items-center rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-zinc-700 ring-1 ring-zinc-200 transition ring-inset hover:bg-zinc-50 hover:text-zinc-900;
+    }
+
+    & table tbody td:last-child > :is(a, button):not([class*='bg-']):is(.text-red-600, .text-red-500, .text-red-700) {
+        @apply text-red-600 ring-red-200 hover:bg-red-50 hover:text-red-700;
+    }
+
+    & table tbody td:last-child > :is(a, button):not([class*='bg-']):is(.text-sky-700, .text-sky-600, .text-blue-600) {
+        @apply text-sky-700 ring-sky-200 hover:bg-sky-50;
+    }
+
+    & button.bg-sky-600,
+    & a.bg-sky-600 {
+        @apply rounded-lg shadow-sm shadow-sky-900/10 transition;
+    }
+
+    & :is(input:not([type='checkbox'], [type='radio'], [type='file'], [type='color'], [type='range']), select, textarea) {
+        @apply rounded-lg border-zinc-300 shadow-xs;
+    }
+
+    & nav[role='navigation'] {
+        @apply text-sm;
+    }
+
+    & input[type='file'] {
+        @apply text-sm text-zinc-500;
+    }
+
+    & input[type='file']::file-selector-button {
+        @apply mr-3 cursor-pointer rounded-lg border-0 bg-zinc-100 px-3 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-200;
+    }
+}
+
+.admin-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.12) transparent;
+}
+
+/* Kadr logo w kształcie koła (x-photo-cropper, kształt „Koło”) */
+.cropper-round .cropper-view-box,
+.cropper-round .cropper-face {
+    border-radius: 50%;
+}
+
+/*
+ * Skład dnia (x-daily-lineup-graphic): grafika 1080×1350 w stylu miniatury Joker TV, boisko w perspektywie.
+ * Na stronie skalowana przez resources/js/daily-lineup.js; te same style trafiają do pobieranego obrazka.
+ */
+.daily-lineup-frame {
+    position: relative;
+    aspect-ratio: 1080 / 1350;
+    overflow: hidden;
+}
+
+.daily-lineup {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1080px;
+    height: 1350px;
+    overflow: hidden;
+    transform-origin: 0 0;
+    background: #060b1d;
+    color: #fff;
+    font-family: var(--font-sans);
+
+    & .dl-bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 40% 12%;
+    }
+
+    & .dl-shade {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgb(4 8 24 / 0.25) 0%, rgb(4 8 24 / 0.6) 30%, rgb(4 8 24 / 0.85) 100%);
+    }
+
+    & .dl-header {
+        position: absolute;
+        top: 56px;
+        right: 0;
+        left: 0;
+        z-index: 5;
+        text-align: center;
+        text-shadow: 0 3px 18px rgb(0 0 0 / 0.6);
+    }
+
+    & .dl-logo {
+        position: absolute;
+        top: -8px;
+        left: 64px;
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+    }
+
+    & .dl-date {
+        position: absolute;
+        top: 14px;
+        right: 64px;
+        font-family: var(--font-display);
+        font-size: 30px;
+        font-weight: 600;
+        line-height: 1.1;
+        letter-spacing: 0.04em;
+        text-align: right;
+
+        & small {
+            display: block;
+            margin-top: 6px;
+            font-family: var(--font-sans);
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+    }
+
+    & .dl-title {
+        font-family: var(--font-display);
+        font-size: 92px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+    }
+
+    & .dl-sub {
+        margin-top: 10px;
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        opacity: 0.8;
+    }
+
+    & .dl-court {
+        position: absolute;
+        top: 335px;
+        left: 120px;
+        z-index: 1;
+        width: 840px;
+        height: 820px;
+
+        & svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+            transform: perspective(900px) rotateX(24deg);
+            transform-origin: 50% 0%;
+        }
+    }
+
+    & .dl-tile {
+        position: absolute;
+        z-index: 3;
+        width: 206px;
+        text-align: center;
+        transform: translateX(-50%);
+    }
+
+    & .dl-pic {
+        position: relative;
+        display: flex;
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+        align-items: center;
+        justify-content: center;
+        border-radius: 22px;
+        background: linear-gradient(145deg, #1d4ed8, #0b1638);
+        box-shadow: 0 0 0 3px #4aa8ff, 0 0 24px rgb(74 168 255 / 0.55);
+        color: #e0f0ff;
+        font-family: var(--font-display);
+        font-weight: 700;
+
+        & img {
+            width: 100%;
+            height: 100%;
+            border-radius: inherit;
+            object-fit: cover;
+        }
+    }
+
+    /* Libero: biały kafelek z niebieskim numerem, jak koszulka w innym kolorze. */
+    & .dl-pic-libero {
+        background: #fff;
+        box-shadow: 0 0 0 3px #4aa8ff, 0 0 24px rgb(255 255 255 / 0.45);
+        color: #1d4ed8;
+    }
+
+    & .dl-num {
+        font-size: 86px;
+        line-height: 1;
+    }
+
+    & .dl-ini {
+        font-size: 58px;
+        letter-spacing: 0.02em;
+    }
+
+    & .dl-cap {
+        position: absolute;
+        top: -12px;
+        right: -12px;
+        display: flex;
+        width: 44px;
+        height: 44px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: #facc15;
+        box-shadow: 0 4px 12px rgb(0 0 0 / 0.35);
+        color: #111827;
+        font-size: 26px;
+    }
+
+    & .dl-name {
+        margin-top: 12px;
+        font-family: var(--font-display);
+        line-height: 1.02;
+        text-shadow: 0 2px 12px rgb(0 0 0 / 0.95);
+        text-transform: uppercase;
+
+        & span {
+            display: block;
+            font-size: 20px;
+            font-weight: 500;
+            letter-spacing: 0.06em;
+            opacity: 0.85;
+        }
+
+        & strong {
+            display: block;
+            font-size: 31px;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+        }
+    }
+
+    & .dl-meta {
+        margin-top: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-shadow: 0 1px 8px rgb(0 0 0 / 0.95);
+
+        & b {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: #1d4ed8;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-shadow: none;
+            text-transform: uppercase;
+        }
+
+        & span {
+            display: block;
+            margin-top: 5px;
+            font-size: 15px;
+        }
+    }
+
+    & .dl-coach {
+        position: absolute;
+        bottom: 92px;
+        left: 50%;
+        z-index: 3;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 14px 28px 14px 14px;
+        border-radius: 20px;
+        background: rgb(8 16 48 / 0.85);
+        box-shadow: 0 0 0 2px #4aa8ff, 0 0 30px rgb(74 168 255 / 0.35);
+        transform: translateX(-50%);
+        white-space: nowrap;
+
+        & .dl-pic {
+            width: 84px;
+            height: 84px;
+            margin: 0;
+            border-radius: 16px;
+        }
+
+        & .dl-ini {
+            font-size: 34px;
+        }
+    }
+
+    & .dl-coach-label {
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        opacity: 0.75;
+    }
+
+    & .dl-coach-name {
+        font-family: var(--font-display);
+        font-size: 34px;
+        font-weight: 700;
+        line-height: 1.05;
+        text-transform: uppercase;
+    }
+
+    & .dl-footer {
+        position: absolute;
+        right: 0;
+        bottom: 34px;
+        left: 0;
+        z-index: 3;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-align: center;
+        opacity: 0.75;
+
+        & strong {
+            font-weight: 800;
+        }
+    }
+}
+
+/* Tabele sortowane w przeglądarce (resources/js/table-sort.js): nagłówek jako przycisk ze strzałką. */
+table[data-sortable] > thead th:not([data-nosort]) {
+    cursor: pointer;
+    user-select: none;
+
+    &::after {
+        content: '↕';
+        margin-left: 0.25rem;
+        font-size: 0.85em;
+        opacity: 0.3;
+    }
+
+    &[aria-sort='ascending']::after {
+        content: '▲';
+        opacity: 0.8;
+    }
+
+    &[aria-sort='descending']::after {
+        content: '▼';
+        opacity: 0.8;
+    }
+
+    &:hover::after {
+        opacity: 0.8;
+    }
 }

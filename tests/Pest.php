@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,6 +17,10 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
+    ->beforeEach(function () {
+        // Konta tworzone w testach mają już zgodę RODO (testy samej zgody ją zerują).
+        User::creating(fn (User $user) => $user->privacy_consent_at ??= now());
+    })
     ->in('Feature');
 
 /*

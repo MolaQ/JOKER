@@ -1,0 +1,195 @@
+<div class="bg-white lg:flex">
+    {{-- Zakładki: na telefonie zawijają się w kilka rzędów, na komputerze są kolumną po lewej --}}
+    <nav class="flex flex-wrap gap-1 border-b border-gray-200 p-3 lg:w-56 lg:shrink-0 lg:flex-col lg:flex-nowrap lg:border-r lg:border-b-0" aria-label="Sekcje ustawień">
+        @foreach($groups as $groupKey => $group)
+            <button
+                type="button"
+                wire:click="selectTab('{{ $groupKey }}')"
+                @class([
+                    'flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium transition',
+                    'bg-sky-50 text-sky-800 ring-1 ring-sky-200' => $tab === $groupKey,
+                    'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900' => $tab !== $groupKey,
+                ])
+                @if($tab === $groupKey) aria-current="true" @endif
+            >
+                <x-admin-icon :name="$group['icon']" @class(['size-[18px]', 'text-sky-600' => $tab === $groupKey, 'text-zinc-400' => $tab !== $groupKey]) /> <span>{{ $group['label'] }}</span>
+            </button>
+        @endforeach
+    </nav>
+
+    <form wire:submit="save" class="min-w-0 flex-1 p-4 sm:p-6">
+        @if($errors->any())
+            <div class="mb-6 rounded-lg bg-red-50 p-4 text-sm text-red-800">
+                Popraw zaznaczone pola i zapisz ponownie.
+            </div>
+        @endif
+
+        <div class="space-y-6" wire:key="tab-{{ $tab }}">
+            @foreach($groups[$tab]['fields'] as $key => $field)
+                <div class="grid gap-2 sm:grid-cols-3 sm:gap-6 border-b border-gray-100 pb-6 last:border-0" wire:key="field-{{ $key }}">
+                    <div>
+                        <label for="field-{{ $key }}" class="block text-sm font-semibold text-gray-900">{{ $field['label'] }}</label>
+                        @isset($field['help'])
+                            <p class="mt-1 text-xs text-gray-500">{{ $field['help'] }}</p>
+                        @endisset
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        @switch($field['type'])
+                            @case('color')
+                                <div class="flex items-center gap-3" x-data>
+                                    <input type="color" id="field-{{ $key }}" wire:model.live="values.{{ $key }}" class="h-11 w-16 cursor-pointer rounded-md border border-gray-300 bg-white p-1">
+                                    <input type="text" wire:model.live.debounce.500ms="values.{{ $key }}" maxlength="7" class="w-32 font-mono uppercase" aria-label="{{ $field['label'] }} (kod koloru)">
+                                    <span class="inline-flex h-11 flex-1 items-center rounded-md px-3 text-xs font-semibold" style="background: {{ preg_match('/^#[0-9a-fA-F]{6}$/', (string) $values[$key]) ? $values[$key] : '#ffffff' }}; color: {{ preg_match('/^#[0-9a-fA-F]{6}$/', (string) $values[$key]) && hexdec(substr($values[$key], 1, 2)) * 0.299 + hexdec(substr($values[$key], 3, 2)) * 0.587 + hexdec(substr($values[$key], 5, 2)) * 0.114 < 150 ? '#fff' : '#111' }}">Podgląd</span>
+                                </div>
+                                @break
+
+                            @case('toggle')
+                                <label class="inline-flex cursor-pointer items-center gap-3">
+                                    <input type="checkbox" id="field-{{ $key }}" wire:model="values.{{ $key }}" class="peer sr-only">
+                                    <span class="relative h-7 w-12 rounded-full bg-gray-300 transition peer-checked:bg-sky-600 after:absolute after:left-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition peer-checked:after:translate-x-5"></span>
+                                    <span class="text-sm text-gray-700">{{ $values[$key] ? 'Włączone' : 'Wyłączone' }}</span>
+                                </label>
+                                @break
+
+                            @case('select')
+                                <div class="space-y-2">
+                                    @foreach($field['options'] as $optionValue => $optionLabel)
+                                        <label class="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 ring-1 ring-gray-200 has-[:checked]:bg-sky-50 has-[:checked]:ring-sky-500">
+                                            <input type="radio" wire:model="values.{{ $key }}" value="{{ $optionValue }}" class="text-sky-600">
+                                            <span class="text-sm text-gray-800">{{ $optionLabel }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                                @break
+
+                            @case('textarea')
+                                <textarea id="field-{{ $key }}" wire:model="values.{{ $key }}" rows="3" class="block w-full"></textarea>
+                                @break
+
+                            @case('image')
+                                <div class="flex flex-wrap items-center gap-4">
+                                    @if(isset($uploads[$key]) && $uploads[$key])
+                                        <img src="{{ $uploads[$key]->temporaryUrl() }}" alt="Podgląd" class="h-20 w-20 rounded-lg border object-cover">
+                                    @elseif($values[$key])
+                                        <img src="{{ \App\Support\Media::url($values[$key]) }}" onerror="this.style.visibility='hidden'" alt="" class="h-20 w-20 rounded-lg border object-cover">
+                                    @elseif(isset($field['preview']))
+                                        <figure class="text-center">
+                                            <img src="{{ asset($field['preview']) }}" alt="" class="h-20 w-20 rounded-lg border object-contain p-1">
+                                            <figcaption class="mt-1 text-xs text-gray-500">domyślny</figcaption>
+                                        </figure>
+                                    @else
+                                        <span class="flex h-20 w-20 items-center justify-center rounded-lg border border-dashed text-xs text-gray-400">brak</span>
+                                    @endif
+                                    <div class="space-y-2">
+                                        @php $crop = $field['crop'] ?? ['aspect' => 'free', 'format' => 'png', 'width' => 1600]; @endphp
+                                        <x-photo-cropper :model="'uploads.'.$key" :preview="false" :aspect="$crop['aspect']" :format="$crop['format'] ?? 'jpeg'" :width="$crop['width'] ?? 1600" />
+                                        @if($values[$key])
+                                            <button type="button" wire:click="removeImage('{{ $key }}')" class="text-xs font-semibold text-red-600 hover:text-red-800">Usuń obrazek (wróci domyślny)</button>
+                                        @endif
+                                    </div>
+                                </div>
+                                @error('uploads.'.$key) <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                @break
+
+                            @case('links')
+                                <div class="space-y-2">
+                                    @foreach($values[$key] as $index => $link)
+                                        <div class="flex flex-wrap items-start gap-2 rounded-lg bg-gray-50 p-2 sm:flex-nowrap" wire:key="{{ $key }}-{{ $index }}">
+                                            <input type="text" wire:model="values.{{ $key }}.{{ $index }}.label" placeholder="Tekst, np. Dla rodziców" class="min-w-0 flex-1" aria-label="Tekst linku {{ $index + 1 }}">
+                                            <input type="text" wire:model="values.{{ $key }}.{{ $index }}.url" placeholder="Adres, np. /strona/faq" class="min-w-0 flex-1 font-mono text-xs" aria-label="Adres linku {{ $index + 1 }}">
+                                            <div class="flex shrink-0 gap-1">
+                                                <button type="button" wire:click="moveLink('{{ $key }}', {{ $index }}, -1)" @disabled($loop->first) class="rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm disabled:opacity-30" title="Wyżej">↑</button>
+                                                <button type="button" wire:click="moveLink('{{ $key }}', {{ $index }}, 1)" @disabled($loop->last) class="rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm disabled:opacity-30" title="Niżej">↓</button>
+                                                <button type="button" wire:click="removeLink('{{ $key }}', {{ $index }})" class="rounded-md border border-red-200 bg-white px-2.5 py-2 text-sm text-red-600 hover:bg-red-50" title="Usuń">✕</button>
+                                            </div>
+                                        </div>
+                                        @error('values.'.$key.'.'.$index.'.url') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
+                                    @endforeach
+                                    <button type="button" wire:click="addLink('{{ $key }}')" class="rounded-md border border-dashed border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">+ Dodaj link</button>
+                                    <p class="text-xs text-gray-500">Podstrony klubu mają adresy /strona/nazwa (lista w „Podstrony”). Adresy innych serwisów zaczynaj od https://.</p>
+                                </div>
+                                @break
+
+                            @case('role_matrix')
+                                <div class="overflow-x-auto rounded-lg ring-1 ring-gray-200">
+                                    <table class="min-w-full text-xs">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="sticky left-0 bg-gray-50 px-3 py-2 text-left font-semibold text-gray-600">Pisze ↓ / do →</th>
+                                                @foreach(\App\UserRole::cases() as $to)
+                                                    <th class="px-1 py-2 text-center font-semibold text-gray-600 normal-case"><span class="block w-20 leading-tight break-words normal-case">{{ $to->label() }}</span></th>
+                                                @endforeach
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-100">
+                                            @foreach(\App\UserRole::cases() as $from)
+                                                <tr wire:key="matrix-{{ $key }}-{{ $from->value }}">
+                                                    <th class="sticky left-0 bg-white px-3 py-2 text-left font-semibold whitespace-nowrap text-gray-800">{{ $from->label() }}</th>
+                                                    @foreach(\App\UserRole::cases() as $to)
+                                                        <td class="px-1 py-2 text-center">
+                                                            <input type="checkbox" wire:model="values.{{ $key }}.{{ $from->value }}" value="{{ $to->value }}" class="h-4 w-4 rounded text-sky-600" aria-label="{{ $from->label() }} pisze do: {{ $to->label() }}">
+                                                        </td>
+                                                    @endforeach
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                                @break
+
+                            @case('platforms')
+                                <div class="space-y-2">
+                                    @foreach($values[$key] as $index => $platform)
+                                        <div class="flex flex-wrap items-center gap-2 rounded-lg bg-gray-50 p-2 sm:flex-nowrap" wire:key="{{ $key }}-{{ $index }}">
+                                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-gray-700 ring-1 ring-gray-200"><x-social-icon :network="$platform['icon'] ?? 'website'" class="h-4 w-4" /></span>
+                                            <input type="text" wire:model.blur="values.{{ $key }}.{{ $index }}.label" placeholder="Nazwa, np. Instagram" class="min-w-0 flex-1" aria-label="Nazwa serwisu {{ $index + 1 }}">
+                                            <select wire:model.live="values.{{ $key }}.{{ $index }}.icon" class="min-w-0 flex-1 sm:max-w-[14rem]" aria-label="Ikona serwisu {{ $index + 1 }}">
+                                                @foreach(\App\Support\SiteSettings::SOCIAL_ICONS as $iconKey => $iconLabel)
+                                                    <option value="{{ $iconKey }}">Ikona: {{ $iconLabel }}</option>
+                                                @endforeach
+                                            </select>
+                                            <div class="flex shrink-0 gap-1">
+                                                <button type="button" wire:click="moveLink('{{ $key }}', {{ $index }}, -1)" @disabled($loop->first) class="rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm disabled:opacity-30" title="Wyżej">↑</button>
+                                                <button type="button" wire:click="moveLink('{{ $key }}', {{ $index }}, 1)" @disabled($loop->last) class="rounded-md border border-gray-300 bg-white px-2.5 py-2 text-sm disabled:opacity-30" title="Niżej">↓</button>
+                                                <button type="button" wire:click="removeLink('{{ $key }}', {{ $index }})" class="rounded-md border border-red-200 bg-white px-2.5 py-2 text-sm text-red-600 hover:bg-red-50" title="Usuń">✕</button>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                    <button type="button" wire:click="addPlatform('{{ $key }}')" class="rounded-md border border-dashed border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">+ Dodaj serwis</button>
+                                    <p class="text-xs text-gray-500">Usunięcie serwisu ukrywa jego linki w profilach; po ponownym dodaniu z tą samą nazwą wrócą.</p>
+                                </div>
+                                @break
+
+                            @default
+                                <input type="text" id="field-{{ $key }}" wire:model="values.{{ $key }}" class="block w-full" @if($field['type'] === 'url') placeholder="/contact albo https://..." @endif>
+                        @endswitch
+
+                        @error('values.'.$key) <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        @if($tab === 'powiadomienia')
+            <div class="mt-6 flex flex-col gap-3 rounded-xl border border-sky-100 bg-sky-50/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-sm text-gray-700">Podgląd z ustawieniami wpisanymi powyżej (także przed zapisaniem).</p>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" x-data x-on:click="window.toastPreview($wire.values, 'success')" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-800 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50">🔔 Pokaż przykładowy toast</button>
+                    <button type="button" x-data x-on:click="window.toastPreview($wire.values, 'error')" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-800 shadow-sm ring-1 ring-gray-300 hover:bg-gray-50">Pokaż przykładowy błąd</button>
+                </div>
+            </div>
+        @endif
+
+        <div class="sticky bottom-0 -mx-4 mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 bg-white/95 px-4 py-4 backdrop-blur sm:-mx-6 sm:px-6">
+            <button type="button" wire:click="restoreDefaults" wire:confirm="Przywrócić ustawienia domyślne w tej zakładce?" class="text-sm font-semibold text-gray-500 hover:text-gray-800">Przywróć domyślne</button>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('home') }}" target="_blank" class="text-sm font-semibold text-sky-700 hover:text-sky-900">Zobacz stronę ↗</a>
+                <button type="submit" class="rounded-md bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
+                    <span wire:loading.remove wire:target="save">Zapisz zmiany</span>
+                    <span wire:loading wire:target="save">Zapisywanie…</span>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>

@@ -19,6 +19,7 @@ class Comment extends Model
         'parent_id',
         'content',
         'is_approved',
+        'approved_by',
     ];
 
     protected function casts(): array
@@ -56,5 +57,13 @@ class Comment extends Model
     public function scopeTopLevel($query)
     {
         return $query->whereNull('parent_id');
+    }
+
+    /**
+     * Kto opublikował komentarz czekający na akceptację.
+     */
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 }

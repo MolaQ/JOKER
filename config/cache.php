@@ -18,6 +18,14 @@ return [
     'default' => env('CACHE_STORE', 'database'),
 
     /*
+    | Licznik limitów zapytań (throttle) trzymamy w plikach, a nie w bazie:
+    | równoległe zapytania (np. statystyki wysyłane przy zamykaniu strony)
+    | blokowały się wzajemnie w tabeli cache na MySQL (deadlock 1213).
+    */
+
+    'limiter' => env('CACHE_LIMITER', 'file'),
+
+    /*
     |--------------------------------------------------------------------------
     | Cache Stores
     |--------------------------------------------------------------------------

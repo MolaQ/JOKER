@@ -19,6 +19,9 @@ class LeagueStanding extends Model
         'competitor_id',
         'season_id',
         'competition_id',
+        'stage_name',
+        'group_name',
+        'source_name',
         'position',
         'played',
         'won',
@@ -63,11 +66,34 @@ class LeagueStanding extends Model
 
     public function competitorName(): string
     {
+        if ($this->source_name && ! $this->isOwnTeam()) {
+            return $this->source_name;
+        }
+
         if ($this->competitor instanceof RivalTeam) {
             return $this->competitor->full_name;
         }
 
         return $this->competitor?->name ?? '—';
+    }
+
+    /**
+     * Podpis wiersza: dla naszej drużyny nazwa z ustawień rozgrywek. Plakietkę z nazwą drużyny
+     * pokazujemy tylko, gdy w jednej tabeli gra kilka naszych drużyn i trzeba je odróżnić.
+     *
+     * @return array{name: string, badge: ?string}
+     */
+    public function competitorLabel(bool $withBadge = false): array
+    {
+        if ($this->isOwnTeam() && $this->competition && $this->competitor instanceof Team) {
+            $label = $this->competition->teamLabel($this->competitor);
+
+            if ($this->competition->teams->firstWhere('id', $this->competitor->id)?->pivot?->display_name) {
+                return ['name' => $label['name'], 'badge' => $withBadge ? $label['badge'] : null];
+            }
+        }
+
+        return ['name' => $this->competitorName(), 'badge' => null];
     }
 
     public function competitorShortName(): string
@@ -81,7 +107,7 @@ class LeagueStanding extends Model
 
     public function competitorLogoPath(): ?string
     {
-        return $this->competitor?->logo_path;
+        return $this->competitor instanceof RivalTeam ? $this->competitor->logoPath() : $this->competitor?->logoPath();
     }
 
     public function isOwnTeam(): bool

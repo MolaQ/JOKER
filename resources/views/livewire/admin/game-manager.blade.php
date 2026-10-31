@@ -1,28 +1,34 @@
 <div>
-    @if($flashMessage)
-        <div class="p-4 {{ $flashType === 'error' ? 'bg-red-50 text-red-800' : 'bg-green-50 text-green-800' }} text-sm font-medium">
-            {{ $flashMessage }}
-        </div>
-    @endif
-
     <!-- Toolbar -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border-b border-gray-200">
-        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+    <div class="flex flex-col gap-3 border-b border-gray-200 bg-white p-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="grid w-full gap-2 sm:grid-cols-2 lg:flex lg:w-auto lg:flex-wrap">
             <input
-                type="text"
+                type="search"
                 wire:model.live.debounce.300ms="search"
                 placeholder="Szukaj przeciwnika..."
-                class="w-full sm:w-64 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                class="w-full lg:w-56 text-sm"
             >
-            <select wire:model.live="statusFilter" class="w-full sm:w-48 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+            <select wire:model.live="teamFilter" class="w-full lg:w-44 text-sm" aria-label="Drużyna">
+                <option value="">Wszystkie drużyny</option>
+                @foreach($teams as $team)
+                    <option value="{{ $team->id }}">{{ $team->name }}</option>
+                @endforeach
+            </select>
+            <select wire:model.live="statusFilter" class="w-full lg:w-40 text-sm" aria-label="Status">
                 <option value="">Wszystkie statusy</option>
                 <option value="scheduled">Zaplanowany</option>
                 <option value="live">Na żywo</option>
                 <option value="finished">Zakończony</option>
                 <option value="cancelled">Odwołany</option>
             </select>
+            <select wire:model.live="mediaFilter" class="w-full lg:w-48 text-sm" aria-label="Materiały">
+                <option value="">Wszystkie materiały</option>
+                @foreach(\App\Livewire\Admin\GameManager::MEDIA_FILTERS as $key => $label)
+                    <option value="{{ $key }}">{{ $label }}</option>
+                @endforeach
+            </select>
         </div>
-        <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+        <button type="button" wire:click="openCreateModal" class="inline-flex shrink-0 items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
             + Dodaj mecz
         </button>
     </div>
@@ -30,11 +36,12 @@
     <table class="min-w-full divide-y divide-gray-300">
         <thead class="bg-gray-50">
             <tr>
-                <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Data</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Drużyna</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Przeciwnik</th>
+                <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"><x-sort-button field="data" :current="$sortField" :direction="$sortDirection">Data</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="druzyna" :current="$sortField" :direction="$sortDirection">Drużyna</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="przeciwnik" :current="$sortField" :direction="$sortDirection">Przeciwnik</x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Wynik</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="status" :current="$sortField" :direction="$sortDirection">Status</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="materialy" :current="$sortField" :direction="$sortDirection">Materiały</x-sort-button></th>
                 <th class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Akcje</span></th>
             </tr>
         </thead>
@@ -52,7 +59,14 @@
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         @if(!is_null($game->home_score) && !is_null($game->away_score))
-                            <div>{{ $game->home_score }} : {{ $game->away_score }}</div>
+                            <div>
+                                {{ $game->home_score }} : {{ $game->away_score }}
+                                @if($game->result_source === \App\Models\Game::RESULT_MANUAL)
+                                    <span class="ml-1 rounded bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800" title="Wpisany ręcznie, import ze związku go nie zmienia">ręcznie</span>
+                                @elseif($game->result_source)
+                                    <span class="ml-1 rounded bg-green-50 px-1.5 py-0.5 text-xs font-medium text-green-800" title="Pobrany ze strony związku">ze związku</span>
+                                @endif
+                            </div>
                             @if(is_array($game->sets_score) && count($game->sets_score) > 0)
                                 <div class="text-xs text-gray-400 mt-0.5">
                                     @foreach($game->sets_score as $set)
@@ -76,17 +90,32 @@
                             ];
                         @endphp
                         <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset {{ $statusColors[$game->status] ?? '' }}">
-                            {{ $game->status }}
+                            {{ ['scheduled' => 'Zaplanowany', 'live' => 'Na żywo', 'finished' => 'Zakończony', 'cancelled' => 'Odwołany'][$game->status] ?? $game->status }}
                         </span>
                     </td>
+                    <td class="whitespace-nowrap px-3 py-4 text-sm">
+                        @php
+                            $materials = array_filter([
+                                ['newspaper', 'Wiadomość', $game->articles_count > 0],
+                                ['video', 'Wideo', $game->hasStreams()],
+                                ['photo', 'Galeria', $game->galleries_count > 0],
+                                ['pencil', 'Relacja', filled($game->match_report)],
+                            ], fn (array $material) => $material[2]);
+                        @endphp
+                        @forelse($materials as [$icon, $label])
+                            <span class="mr-1 inline-flex size-7 items-center justify-center rounded-md bg-sky-50 text-sky-700 ring-1 ring-sky-100" title="{{ $label }}" aria-label="{{ $label }}"><x-admin-icon :name="$icon" class="size-4" /></span>
+                        @empty
+                            <span class="text-xs text-gray-400">brak</span>
+                        @endforelse
+                    </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <button type="button" wire:click="openEditModal({{ $game->id }})" class="text-blue-600 hover:text-blue-900 mr-4">Edytuj</button>
+                        <button type="button" wire:click="openEditModal({{ $game->id }})" class="text-sky-700 hover:text-sky-900 mr-4">Edytuj</button>
                         <button type="button" wire:click="delete({{ $game->id }})" wire:confirm="Czy na pewno chcesz usunąć ten mecz?" class="text-red-600 hover:text-red-900">Usuń</button>
                     </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="px-3 py-4 text-sm text-gray-500 text-center">Brak meczów do wyświetlenia</td>
+                    <td colspan="7" class="px-3 py-4 text-sm text-gray-500 text-center">Brak meczów do wyświetlenia</td>
                 </tr>
             @endforelse
         </tbody>
@@ -99,10 +128,10 @@
     <!-- Modal -->
     @if($showModal)
         <div class="fixed inset-0 z-50 overflow-y-auto">
-            <div class="fixed inset-0 bg-gray-500/75" wire:click="closeModal"></div>
+            <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="closeModal"></div>
 
             <div class="flex min-h-full items-center justify-center p-4">
-                <div class="relative bg-white rounded-lg shadow-xl w-full max-w-lg" @click.stop>
+                <div class="relative bg-white rounded-2xl shadow-2xl ring-1 ring-zinc-900/5 w-full max-w-lg" @click.stop>
                     <form wire:submit.prevent="save">
                         <div class="px-6 py-4 border-b border-gray-200">
                             <h3 class="text-lg font-semibold text-gray-900">
@@ -110,11 +139,11 @@
                             </h3>
                         </div>
 
-                        <div class="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                        <div class="px-6 py-4 space-y-4">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Drużyna</label>
-                                    <select wire:model="team_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <select wire:model="team_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                         <option value="">Wybierz</option>
                                         @foreach($teams as $team)
                                             <option value="{{ $team->id }}">{{ $team->name }}</option>
@@ -124,7 +153,7 @@
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Sezon</label>
-                                    <select wire:model="season_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <select wire:model="season_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                         <option value="">Wybierz</option>
                                         @foreach($seasons as $season)
                                             <option value="{{ $season->id }}">{{ $season->name }}</option>
@@ -136,7 +165,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Drużyna rywala (z bazy)</label>
-                                <select wire:model="opponent_team_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <select wire:model="opponent_team_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     <option value="">Brak (wpisz nazwę ręcznie poniżej)</option>
                                     @foreach($rivalTeams as $rivalTeam)
                                         <option value="{{ $rivalTeam->id }}">{{ $rivalTeam->full_name }}</option>
@@ -147,13 +176,36 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Przeciwnik (nazwa)</label>
-                                <input type="text" wire:model="opponent" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <input type="text" wire:model="opponent" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 @error('opponent') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
+                                <label class="block text-sm font-medium text-gray-700">Rodzaj meczu</label>
+                                <select wire:model.live="kind" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                    @foreach(\App\Models\Game::KINDS as $kindValue => $kindLabel)
+                                        <option value="{{ $kindValue }}">{{ $kindLabel }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            @if($kind === 'tournament')
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Turniej</label>
+                                    <select wire:model="tournament_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                        <option value="">— wybierz —</option>
+                                        @foreach($tournaments as $tournamentOption)
+                                            <option value="{{ $tournamentOption->id }}">{{ $tournamentOption->fullName() }} ({{ $tournamentOption->dateRangeLabel() }})</option>
+                                        @endforeach
+                                    </select>
+                                    <p class="mt-1 text-xs text-gray-500">Nowy turniej dodasz w zakładce „Turnieje”.</p>
+                                    @error('tournament_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                            @endif
+
+                            <div @class(['hidden' => $kind !== 'league'])>
                                 <label class="block text-sm font-medium text-gray-700">Rozgrywki (liga)</label>
-                                <select wire:model="competition_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <select wire:model="competition_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     <option value="">Brak / inne</option>
                                     @foreach($competitions as $competition)
                                         <option value="{{ $competition->id }}">{{ $competition->name }} ({{ $competition->level }})</option>
@@ -165,12 +217,12 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Data i godzina</label>
-                                    <input type="datetime-local" wire:model="game_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="datetime-local" wire:model="game_date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     @error('game_date') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Status</label>
-                                    <select wire:model="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <select wire:model="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                         <option value="scheduled">Zaplanowany</option>
                                         <option value="live">Na żywo</option>
                                         <option value="finished">Zakończony</option>
@@ -181,35 +233,44 @@
                             </div>
 
                             <div class="flex items-center">
-                                <input type="checkbox" wire:model="is_home" id="is_home" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <input type="checkbox" wire:model="is_home" id="is_home" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500">
                                 <label for="is_home" class="ml-2 text-sm text-gray-700">Mecz u siebie (gospodarze)</label>
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Miejsce</label>
-                                    <input type="text" wire:model="venue" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="text" wire:model="venue" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Liga</label>
-                                    <input type="text" wire:model="league" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="text" wire:model="league" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                             </div>
+
+                            @if($editingId && $resultSource === \App\Models\Game::RESULT_MANUAL && $competition_id)
+                                <div class="flex flex-wrap items-center justify-between gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-900">
+                                    <span>Wynik wpisany ręcznie. Import ze związku go nie nadpisze.</span>
+                                    <button type="button" wire:click="restoreOfficialResult" wire:confirm="Wrócić do wyniku ze związku? Ręczny wynik zostanie zastąpiony oficjalnym, gdy związek go poda." class="rounded-md bg-white px-3 py-1.5 font-semibold text-amber-900 ring-1 ring-amber-300 hover:bg-amber-100">Wróć do wyniku ze związku</button>
+                                </div>
+                            @elseif($editingId && $resultSource)
+                                <p class="rounded-md bg-green-50 p-3 text-sm text-green-900">Wynik pobrany ze strony związku. Jeśli go zmienisz, import przestanie go aktualizować.</p>
+                            @endif
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Wynik gospodarzy (sety)</label>
-                                    <input type="number" wire:model="home_score" min="0" max="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="number" wire:model="home_score" min="0" max="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Wynik gości (sety)</label>
-                                    <input type="number" wire:model="away_score" min="0" max="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="number" wire:model="away_score" min="0" max="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Wyniki setów</label>
-                                <input type="text" wire:model="sets_input" placeholder="np. 25:23, 22:25, 25:20, 25:18" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <input type="text" wire:model="sets_input" placeholder="np. 25:23, 22:25, 25:20, 25:18" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 @error('sets_input') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 <p class="mt-1 text-xs text-gray-500">Po wpisaniu setów system automatycznie wyliczy wynik meczu i małe punkty oraz ustawi status na „Zakończony”.</p>
                             </div>
@@ -217,11 +278,11 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Małe punkty gospodarzy</label>
-                                    <input type="number" wire:model="home_points" min="0" placeholder="opcjonalnie" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="number" wire:model="home_points" min="0" placeholder="opcjonalnie" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Małe punkty gości</label>
-                                    <input type="number" wire:model="away_points" min="0" placeholder="opcjonalnie" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <input type="number" wire:model="away_points" min="0" placeholder="opcjonalnie" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 </div>
                             </div>
                             <p class="text-xs text-gray-500 -mt-2">Ustawienie wyniku i statusu "Zakończony" automatycznie przelicza tabelę ligową dla wybranych rozgrywek.</p>
@@ -233,16 +294,16 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Link do wideo</label>
-                                <input type="url" wire:model="video_url" placeholder="https://..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <input type="url" wire:model="video_url" placeholder="https://..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 @error('video_url') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
                         </div>
 
-                        <div class="px-6 py-4 bg-gray-50 flex justify-end space-x-3 rounded-b-lg">
+                        <div class="sticky bottom-0 z-10 px-6 py-4 bg-gray-50 flex justify-end space-x-3 rounded-b-lg border-t border-gray-200">
                             <button type="button" wire:click="closeModal" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                                 Anuluj
                             </button>
-                            <button type="submit" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
+                            <button type="submit" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
                                 <span wire:loading.remove wire:target="save">Zapisz</span>
                                 <span wire:loading wire:target="save">Zapisywanie...</span>
                             </button>
