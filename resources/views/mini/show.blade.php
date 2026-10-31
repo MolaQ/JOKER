@@ -61,17 +61,31 @@
     <div x-show="tab === 'o-grupie'" @if($tabs->keys()->first() !== 'o-grupie') x-cloak @endif class="prose-club mt-8 max-w-3xl">{!! $group->html('about') !!}</div>
     @endif
 
-    {{-- Dzieci: zdjęcie tylko ze zgodą rodzica, inaczej sylwetka --}}
+    {{-- Dzieci: kafelki jak w kadrze drużyn --}}
     @if($tabs->has('dzieci'))
-    <div x-show="tab === 'dzieci'" @if($tabs->keys()->first() !== 'dzieci') x-cloak @endif class="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-4 lg:grid-cols-6">
+    <div x-show="tab === 'dzieci'" @if($tabs->keys()->first() !== 'dzieci') x-cloak @endif class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+        @php
+            $accent = $group->iconColor();
+            $initials = fn ($child) => mb_strtoupper(mb_substr($child->first_name, 0, 1).mb_substr($child->last_name, 0, 1));
+        @endphp
         @forelse($players as $child)
-            <figure class="text-center">
-                @if($child->photoUrl())
-                    <img src="{{ $child->photoUrl() }}" alt="{{ $child->displayName() }}" loading="lazy" class="mx-auto size-24 rounded-full object-cover ring-4 ring-white shadow">
-                @else
-                    <span class="mx-auto flex size-24 items-end justify-center overflow-hidden rounded-full bg-zinc-200 ring-4 ring-white shadow" aria-hidden="true"><svg viewBox="0 0 24 24" class="size-20 text-zinc-400" fill="currentColor"><circle cx="12" cy="8" r="4.5"/><path d="M3 23c0-5 4-8.5 9-8.5s9 3.5 9 8.5z"/></svg></span>
-                @endif
-                <figcaption class="mt-2 text-sm font-semibold text-zinc-900">{{ $child->displayName() }}@if($site['mini_show_birth_year'] && $child->birth_year)<span class="block text-xs font-normal text-zinc-500">{{ $child->birth_year }}</span>@endif</figcaption>
+            {{-- Kafelek jak w kadrze drużyn: zdjęcie tylko ze zgodą rodzica, inaczej inicjały w kolorze grupy --}}
+            <figure class="card group relative overflow-hidden" style="--mini-accent: {{ $accent }}">
+                <div class="relative aspect-[4/5] w-full overflow-hidden bg-gradient-to-br from-graphite to-ink">
+                    @if($child->photoUrl())
+                        <img src="{{ $child->photoUrl() }}" alt="{{ $child->displayName() }}" loading="lazy" class="absolute inset-0 h-full w-full object-cover" onerror="this.remove()">
+                    @else
+                        <span class="absolute inset-0 flex items-center justify-center pb-10 font-display text-6xl font-bold text-(--mini-accent)" aria-hidden="true">{{ $initials($child) }}</span>
+                    @endif
+                    <span class="absolute inset-x-0 top-0 h-1 bg-(--mini-accent)" aria-hidden="true"></span>
+                    @if($site['mini_show_birth_year'] && $child->birth_year)
+                        <span class="absolute top-3 right-3 rounded-full bg-black/40 px-2 py-0.5 text-[11px] font-bold text-white tabular-nums backdrop-blur">{{ $child->birth_year }}</span>
+                    @endif
+                    <figcaption class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink via-ink/80 to-transparent px-3 pt-8 pb-3">
+                        <span class="block font-display text-lg leading-tight font-semibold text-white uppercase">{{ $child->displayName() }}</span>
+                        <x-mini-players :group="$group" size="xs" class="mt-1 opacity-90" aria-hidden="true" />
+                    </figcaption>
+                </div>
             </figure>
         @empty
             <p class="col-span-full text-sm text-zinc-500">{{ __('Lista dzieci pojawi się wkrótce.') }}</p>
