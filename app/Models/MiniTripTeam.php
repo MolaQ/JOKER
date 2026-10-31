@@ -67,8 +67,6 @@ class MiniTripTeam extends Model
             return null;
         }
 
-        return $this->teams_count
-            ? __(':place. miejsce na :count drużyn', ['place' => $this->place, 'count' => $this->teams_count])
-            : __(':place. miejsce', ['place' => $this->place]);
+        return __(':place. miejsce', ['place' => $this->place]).($this->teams_count ? ' | '.$this->fieldLabel() : '');
     }
 }

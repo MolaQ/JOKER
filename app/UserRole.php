@@ -16,6 +16,8 @@ enum UserRole: string
     case Trainer = 'trainer';
     case Staff = 'staff';
     case Coordinator = 'coordinator';
+    case MiniTrainer = 'mini_trainer';
+    case MiniCoordinator = 'mini_coordinator';
     case Parent = 'parent';
     case Player = 'player';
     case Fan = 'fan';
@@ -31,6 +33,8 @@ enum UserRole: string
             self::Trainer => 'Trener',
             self::Staff => 'Członek sztabu',
             self::Coordinator => 'Koordynator drużyny',
+            self::MiniTrainer => 'Trener mini',
+            self::MiniCoordinator => 'Koordynator mini',
             self::Parent => 'Rodzic',
             self::Player => 'Zawodnik',
             self::Fan => 'Kibic',
@@ -48,6 +52,8 @@ enum UserRole: string
             self::Trainer => 'Prowadzi swoje drużyny: zawodnicy, mecze, wyniki.',
             self::Staff => 'Kierownik, fizjoterapeuta, statystyk. Ma publiczny profil w sztabie.',
             self::Coordinator => 'Dba o przepływ informacji w swojej drużynie: przyjmuje rodziców, przypisuje ich do dzieci, zatwierdza zgłoszenia drużyny. Nie jest w sztabie.',
+            self::MiniTrainer => 'Prowadzi grupy minisiatkówki: dodaje turnieje, wyniki i relacje (do zatwierdzenia). Nie ma dostępu do panelu.',
+            self::MiniCoordinator => 'Pomaga w minisiatkówce: dodaje turnieje, wyniki i relacje (do zatwierdzenia). Nie ma dostępu do panelu.',
             self::Parent => 'Opiekun konkretnego zawodnika lub kilku zawodników.',
             self::Player => 'Zawodnik z profilem w kadrze.',
             self::Fan => 'Konto bez funkcji w klubie: serduszka i komentarze.',
@@ -69,6 +75,7 @@ enum UserRole: string
             self::Photographer => [Permission::WriteComments, Permission::WriteMessages, Permission::Media, Permission::PhotoTags],
             self::Staff => [Permission::Trainings],
             self::Coordinator => [Permission::WriteComments, Permission::WriteMessages, Permission::Teams, Permission::MiniVolleyball, Permission::ActivateAccounts, Permission::Proposals],
+            self::MiniTrainer, self::MiniCoordinator => [Permission::WriteComments, Permission::WriteMessages, Permission::MiniSubmit],
             default => [],
         };
     }

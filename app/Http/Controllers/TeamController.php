@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Competition;
 use App\Models\Game;
 use App\Models\LeagueStanding;
+use App\Models\MiniGroup;
 use App\Models\Season;
 use App\Models\Team;
+use App\Support\SiteSettings;
 use Illuminate\Support\Collection;
 
 class TeamController extends Controller
@@ -18,7 +20,12 @@ class TeamController extends Controller
             ->orderBy('display_order')
             ->get();
 
-        return view('teams.index', compact('teams'));
+        // Minisiatkówka jako miniatury pod drużynami (kliknięcie otwiera zakładkę grupy).
+        $miniGroups = app(SiteSettings::class)['module_mini']
+            ? MiniGroup::where('is_active', true)->ordered()->withCount(['players' => fn ($query) => $query->where('is_active', true)])->get()
+            : collect();
+
+        return view('teams.index', compact('teams', 'miniGroups'));
     }
 
     public function show(Team $team)

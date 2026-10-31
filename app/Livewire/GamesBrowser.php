@@ -118,7 +118,7 @@ class GamesBrowser extends Component
             return collect();
         }
 
-        return MiniTrip::with(['teams.group', 'teams.players'])
+        return MiniTrip::published()->with(['teams.group', 'teams.players', 'articles'])
             ->when($this->selectedSeason, fn ($query, Season $season) => $query->whereBetween('starts_on', [$season->start_date, $season->end_date]))
             ->orderBy('starts_on')
             ->get();

@@ -20,6 +20,7 @@ enum Permission: string
     case Games = 'games.manage';
     case Tournaments = 'tournaments.manage';
     case MiniVolleyball = 'mini.manage';
+    case MiniSubmit = 'mini.submit';
     case Competitions = 'competitions.manage';
     case Proposals = 'proposals.review';
     case Documents = 'documents.manage';
@@ -49,6 +50,7 @@ enum Permission: string
             self::Games => 'Mecze, wyniki i tabele',
             self::Tournaments => 'Turnieje',
             self::MiniVolleyball => 'Minisiatkówka: dzieci, wyjazdy i wyniki',
+            self::MiniSubmit => 'Minisiatkówka: zgłaszanie turniejów, wyników i relacji (do zatwierdzenia)',
             self::Competitions => 'Rozgrywki, rywale, sezony',
             self::Proposals => 'Zatwierdzanie zmian od zawodników i rodziców',
             self::Documents => 'Dokumenty',
@@ -73,6 +75,7 @@ enum Permission: string
             self::Trainings => 'Trener i członek sztabu układają plan tylko swoich drużyn.',
             self::PhotoTags => 'Bez tego trener zatwierdza tylko oznaczenia zawodników swoich drużyn.',
             self::Roles => 'Kto nie jest administratorem, nie nada roli administratora.',
+            self::MiniSubmit => 'Zakładka „Zgłoś” na stronie minisiatkówki. Zgłoszenia czekają w „Do zatwierdzenia”, chyba że zgłasza ktoś z uprawnieniem „Minisiatkówka: dzieci, wyjazdy i wyniki”.',
             self::WriteComments => 'Komentarze pod aktualnościami i meczami. Odbierz je, gdy ktoś łamie zasady.',
             self::WriteMessages => 'Wiadomości do innych osób i grup na stronie. Odbierz je, gdy ktoś wysyła spam albo łamie zasady.',
             default => null,
@@ -84,14 +87,14 @@ enum Permission: string
      */
     public function isPublic(): bool
     {
-        return in_array($this, [self::WriteComments, self::WriteMessages], true);
+        return in_array($this, [self::WriteComments, self::WriteMessages, self::MiniSubmit], true);
     }
 
     public function group(): string
     {
         return match ($this) {
             self::Articles, self::Media, self::Homepage, self::Comments, self::ContentProposals, self::PhotoTags => 'Treści',
-            self::Teams, self::AllTeams, self::Trainings, self::Games, self::Tournaments, self::MiniVolleyball, self::Competitions, self::Proposals => 'Drużyny i rozgrywki',
+            self::Teams, self::AllTeams, self::Trainings, self::Games, self::Tournaments, self::MiniVolleyball, self::MiniSubmit, self::Competitions, self::Proposals => 'Drużyny i rozgrywki',
             self::Documents, self::Sponsors => 'Klub',
             self::WriteComments, self::WriteMessages => 'Korzystanie ze strony',
             default => 'Konta i strona',

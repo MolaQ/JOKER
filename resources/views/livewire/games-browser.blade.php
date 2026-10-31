@@ -162,7 +162,7 @@
                                             <ul class="mt-1.5 hidden space-y-1 lg:block">
                                                 @foreach($day['mini'] as $trip)
                                                     <li wire:key="cell-mini-{{ $trip->id }}" class="rounded-lg bg-gradient-to-br from-emerald-100 to-emerald-50 px-1.5 py-1 text-[11px] leading-tight text-emerald-950 ring-1 ring-emerald-300" title="{{ $trip->title }}{{ $trip->venue ? ' · '.$trip->venue : '' }}">
-                                                        <p class="font-semibold"><a href="{{ route('mini.index') }}" class="hover:underline">🏐 {{ $trip->title }}</a></p>
+                                                        <p class="font-semibold"><a href="{{ route('mini.index') }}" class="hover:underline">🏐 {{ $trip->title }}</a>@if($article = $trip->articles->first()) <a href="{{ route('articles.show', $article) }}" title="{{ __('Relacja') }}: {{ $article->title }}">📰</a>@endif</p>
                                                         <p class="text-emerald-800">{{ $trip->city }}</p>
                                                         @foreach($trip->teams as $miniTeam)
                                                             <details class="group/mini">
@@ -350,6 +350,9 @@
                                 </li>
                             @endforeach
                         </ul>
+                        @foreach($trip->articles as $article)
+                            <a href="{{ route('articles.show', $article) }}" class="mt-3 mr-4 inline-block text-xs font-semibold text-emerald-800 underline">📰 {{ __('Relacja') }} →</a>
+                        @endforeach
                         <a href="{{ route('mini.index') }}" class="mt-3 inline-block text-xs font-semibold text-emerald-800 underline">{{ __('Strona minisiatkówki') }} →</a>
                     </li>
                 @endforeach

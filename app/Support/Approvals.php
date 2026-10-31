@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Livewire\Admin\AccountActivation;
 use App\Livewire\Admin\CommentModeration;
+use App\Livewire\Admin\MiniApprovals;
 use App\Livewire\Admin\ParentAssignment;
 use App\Livewire\Admin\PhotoTagReview;
 use App\Livewire\Admin\ReportedMessages;
@@ -59,6 +60,15 @@ class Approvals
                 'component' => 'admin.content-proposal-manager',
                 'visible' => fn () => $user->can('proposals.content'),
                 'count' => fn () => ContentProposal::pending()->count(),
+            ],
+            'mini' => [
+                'label' => 'Minisiatkówka',
+                'icon' => 'ball',
+                'route' => 'admin.mini-approvals.index',
+                'intro' => 'Turnieje i wyniki zgłoszone przez trenerów i koordynatorów mini. Zatwierdzony turniej pojawia się w kalendarzu i na stronie minisiatkówki. Relacje z turniejów czekają w „Propozycjach treści”, jak relacje z meczów.',
+                'component' => 'admin.mini-approvals',
+                'visible' => fn () => app(SiteSettings::class)['module_mini'] && $user->can('mini.manage'),
+                'count' => fn () => MiniApprovals::pendingCount(),
             ],
             'komentarze' => [
                 'label' => 'Komentarze',

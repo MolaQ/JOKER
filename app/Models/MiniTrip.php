@@ -26,16 +26,43 @@ class MiniTrip extends Model
         'description',
         'parent_info',
         'tournament_id',
+        'status',
+        'pending_results',
+        'submitted_by',
     ];
+
+    public const STATUS_PUBLISHED = 'published';
+
+    public const STATUS_PENDING = 'pending';
 
     protected function casts(): array
     {
-        return ['starts_on' => 'date', 'ends_on' => 'date'];
+        return ['starts_on' => 'date', 'ends_on' => 'date', 'pending_results' => 'array'];
     }
 
     public function teams(): HasMany
     {
         return $this->hasMany(MiniTripTeam::class)->orderBy('name');
+    }
+
+    public function articles(): HasMany
+    {
+        return $this->hasMany(Article::class)->published()->latest('published_at');
+    }
+
+    public function submitter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'submitted_by');
+    }
+
+    /**
+     * Turnieje widoczne na stronie (zgłoszone przez trenera mini czekają na zatwierdzenie).
+     *
+     * @param  Builder<MiniTrip>  $query
+     */
+    public function scopePublished(Builder $query): void
+    {
+        $query->where('status', self::STATUS_PUBLISHED);
     }
 
     public function tournament(): BelongsTo
@@ -48,7 +75,7 @@ class MiniTrip extends Model
      */
     public function scopeUpcoming(Builder $query): void
     {
-        $query->whereDate('starts_on', '>=', today())->orderBy('starts_on');
+        $query->where('status', self::STATUS_PUBLISHED)->whereDate('starts_on', '>=', today())->orderBy('starts_on');
     }
 
     /**
@@ -64,6 +91,14 @@ class MiniTrip extends Model
     public function isPast(): bool
     {
         return ($this->ends_on ?? $this->starts_on)->lt(today());
+    }
+
+    /**
+     * Opis turnieju w propozycjach treści i panelu: „Minisiatkówka: Turniej w Ostrowie (sob 12.10)”.
+     */
+    public function mediaLabel(): string
+    {
+        return __('Minisiatkówka').': '.($this->title ?: $this->city).' ('.$this->dateLabel().')';
     }
 
     public function dateLabel(): string

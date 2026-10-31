@@ -30,6 +30,7 @@ class Article extends Model
     use HasFactory, Likeable;
 
     protected $fillable = [
+        'mini_trip_id',
         'title',
         'title_en',
         'slug',
@@ -84,6 +85,14 @@ class Article extends Model
     public function games(): BelongsToMany
     {
         return $this->belongsToMany(Game::class);
+    }
+
+    /**
+     * Turniej minisiatkówki, z którego jest relacja.
+     */
+    public function miniTrip(): BelongsTo
+    {
+        return $this->belongsTo(MiniTrip::class);
     }
 
     public function comments(): HasMany

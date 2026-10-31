@@ -30,8 +30,25 @@
         'wyniki' => [__('Wyniki'), $site['mini_show_results'] && $past->isNotEmpty()],
         'historia' => [__('Historia'), $site['mini_show_history'] && ($medals->isNotEmpty() || filled($group->history))],
         'zasady' => [__('Zasady'), $site['mini_show_rules'] && filled($group->rules)],
+        'zglos' => ['＋ '.__('Dodaj turniej i wyniki'), \App\Livewire\MiniSubmissions::canSubmit()],
     ])->filter(fn ($tab) => $tab[1]);
 @endphp
+{{-- Grupy jako zakładki: kliknięcie przechodzi do składu, dzieci i zasad danej grupy --}}
+<div class="sticky top-16 z-30 border-b border-zinc-200 bg-white/90 backdrop-blur-xl lg:top-20">
+    <nav class="container-site scrollbar-none flex gap-2 overflow-x-auto py-3" aria-label="{{ __('Grupy minisiatkówki') }}">
+        @foreach($groups as $tabGroup)
+            <a href="{{ route('mini.show', $tabGroup) }}" @if($tabGroup->is($group)) aria-current="page" @endif @class([
+                'flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition',
+                'bg-club-navy text-white shadow' => $tabGroup->is($group),
+                'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => ! $tabGroup->is($group),
+            ])>
+                <span class="flex gap-0.5" aria-hidden="true">@for($i = 0; $i < $tabGroup->players_on_court; $i++)<span class="size-1.5 rounded-full bg-amber-400"></span>@endfor</span>
+                {{ $tabGroup->name }}
+            </a>
+        @endforeach
+    </nav>
+</div>
+
 <section class="container-site py-10 lg:py-14" x-data="{ tab: (new URLSearchParams(location.search)).get('tab') || @js($tabs->keys()->first()) }">
     <nav class="flex flex-wrap gap-2" role="tablist">
         @foreach($tabs as $key => [$name])
@@ -90,17 +107,15 @@
     </div>
     @endif
 
+    @if($tabs->has('zglos'))
+    <div x-show="tab === 'zglos'" @if($tabs->keys()->first() !== 'zglos') x-cloak @endif class="mt-8">
+        <livewire:mini-submissions :group-id="$group->id" />
+    </div>
+    @endif
+
     @if($tabs->has('zasady'))
     <div x-show="tab === 'zasady'" @if($tabs->keys()->first() !== 'zasady') x-cloak @endif class="prose mt-8 max-w-3xl whitespace-pre-line text-zinc-700">{{ $group->rules }}</div>
     @endif
 
-    @if($others->isNotEmpty())
-        <h2 class="heading-md mt-16">{{ __('Inne grupy') }}</h2>
-        <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            @foreach($others as $other)
-                <x-mini-group-tile :group="$other" class="min-h-48!" />
-            @endforeach
-        </div>
-    @endif
 </section>
 @endsection

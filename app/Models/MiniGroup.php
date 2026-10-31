@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Support\Media;
-use App\Support\SiteSettings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -98,7 +97,7 @@ class MiniGroup extends Model
 
     public function lastResult(): ?MiniTripTeam
     {
-        return $this->tripTeams()->with('trip')->whereNotNull('place')->get()->sortByDesc(fn (MiniTripTeam $team) => $team->trip->starts_on)->first();
+        return $this->tripTeams()->with('trip')->whereHas('trip', fn ($query) => $query->published())->whereNotNull('place')->get()->sortByDesc(fn (MiniTripTeam $team) => $team->trip->starts_on)->first();
     }
 
     /**
@@ -124,7 +123,7 @@ class MiniGroup extends Model
      */
     public function medals(): Collection
     {
-        return $this->tripTeams()->with('trip')->whereBetween('place', [1, 3])->get()
+        return $this->tripTeams()->with('trip')->whereHas('trip', fn ($query) => $query->published())->whereBetween('place', [1, 3])->get()
             ->sortByDesc(fn (MiniTripTeam $team) => $team->trip->starts_on)->values();
     }
 }

@@ -22,6 +22,9 @@
                 @if($team->photoUrl())<img src="{{ $team->photoUrl() }}" alt="{{ $team->name }}, {{ $trip->title }}" loading="lazy" class="mt-2 max-h-64 rounded-xl object-cover">@endif
             </div>
         @endforeach
+        @foreach($trip->articles as $article)
+            <a href="{{ route('articles.show', $article) }}" class="mt-2 mr-4 inline-block text-sm font-semibold text-sky-club-dark hover:underline">📰 {{ __('Relacja') }}: {{ $article->title }} →</a>
+        @endforeach
         @if($trip->tournament)
             <a href="{{ route('tournaments.show', $trip->tournament) }}" class="mt-2 inline-block text-sm font-semibold text-sky-club-dark hover:underline">{{ __('Pełne wyniki turnieju') }} →</a>
         @endif

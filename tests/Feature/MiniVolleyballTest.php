@@ -47,12 +47,12 @@ test('a trainer sets up groups, children and a trip with a result that shows on 
     $manager->call('togglePlayer', $team->id, $antek->id)->call('togglePlayer', $team->id, $kuba->id)
         ->set("results.{$team->id}.place", '1')->set("results.{$team->id}.teams_count", '18');
 
-    expect($team->fresh()->resultLabel())->toBe('1. miejsce na 18 drużyn')
+    expect($team->fresh()->resultLabel())->toBe('1. miejsce | 18 drużyn')
         ->and($team->players()->pluck('first_name')->sort()->values()->all())->toBe(['Antek', 'Kuba'])
         ->and($fours->medals())->toHaveCount(1);
 
     $this->get(route('mini.show', $fours))->assertOk()
-        ->assertSee('Antek Kowalski')->assertSee('1. miejsce na 18 drużyn')->assertSee('Boisko 7×7 m')->assertSee('Mistrzostwa Wielkopolski');
+        ->assertSee('Antek Kowalski')->assertSee('1. miejsce | 18 drużyn')->assertSee('Boisko 7×7 m')->assertSee('Mistrzostwa Wielkopolski');
     $this->get(route('mini.index'))->assertOk()->assertSee('Czwórki')->assertSee('Trójki');
     $this->get('/')->assertOk()->assertSee('Minisiatkówka')->assertSee('Ostatnio: 1. miejsce, Leszno');
 });

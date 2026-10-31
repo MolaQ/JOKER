@@ -91,14 +91,20 @@
             </div>
         @else
             <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold text-gray-900">Wyjazdy <span class="text-sm font-normal text-gray-500">({{ $trips->count() }})</span></h2>
-                <button type="button" wire:click="newTrip" class="{{ $primary }}">+ Nowy wyjazd</button>
+                <h2 class="text-lg font-semibold text-gray-900">Turnieje <span class="text-sm font-normal text-gray-500">({{ $trips->count() }})</span></h2>
+                <button type="button" wire:click="newTrip" class="{{ $primary }}">+ Nowy turniej</button>
             </div>
             <ul class="divide-y divide-gray-200 overflow-hidden rounded-lg bg-white shadow ring-1 ring-zinc-200">
                 @forelse($trips as $item)
                     <li class="flex flex-wrap items-center gap-3 p-4" wire:key="trip-{{ $item->id }}">
                         <div class="min-w-0 flex-1">
-                            <p class="font-semibold text-gray-900">{{ $item->title }}</p>
+                            <p class="font-semibold text-gray-900">{{ $item->title }}
+                                @if($item->status === \App\Models\MiniTrip::STATUS_PENDING)
+                                    <a href="{{ route('admin.mini-approvals.index') }}" class="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">czeka na zatwierdzenie</a>
+                                @elseif($item->pending_results)
+                                    <a href="{{ route('admin.mini-approvals.index') }}" class="ml-1 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-800">nowe wyniki do zatwierdzenia</a>
+                                @endif
+                            </p>
                             <p class="text-sm text-gray-500">{{ $item->dateLabel() }}@if($item->city) · {{ $item->city }}@endif · {{ $item->teams->pluck('name')->implode(', ') ?: 'bez drużyn' }}</p>
                         </div>
                         @foreach($item->teams->filter(fn ($team) => $team->place) as $team)
@@ -107,7 +113,7 @@
                         <button type="button" wire:click="openTrip({{ $item->id }})" class="admin-action">{{ $item->isPast() ? 'Wynik i skład' : 'Otwórz' }}</button>
                     </li>
                 @empty
-                    <li class="p-6 text-sm text-gray-500">Nie ma jeszcze wyjazdów. Dodaj pierwszy turniej.</li>
+                    <li class="p-6 text-sm text-gray-500">Nie ma jeszcze turniejów. Dodaj pierwszy.</li>
                 @endforelse
             </ul>
         @endif

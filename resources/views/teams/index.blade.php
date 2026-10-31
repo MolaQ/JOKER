@@ -33,4 +33,21 @@
         @endforeach
     </div>
 </section>
+
+@if($miniGroups->isNotEmpty())
+<section class="container-site pt-16 pb-6">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+            <p class="eyebrow">{{ __($site['mini_eyebrow']) }}</p>
+            <h2 class="heading-md mt-2">{{ __($site['mini_title']) }}</h2>
+        </div>
+        <a href="{{ route('mini.index') }}" class="link-underline pb-1 text-sm font-semibold">{{ __('Wszystko o minisiatkówce') }} →</a>
+    </div>
+    <div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        @foreach($miniGroups as $miniGroup)
+            <x-mini-group-tile :group="$miniGroup" class="min-h-44! p-4! sm:min-h-52!" />
+        @endforeach
+    </div>
+</section>
+@endif
 @endsection

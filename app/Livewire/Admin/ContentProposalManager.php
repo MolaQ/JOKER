@@ -9,6 +9,7 @@ use App\Models\ContentProposal;
 use App\Models\Gallery;
 use App\Models\GalleryPhoto;
 use App\Models\Game;
+use App\Models\MiniTrip;
 use App\Models\TournamentMatch;
 use App\Support\Slug;
 use Illuminate\Contracts\View\View;
@@ -177,6 +178,10 @@ class ContentProposalManager extends Component
             $article->games()->attach($proposal->match->id);
         }
 
+        if ($proposal->match instanceof MiniTrip) {
+            $article->update(['mini_trip_id' => $proposal->match->id]);
+        }
+
         return $article;
     }
 
@@ -237,6 +242,7 @@ class ContentProposalManager extends Component
         return match (true) {
             $match instanceof Game => implode(' – ', $match->sidesNames()),
             $match instanceof TournamentMatch => $match->homeName().' – '.$match->awayName(),
+            $match instanceof MiniTrip => $match->mediaLabel(),
             default => '',
         };
     }

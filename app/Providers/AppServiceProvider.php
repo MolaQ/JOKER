@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Article;
 use App\Models\Document;
 use App\Models\Game;
+use App\Models\MiniTrip;
 use App\Models\Page;
 use App\Models\Player;
 use App\Models\RivalTeam;
@@ -98,6 +99,7 @@ class AppServiceProvider extends ServiceProvider
             'team' => Team::class,
             'rival_team' => RivalTeam::class,
             'tournament_match' => TournamentMatch::class,
+            'mini_trip' => MiniTrip::class,
         ]);
 
         // Każda zmiana treści odświeża indeks wyszukiwarki.
