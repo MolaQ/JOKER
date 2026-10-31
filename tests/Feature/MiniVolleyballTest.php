@@ -24,6 +24,9 @@ test('a trainer sets up groups, children and a trip with a result that shows on 
         ->set('group.name', 'Czwórki')->set('group.players_on_court', '4')->set('group.age_label', 'U-13')
         ->set('group.birth_year_from', '2013')->set('group.birth_year_to', '2014')->set('group.rules', 'Boisko 7×7 m, siatka 2,15 m.')
         ->call('saveGroup')->assertHasNoErrors()
+        // Nowa grupa od razu otwiera swoją zakładkę; kolejną dodaje się z „＋ Grupy”.
+        ->assertSet('section', 'grupa')
+        ->set('section', 'grupy')->call('resetGroup')
         ->set('group.name', 'Trójki')->set('group.players_on_court', '3')->call('saveGroup');
 
     $fours = MiniGroup::firstWhere('slug', 'czworki');
@@ -90,4 +93,25 @@ test('the whole mini volleyball module and each part of it can be switched off i
     $this->get(route('mini.show', $group))->assertNotFound();
     $this->get('/')->assertOk()->assertDontSee('Wszystko o minisiatkówce');
     $this->actingAs(User::factory()->trainer()->create())->get('/panel/minisiatkowka')->assertNotFound();
+});
+
+test('each group has its own tab with an editor page and its children, and can be shown or hidden', function () {
+    $group = MiniGroup::firstWhere('slug', 'czworki');
+    MiniPlayer::create(['mini_group_id' => $group->id, 'first_name' => 'Antek', 'last_name' => 'Kowalski']);
+    MiniPlayer::create(['mini_group_id' => MiniGroup::firstWhere('slug', 'trojki')->id, 'first_name' => 'Kuba', 'last_name' => 'Młodszy']);
+    $this->actingAs(User::factory()->trainer()->create());
+
+    Livewire::test(MiniVolleyballManager::class)
+        ->call('openGroup', $group->id)
+        ->assertSet('group.name', 'Czwórki')
+        ->set('group.about', '<p>Treningi we <strong>wtorki</strong></p><script>alert(1)</script>')
+        ->call('saveGroup')->assertHasNoErrors()
+        ->assertSet('section', 'grupa')
+        ->call('toggleGroupVisible', $group->id)
+        ->set('groupPane', 'dzieci')
+        ->assertSee('Antek Kowalski')->assertDontSee('Kuba Młodszy');
+
+    expect($group->fresh()->is_active)->toBeTrue();
+    $this->get(route('mini.show', $group))->assertOk()->assertSee('O grupie')->assertSee('<strong>wtorki</strong>', false)->assertDontSee('<script>alert(1)</script>', false);
+    $this->get('/')->assertSee('Czwórki');
 });

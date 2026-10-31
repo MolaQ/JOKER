@@ -25,6 +25,7 @@
 
 @php
     $tabs = collect([
+        'o-grupie' => [__('O grupie'), filled(strip_tags((string) $group->about))],
         'dzieci' => [__('Dzieci'), $site['mini_show_children']],
         'wyjazdy' => [__('Wyjazdy'), $site['mini_show_trips'] && $upcoming->isNotEmpty()],
         'wyniki' => [__('Wyniki'), $site['mini_show_results'] && $past->isNotEmpty()],
@@ -56,9 +57,13 @@
         @endforeach
     </nav>
 
+    @if($tabs->has('o-grupie'))
+    <div x-show="tab === 'o-grupie'" @if($tabs->keys()->first() !== 'o-grupie') x-cloak @endif class="prose-club mt-8 max-w-3xl">{!! $group->html('about') !!}</div>
+    @endif
+
     {{-- Dzieci: zdjęcie tylko ze zgodą rodzica, inaczej sylwetka --}}
     @if($tabs->has('dzieci'))
-    <div x-show="tab === 'dzieci'" class="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-4 lg:grid-cols-6">
+    <div x-show="tab === 'dzieci'" @if($tabs->keys()->first() !== 'dzieci') x-cloak @endif class="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-4 lg:grid-cols-6">
         @forelse($players as $child)
             <figure class="text-center">
                 @if($child->photoUrl())
@@ -103,7 +108,7 @@
                 @endforeach
             </ul>
         @endif
-        @if($group->history)<div class="prose max-w-none whitespace-pre-line text-zinc-700">{{ $group->history }}</div>@endif
+        @if($group->history)<div class="prose-club max-w-3xl">{!! $group->html('history') !!}</div>@endif
     </div>
     @endif
 
@@ -114,7 +119,7 @@
     @endif
 
     @if($tabs->has('zasady'))
-    <div x-show="tab === 'zasady'" @if($tabs->keys()->first() !== 'zasady') x-cloak @endif class="prose mt-8 max-w-3xl whitespace-pre-line text-zinc-700">{{ $group->rules }}</div>
+    <div x-show="tab === 'zasady'" @if($tabs->keys()->first() !== 'zasady') x-cloak @endif class="prose-club mt-8 max-w-3xl">{!! $group->html('rules') !!}</div>
     @endif
 
 </section>

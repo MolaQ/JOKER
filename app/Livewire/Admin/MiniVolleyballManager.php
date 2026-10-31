@@ -26,6 +26,14 @@ class MiniVolleyballManager extends Component
     #[Url(as: 'section')]
     public string $section = 'wyjazdy';
 
+    /** Otwarta grupa (zakładka z nazwą grupy): strona grupy i baza dzieci tej grupy. */
+    #[Url(as: 'group')]
+    public ?int $groupTab = null;
+
+    /** W zakładce grupy: „strona” (treść) albo „dzieci” (baza dzieci). */
+    #[Url(as: 'pane')]
+    public string $groupPane = 'strona';
+
     #[Url(as: 'trip')]
     public ?int $tripId = null;
 
@@ -66,6 +74,33 @@ class MiniVolleyballManager extends Component
         $this->resetPlayer();
         $this->resetGroup();
         $this->loadResults();
+
+        if ($this->section === 'grupa' && $this->groupTab && MiniGroup::whereKey($this->groupTab)->exists()) {
+            $this->openGroup($this->groupTab, $this->groupPane);
+        } elseif ($this->section === 'grupa') {
+            $this->section = 'grupy';
+        }
+    }
+
+    /**
+     * Zakładka grupy: formularz strony grupy i lista dzieci tej grupy.
+     */
+    public function openGroup(int $id, string $pane = 'strona'): void
+    {
+        $this->section = 'grupa';
+        $this->groupTab = $id;
+        $this->groupPane = in_array($pane, ['strona', 'dzieci'], true) ? $pane : 'strona';
+        $this->editGroup($id);
+        $this->playerGroup = (string) $id;
+        $this->resetPlayer($id);
+    }
+
+    public function toggleGroupVisible(int $id): void
+    {
+        $group = MiniGroup::findOrFail($id);
+        $group->update(['is_active' => ! $group->is_active]);
+        $this->group['is_active'] = $this->editingGroupId === $group->id ? $group->is_active : ($this->group['is_active'] ?? true);
+        $this->toast($group->is_active ? 'Grupa jest widoczna na stronie (także kafel na stronie głównej).' : 'Grupa ukryta na stronie.');
     }
 
     // ── Wyjazdy ──────────────────────────────────────────────
@@ -289,7 +324,7 @@ class MiniVolleyballManager extends Component
     {
         $group = MiniGroup::findOrFail($id);
         $this->editingGroupId = $group->id;
-        $this->group = collect($group->only(['name', 'slug', 'players_on_court', 'age_label', 'birth_year_from', 'birth_year_to', 'gender', 'color', 'lead', 'rules', 'history', 'display_order']))
+        $this->group = collect($group->only(['name', 'slug', 'players_on_court', 'age_label', 'birth_year_from', 'birth_year_to', 'gender', 'color', 'lead', 'about', 'rules', 'history', 'display_order']))
             ->map(fn ($value) => (string) $value)->all() + ['is_active' => $group->is_active, 'photo_path' => $group->photo_path];
         $this->groupPhoto = null;
     }
@@ -306,6 +341,7 @@ class MiniVolleyballManager extends Component
             'group.gender' => ['nullable', Rule::in(array_keys(MiniGroup::GENDERS))],
             'group.lead' => 'nullable|string|max:255',
             'group.color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'group.about' => 'nullable|string|max:20000',
             'group.rules' => 'nullable|string|max:20000',
             'group.history' => 'nullable|string|max:20000',
             'group.display_order' => 'nullable|integer|min:0',
@@ -321,8 +357,16 @@ class MiniVolleyballManager extends Component
             $attributes['photo_path'] = $this->groupPhoto->store('mini', 'public');
         }
 
-        MiniGroup::updateOrCreate(['id' => $this->editingGroupId], $attributes);
+        $saved = MiniGroup::updateOrCreate(['id' => $this->editingGroupId], $attributes);
         $this->toast($this->editingGroupId ? 'Zapisano grupę.' : 'Dodano grupę.');
+
+        // W zakładce grupy zostajemy przy niej, nowa grupa od razu dostaje swoją zakładkę.
+        if ($this->section === 'grupa' || ! $this->editingGroupId) {
+            $this->openGroup($saved->id, 'strona');
+
+            return;
+        }
+
         $this->resetGroup();
     }
 
@@ -330,6 +374,8 @@ class MiniVolleyballManager extends Component
     {
         MiniGroup::findOrFail($id)->delete();
         $this->resetGroup();
+        $this->section = 'grupy';
+        $this->groupTab = null;
         $this->toast('Usunięto grupę. Dzieci zostały na liście bez grupy.');
     }
 
@@ -337,7 +383,7 @@ class MiniVolleyballManager extends Component
     {
         $this->editingGroupId = null;
         $this->groupPhoto = null;
-        $this->group = ['name' => '', 'slug' => '', 'players_on_court' => '4', 'age_label' => '', 'birth_year_from' => '', 'birth_year_to' => '', 'gender' => '', 'color' => '', 'lead' => '', 'rules' => '', 'history' => '', 'display_order' => '0', 'is_active' => true, 'photo_path' => null];
+        $this->group = ['name' => '', 'slug' => '', 'players_on_court' => '4', 'age_label' => '', 'birth_year_from' => '', 'birth_year_to' => '', 'gender' => '', 'color' => '', 'lead' => '', 'about' => '', 'rules' => '', 'history' => '', 'display_order' => '0', 'is_active' => true, 'photo_path' => null];
         $this->resetErrorBag();
     }
 

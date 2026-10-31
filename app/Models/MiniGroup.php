@@ -28,6 +28,7 @@ class MiniGroup extends Model
         'color',
         'photo_path',
         'lead',
+        'about',
         'rules',
         'history',
         'display_order',
@@ -68,6 +69,30 @@ class MiniGroup extends Model
     public function iconColor(): string
     {
         return $this->color ?: (self::DEFAULT_COLORS[(int) $this->players_on_court] ?? '#f5b301');
+    }
+
+    /**
+     * Treść z edytora (O grupie, Zasady, Historia) bezpieczna do wstawienia na stronę.
+     * Stary zwykły tekst (bez znaczników) dostaje akapity z nowych linii.
+     */
+    public function html(string $field): string
+    {
+        $text = trim((string) $this->{$field});
+
+        if ($text === '') {
+            return '';
+        }
+
+        if (! str_contains($text, '<')) {
+            return collect(preg_split('/\R{2,}/u', $text))->map(fn (string $paragraph) => '<p>'.nl2br(e(trim($paragraph)), false).'</p>')->implode('');
+        }
+
+        $clean = strip_tags($text, '<p><br><h2><h3><h4><strong><b><em><i><u><s><ul><ol><li><blockquote><a><hr>');
+
+        // Linki tylko http(s), mailto i względne; bez atrybutów zdarzeń.
+        $clean = preg_replace('/\s+on[a-z]+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $clean);
+
+        return preg_replace('/href\s*=\s*(["\'])\s*(?!https?:|mailto:|\/|#)[^"\']*\1/i', 'href="#"', $clean);
     }
 
     public function players(): HasMany
