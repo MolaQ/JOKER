@@ -24,6 +24,7 @@ class SitemapController extends Controller
             'Disallow: /moj-profil',
             'Disallow: /szukaj',
             'Disallow: /jezyk/',
+            'Disallow: /logotypy',
             '',
             'Sitemap: '.route('sitemap'),
         ];

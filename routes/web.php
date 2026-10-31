@@ -14,6 +14,7 @@ use App\Http\Controllers\GameCalendarController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\LogoController;
 use App\Http\Controllers\MiniVolleyballController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PageViewController;
@@ -96,6 +97,10 @@ Route::view('/photo-credits', 'credits')->name('credits');
 Route::get('/page/{page}', [PageController::class, 'show'])->name('pages.show');
 
 // Contact
+// Logotypy klubów do pobrania (np. do transmisji), poza wyszukiwarkami.
+Route::get('/logotypy', [LogoController::class, 'index'])->name('logos.index');
+Route::get('/logotypy/wszystkie.zip', [LogoController::class, 'zip'])->name('logos.zip');
+Route::get('/logotypy/{key}', [LogoController::class, 'download'])->where('key', '[a-z0-9-]+')->name('logos.download');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
 // Statystyki odwiedzin: czas na stronie, przewinięcie i otwierane zakładki (sendBeacon).
 Route::middleware('throttle:120,1')->group(function () {
