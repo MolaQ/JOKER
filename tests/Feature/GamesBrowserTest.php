@@ -2,6 +2,9 @@
 
 use App\Livewire\GamesBrowser;
 use App\Models\Game;
+use App\Models\MiniGroup;
+use App\Models\MiniPlayer;
+use App\Models\MiniTrip;
 use App\Models\Season;
 use App\Models\Team;
 use App\Support\SiteSettings;
@@ -61,4 +64,28 @@ test('calendar colours and the birthday icon come from the settings', function (
 
 test('the calendar shows all matches by default', function () {
     $this->get(route('schedule.index'))->assertOk()->assertSee('Warta Zawiercie')->assertSee('Gwardia Wrocław');
+});
+
+test('minivolleyball tournaments show in the calendar with category names, places and lineups', function () {
+    $group = MiniGroup::create(['name' => 'Czwórki dziewcząt', 'players_on_court' => 4]);
+    $child = MiniPlayer::create(['mini_group_id' => $group->id, 'first_name' => 'Zosia', 'last_name' => 'Nowak', 'is_active' => true]);
+    $home = MiniTrip::create(['title' => 'Faza powiatowa', 'starts_on' => now()->addWeek()->toDateString(), 'city' => 'Piła']);
+    $home->teams()->create(['mini_group_id' => $group->id, 'name' => 'Joker 1', 'place' => 1, 'teams_count' => 10])->players()->attach($child);
+    MiniTrip::create(['title' => 'Turniej w Wałczu', 'starts_on' => now()->addWeeks(2)->toDateString(), 'city' => 'Wałcz']);
+    app(SiteSettings::class)->set(['mini_format_4' => 'Quattro']);
+
+    Livewire::test(GamesBrowser::class)
+        ->assertSee('Faza powiatowa')
+        ->assertSee('u siebie · Piła')
+        ->assertSee('Quattro')
+        ->assertSee('Zosia Nowak')
+        ->set('place', 'away')
+        ->assertDontSee('Faza powiatowa')
+        ->assertSee('Turniej w Wałczu')
+        ->set('place', '')
+        ->set('competition', GamesBrowser::FILTER_MINI)
+        ->assertSee('Faza powiatowa');
+
+    app(SiteSettings::class)->set(['mini_in_calendar' => false]);
+    Livewire::test(GamesBrowser::class)->assertDontSee('Faza powiatowa');
 });

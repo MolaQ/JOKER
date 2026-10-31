@@ -112,11 +112,13 @@ class GamesBrowser extends Component
     #[Computed]
     public function seasonMiniTrips(): Collection
     {
-        if (! app(SiteSettings::class)['module_mini']) {
+        $site = app(SiteSettings::class);
+
+        if (! $site['module_mini'] || ! $site['mini_in_calendar']) {
             return collect();
         }
 
-        return MiniTrip::with('teams.group')
+        return MiniTrip::with(['teams.group', 'teams.players'])
             ->when($this->selectedSeason, fn ($query, Season $season) => $query->whereBetween('starts_on', [$season->start_date, $season->end_date]))
             ->orderBy('starts_on')
             ->get();

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\Media;
+use App\Support\SiteSettings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -88,6 +89,19 @@ class MiniGroup extends Model
         };
 
         return collect([$this->age_label, $years, self::GENDERS[$this->gender] ?? null])->filter()->implode(' · ') ?: null;
+    }
+
+    /**
+     * Nazwa kategorii według liczby graczy na boisku (Ustawienia → Minisiatkówka), np. „Czwórki”.
+     */
+    public static function formatName(int $playersOnCourt): string
+    {
+        return (string) (app(SiteSettings::class)['mini_format_'.$playersOnCourt] ?: $playersOnCourt.' × '.$playersOnCourt);
+    }
+
+    public function formatLabel(): string
+    {
+        return self::formatName((int) $this->players_on_court);
     }
 
     public function nextTrip(): ?MiniTrip

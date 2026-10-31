@@ -161,11 +161,16 @@
                                             {{-- Komputer: mecze wpisane w kartkę; granat = u siebie, szary = wyjazd --}}
                                             <ul class="mt-1.5 hidden space-y-1 lg:block">
                                                 @foreach($day['mini'] as $trip)
-                                                    <li wire:key="cell-mini-{{ $trip->id }}" class="rounded-lg bg-gradient-to-br from-emerald-100 to-emerald-50 px-1.5 py-1 text-[11px] leading-tight text-emerald-950 ring-1 ring-emerald-300" title="{{ __('Minisiatkówka') }} · {{ $trip->title }}{{ $trip->city ? ' · '.$trip->city : '' }}">
+                                                    <li wire:key="cell-mini-{{ $trip->id }}" class="rounded-lg bg-gradient-to-br from-emerald-100 to-emerald-50 px-1.5 py-1 text-[11px] leading-tight text-emerald-950 ring-1 ring-emerald-300" title="{{ $trip->title }}{{ $trip->venue ? ' · '.$trip->venue : '' }}">
                                                         <p class="font-semibold"><a href="{{ route('mini.index') }}" class="hover:underline">🏐 {{ $trip->title }}</a></p>
-                                                        <p class="text-emerald-800">{{ __('Minisiatkówka') }} · {{ $trip->isHome() ? __('u nas') : ($trip->city ?: __('wyjazd')) }}</p>
+                                                        <p class="text-emerald-800">{{ $trip->isHome() ? __('u siebie').' · ' : '' }}{{ $trip->city }}</p>
                                                         @foreach($trip->teams as $miniTeam)
-                                                            <p class="truncate">{{ $miniTeam->name }}@if($miniTeam->place) · <strong>{{ $miniTeam->place }}.</strong>@if($miniTeam->teams_count)<span class="text-emerald-700">/{{ $miniTeam->teams_count }}</span>@endif @endif</p>
+                                                            <details class="group/mini">
+                                                                <summary class="cursor-pointer list-none truncate hover:underline [&::-webkit-details-marker]:hidden"><span class="text-emerald-700">{{ $miniTeam->group?->formatLabel() }}</span> {{ $miniTeam->name }}@if($miniTeam->place) · <strong>{{ $miniTeam->place }}.</strong>@if($miniTeam->teams_count)<span class="text-emerald-700">/{{ $miniTeam->teams_count }}</span>@endif @endif</summary>
+                                                                @if($site['mini_show_lineups'] && $miniTeam->players->isNotEmpty())
+                                                                    <p class="mt-0.5 rounded bg-white/70 px-1 py-0.5 text-emerald-900">{{ $miniTeam->players->map->displayName()->implode(', ') }}</p>
+                                                                @endif
+                                                            </details>
                                                         @endforeach
                                                     </li>
                                                 @endforeach
@@ -315,17 +320,37 @@
                 @endforeach
                 @foreach($month['mini'] as $trip)
                     <li id="mini-{{ $trip->id }}" wire:key="list-mini-{{ $trip->id }}" class="card scroll-mt-24 lg:scroll-mt-48 bg-emerald-50 p-4 text-sm text-emerald-950 ring-emerald-200">
-                        <p class="text-xs font-semibold tracking-wide text-emerald-700 uppercase">{{ __('Minisiatkówka') }} · {{ $trip->dateLabel() }} · {{ $trip->isHome() ? __('u nas') : __('wyjazd') }}</p>
+                        <p class="text-xs font-semibold tracking-wide text-emerald-700 uppercase">{{ $trip->dateLabel() }} · {{ $trip->isHome() ? __('u siebie').' · ' : '' }}{{ $trip->city }}</p>
                         <p class="mt-1 font-display text-lg font-semibold uppercase">🏐 {{ $trip->title }}</p>
-                        @if($trip->venue || $trip->city)
-                            <p class="text-xs text-emerald-800">{{ collect([$trip->venue, $trip->city])->filter()->implode(', ') }}</p>
+                        @if($trip->venue)
+                            <p class="text-xs text-emerald-800">{{ $trip->venue }}</p>
                         @endif
-                        <ul class="mt-2 space-y-0.5">
-                            @foreach($trip->teams as $miniTeam)
-                                <li>{{ $miniTeam->name }}@if($miniTeam->group) <span class="text-emerald-700">({{ $miniTeam->group->name }})</span>@endif @if($miniTeam->place) · <strong>{{ $miniTeam->place }}. {{ __('miejsce') }}</strong>@if($miniTeam->teams_count) {{ __('na') }} {{ $miniTeam->teams_count }}@endif @endif</li>
+                        <ul class="mt-3 space-y-2">
+                            @foreach($trip->teams->sortBy(fn ($team) => [-(int) $team->group?->players_on_court, $team->place ?? 99]) as $miniTeam)
+                                <li>
+                                    <details class="group/mini rounded-xl bg-white/70 ring-1 ring-emerald-200">
+                                        <summary class="flex cursor-pointer list-none items-center gap-3 px-3 py-2 [&::-webkit-details-marker]:hidden">
+                                            @if($miniTeam->place)
+                                                <span @class(['flex size-9 shrink-0 items-center justify-center rounded-full font-display text-lg font-bold', 'bg-amber-300 text-amber-950' => $miniTeam->place === 1, 'bg-zinc-200 text-zinc-800' => $miniTeam->place === 2, 'bg-orange-300 text-orange-950' => $miniTeam->place === 3, 'bg-emerald-100 text-emerald-900' => $miniTeam->place > 3])>{{ $miniTeam->place }}.</span>
+                                            @else
+                                                <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">–</span>
+                                            @endif
+                                            <span class="min-w-0 flex-1">
+                                                <span class="block text-xs font-semibold tracking-wide text-emerald-700 uppercase">{{ $miniTeam->group?->formatLabel() }}{{ $miniTeam->teams_count ? ' · '.__('na :count drużyn', ['count' => $miniTeam->teams_count]) : '' }}</span>
+                                                <span class="block font-semibold">{{ $miniTeam->name }}</span>
+                                            </span>
+                                            @if($site['mini_show_lineups'] && $miniTeam->players->isNotEmpty())
+                                                <span class="text-xs text-emerald-700 group-open/mini:rotate-180">▾</span>
+                                            @endif
+                                        </summary>
+                                        @if($site['mini_show_lineups'] && $miniTeam->players->isNotEmpty())
+                                            <p class="border-t border-emerald-100 px-3 py-2 text-emerald-900">{{ $miniTeam->players->map->displayName()->implode(', ') }}</p>
+                                        @endif
+                                    </details>
+                                </li>
                             @endforeach
                         </ul>
-                        <a href="{{ route('mini.index') }}" class="mt-2 inline-block text-xs font-semibold text-emerald-800 underline">{{ __('Strona minisiatkówki') }} →</a>
+                        <a href="{{ route('mini.index') }}" class="mt-3 inline-block text-xs font-semibold text-emerald-800 underline">{{ __('Strona minisiatkówki') }} →</a>
                     </li>
                 @endforeach
                 @foreach($month['tournaments'] as $tournament)
