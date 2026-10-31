@@ -70,6 +70,15 @@ class Approvals
                 'visible' => fn () => app(SiteSettings::class)['module_mini'] && $user->can('mini.manage'),
                 'count' => fn () => MiniApprovals::pendingCount(),
             ],
+            'duble' => [
+                'label' => 'Możliwe duble meczów',
+                'icon' => 'ball',
+                'route' => 'admin.duplicate-games.index',
+                'intro' => 'Ta sama drużyna ma tego samego dnia dwa mecze z tym samym rywalem. Zwykle to import ze związku, który dodał mecz drugi raz pod innym numerem. Usuń zbędny (trafi do kosza) albo, przy dwumeczu w jeden dzień, kliknij „To nie dubel”.',
+                'component' => 'admin.duplicate-game-review',
+                'visible' => fn () => $user->can('games.manage'),
+                'count' => fn () => DuplicateGames::count($user),
+            ],
             'komentarze' => [
                 'label' => 'Komentarze',
                 'icon' => 'chat',

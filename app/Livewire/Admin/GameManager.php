@@ -13,6 +13,7 @@ use App\Models\Team;
 use App\Models\Tournament;
 use App\Services\ScheduleImporter;
 use App\Services\StandingsCalculator;
+use App\Support\DuplicateGames;
 use App\Support\Trash;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -443,6 +444,7 @@ class GameManager extends Component
             'competitions' => $competitions,
             'tournaments' => $tournaments,
             'rivalTeams' => $rivalTeams,
+            'duplicateIds' => array_flip(DuplicateGames::gameIds(Auth::user())),
         ]);
     }
 }

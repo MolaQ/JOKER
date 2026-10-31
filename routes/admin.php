@@ -81,6 +81,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     Route::get('/account-activations', ApprovalsController::class)->defaults('section', 'konta')->name('accounts.index');
     Route::get('/proposals', ApprovalsController::class)->defaults('section', 'propozycje')->name('content-proposals.index');
     Route::get('/mini-approvals', ApprovalsController::class)->defaults('section', 'mini')->name('mini-approvals.index');
+    Route::get('/duplicate-games', ApprovalsController::class)->defaults('section', 'duble')->name('duplicate-games.index');
     Route::get('/comments', ApprovalsController::class)->defaults('section', 'komentarze')->name('comments.index');
     Route::get('/reported-messages', ApprovalsController::class)->defaults('section', 'wiadomosci')->name('reported-messages.index');
     Route::get('/photo-tags', ApprovalsController::class)->defaults('section', 'oznaczenia')->name('photo-tags.index');

@@ -56,6 +56,9 @@
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {{ $game->is_home ? 'vs ' : '@ ' }}{{ $game->opponentDisplayName() }}
+                        @isset($duplicateIds[$game->id])
+                            <a href="{{ route('admin.duplicate-games.index') }}" class="ml-1 inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-600/30 ring-inset hover:bg-amber-100" title="Ta drużyna ma tego dnia drugi mecz z tym rywalem. Sprawdź w: Do zatwierdzenia → Możliwe duble meczów">⚠ możliwy dubel</a>
+                        @endisset
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         @if(!is_null($game->home_score) && !is_null($game->away_score))
