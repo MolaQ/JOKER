@@ -285,7 +285,7 @@
             @if($currentTab === $key)
                 <div class="card mx-auto max-w-3xl p-8">
                     <h2 class="heading-md">{{ $tabs[$key] }}</h2>
-                    <div class="prose-club mt-5">{!! strip_tags($content, '<p><br><strong><em><b><i><u><s><mark><blockquote><hr><ul><ol><li><h2><h3><h4><a><table><thead><tbody><tr><th><td>') !!}</div>
+                    <div class="prose-club mt-5">{!! \App\Support\DeadLinks::strip(strip_tags($content, '<p><br><strong><em><b><i><u><s><mark><blockquote><hr><ul><ol><li><h2><h3><h4><a><table><thead><tbody><tr><th><td>')) !!}</div>
                 </div>
             @endif
         @endforeach

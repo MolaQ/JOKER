@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\DeadLinks;
 use App\Support\Media;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -92,7 +93,7 @@ class MiniGroup extends Model
         // Linki tylko http(s), mailto i względne; bez atrybutów zdarzeń.
         $clean = preg_replace('/\s+on[a-z]+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $clean);
 
-        return preg_replace('/href\s*=\s*(["\'])\s*(?!https?:|mailto:|\/|#)[^"\']*\1/i', 'href="#"', $clean);
+        return DeadLinks::strip(preg_replace('/href\s*=\s*(["\'])\s*(?!https?:|mailto:|\/|#)[^"\']*\1/i', 'href="#"', $clean));
     }
 
     public function players(): HasMany

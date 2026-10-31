@@ -2,6 +2,7 @@
 
 use App\Livewire\Admin\AuditLogViewer;
 use App\Livewire\Admin\GalleryManager;
+use App\Livewire\Admin\PlayerManager;
 use App\Livewire\Admin\TournamentManager;
 use App\Livewire\Admin\TrashBin;
 use App\Livewire\Admin\UserManager;
@@ -10,11 +11,13 @@ use App\Models\Article;
 use App\Models\AuditLog;
 use App\Models\Gallery;
 use App\Models\PermissionOverride;
+use App\Models\Player;
 use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\TrashItem;
 use App\Models\User;
 use App\Permission;
+use App\Support\DeadLinks;
 use App\Support\SiteSettings;
 use App\UserRole;
 use Illuminate\Support\Facades\Storage;
@@ -131,4 +134,22 @@ test('account permission history restores roles and overrides', function () {
     expect($user->roles()->map->value->all())->toBe(['trainer'])
         ->and(PermissionOverride::where('user_id', $user->id)->count())->toBe(0)
         ->and(AuditLog::where('action', 'permissions.restored')->exists())->toBeTrue();
+});
+
+test('links to deleted things stay as plain text and work again after restoring', function () {
+    $player = Player::factory()->create(['first_name' => 'Marek', 'last_name' => 'Zniknięty']);
+    $url = route('players.show', $player, false);
+    $html = '<p>Brawo <a href="'.$url.'">Marek</a> i <a href="https://example.com">strona</a> i <a href="/news/nie-ma-takiego">stary</a>.</p>';
+
+    expect(DeadLinks::strip($html))->toContain('<a href="'.$url.'">Marek</a>')->toContain(' i stary.');
+
+    Livewire::test(PlayerManager::class)->call('delete', $player->id);
+    DeadLinks::flush();
+
+    expect(DeadLinks::strip($html))->toBe('<p>Brawo Marek i <a href="https://example.com">strona</a> i stary.</p>');
+
+    Livewire::test(TrashBin::class)->call('restore', TrashItem::sole()->id);
+    DeadLinks::flush();
+
+    expect(DeadLinks::strip($html))->toContain('<a href="'.$url.'">Marek</a>');
 });

@@ -36,7 +36,7 @@
             @endif
 
             <div class="prose-club" @if(app()->getLocale() === 'en' && blank($page->content_en)) lang="pl" @endif>
-                {!! $page->localizedContent() !!}
+                {!! \App\Support\DeadLinks::strip($page->localizedContent()) !!}
             </div>
 
             <div class="mt-12 flex justify-end border-t border-zinc-200 pt-6">
