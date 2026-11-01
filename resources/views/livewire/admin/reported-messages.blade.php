@@ -7,7 +7,7 @@
                         <span class="font-semibold text-gray-900">{{ $message->author?->name ?? 'Konto usunięte' }}</span>
                         w rozmowie „{{ $message->conversation->titleFor(auth()->user()) }}” · {{ $message->created_at->format('d.m.Y H:i') }}
                     </p>
-                    <p class="mt-2 rounded-lg bg-gray-50 p-3 text-sm whitespace-pre-line text-gray-800">{{ $message->body }}</p>
+                    <div class="message-body mt-2 rounded-lg bg-gray-50 p-3 text-sm text-gray-800">{!! $message->html() !!}</div>
                     <p class="mt-2 text-xs text-gray-500">Zgłosił(a): {{ $message->reporter?->name ?? '—' }}, {{ $message->reported_at->format('d.m.Y H:i') }}</p>
                 </div>
                 <div class="flex shrink-0 gap-2">

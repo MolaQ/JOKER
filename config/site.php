@@ -64,6 +64,11 @@ return [
                 'venue_court3' => ['type' => 'text', 'label' => 'Sala: nazwa lewej części', 'default' => 'Sektor III'],
                 'venue_main' => ['type' => 'text', 'label' => 'Sala: nazwa całej sali', 'default' => 'Główne boisko'],
                 'venue_gym' => ['type' => 'text', 'label' => 'Nazwa siłowni', 'default' => 'Siłownia'],
+                'color_age_senior' => ['type' => 'color', 'label' => 'Kolor kategorii: seniorzy', 'help' => 'Kolory kategorii wiekowych są wspólne: obłożenie sali w planie treningów i obłożenie sektorów na turnieju (kategoria turnieju dostaje kolor po nazwie, np. „Kadeci”).', 'default' => '#45a0e0'],
+                'color_age_junior' => ['type' => 'color', 'label' => 'Kolor kategorii: juniorzy', 'default' => '#f59e0b'],
+                'color_age_junior_mlodszy' => ['type' => 'color', 'label' => 'Kolor kategorii: kadeci (juniorzy młodsi)', 'default' => '#10b981'],
+                'color_age_mlodzik' => ['type' => 'color', 'label' => 'Kolor kategorii: młodzicy', 'default' => '#8b5cf6'],
+                'color_age_mini' => ['type' => 'color', 'label' => 'Kolor kategorii: minisiatkówka i dzieci', 'default' => '#f43f5e'],
             ],
         ],
 

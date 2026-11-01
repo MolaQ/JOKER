@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\AgeColors;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -40,10 +41,23 @@ class TournamentCategory extends Model
     public const COLORS = ['#45a0e0', '#f59e0b', '#10b981', '#8b5cf6', '#f43f5e', '#84cc16', '#06b6d4', '#ec4899'];
 
     /**
-     * Kolor kategorii: ustawiony w panelu albo kolejny z palety według kolejności kategorii w turnieju.
+     * Kategoria wiekowa po nazwie (np. „Kadeci” → junior_mlodszy); wtedy kolor jest wspólny z treningami.
+     */
+    public function ageGroup(): ?string
+    {
+        return AgeColors::groupForName($this->name);
+    }
+
+    /**
+     * Kolor kategorii: wspólny kolor kategorii wiekowej z ustawień, a gdy nazwa nie pasuje do żadnej:
+     * ustawiony przy kategorii albo kolejny z palety według kolejności kategorii w turnieju.
      */
     public function color(): string
     {
+        if ($group = $this->ageGroup()) {
+            return AgeColors::color($group);
+        }
+
         if ($this->color) {
             return $this->color;
         }

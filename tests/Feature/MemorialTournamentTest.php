@@ -10,6 +10,7 @@ use App\Models\TournamentMatch;
 use App\Models\TournamentParticipant;
 use App\Models\TrainingSession;
 use App\Models\User;
+use App\Support\AgeColors;
 use App\Support\TournamentBracket;
 use App\Support\TournamentTable;
 use Livewire\Livewire;
@@ -721,13 +722,21 @@ test('category colours are configurable and the sector occupancy switches betwee
     $category->matches()->create(['stage' => 'placement', 'placement' => 1, 'court' => 'Sektor I', 'starts_at' => '2026-11-14 09:00']);
     $category->matches()->create(['stage' => 'placement', 'placement' => 3, 'court' => 'Sektor II', 'starts_at' => '2026-11-15 10:00']);
 
-    expect($category->color())->toBe('#45a0e0');
+    // „Kadetki” to kategoria wiekowa: kolor wspólny z planem treningów, zapisany w ustawieniach.
+    expect($category->ageGroup())->toBe('junior_mlodszy')
+        ->and($category->color())->toBe('#10b981');
 
     Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'kategorie')
         ->call('setCategoryColor', $category->id, '#FF0000')
         ->call('setCategoryColor', $category->id, 'red;');
 
-    expect($category->fresh()->color())->toBe('#ff0000');
+    expect($category->fresh()->color())->toBe('#ff0000')
+        ->and(AgeColors::forTeam(Team::create(['name' => 'Kadeci', 'slug' => 'kadeci-2', 'category' => 'junior_mlodszy'])))->toBe('#ff0000');
+
+    // Kategoria bez kategorii wiekowej w nazwie ma własny kolor.
+    $other = $this->tournament->categories()->create(['name' => 'Rodzinny', 'display_order' => 5]);
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'kategorie')->call('setCategoryColor', $other->id, '#00aa00');
+    expect($other->fresh()->color())->toBe('#00aa00');
 
     $this->get(route('admin.tournaments.edit', ['tournament' => $this->tournament, 'section' => 'mecze']))->assertOk()
         ->assertSee('#ff0000', false)

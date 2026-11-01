@@ -129,4 +129,13 @@
             </div>
         @endif
     </div>
+
+    {{-- Obłożenie sali i siłowni (wszystkie drużyny; wybrana w filtrze jest wyróżniona) --}}
+    @if($allSessions->isNotEmpty())
+        <section class="rounded-lg bg-white p-5 shadow ring-1 ring-zinc-200">
+            <h2 class="text-lg font-semibold text-gray-900">Obłożenie sektorów i siłowni</h2>
+            <p class="mt-1 text-sm text-gray-500">Kolory kategorii wiekowych są wspólne z obłożeniem sektorów na turnieju. @can('system')Zmienisz je w <a href="{{ route('admin.settings.index') }}" class="font-semibold text-sky-700 hover:underline">ustawieniach (Moduły)</a> albo przy kategorii turnieju.@endcan</p>
+            <x-training-occupancy :sessions="$allSessions" :highlight="$filterTeam !== '' ? (int) $filterTeam : null" class="mt-4" wire:key="occupancy-{{ $filterTeam }}-{{ $allSessions->max('updated_at') }}" />
+        </section>
+    @endif
 </div>

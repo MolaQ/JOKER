@@ -10,6 +10,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Notifications\MessagesWaiting;
 use App\Permission;
+use App\Support\MessageHtml;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Livewire;
@@ -183,4 +184,22 @@ test('do rozmowy grupowej można dodać kolejną osobę, a rozmowa dwóch osób 
         ->call('addParticipant', $ewa->id);
 
     expect($private->fresh()->participants)->toHaveCount(2);
+});
+
+test('wiadomość z edytora zachowuje proste formatowanie i wycina resztę', function () {
+    $this->actingAs($this->anna);
+    $conversation = Conversation::between($this->anna, $this->piotr);
+
+    Livewire::test(Messages::class)->call('open', $conversation->id)
+        ->set('body', '<p>Trening <strong>jutro</strong> <em>o 17</em></p><ul><li>piłki</li></ul><script>alert(1)</script><p><a href="javascript:alert(2)" onclick="x()">zły</a> <a href="https://joker.pila.pl" style="color:red">dobry</a></p><img src=x onerror=alert(3)>')
+        ->call('send')->assertHasNoErrors();
+
+    $body = $conversation->messages()->latest('id')->value('body');
+    expect($body)->toContain('<strong>jutro</strong>', '<em>o 17</em>', '<li>piłki</li>', 'href="https://joker.pila.pl"', 'rel="nofollow noopener noreferrer"')
+        ->not->toContain('script', 'javascript', 'onclick', 'style=', '<img', 'onerror');
+
+    expect(MessageHtml::plain($body))->toContain('Trening jutro o 17')
+        ->and(MessageHtml::render("Stara\n<wiadomość>"))->toBe("Stara<br>\n&lt;wiadomość&gt;");
+
+    Livewire::test(Messages::class)->call('open', $conversation->id)->set('body', '<p></p><p><br></p>')->call('send')->assertHasErrors('body');
 });

@@ -31,6 +31,7 @@ class ClubInfoController extends Controller
             'days' => $sessions->when($team, fn ($all) => $all->where('team_id', $team->id))->groupBy('weekday')->sortKeys(),
             'teams' => Team::whereIn('id', $sessions->pluck('team_id')->unique())->orderBy('display_order')->get(),
             'team' => $team,
+            'allSessions' => $sessions,
         ]);
     }
 

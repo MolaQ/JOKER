@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\MessageHtml;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -36,6 +37,18 @@ class Message extends Model
     public function reporter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reported_by');
+    }
+
+    /** Treść do pokazania w rozmowie (bezpieczny HTML z edytora albo stary zwykły tekst). */
+    public function html(): string
+    {
+        return MessageHtml::render($this->body);
+    }
+
+    /** Sam tekst: podgląd na liście rozmów, powiadomienia, e-maile. */
+    public function plainText(): string
+    {
+        return MessageHtml::plain($this->body);
     }
 
     public function isHidden(): bool

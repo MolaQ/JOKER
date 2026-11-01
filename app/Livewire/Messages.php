@@ -10,6 +10,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Permission;
 use App\Services\PushNotifier;
+use App\Support\MessageHtml;
 use App\Support\SiteSettings;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -203,7 +204,7 @@ class Messages extends Component
             return;
         }
 
-        $this->validate(['body' => 'required|string|max:'.Message::MAX_LENGTH], [], ['body' => 'wiadomość']);
+        $this->validate(['body' => $this->bodyRules()], [], ['body' => 'wiadomość']);
         $this->post($conversation, $this->body);
         $this->body = '';
     }
@@ -215,7 +216,7 @@ class Messages extends Component
         }
 
         $this->validate([
-            'newBody' => 'required|string|max:'.Message::MAX_LENGTH,
+            'newBody' => $this->bodyRules(),
             'groupTitle' => 'nullable|string|max:120',
             'teamGroup' => 'nullable|string|max:40',
         ], [], ['newBody' => 'wiadomość', 'groupTitle' => 'nazwa rozmowy']);
@@ -256,6 +257,24 @@ class Messages extends Component
         $this->reset('recipientIds', 'recipientSearch', 'groupTitle', 'newBody', 'teamGroup');
     }
 
+    /**
+     * Treść z edytora: liczy się sam tekst (bez znaczników), a pusta wiadomość z samymi akapitami nie przejdzie.
+     *
+     * @return array<int, mixed>
+     */
+    private function bodyRules(): array
+    {
+        return ['required', 'string', 'max:'.(Message::MAX_LENGTH * 4), function (string $attribute, mixed $value, \Closure $fail): void {
+            $text = MessageHtml::plain((string) $value);
+
+            if (trim($text) === '') {
+                $fail('Wpisz treść wiadomości.');
+            } elseif (mb_strlen($text) > Message::MAX_LENGTH) {
+                $fail('Wiadomość może mieć najwyżej '.Message::MAX_LENGTH.' znaków.');
+            }
+        }];
+    }
+
     private function mayWrite(): bool
     {
         if (! $this->user()->canMessage()) {
@@ -279,7 +298,7 @@ class Messages extends Component
         RateLimiter::hit('messages:'.$user->id, 60);
 
         $conversation->syncTeamMembers();
-        $message = $conversation->messages()->create(['user_id' => $user->id, 'body' => trim($body)]);
+        $message = $conversation->messages()->create(['user_id' => $user->id, 'body' => MessageHtml::sanitize($body)]);
         $conversation->forceFill(['last_message_at' => $message->created_at])->save();
         $conversation->markReadBy($user);
         $conversation->load('participants', 'team');
@@ -287,7 +306,7 @@ class Messages extends Component
         app(PushNotifier::class)->newMessage(
             $conversation->participants->where('id', '!=', $user->id)->pluck('id'),
             $conversation->isGroup() ? $user->name.' · '.$conversation->titleFor($user) : $user->name,
-            Str::limit($message->body, 140),
+            Str::limit($message->plainText(), 140),
             route('messages.index', ['conversation' => $conversation->id]),
             'rozmowa-'.$conversation->id,
         );

@@ -26,7 +26,7 @@
                             <span class="mt-0.5 flex items-center gap-2">
                                 <span class="truncate text-xs text-zinc-500">
                                     @if($last)
-                                        @if($last->user_id === auth()->id()){{ __('Ty') }}: @elseif($item->isGroup() && $last->author){{ $last->author->name }}: @endif{{ $last->isHidden() ? __('wiadomość ukryta') : \Illuminate\Support\Str::limit($last->body, 70) }}
+                                        @if($last->user_id === auth()->id()){{ __('Ty') }}: @elseif($item->isGroup() && $last->author){{ $last->author->name }}: @endif{{ $last->isHidden() ? __('wiadomość ukryta') : \Illuminate\Support\Str::limit($last->plainText(), 70) }}
                                     @endif
                                 </span>
                                 @if($item->unread_count > 0)
@@ -112,8 +112,8 @@
                 @endif
 
                 <div>
-                    <label for="new-body" class="block text-sm font-semibold text-zinc-700">{{ __('Wiadomość') }}</label>
-                    <textarea id="new-body" wire:model="newBody" rows="5" maxlength="{{ \App\Models\Message::MAX_LENGTH }}" class="mt-1 w-full rounded-lg border-zinc-300 text-sm"></textarea>
+                    <p class="block text-sm font-semibold text-zinc-700">{{ __('Wiadomość') }}</p>
+                    <div class="mt-1"><x-rich-text-editor model="newBody" compact :live="false" placeholder="Napisz wiadomość…" height="min-h-[140px]" /></div>
                     @error('newBody')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
                 <div class="flex justify-end gap-2">
@@ -167,7 +167,7 @@
                         @if($message->isHidden())
                             <p class="rounded-2xl bg-zinc-100 px-4 py-2 text-sm text-zinc-400 italic">{{ __('Wiadomość ukryta przez moderatora.') }}</p>
                         @else
-                            <p @class(['rounded-2xl px-4 py-2 text-sm break-words whitespace-pre-line', 'bg-sky-club text-white' => $mine, 'bg-white text-zinc-800 ring-1 ring-zinc-200' => ! $mine])>{{ $message->body }}</p>
+                            <div @class(['message-body rounded-2xl px-4 py-2 text-sm break-words', 'message-mine bg-sky-club text-white' => $mine, 'bg-white text-zinc-800 ring-1 ring-zinc-200' => ! $mine])>{!! $message->html() !!}</div>
                         @endif
                         <span class="mt-0.5 flex items-center gap-2 px-1 text-[11px] text-zinc-400">
                             {{ $message->created_at->isToday() ? $message->created_at->format('H:i') : $message->created_at->format('d.m.Y H:i') }}
@@ -190,8 +190,11 @@
 
             @if($canWrite)
                 <form wire:submit="send" class="flex items-end gap-2 border-t border-zinc-100 p-3">
-                    <label for="reply-body" class="sr-only">{{ __('Wiadomość') }}</label>
-                    <textarea id="reply-body" wire:model="body" rows="2" maxlength="{{ \App\Models\Message::MAX_LENGTH }}" placeholder="{{ __('Napisz wiadomość…') }}" class="min-h-11 flex-1 resize-y rounded-xl border-zinc-300 text-sm" x-on:keydown.enter="if (! $event.shiftKey) { $event.preventDefault(); $el.form.requestSubmit() }"></textarea>
+                    
+                    {{-- Enter wysyła, Shift+Enter nowa linia; na liście Enter dodaje punkt. --}}
+                    <div id="reply-body" class="min-w-0 flex-1" x-on:keydown.enter.capture="if (! $event.shiftKey && ! $event.target.closest('li') && ! $event.isComposing) { $event.preventDefault(); $event.stopPropagation(); $el.closest('form').requestSubmit() }">
+                        <x-rich-text-editor model="body" compact :live="false" placeholder="Napisz wiadomość…" height="min-h-[2.75rem] max-h-48 overflow-y-auto" />
+                    </div>
                     <button type="submit" class="btn-primary" wire:loading.attr="disabled">{{ __('Wyślij') }}</button>
                 </form>
                 @error('body')<p class="px-4 pb-3 text-sm text-red-600">{{ $message }}</p>@enderror

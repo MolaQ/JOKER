@@ -189,6 +189,7 @@ class TrainingPlanner extends Component
             'days' => $sessions->groupBy('weekday')->sortKeys(),
             'allTeams' => Team::whereIn('id', TrainingSession::distinct()->pluck('team_id'))->orderBy('display_order')->get(['id', 'name']),
             'managedIds' => $this->teams->pluck('id'),
+            'allSessions' => $this->filterTeam === '' ? $sessions : TrainingSession::with('team')->ordered()->get(),
         ]);
     }
 }

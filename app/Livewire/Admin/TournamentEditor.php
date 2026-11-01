@@ -11,6 +11,8 @@ use App\Models\TournamentMatch;
 use App\Models\TournamentParticipant;
 use App\Models\TournamentTemplate;
 use App\Models\TrainingSession;
+use App\Support\AgeColors;
+use App\Support\SiteSettings;
 use App\Support\TournamentBracket;
 use App\Support\TournamentResults;
 use App\Support\TournamentSchedule;
@@ -423,9 +425,21 @@ class TournamentEditor extends Component
 
     public function setCategoryColor(int $id, string $color): void
     {
-        if (preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
-            $this->tournament->categories()->whereKey($id)->update(['color' => strtolower($color)]);
+        if (! preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
+            return;
         }
+
+        $category = $this->tournament->categories()->find($id);
+
+        // Kategoria wiekowa (np. kadeci): kolor wspólny z planem treningów, zapisany w ustawieniach.
+        if ($group = $category?->ageGroup()) {
+            app(SiteSettings::class)->set([AgeColors::key($group) => strtolower($color)]);
+            $this->toast('Zmieniono kolor kategorii „'.AgeColors::GROUPS[$group][0].'” (także w planie treningów).');
+
+            return;
+        }
+
+        $category?->update(['color' => strtolower($color)]);
     }
 
     public function updatedGroupNames(string $value, string $id): void

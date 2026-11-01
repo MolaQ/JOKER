@@ -1120,3 +1120,17 @@ table[data-sortable] > thead th:not([data-nosort]) {
 /* Ramka podglądu: miniatura skalowana do szerokości */
 .ytt-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 12px; background: #0b0d14; }
 .ytt-scaler { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; transform-origin: top left; }
+
+/* Wiadomości z edytora: akapity, listy, cytaty i linki w dymkach rozmowy */
+.message-body p { margin: 0; }
+.message-body p + p, .message-body ul, .message-body ol, .message-body blockquote { margin-top: .4em; }
+.message-body ul { list-style: disc; padding-left: 1.25rem; }
+.message-body ol { list-style: decimal; padding-left: 1.25rem; }
+.message-body blockquote { border-left: 3px solid currentColor; padding-left: .6rem; opacity: .85; }
+.message-body a { text-decoration: underline; text-underline-offset: 2px; }
+.message-body mark { border-radius: 2px; padding: 0 2px; }
+.message-mine a { color: inherit; }
+
+/* Obłożenie sali w planie treningów: oś godzin, trzy sektory, siłownia */
+.ytto-grid { grid-template-columns: 2.25rem minmax(0, 3fr) minmax(4.25rem, 1fr); }
+@media (min-width: 640px) { .ytto-grid { grid-template-columns: 3rem minmax(0, 3fr) minmax(7rem, 1fr); } }

@@ -67,7 +67,7 @@ class SendMessageEmails extends Command
                         'title' => $conversation->titleFor($user),
                         'count' => $items->count(),
                         'author' => $last->author?->name ?? 'Konto usunięte',
-                        'excerpt' => Str::limit(preg_replace('/\s+/', ' ', $last->body), 80),
+                        'excerpt' => Str::limit(preg_replace('/\s+/', ' ', $last->plainText()), 80),
                     ];
                 })->values()->all()));
 

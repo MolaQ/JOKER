@@ -44,6 +44,16 @@
         </div>
     @endif
 
+    @if($allSessions->isNotEmpty())
+        {{-- Obłożenie sali: który sektor i siłownia są zajęte w każdym dniu --}}
+        <div class="mt-14">
+            <p class="eyebrow">{{ __('Hala i siłownia') }}</p>
+            <h2 class="heading-lg mt-3">{{ __('Obłożenie sektorów i siłowni') }}</h2>
+            <p class="mt-3 max-w-2xl text-zinc-600">{{ __('Wybierz dzień, aby zobaczyć, która część sali i siłownia są zajęte.') }}@if($team) {{ __('Zajęcia drużyny :team są wyróżnione.', ['team' => $team->name]) }}@endif</p>
+            <x-training-occupancy :sessions="$allSessions" :highlight="$team?->id" class="mt-6" />
+        </div>
+    @endif
+
     <div class="mt-10 flex flex-wrap gap-3">
         <a href="{{ route('contact.index', ['subject' => __('Trening próbny')]) }}" class="btn-primary">{{ __('Zapisz na trening próbny') }}</a>
         @if($site['trainings_extra_label'] && $site['trainings_extra_url'])

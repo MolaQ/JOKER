@@ -8,10 +8,14 @@
     'saveOnBlur' => false,
     // Podpowiedzi „@Imię Nazwisko” (wzmianki zawodników w artykułach).
     'mentions' => false,
+    // Krótki pasek (wiadomości): tylko pogrubienie, kursywa, listy, cytat i link.
+    'compact' => false,
+    // false: treść trafia do Livewire razem z najbliższą akcją (np. „Wyślij”), bez zapytania przy każdym znaku.
+    'live' => true,
 ])
 
 @php
-    $content = $model ? "\$wire.entangle('{$model}')".($saveOnBlur ? '' : '.live') : Js::from((string) $value);
+    $content = $model ? "\$wire.entangle('{$model}')".($saveOnBlur || ! $live ? '' : '.live') : Js::from((string) $value);
     $icon = 'size-4';
     // Przyciski paska: [etykieta, akcja, czy aktywny, ikona lub tekst].
     $groups = [
@@ -46,6 +50,10 @@
             ['Wyczyść formatowanie', "run('unsetAllMarks'); run('clearNodes')", null, '<svg class="'.$icon.'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h12v2M10 5l-3 14M5 19h6M15 14l6 6M21 14l-6 6"/></svg>'],
         ],
     ];
+    if ($compact) {
+        $keep = ['Pogrubienie (Ctrl+B)', 'Kursywa (Ctrl+I)', 'Podkreślenie (Ctrl+U)', 'Przekreślenie', 'Lista punktowana', 'Lista numerowana', 'Cytat', 'Link'];
+        $groups = collect($groups)->map(fn ($group) => array_values(array_filter($group, fn ($button) => in_array($button[0], $keep, true))))->filter()->values()->all();
+    }
 @endphp
 
 <div
