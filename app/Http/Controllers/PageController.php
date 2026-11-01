@@ -4,18 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\Page;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Request;
 
 class PageController extends Controller
 {
-    public function show(Page $page): View
+    public function show(Request $request, Page $page): View
     {
-        abort_unless($page->is_published, 404);
+        $user = $request->user();
+        abort_unless($page->isVisibleTo($user), 404);
 
-        $otherPages = Page::published()
-            ->whereKeyNot($page->id)
-            ->orderBy('display_order')
-            ->get(['title', 'slug']);
+        $page->load(['parent', 'children' => fn ($children) => $children->visibleTo($user)]);
 
-        return view('pages.show', compact('page', 'otherPages'));
+        return view('pages.show', [
+            'page' => $page,
+            'menu' => Page::menuFor($user),
+            'isPreview' => ! $page->is_published || ($page->parent && ! $page->parent->is_published),
+        ]);
     }
 }

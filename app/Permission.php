@@ -29,6 +29,7 @@ enum Permission: string
     case Users = 'users.manage';
     case Roles = 'roles.manage';
     case Site = 'site.manage';
+    case PagePreview = 'pages.preview';
     case Statistics = 'statistics.view';
     case AuditLog = 'audit.view';
     case Import = 'import.run';
@@ -59,6 +60,7 @@ enum Permission: string
             self::Users => 'Wszystkie konta użytkowników',
             self::Roles => 'Role i uprawnienia',
             self::Site => 'Wygląd, ustawienia i podstrony',
+            self::PagePreview => 'Podgląd ukrytych podstron (projekty przed publikacją)',
             self::Statistics => 'Statystyki odwiedzin',
             self::AuditLog => 'Dziennik zmian (kto, co i kiedy zmienił)',
             self::Import => 'Import z plików',
@@ -75,6 +77,7 @@ enum Permission: string
             self::Trainings => 'Trener i członek sztabu układają plan tylko swoich drużyn.',
             self::PhotoTags => 'Bez tego trener zatwierdza tylko oznaczenia zawodników swoich drużyn.',
             self::Roles => 'Kto nie jest administratorem, nie nada roli administratora.',
+            self::PagePreview => 'Widzi podstrony jeszcze nieopublikowane, razem z linkami w menu i stopce, i może zapisać je jako PDF do akceptacji.',
             self::MiniSubmit => 'Zakładka „Zgłoś” na stronie minisiatkówki. Zgłoszenia czekają w „Do zatwierdzenia”, chyba że zgłasza ktoś z uprawnieniem „Minisiatkówka: dzieci, wyjazdy i wyniki”.',
             self::WriteComments => 'Komentarze pod aktualnościami i meczami. Odbierz je, gdy ktoś łamie zasady.',
             self::WriteMessages => 'Wiadomości do innych osób i grup na stronie. Odbierz je, gdy ktoś wysyła spam albo łamie zasady.',
@@ -87,7 +90,7 @@ enum Permission: string
      */
     public function isPublic(): bool
     {
-        return in_array($this, [self::WriteComments, self::WriteMessages, self::MiniSubmit], true);
+        return in_array($this, [self::WriteComments, self::WriteMessages, self::MiniSubmit, self::PagePreview], true);
     }
 
     public function group(): string

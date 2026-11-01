@@ -5,25 +5,14 @@
         </button>
     </div>
 
+    <p class="border-b border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-600 sm:px-6">Kolejność ze strzałek to kolejność w menu działu na stronie (z boku, na telefonie „W tym dziale”). Ukryta podstrona to projekt: widzi ją tylko administrator, szef i osoby z uprawnieniem „Podgląd ukrytych podstron”, razem z linkami w menu i stopce.</p>
+
     <ul class="divide-y divide-gray-200">
         @forelse($pages as $page)
-            <li class="flex flex-wrap items-center gap-3 px-4 py-4 sm:px-6" wire:key="page-{{ $page->id }}">
-                <div class="min-w-0 flex-1">
-                    <p class="font-semibold text-gray-900">{{ $page->title }}
-                        @if($page->hasEnglish())
-                            <x-english-badge class="ml-1" />
-                        @endif
-                        @unless($page->is_published)
-                            <span class="ml-2 rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">Ukryta</span>
-                        @endunless
-                    </p>
-                    <a href="{{ route('pages.show', $page) }}" target="_blank" class="font-mono text-xs text-sky-700 hover:underline">/strona/{{ $page->slug }} ↗</a>
-                </div>
-                <div class="flex gap-1.5">
-                    <button type="button" wire:click="openEditModal({{ $page->id }})" class="admin-action">Edytuj</button>
-                    <button type="button" wire:click="delete({{ $page->id }})" wire:confirm="Usunąć podstronę „{{ $page->title }}”? Linki do niej w menu przestaną działać." class="admin-action admin-action-danger">Usuń</button>
-                </div>
-            </li>
+            @include('livewire.admin.partials.page-row', ['page' => $page, 'first' => $loop->first, 'last' => $loop->last, 'child' => false])
+            @foreach($page->children as $child)
+                @include('livewire.admin.partials.page-row', ['page' => $child, 'first' => $loop->first, 'last' => $loop->last, 'child' => true])
+            @endforeach
         @empty
             <li class="px-4 py-8 text-center text-sm text-gray-500">Nie ma jeszcze podstron.</li>
         @endforelse
@@ -58,7 +47,20 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700" for="page-lead">Wstęp (wyróżniony tekst pod tytułem)</label>
-                                <textarea id="page-lead" wire:model="lead" rows="2" class="mt-1 block w-full"></textarea>
+                                <textarea id="page-lead" wire:model="lead" rows="2" maxlength="255" class="mt-1 block w-full"></textarea>
+                                @error('lead') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700" for="page-parent">Grupa w menu działu</label>
+                                <select id="page-parent" wire:model="parent_id" class="mt-1 block w-full">
+                                    <option value="">— brak (pozycja główna) —</option>
+                                    @foreach($parents as $parent)
+                                        <option value="{{ $parent->id }}">{{ $parent->title }}</option>
+                                    @endforeach
+                                </select>
+                                <p class="mt-1 text-xs text-gray-500">Np. „KLUB PRO 2026” w grupie „Programy i projekty”. Strona grupy pokazuje swoje podstrony jako kafelki.</p>
+                                @error('parent_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
@@ -100,15 +102,68 @@
                                         <img src="{{ \App\Support\Media::url($existingImage) }}" onerror="this.style.visibility='hidden'" class="h-16 w-24 rounded object-cover" alt="">
                                         <button type="button" wire:click="removeImage" class="text-xs font-semibold text-red-600">Usuń zdjęcie</button>
                                     @endif
-                                    <x-photo-cropper model="image" :preview="false" aspect="16/9" :width="1600" />
+                                    <x-photo-cropper wire:key="page-cropper-{{ $image_is_banner ? 'baner' : 'zdjecie' }}" model="image" :preview="false" :aspect="$image_is_banner ? 'free' : '16/9'" :width="1600" />
                                 </div>
                                 @error('image') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                <label class="mt-2 inline-flex items-center gap-2 text-sm text-gray-700">
+                                    <input type="checkbox" wire:model.live="image_is_banner" class="rounded border-gray-300 text-sky-600">
+                                    To baner (np. programu z logotypami): pokaż go w całości, bez przycinania i przyciemniania
+                                </label>
+                            </div>
+
+                            <div class="rounded-lg border border-gray-200 p-4">
+                                <p class="text-sm font-medium text-gray-700">Kolory strony</p>
+                                <p class="mt-0.5 text-xs text-gray-500">Kolor główny: tło nagłówka i wyróżnionych liczb. Akcent: paski, liczby, kropka w menu. Puste pola = barwy klubu.</p>
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    @foreach(\App\Livewire\Admin\PageManager::THEMES as $key => $theme)
+                                        <button type="button" wire:click="useTheme('{{ $key }}')" class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-700 ring-1 ring-gray-300 hover:bg-gray-50">
+                                            @if($theme['primary'])<span class="h-3 w-3 rounded-full" style="background: {{ $theme['primary'] }}"></span><span class="-ml-1.5 h-3 w-3 rounded-full" style="background: {{ $theme['accent'] }}"></span>@endif
+                                            {{ $theme['label'] }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                                    @foreach(['theme_primary' => 'Kolor główny', 'theme_accent' => 'Akcent'] as $field => $label)
+                                        <label class="block text-sm text-gray-700">{{ $label }}
+                                            <span class="mt-1 flex items-center gap-2">
+                                                <input type="color" wire:model.live="{{ $field }}" value="{{ $this->{$field} ?: '#000000' }}" class="h-9 w-12 cursor-pointer rounded border-gray-300 p-0.5">
+                                                <input type="text" wire:model.live.debounce.500ms="{{ $field }}" placeholder="barwy klubu" class="block w-full font-mono text-sm">
+                                            </span>
+                                            @error($field) <span class="mt-1 block text-sm text-red-600">{{ $message }}</span> @enderror
+                                        </label>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <div class="rounded-lg border border-gray-200 p-4">
+                                <p class="text-sm font-medium text-gray-700">Wyróżnione liczby (opcjonalnie, do 4)</p>
+                                <p class="mt-0.5 text-xs text-gray-500">Kafelki pod wstępem, np. „110 000 zł” — „dofinansowania w edycji 2026”.</p>
+                                <div class="mt-3 space-y-2">
+                                    @foreach($highlights as $index => $highlight)
+                                        <div wire:key="highlight-{{ $index }}" class="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+                                            <input type="text" wire:model="highlights.{{ $index }}.value" placeholder="Liczba, np. 110 000 zł" maxlength="30" class="w-full sm:w-40">
+                                            <input type="text" wire:model="highlights.{{ $index }}.label" placeholder="Opis" maxlength="80" class="min-w-0 flex-1">
+                                            <button type="button" wire:click="removeHighlight({{ $index }})" class="text-xs font-semibold text-red-600">Usuń</button>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                @if(count($highlights) < 4)
+                                    <button type="button" wire:click="addHighlight" class="mt-2 text-sm font-semibold text-sky-700">+ Dodaj liczbę</button>
+                                @endif
                             </div>
 
                             <div class="flex flex-wrap items-center gap-6">
                                 <label class="inline-flex items-center gap-2 text-sm text-gray-700">
                                     <input type="checkbox" wire:model="is_published" class="rounded border-gray-300 text-sky-600">
-                                    Widoczna na stronie
+                                    Opublikowana (widzą ją wszyscy)
+                                </label>
+                                <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                                    <input type="checkbox" wire:model="in_menu" class="rounded border-gray-300 text-sky-600">
+                                    W menu działu
+                                </label>
+                                <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                                    <input type="checkbox" wire:model="footer_link" class="rounded border-gray-300 text-sky-600">
+                                    Link w stopce
                                 </label>
                                 <label class="inline-flex items-center gap-2 text-sm text-gray-700">
                                     Kolejność

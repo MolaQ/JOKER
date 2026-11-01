@@ -896,3 +896,26 @@ table[data-sortable] > thead th:not([data-nosort]) {
         opacity: 0.8;
     }
 }
+
+/*
+ * Wydruk i „Zapisz jako PDF” (np. projekt podstrony do akceptacji): sama treść, bez menu, stopki i paneli.
+ */
+@media print {
+    body > *:not(main),
+    [data-no-print] {
+        display: none !important;
+    }
+
+    [data-print-area] {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    [data-print-area] .container-site {
+        max-width: none;
+    }
+
+    @page {
+        margin: 12mm;
+    }
+}

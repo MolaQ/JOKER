@@ -270,6 +270,10 @@
                         @foreach($site->links('footer_links') ?: [...$navItems, ...$topbarLeft] as $link)
                             <li><a href="{{ $site->href($link['url']) }}" class="inline-block py-2 transition hover:text-white sm:py-0">{{ __($link['label']) }}</a></li>
                         @endforeach
+                        {{-- Podstrony z zaznaczonym „Link w stopce” (np. programy, w których bierze udział klub) --}}
+                        @foreach(\App\Models\Page::footerLinksFor(auth()->user()) as $footerPage)
+                            <li><a href="{{ route('pages.show', $footerPage) }}" class="inline-block py-2 transition hover:text-white sm:py-0">{{ $footerPage->localizedTitle() }}@unless($footerPage->is_published) <span class="ml-1 rounded-full bg-amber-300/90 px-1.5 py-px align-middle text-[10px] font-semibold text-amber-950 uppercase">{{ __('projekt') }}</span>@endunless</a></li>
+                        @endforeach
                     </ul>
                 </div>
 
