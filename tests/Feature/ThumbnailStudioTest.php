@@ -129,6 +129,8 @@ test('the VS graphic and the title colours are configurable and saved in the tem
         ->set('m.home.color', '#112233')
         ->assertSee('--vs2:#112233', false);
 
+    $component->call('chooseTemplate', null)->assertSet('templateId', null)->assertSet('s.vs_size', 100);
+    $component->set('s.vs_size', 140)->set('s.title_color', '#ffcc00')->set('s.stage_text', 'Półfinał')->set('s.vs_team_colors', true)->set('s.vs_offset', -40)->set('templateName', 'VS duże');
     $component->call('nudgeVs', -1000)->assertSet('s.vs_offset', -400)
         ->call('saveTemplate', true)->assertHasNoErrors();
 

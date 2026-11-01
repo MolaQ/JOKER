@@ -97,6 +97,11 @@ class ThumbnailStudio extends Component
         $this->loadTemplate($id ? (int) $id : null);
     }
 
+    public function chooseTemplate(?int $id): void
+    {
+        $this->loadTemplate($id);
+    }
+
     private function loadTemplate(?int $id): void
     {
         $template = $id ? ThumbnailTemplate::find($id) : null;
@@ -390,7 +395,7 @@ class ThumbnailStudio extends Component
         $template = $this->templateId ? ThumbnailTemplate::find($this->templateId) : null;
 
         return view('livewire.admin.thumbnail-studio', $this->choices() + [
-            'templates' => ThumbnailTemplate::query()->with('user:id,name')->orderBy('name')->get(),
+            'templates' => ThumbnailTemplate::query()->with(['user:id,name', 'competition:id,name', 'tournament:id,name'])->orderBy('name')->get(),
             'canChange' => $template?->canBeChangedBy($user) ?? true,
             'logos' => ClubLogos::all()->map(fn (array $logo) => ['name' => $logo['name'], 'url' => ThumbnailData::src($logo['url'])])->values(),
             'seasons' => Season::query()->orderByDesc('start_date')->get(['id', 'name']),
