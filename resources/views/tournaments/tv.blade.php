@@ -169,7 +169,7 @@
                     @foreach([1, 2] as $copy)
                         @foreach($live as $match)
                             @php($liveBracket = $brackets[$match->tournament_category_id])
-                            <span @if($copy === 2) data-copy hidden @endif><strong>{{ $match->category->name }}</strong> · {{ \App\Models\TrainingSession::courtLabel($match->court) }} · {{ $liveBracket->side($match, 'home')['text'] }} <strong class="font-display text-4xl">{{ $match->home_sets ?? 0 }}:{{ $match->away_sets ?? 0 }}</strong> {{ $liveBracket->side($match, 'away')['text'] }}</span>
+                            <span @if($copy === 2) data-copy hidden @endif><strong>{{ $match->category->name }}</strong> · {{ \App\Support\TournamentHalls::label($match->court) }} · {{ $liveBracket->side($match, 'home')['text'] }} <strong class="font-display text-4xl">{{ $match->home_sets ?? 0 }}:{{ $match->away_sets ?? 0 }}</strong> {{ $liveBracket->side($match, 'away')['text'] }}</span>
                         @endforeach
                     @endforeach
                 </div>

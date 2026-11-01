@@ -317,6 +317,16 @@ class TournamentHalls
     }
 
     /**
+     * Pełna nazwa boiska dla kibiców: przy hali klubowej z jej nazwą („Hala LOMS · Sektor III”), inne obiekty mają ją już w zapisie.
+     */
+    public static function label(?string $court): string
+    {
+        $label = (string) TrainingSession::courtLabel($court);
+
+        return TrainingSession::venueForCourt($court) ? self::mainName().self::SEPARATOR.$label : $label;
+    }
+
+    /**
      * Samo boisko bez nazwy obiektu i sali (kolumna w obłożeniu sali).
      */
     public static function courtName(?Tournament $tournament, ?string $court): ?string

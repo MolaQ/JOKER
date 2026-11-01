@@ -12,7 +12,7 @@
             <p @class(['font-display font-bold tabular-nums', 'text-5xl' => ! $compact, 'text-3xl' => $compact])>{{ $match->starts_at?->format('H:i') ?? '—' }}</p>
             @unless($compact)<p class="text-xl text-white/60">{{ $match->starts_at?->translatedFormat('D d.m') }}</p>@endunless
         @endif
-        @if($match->court)<p @class(['mt-1 font-semibold text-sky-300', 'text-xl' => ! $compact, 'text-base' => $compact])>{{ \App\Models\TrainingSession::courtLabel($match->court) }}</p>@endif
+        @if($match->court)<p @class(['mt-1 font-semibold text-sky-300', 'text-xl' => ! $compact, 'text-base' => $compact])>{{ \App\Support\TournamentHalls::label($match->court) }}</p>@endif
     </div>
     <div @class(['min-w-0 flex-1', 'space-y-2' => ! $compact, 'space-y-1' => $compact])>
         @if($title || $match->number || $match->setsLabel())
