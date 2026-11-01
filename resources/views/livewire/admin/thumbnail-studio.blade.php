@@ -40,6 +40,13 @@
                         <input type="text" wire:model.live.debounce.400ms="m.{{ $side }}.sub" class="{{ $input }}" placeholder="Druga linia, np. miasto" aria-label="Nazwa, druga linia">
                         <input type="color" wire:model.live.debounce.300ms="m.{{ $side }}.color" class="h-9 w-11 cursor-pointer rounded-md border border-gray-300 p-0.5" title="Kolor połowy grafiki">
                     </div>
+                    @if($s['tint_gradient'])
+                        <label class="flex items-center gap-2 text-xs text-gray-600">
+                            <input type="color" wire:model.live.debounce.300ms="m.{{ $side }}.color2" value="{{ $m[$side]['color2'] ?: '#ffffff' }}" class="h-7 w-10 cursor-pointer rounded border border-gray-300 p-0.5">
+                            Drugi kolor gradientu (przy krawędzi)
+                            @if(filled($m[$side]['color2'] ?? null))<button type="button" wire:click="$set('m.{{ $side }}.color2', '')" class="text-gray-400 hover:text-red-600">automatyczny</button>@endif
+                        </label>
+                    @endif
                     <div class="flex items-center gap-2">
                         @if(filled($m[$side]['logo'] ?? null))
                             <img src="{{ $m[$side]['logo'] }}" alt="" class="size-9 shrink-0 rounded bg-white object-contain p-0.5 ring-1 ring-gray-200">
@@ -127,7 +134,23 @@
                     <div><label class="{{ $label }}">Tytuł zapowiedzi</label><input type="text" wire:model.live.debounce.400ms="s.preview_title" class="{{ $input }}"></div>
                     <div><label class="{{ $label }}">Tytuł podsumowania</label><input type="text" wire:model.live.debounce.400ms="s.summary_title" class="{{ $input }}"></div>
                 @endif
-                <div class="col-span-2"><label class="{{ $label }}">Napis w zapowiedzi (puste = bez napisu)</label><input type="text" wire:model.live.debounce.400ms="s.live_text" class="{{ $input }}"></div>
+                <div><label class="{{ $label }}">Napis o transmisji (puste = brak)</label><input type="text" wire:model.live.debounce.400ms="s.live_text" class="{{ $input }}"></div>
+                <div>
+                    <label class="{{ $label }}">Gdzie napis o transmisji</label>
+                    <select wire:model.live="s.live_position" class="{{ $input }}">
+                        @foreach(\App\Models\ThumbnailTemplate::LIVE_POSITIONS as $value => $positionLabel)<option value="{{ $value }}">{{ $positionLabel }}</option>@endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="{{ $label }}">Czcionka napisu VS</label>
+                    <select wire:model.live="s.vs_font" class="{{ $input }}">
+                        @foreach(\App\Models\ThumbnailTemplate::VS_FONTS as $value => [$fontLabel])<option value="{{ $value }}">{{ $fontLabel }}</option>@endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="{{ $label }}">Kolor napisu VS</label>
+                    <input type="color" wire:model.live.debounce.300ms="s.vs_color" class="h-9 w-full cursor-pointer rounded-md border border-gray-300 p-0.5">
+                </div>
             </div>
 
             <div class="grid grid-cols-4 gap-2 border-t border-gray-100 pt-3">
@@ -142,6 +165,7 @@
 
             <div class="space-y-2 border-t border-gray-100 pt-3">
                 <label class="{{ $toggle }}"><input type="checkbox" wire:model.live="s.tint" class="rounded border-gray-300"> Zabarw tło kolorami drużyn</label>
+                <label class="{{ $toggle }}"><input type="checkbox" wire:model.live="s.tint_gradient" class="rounded border-gray-300"> Połówki gradientem (drugi kolor przy drużynie)</label>
                 <label class="{{ $toggle }}"><input type="checkbox" wire:model.live="s.show_names" class="rounded border-gray-300"> Nazwy drużyn pod logo</label>
                 <label class="{{ $toggle }}"><input type="checkbox" wire:model.live="s.show_sponsors" class="rounded border-gray-300"> Pasek sponsorów na dole</label>
                 <label class="{{ $toggle }}"><input type="checkbox" wire:model.live="s.tournament_logo" class="rounded border-gray-300"> Logo turnieju w lewym górnym rogu (gdy turniej je ma)</label>

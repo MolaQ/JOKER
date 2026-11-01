@@ -1,20 +1,20 @@
-@extends('layouts.public')
+@extends('admin.layout')
 
 @section('title', __('Logotypy klubów'))
-@section('robots', 'noindex, nofollow')
 
 @section('content')
-<section class="relative isolate -mt-16 bg-club-navy pt-16 text-white lg:-mt-20 lg:pt-20">
-    <div class="container-site pt-16 pb-10 lg:pt-20">
-        <h1 class="heading-lg">{{ __('Logotypy klubów') }}</h1>
-        <p class="mt-3 max-w-2xl text-white/75">{{ __('Do grafik transmisji i relacji. Kliknij logo, żeby pobrać plik w oryginalnej jakości, albo pobierz wszystkie naraz.') }}</p>
+<div class="px-4 sm:px-6 lg:px-8">
+    <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ __('Logotypy klubów') }}</h1>
+            <p class="mt-2 max-w-2xl text-sm text-gray-700">{{ __('Do grafik transmisji i relacji. Kliknij logo, żeby pobrać plik w oryginalnej jakości, albo pobierz wszystkie naraz.') }}</p>
+        </div>
         @if($logos->isNotEmpty())
-            <a href="{{ route('logos.zip') }}" class="btn-primary mt-6">⬇ {{ __('Pobierz wszystkie (:count, ZIP)', ['count' => $logos->count()]) }}</a>
+            <a href="{{ route('logos.zip') }}" class="inline-flex items-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">⬇ {{ __('Pobierz wszystkie (:count, ZIP)', ['count' => $logos->count()]) }}</a>
         @endif
     </div>
-</section>
 
-<section class="container-site py-8" x-data="{ q: '', bg: 'checker', sort: (new URLSearchParams(location.search)).get('sort') || 'popular', order(popular, name) { return this.sort === 'popular' ? popular : (this.sort === 'name_desc' ? 100000 - name : name); }, match(name) { const n = (s) => s.toLocaleLowerCase('pl').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ł/g, 'l'); return n(name).includes(n(this.q)); } }">
+<section class="admin-card p-4 sm:p-6" x-data="{ q: '', bg: 'checker', sort: (new URLSearchParams(location.search)).get('sort') || 'popular', order(popular, name) { return this.sort === 'popular' ? popular : (this.sort === 'name_desc' ? 100000 - name : name); }, match(name) { const n = (s) => s.toLocaleLowerCase('pl').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ł/g, 'l'); return n(name).includes(n(this.q)); } }">
     <div class="flex flex-wrap items-center gap-3">
         <input type="search" x-model="q" placeholder="{{ __('Szukaj klubu…') }}" class="w-full max-w-sm rounded-full border border-zinc-300 px-4 py-2 text-sm">
         <label class="sr-only" for="logos-sort">{{ __('Sortuj') }}</label>
@@ -31,7 +31,7 @@
     </div>
 
     @foreach($logos->groupBy('group') as $group => $items)
-        <h2 class="mt-8 font-display text-2xl font-semibold text-zinc-900 uppercase">{{ $group }}</h2>
+        <h2 class="mt-8 text-lg font-bold text-gray-900">{{ $group }}</h2>
         <ul class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             @foreach($items as $logo)
                 <li x-show="match(@js($logo['name']))" :style="'order: ' + order({{ $logo['popular_rank'] }}, {{ $logo['name_rank'] }})" title="{{ trans_choice('{0}|{1} :count pobranie|[2,4] :count pobrania|[5,*] :count pobrań', $logo['downloads'], ['count' => $logo['downloads']]) }}">
@@ -55,4 +55,5 @@
         <p class="mt-8 text-sm text-zinc-500">{{ __('Nie ma jeszcze żadnych logotypów. Dodaje się je w panelu: Rywale (klub albo drużyna) i Drużyny.') }}</p>
     @endif
 </section>
+</div>
 @endsection

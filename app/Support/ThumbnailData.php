@@ -130,7 +130,7 @@ class ThumbnailData
     {
         [$line1, $line2] = self::splitName($name);
 
-        return ['name' => $line1, 'sub' => $line2, 'logo' => (string) self::src($logo), 'color' => $color, 'key' => $key];
+        return ['name' => $line1, 'sub' => $line2, 'logo' => (string) self::src($logo), 'color' => $color, 'color2' => '', 'key' => $key];
     }
 
     /**

@@ -26,6 +26,11 @@
     $style = implode(';', [
         '--hc:'.$color($home['color'] ?? null, '#1d6ff2'),
         '--ac:'.$color($away['color'] ?? null, ThumbnailData::RIVAL_COLOR),
+        // Gradient w połówce: od drugiego koloru drużyny przy krawędzi do pierwszego przy środku.
+        '--hc2:'.($s['tint_gradient'] ? $color($home['color2'] ?? null, 'color-mix(in srgb, var(--hc) 55%, #fff)') : 'var(--hc)'),
+        '--ac2:'.($s['tint_gradient'] ? $color($away['color2'] ?? null, 'color-mix(in srgb, var(--ac) 55%, #fff)') : 'var(--ac)'),
+        '--vsc:'.$color($s['vs_color'], '#ffffff'),
+        '--vsfont:'.ThumbnailTemplate::vsFontFamily($s['vs_font'], $s['font']),
         '--hl:'.$color($s['accent'], '#60a5fa'),
         '--bar1:'.$color($s['bar_from'], '#0b1f4d'),
         '--bar2:'.$color($s['bar_to'], '#1d4ed8'),
@@ -50,10 +55,10 @@
             @endforeach
         </div>
     @else
-        <div class="ytt-streak" style="left:-60px;top:250px;width:420px;background:var(--hc)"></div>
-        <div class="ytt-streak" style="left:-40px;top:300px;width:260px;height:10px;background:#fff"></div>
-        <div class="ytt-streak" style="right:-60px;top:830px;width:420px;background:var(--ac)"></div>
-        <div class="ytt-streak" style="right:-40px;top:880px;width:260px;height:10px;background:#fff"></div>
+        <div class="ytt-streak" style="left:-60px;top:196px;width:420px;background:var(--hc)"></div>
+        <div class="ytt-streak" style="left:-40px;top:238px;width:260px;height:10px;background:#fff"></div>
+        <div class="ytt-streak" style="right:-60px;top:968px;width:420px;background:var(--ac)"></div>
+        <div class="ytt-streak" style="right:-40px;top:1012px;width:260px;height:10px;background:#fff"></div>
         <div class="ytt-title">
             @if(filled($s['label']))<div class="ytt-label">{{ $s['label'] }}</div>@endif
             @php $title = (string) ($summary ? $s['summary_title'] : $s['preview_title']); $words = preg_split('/\s+/u', trim($title), 2); @endphp
@@ -102,7 +107,6 @@
             @if($bars && ($dayName || $time))
                 <div class="ytt-when">{{ $dayName }}@if($time) · {{ $time }}@endif</div>
             @endif
-            @if(filled($s['live_text']))<div class="ytt-live">{{ $s['live_text'] }}</div>@endif
         @endif
     </div>
 
@@ -131,6 +135,10 @@
                 </div>
             @endif
         </div>
+    @endif
+
+    @if(! $summary && filled($s['live_text']))
+        <div class="ytt-live ytt-live-{{ $s['live_position'] === 'br' ? 'br' : 'bl' }}">{{ $s['live_text'] }}</div>
     @endif
 
     @if($sponsors)

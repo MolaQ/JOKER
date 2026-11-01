@@ -16,6 +16,16 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
+        "@fontsource-variable/montserrat": "^5.3.0",
+        "@fontsource-variable/roboto-condensed": "^5.3.0",
+        "@fontsource/anton": "^5.3.0",
+        "@fontsource/barlow-condensed": "^5.3.0",
+        "@fontsource/bebas-neue": "^5.3.0",
+        "@fontsource/kaushan-script": "^5.3.0",
+        "@fontsource/knewave": "^5.3.0",
+        "@fontsource/permanent-marker": "^5.3.0",
+        "@fontsource/protest-revolution": "^5.3.0",
+        "@fontsource/yellowtail": "^5.3.0",
         "@tiptap/core": "^3.32.0",
         "@tiptap/extension-highlight": "^3.32.0",
         "@tiptap/extension-text-align": "^3.32.0",

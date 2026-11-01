@@ -240,6 +240,9 @@ class ThumbnailStudio extends Component
             's.bar_to' => $color,
             's.panel' => $color,
             's.images.*.size' => 'integer|min:60|max:400',
+            's.vs_font' => ['required', Rule::in(array_keys(ThumbnailTemplate::VS_FONTS))],
+            's.vs_color' => $color,
+            's.live_position' => ['required', Rule::in(array_keys(ThumbnailTemplate::LIVE_POSITIONS))],
         ], [], [
             'templateName' => __('nazwa szablonu'),
         ]);

@@ -16,9 +16,26 @@ class ThumbnailTemplate extends Model
     public const FONTS = [
         'oswald' => ['Oswald (klubowa, wąska)', "'Oswald Variable', Oswald, 'Arial Narrow', sans-serif"],
         'inter' => ['Inter (prosta)', "'Inter Variable', Inter, Arial, sans-serif"],
+        'bebas' => ['Bebas Neue (wąska, same wielkie)', "'Bebas Neue', 'Oswald Variable', sans-serif"],
+        'anton' => ['Anton (gruba, wąska)', "Anton, 'Oswald Variable', sans-serif"],
+        'barlow' => ['Barlow Condensed (sportowa)', "'Barlow Condensed', 'Oswald Variable', sans-serif"],
+        'roboto' => ['Roboto Condensed (prosta, wąska)', "'Roboto Condensed Variable', 'Roboto Condensed', sans-serif"],
+        'montserrat' => ['Montserrat (szeroka, nowoczesna)', "'Montserrat Variable', Montserrat, Arial, sans-serif"],
         'serif' => ['Szeryfowa (jak w gazecie)', "'Times New Roman', 'Liberation Serif', Georgia, serif"],
-        'impact' => ['Impact (gruba)', "Impact, 'Arial Black', 'Oswald Variable', sans-serif"],
     ];
+
+    /** Czcionka napisu VS: pisana albo taka jak reszta grafiki. */
+    public const VS_FONTS = [
+        'brush' => ['Pędzel, poszarpana (jak Joker TV)', "'Protest Revolution', 'Permanent Marker', cursive"],
+        'knewave' => ['Pędzel, gruba', 'Knewave, cursive'],
+        'kaushan' => ['Kaushan Script (pisana, pędzel)', "'Kaushan Script', cursive"],
+        'yellowtail' => ['Yellowtail (pisana, elegancka)', 'Yellowtail, cursive'],
+        'marker' => ['Permanent Marker (flamaster)', "'Permanent Marker', cursive"],
+        'same' => ['Jak reszta grafiki', null],
+    ];
+
+    /** Miejsce napisu o transmisji w zapowiedzi. */
+    public const LIVE_POSITIONS = ['bl' => 'Lewy dolny róg', 'br' => 'Prawy dolny róg'];
 
     /** Układy: nowoczesny (zdjęcie w kolorach drużyn) albo z belkami u góry i u dołu. */
     public const LAYOUTS = [
@@ -41,6 +58,10 @@ class ThumbnailTemplate extends Model
         'panel' => '#080a10',
         'background' => null,
         'tint' => true,
+        'tint_gradient' => false,
+        'vs_font' => 'brush',
+        'vs_color' => '#ffffff',
+        'live_position' => 'bl',
         'show_names' => true,
         'show_sponsors' => false,
         'tournament_logo' => false,
@@ -87,5 +108,10 @@ class ThumbnailTemplate extends Model
     public static function fontFamily(string $font): string
     {
         return (self::FONTS[$font] ?? self::FONTS['oswald'])[1];
+    }
+
+    public static function vsFontFamily(string $vsFont, string $font): string
+    {
+        return (self::VS_FONTS[$vsFont] ?? self::VS_FONTS['brush'])[1] ?? self::fontFamily($font);
     }
 }
