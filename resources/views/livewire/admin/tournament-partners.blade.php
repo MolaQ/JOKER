@@ -1,5 +1,5 @@
 <div class="space-y-6">
-    <p class="text-sm text-gray-600">Logotypy partnerów są na dole każdej strony turnieju (nad klubowym blokiem „Wspierają nas”) i jako pierwsze na pasku ekranu TV. Partner główny dostaje duży, wyróżniony kafelek. Kolejność zmienisz strzałkami ▲▼ przy partnerze. Podpis (np. „Patronat honorowy”) pokazuje się nad logo.</p>
+    <p class="text-sm text-gray-600">Logotypy partnerów są na dole każdej strony turnieju (nad klubowym blokiem „Wspierają nas”) i jako pierwsze na pasku ekranu TV. „★ Partner główny” dostaje duży, wyróżniony kafelek. Kolejność zmienisz strzałkami ▲▼ przy partnerze. Podpis (np. „Patronat honorowy”) pokazuje się nad logo.</p>
 
     <ul class="divide-y divide-gray-200 rounded-lg ring-1 ring-gray-200">
         @forelse($partners as $partner)
@@ -8,8 +8,8 @@
                     <button type="button" wire:click="move({{ $partner->id }}, -1)" @disabled($loop->first) class="px-1 text-gray-400 hover:text-gray-900 disabled:opacity-25" aria-label="Wyżej">▲</button>
                     <button type="button" wire:click="move({{ $partner->id }}, 1)" @disabled($loop->last) class="px-1 text-gray-400 hover:text-gray-900 disabled:opacity-25" aria-label="Niżej">▼</button>
                 </div>
-                <span class="flex h-12 w-20 shrink-0 items-center justify-center rounded-md p-1 ring-1 ring-gray-200" style="{{ $partner->tile_color ? 'background: '.$partner->tile_color : '' }}">
-                    @if($partner->logo_path)<img src="{{ \App\Support\Media::url($partner->logo_path) }}" alt="" class="max-h-full max-w-full object-contain">@endif
+                <span class="flex h-12 w-24 shrink-0 items-center justify-center rounded-md p-1 ring-1 ring-gray-200" style="{{ $partner->tile_color ? 'background: '.$partner->tile_color : '' }}">
+                    @if($partner->logo_path)<img src="{{ \App\Support\Media::url($partner->logo_path) }}" alt="" class="max-h-full max-w-full object-contain">@else<span class="text-[10px] text-gray-400">brak logo</span>@endif
                 </span>
                 <div class="min-w-0 flex-1">
                     <p class="font-semibold text-gray-900">{{ $partner->name }}
@@ -19,10 +19,53 @@
                     <p class="text-xs text-gray-500">{{ $partner->sponsor_group_id ? 'także sponsor klubu' : 'tylko turnieje' }}</p>
                     <input type="text" value="{{ $partner->pivot->role }}" wire:change="setRole({{ $partner->id }}, $event.target.value)" maxlength="60" list="partner-roles" placeholder="Podpis, np. Patronat honorowy" aria-label="Podpis nad logo" class="mt-1 block w-64 max-w-full py-1 text-xs">
                 </div>
-                <div class="flex gap-1.5">
-                    <button type="button" wire:click="toggleMain({{ $partner->id }})" class="admin-action">{{ $partner->pivot->is_main ? 'Zwykły partner' : 'Partner główny' }}</button>
-                    <button type="button" wire:click="remove({{ $partner->id }})" class="admin-action admin-action-danger">Usuń</button>
+                <div class="flex flex-wrap items-center gap-2">
+                    {{-- Rodzaj kafelka: zaznaczona opcja jest wyróżniona --}}
+                    <span class="inline-flex overflow-hidden rounded-md text-xs font-semibold ring-1 ring-gray-300" role="group" aria-label="Rodzaj partnera">
+                        <button type="button" wire:click="setMain({{ $partner->id }}, false)" aria-pressed="{{ $partner->pivot->is_main ? 'false' : 'true' }}" @class(['px-2.5 py-1.5', 'bg-sky-600 text-white' => ! $partner->pivot->is_main, 'bg-white text-gray-600 hover:bg-gray-50' => $partner->pivot->is_main])>Zwykły kafelek</button>
+                        <button type="button" wire:click="setMain({{ $partner->id }}, true)" aria-pressed="{{ $partner->pivot->is_main ? 'true' : 'false' }}" @class(['border-l border-gray-300 px-2.5 py-1.5', 'bg-amber-400 text-gray-900' => $partner->pivot->is_main, 'bg-white text-gray-600 hover:bg-gray-50' => ! $partner->pivot->is_main])>★ Partner główny</button>
+                    </span>
+                    <button type="button" wire:click="edit({{ $partner->id }})" class="admin-action">Edytuj</button>
+                    <button type="button" wire:click="remove({{ $partner->id }})" wire:confirm="Usunąć {{ $partner->name }} z partnerów turnieju?" class="admin-action admin-action-danger">Usuń</button>
                 </div>
+                @if($editingId === $partner->id)
+                    {{-- Edycja partnera: nazwa, link, logo i tło kafelka --}}
+                    <form wire:submit="saveEdit" class="grid w-full gap-3 rounded-md bg-gray-50 p-3 ring-1 ring-gray-200 sm:grid-cols-2">
+                        <label class="block text-xs text-gray-600">Nazwa
+                            <input type="text" wire:model="editName" class="mt-1 block w-full">
+                            @error('editName') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                        </label>
+                        <label class="block text-xs text-gray-600">Link
+                            <input type="text" wire:model="editUrl" placeholder="https://firma.pl" class="mt-1 block w-full">
+                            @error('editUrl') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                        </label>
+                        <div class="sm:col-span-2">
+                            <p class="text-xs text-gray-600">Logo</p>
+                            <div class="mt-1 flex flex-wrap items-start gap-3">
+                                <span class="flex h-16 w-40 shrink-0 items-center justify-center rounded p-1 ring-1 ring-gray-200" style="background: {{ $editColor ?: '#fff' }}">
+                                    @if($editLogo && ! $errors->has('editLogo'))
+                                        <img src="{{ $editLogo->temporaryUrl() }}" alt="Nowe logo" class="max-h-full max-w-full object-contain">
+                                    @elseif($partner->logo_path)
+                                        <img src="{{ \App\Support\Media::url($partner->logo_path) }}" alt="Obecne logo" class="max-h-full max-w-full object-contain">
+                                    @else
+                                        <span class="text-xs text-gray-400">brak logo</span>
+                                    @endif
+                                </span>
+                                <x-photo-cropper model="editLogo" class="min-w-0 flex-1" :preview="false" aspect="free" format="png" :width="1600" :label="$partner->logo_path ? 'Zmień logo' : 'Dodaj logo'" />
+                            </div>
+                            @error('editLogo') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+                        <label class="block text-xs text-gray-600">Tło kafelka (dla białego logo; puste = białe)
+                            <input type="text" wire:model.live.debounce.500ms="editColor" placeholder="#RRGGBB" class="mt-1 block w-40 font-mono text-sm">
+                            @error('editColor') <span class="text-sm text-red-600">{{ $message }}</span> @enderror
+                        </label>
+                        <div class="flex items-end justify-end gap-2">
+                            @if($partner->sponsor_group_id)<span class="mr-auto text-xs text-amber-700">Zmiany dotyczą też sponsora klubu.</span>@endif
+                            <button type="button" wire:click="cancelEdit" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-gray-300">Anuluj</button>
+                            <button type="submit" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">Zapisz</button>
+                        </div>
+                    </form>
+                @endif
             </li>
         @empty
             <li class="px-4 py-6 text-center text-sm text-gray-500">Turniej nie ma jeszcze partnerów.</li>

@@ -71,6 +71,15 @@ test('a tournament has its own partners on its pages and on the tv bar', functio
         ->assertSeeInOrder(['Partnerzy turnieju', 'Partner główny', 'Piekarnia Turniejowa', 'Wspierają nas'])
         ->assertSee('O turnieju')->assertSee('Turniej pamięci trenera.');
 
+    // Edycja partnera: nazwa i link; rodzaj kafelka ustawiany wprost.
+    Livewire::test(TournamentPartners::class, ['tournamentId' => $tournament->id])
+        ->call('edit', $partner->id)->assertSet('editName', 'Piekarnia Turniejowa')
+        ->set('editName', 'Piekarnia Turniejowa Sp. z o.o.')->set('editUrl', 'https://piekarnia.pl')
+        ->call('saveEdit')->assertHasNoErrors()
+        ->call('setMain', $partner->id, true);
+    expect($partner->fresh()->name)->toBe('Piekarnia Turniejowa Sp. z o.o.')->and($partner->fresh()->website_url)->toBe('https://piekarnia.pl')
+        ->and($tournament->sponsors()->first()->pivot->is_main)->toBeTruthy();
+
     // Podpis nad logo zamiast „Partner główny”, np. patronat honorowy.
     Livewire::test(TournamentPartners::class, ['tournamentId' => $tournament->id])->call('setRole', $partner->id, ' Patronat honorowy ');
     $this->get(route('tournaments.show', $tournament))->assertSeeInOrder(['Partnerzy turnieju', 'Patronat honorowy', 'Piekarnia Turniejowa']);

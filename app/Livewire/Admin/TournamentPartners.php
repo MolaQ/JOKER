@@ -30,6 +30,17 @@ class TournamentPartners extends Component
 
     public $logo = null;
 
+    /** Edycja dodanego partnera (nazwa, link, logo, tło kafelka). */
+    public ?int $editingId = null;
+
+    public string $editName = '';
+
+    public string $editUrl = '';
+
+    public string $editColor = '';
+
+    public $editLogo = null;
+
     public function boot(): void
     {
         abort_unless(Auth::user()?->can('tournaments.manage'), 403);
@@ -101,7 +112,56 @@ class TournamentPartners extends Component
     public function toggleMain(int $sponsorId): void
     {
         $partner = $this->tournament()->sponsors()->whereKey($sponsorId)->firstOrFail();
-        $this->tournament()->sponsors()->updateExistingPivot($sponsorId, ['is_main' => ! $partner->pivot->is_main]);
+        $this->setMain($sponsorId, ! $partner->pivot->is_main);
+    }
+
+    public function setMain(int $sponsorId, bool $main): void
+    {
+        $partner = $this->tournament()->sponsors()->whereKey($sponsorId)->firstOrFail();
+        $this->tournament()->sponsors()->updateExistingPivot($sponsorId, ['is_main' => $main]);
+        $this->toast($partner->name.': '.($main ? 'partner główny (duży kafelek).' : 'zwykły partner.'));
+    }
+
+    public function edit(int $sponsorId): void
+    {
+        $partner = $this->tournament()->sponsors()->whereKey($sponsorId)->firstOrFail();
+        $this->editingId = $partner->id;
+        $this->editName = $partner->name;
+        $this->editUrl = (string) $partner->website_url;
+        $this->editColor = (string) $partner->tile_color;
+        $this->editLogo = null;
+        $this->resetErrorBag();
+    }
+
+    public function cancelEdit(): void
+    {
+        $this->reset(['editingId', 'editName', 'editUrl', 'editColor', 'editLogo']);
+        $this->resetErrorBag();
+    }
+
+    public function saveEdit(): void
+    {
+        $partner = $this->tournament()->sponsors()->whereKey((int) $this->editingId)->firstOrFail();
+
+        $this->validate([
+            'editName' => 'required|string|max:255',
+            'editUrl' => ['nullable', 'string', 'max:255', 'regex:#^(https?://|/)#i'],
+            'editColor' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'editLogo' => 'nullable|image|max:4096',
+        ], [
+            'editName.required' => 'Wpisz nazwę partnera.',
+            'editUrl.regex' => 'Link zaczyna się od https:// albo / (podstrona naszej strony).',
+            'editColor.regex' => 'Kolor podaj jako #RRGGBB.',
+        ]);
+
+        $partner->update([
+            'name' => trim($this->editName),
+            'website_url' => trim($this->editUrl) ?: null,
+            'tile_color' => $this->editColor ?: null,
+        ] + ($this->editLogo ? ['logo_path' => $this->editLogo->store('sponsors', 'public')] : []));
+
+        $this->cancelEdit();
+        $this->toast('Zapisano partnera: '.$partner->name.'.');
     }
 
     /**
