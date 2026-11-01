@@ -72,6 +72,8 @@ class GameManager extends Component
 
     public string $video_url = '';
 
+    public string $mvp = '';
+
     public string $search = '';
 
     public string $statusFilter = '';
@@ -111,6 +113,7 @@ class GameManager extends Component
             'sets_input' => 'nullable|string|max:1000',
             'match_report' => 'nullable|string',
             'video_url' => 'nullable|url',
+            'mvp' => 'nullable|string|max:120',
         ];
     }
 
@@ -206,6 +209,7 @@ class GameManager extends Component
             ->implode(', ');
         $this->match_report = (string) $game->match_report;
         $this->video_url = (string) $game->video_url;
+        $this->mvp = (string) $game->mvp;
 
         $this->showModal = true;
     }
@@ -213,6 +217,7 @@ class GameManager extends Component
     public function save(): void
     {
         $validated = $this->validate();
+        $validated['mvp'] = trim((string) $validated['mvp']) ?: null;
         $this->applySetResults($validated);
 
         // Sparing i mecz turniejowy nie liczą się do tabeli ligowej.
@@ -288,6 +293,7 @@ class GameManager extends Component
         $this->sets_input = '';
         $this->match_report = '';
         $this->video_url = '';
+        $this->mvp = '';
         $this->resetErrorBag();
     }
 

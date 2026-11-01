@@ -182,7 +182,11 @@ export function initPush() {
         const list = box.querySelector('[data-push-followed]');
         const names = Object.fromEntries([...select.options].map((option) => [option.value, option.textContent]));
 
+        const count = box.querySelector('[data-push-follow-count]');
         const render = (ids) => {
+            if (count) {
+                count.textContent = ids.filter((id) => names[id]).length || '';
+            }
             list.replaceChildren(...ids.filter((id) => names[id]).map((id) => {
                 const chip = document.createElement('button');
                 chip.type = 'button';

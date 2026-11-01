@@ -2,8 +2,10 @@
 
 use App\Models\RivalClub;
 use App\Models\RivalTeam;
+use App\Models\User;
 use App\Support\ClubLogos;
 use App\Support\SiteSettings;
+use App\UserRole;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -12,6 +14,10 @@ test('the logos page lists club logos, downloads them and stays out of search en
     Storage::disk('public')->put('logos/sparta.png', UploadedFile::fake()->image('s.png')->getContent());
     $club = RivalClub::create(['name' => 'Sparta Złotów', 'logo_path' => 'logos/sparta.png']);
     RivalTeam::create(['full_name' => 'Sparta Złotów II', 'rival_club_id' => $club->id]);
+
+    $this->get('/logotypy')->assertRedirect(route('login'));
+    $this->actingAs(User::factory()->create(['role' => UserRole::Fan]))->get('/logotypy')->assertForbidden();
+    $this->actingAs(User::factory()->create(['role' => UserRole::Photographer]));
 
     $this->get('/logotypy')->assertOk()
         ->assertHeader('X-Robots-Tag', 'noindex, nofollow')
@@ -24,14 +30,12 @@ test('the logos page lists club logos, downloads them and stays out of search en
     $this->get('/robots.txt')->assertSee('Disallow: /logotypy');
     $this->get('/sitemap.xml')->assertDontSee('logotypy');
 
-    app(SiteSettings::class)->set(['logos_login' => true]);
-    $this->get('/logotypy')->assertRedirect(route('login'));
-
     app(SiteSettings::class)->set(['logos_page' => false]);
     $this->get('/logotypy')->assertNotFound();
 });
 
 test('logos sort by downloads, then meetings, and by name both ways', function () {
+    $this->actingAs(User::factory()->create(['role' => UserRole::Photographer]));
     Storage::fake('public');
     foreach (['Adria', 'Zawisza', 'Borowiak'] as $name) {
         Storage::disk('public')->put('logos/'.$name.'.png', UploadedFile::fake()->image('x.png')->getContent());

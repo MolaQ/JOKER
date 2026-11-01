@@ -281,7 +281,7 @@
                                 @endif
                             </div>
                             @if($game->isFinished() && is_array($game->sets_score) && count($game->sets_score))
-                                <p class="mt-1 text-xs text-zinc-500 tabular-nums">{{ collect($game->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(' · ') }}@if($game->result_note) · <span class="font-semibold text-amber-700">{{ $game->result_note }}</span>@endif</p>
+                                <p class="mt-1 text-xs text-zinc-500 tabular-nums">{{ collect($game->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(' · ') }}@if($game->result_note) · <span class="font-semibold text-amber-700">{{ $game->result_note }}</span>@endif@if($game->mvp) · <span class="font-semibold text-amber-700">★ {{ $game->mvp }}</span>@endif</p>
                             @elseif($game->result_note)
                                 <p class="mt-1 text-xs font-semibold text-amber-700">{{ $game->result_note }}</p>
                             @endif

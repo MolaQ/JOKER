@@ -741,6 +741,7 @@ class TournamentEditor extends Component
             'starts_at' => ($row['starts_at'] ?? '') ?: null,
             'court' => trim($row['court'] ?? '') ?: null,
             'is_live' => (bool) ($row['live'] ?? false),
+            'mvp' => mb_substr(trim((string) ($row['mvp'] ?? '')), 0, 120) ?: null,
         ]);
         $this->afterTimeChange($match, $previous);
         $this->syncBracket();
@@ -1233,6 +1234,7 @@ class TournamentEditor extends Component
             'starts_at' => (string) $match->starts_at?->format('Y-m-d\TH:i'),
             'court' => (string) $match->court,
             'live' => $match->is_live,
+            'mvp' => (string) $match->mvp,
         ]])->all() ?? [];
     }
 

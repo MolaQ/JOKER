@@ -278,6 +278,12 @@
                                 <p class="mt-1 text-xs text-gray-500">Po wpisaniu setów system automatycznie wyliczy wynik meczu i małe punkty oraz ustawi status na „Zakończony”.</p>
                             </div>
 
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Wyróżnienie meczu <span class="font-normal text-gray-400">(opcjonalnie)</span></label>
+                                <input type="text" wire:model="mvp" maxlength="120" placeholder="np. MVP: Jan Kowalski" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                @error('mvp') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Małe punkty gospodarzy</label>

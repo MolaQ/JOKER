@@ -603,6 +603,7 @@
                                     <div>
                                         <input type="text" wire:model.blur.live="results.{{ $tournamentMatch->id }}.sets" class="{{ $input }}" placeholder="25:20, 23:25, 15:12">
                                         @error("results.{$tournamentMatch->id}.sets") <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                                        <input type="text" wire:model.blur.live="results.{{ $tournamentMatch->id }}.mvp" maxlength="120" class="{{ $input }} mt-1" placeholder="Wyróżnienie (opcjonalnie), np. MVP: Jan Kowalski" aria-label="Wyróżnienie meczu">
                                     </div>
                                     <div>
                                         <x-datetime-input :model="'results.'.$tournamentMatch->id.'.starts_at'" live class="{{ $input }}" />

@@ -2,11 +2,61 @@
     {{-- Kategorie wiekowe i zakładki --}}
     <div class="sticky top-16 z-30 border-b border-zinc-200 bg-white/90 backdrop-blur-xl lg:top-20">
         <div class="container-site space-y-3 py-3">
-            @if($categories->count() > 1)
-                <div class="flex flex-wrap gap-2" aria-label="{{ __('Kategoria wiekowa') }}">
-                    @foreach($categories as $categoryOption)
-                        <a href="{{ route('tournaments.show', ['tournament' => $tournament, 'category' => $loop->first ? null : $categoryOption->slug(), 'tab' => $tabs->has($currentTab) && $currentTab !== $tabs->keys()->first() ? $currentTab : null]) }}" data-track="{{ __('Kategoria') }}: {{ $categoryOption->name }}" @if($current?->id === $categoryOption->id) aria-current="page" @endif @class(['chip transition', 'bg-club-navy text-white' => $current?->id === $categoryOption->id, 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => $current?->id !== $categoryOption->id])>{{ $categoryOption->name }}</a>
-                    @endforeach
+            @php
+                $followable = $current && $current->participants->isNotEmpty() && $site['push_enabled'] && ($site['push_tournaments'] || $site['push_upcoming']);
+                $teamFilter = $currentTab === 'matches' && $current && $current->participants->count() > 1;
+                $sortedParticipants = $current?->participants->sortBy([fn ($a, $b) => (int) $b->isOwnTeam() <=> (int) $a->isOwnTeam(), fn ($a, $b) => strcoll($a->name(), $b->name())])->values() ?? collect();
+            @endphp
+            @if($categories->count() > 1 || $followable || $teamFilter)
+                <div class="flex flex-wrap items-center gap-2">
+                    @if($categories->count() > 1)
+                        <div class="flex flex-wrap gap-2" aria-label="{{ __('Kategoria wiekowa') }}">
+                            @foreach($categories as $categoryOption)
+                                <a href="{{ route('tournaments.show', ['tournament' => $tournament, 'category' => $loop->first ? null : $categoryOption->slug(), 'tab' => $tabs->has($currentTab) && $currentTab !== $tabs->keys()->first() ? $currentTab : null]) }}" data-track="{{ __('Kategoria') }}: {{ $categoryOption->name }}" @if($current?->id === $categoryOption->id) aria-current="page" @endif @class(['chip transition', 'bg-club-navy text-white' => $current?->id === $categoryOption->id, 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => $current?->id !== $categoryOption->id])>{{ $categoryOption->name }}</a>
+                            @endforeach
+                        </div>
+                    @endif
+                    <div class="ml-auto flex items-center gap-2">
+                        {{-- Filtr drużyny terminarza: stan trzyma komponent terminarza (zdarzenia okna) --}}
+                        @if($teamFilter)
+                            <label wire:key="team-filter-{{ $current->id }}" class="relative" x-data="{ team: '' }" x-on:tournament-team.window="team = $event.detail ?? ''">
+                                <span class="sr-only">{{ __('Pokaż mecze drużyny') }}</span>
+                                <select x-on:change="$dispatch('tournament-team-pick', $event.target.value || null)" x-effect="$el.value = team"
+                                    class="h-8 max-w-44 appearance-none truncate rounded-full border-0 bg-zinc-100 pr-8 pl-3 text-xs font-semibold text-zinc-700 ring-1 ring-transparent transition hover:ring-sky-club focus:ring-2 focus:ring-sky-club sm:max-w-56"
+                                    :class="team !== '' && 'bg-sky-club/10 text-sky-club-dark ring-sky-club/40!'">
+                                    <option value="">{{ __('Wszystkie drużyny') }}</option>
+                                    @foreach($sortedParticipants as $participant)
+                                        <option value="{{ $participant->id }}">{{ $participant->name() }}</option>
+                                    @endforeach
+                                </select>
+                                <svg class="pointer-events-none absolute top-1/2 right-2.5 size-3.5 -translate-y-1/2 text-zinc-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd"/></svg>
+                            </label>
+                        @endif
+                        {{-- Kibic wybiera drużynę i dostaje powiadomienia o jej wynikach i meczach za chwilę (obsługa w resources/js/push.js) --}}
+                        @if($followable)
+                            <div wire:ignore wire:key="push-follow-{{ $current->id }}" data-push-follow hidden data-unfollow-label="{{ __('Przestań obserwować') }}" class="relative" x-data="{ open: false }" x-on:click.outside="open = false" x-on:keydown.escape="open = false">
+                                <button type="button" x-on:click="open = ! open" :aria-expanded="open" aria-expanded="false" title="{{ __('Powiadamiaj mnie o meczach drużyny') }}"
+                                    class="inline-flex h-8 items-center gap-1.5 rounded-full bg-zinc-100 px-3 text-xs font-semibold text-zinc-700 ring-1 ring-transparent transition hover:ring-sky-club">
+                                    <svg class="size-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M10 2a6 6 0 0 0-6 6c0 1.887-.454 3.665-1.257 5.234a.75.75 0 0 0 .515 1.076 32.91 32.91 0 0 0 3.256.508 3.5 3.5 0 0 0 6.972 0 32.903 32.903 0 0 0 3.256-.508.75.75 0 0 0 .515-1.076A11.448 11.448 0 0 1 16 8a6 6 0 0 0-6-6Zm0 14.5a2 2 0 0 1-1.95-1.557 33.54 33.54 0 0 0 3.9 0A2 2 0 0 1 10 16.5Z"/></svg>
+                                    <span class="hidden sm:inline">{{ __('Powiadomienia') }}</span>
+                                    <span data-push-follow-count class="rounded-full bg-sky-club px-1.5 text-[10px] leading-4 text-white empty:hidden"></span>
+                                </button>
+                                <div x-cloak x-show="open" x-transition.origin.top.right class="absolute top-full right-0 z-40 mt-2 w-72 space-y-3 rounded-2xl bg-white p-4 text-sm shadow-xl ring-1 ring-zinc-200">
+                                    <p class="font-semibold text-zinc-900">{{ __('Powiadamiaj mnie o meczach drużyny') }}</p>
+                                    <div class="flex gap-2">
+                                        <select class="h-8 min-w-0 flex-1 rounded-full border-zinc-200 bg-white py-0 text-xs" aria-label="{{ __('Drużyna') }}">
+                                            <option value="">{{ __('wybierz drużynę') }}</option>
+                                            @foreach($sortedParticipants as $participant)
+                                                <option value="{{ $participant->id }}">{{ $participant->name() }}</option>
+                                            @endforeach
+                                        </select>
+                                        <button type="button" data-push-follow-add class="h-8 rounded-full bg-sky-club px-3 text-xs font-semibold text-white hover:bg-sky-club-dark">{{ __('Obserwuj') }}</button>
+                                    </div>
+                                    <div data-push-followed class="flex flex-wrap gap-1.5 empty:hidden"></div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
                 </div>
             @endif
             <div class="scrollbar-none -mx-4 flex gap-1 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="tablist">
@@ -22,21 +72,6 @@
     </div>
 
     <section class="container-site py-10 transition-opacity" wire:loading.class="opacity-50">
-        {{-- Kibic wybiera drużynę i dostaje powiadomienia o jej wynikach i meczach za chwilę (obsługa w resources/js/push.js) --}}
-        @if($current && $current->participants->isNotEmpty() && $site['push_enabled'] && ($site['push_tournaments'] || $site['push_upcoming']))
-            <div wire:ignore wire:key="push-follow-{{ $current->id }}" data-push-follow hidden data-unfollow-label="{{ __('Przestań obserwować') }}" class="mb-8 flex flex-wrap items-center gap-2 rounded-2xl bg-sky-50 px-4 py-3 text-sm ring-1 ring-sky-100">
-                <span class="w-full font-semibold text-sky-950 sm:w-auto">🔔 {{ __('Powiadamiaj mnie o meczach drużyny') }}</span>
-                <select class="min-w-0 flex-1 rounded-full border-sky-200 bg-white py-1.5 text-sm sm:max-w-xs" aria-label="{{ __('Drużyna') }}">
-                    <option value="">{{ __('wybierz drużynę') }}</option>
-                    @foreach($current->participants->sortBy(fn ($participant) => $participant->name()) as $participant)
-                        <option value="{{ $participant->id }}">{{ $participant->name() }}</option>
-                    @endforeach
-                </select>
-                <button type="button" data-push-follow-add class="rounded-full bg-sky-club px-4 py-1.5 font-semibold text-white hover:bg-sky-club-dark">{{ __('Obserwuj') }}</button>
-                <div data-push-followed class="flex w-full flex-wrap gap-2 empty:hidden"></div>
-            </div>
-        @endif
-
         @if($tabs->isEmpty())
             <div class="card p-12 text-center text-zinc-500">{{ __('Szczegóły turnieju pojawią się wkrótce.') }}</div>
         @endif

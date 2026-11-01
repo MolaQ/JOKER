@@ -45,6 +45,9 @@
         @if($match->setsLabel())
             <p class="mt-6 text-center text-sm text-white/70 tabular-nums">({{ $match->setsLabel() }})</p>
         @endif
+        @if(filled($match->mvp))
+            <p class="mt-4 text-center"><span class="inline-flex items-center gap-1.5 rounded-full bg-amber-400/15 px-3 py-1 text-sm font-semibold text-amber-200 ring-1 ring-amber-300/30">★ {{ $match->mvp }}</span></p>
+        @endif
 
         <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
             @livewire('like-button', ['type' => 'tournament_match', 'id' => $match->id, 'dark' => true], key('tournament-match-like-'.$match->id))

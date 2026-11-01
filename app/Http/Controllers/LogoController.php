@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Permission;
 use App\Support\ClubLogos;
 use App\Support\SiteSettings;
 use Illuminate\Support\Str;
@@ -11,7 +12,7 @@ use ZipArchive;
 
 /**
  * Strona /logotypy: logotypy klubów do pobrania (np. do transmisji). Nie trafia do wyszukiwarek
- * (noindex, robots.txt, brak w mapie strony); może wymagać logowania (Ustawienia → Moduły).
+ * (noindex, robots.txt, brak w mapie strony). Tylko dla zalogowanych z uprawnieniem „Grafiki do transmisji”.
  */
 class LogoController extends Controller
 {
@@ -20,9 +21,11 @@ class LogoController extends Controller
         $settings = app(SiteSettings::class);
         abort_unless($settings['logos_page'], 404);
 
-        if ($settings['logos_login'] && ! auth()->check()) {
+        if (! auth()->check()) {
             abort(redirect()->guest(route('login')));
         }
+
+        abort_unless(auth()->user()->can(Permission::Graphics->value), 403);
     }
 
     public function index(): Response

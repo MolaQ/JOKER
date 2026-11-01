@@ -70,57 +70,26 @@
                 const saved = localStorage.getItem(this.key);
                 if (saved && this.info[saved]) this.team = saved;
             } catch (e) {}
+            this.$nextTick(() => window.dispatchEvent(new CustomEvent('tournament-team', { detail: this.team })));
         },
         pick(id) {
             this.team = id && this.info[id] ? String(id) : null;
             try {
                 this.team ? localStorage.setItem(this.key, this.team) : localStorage.removeItem(this.key);
             } catch (e) {}
+            window.dispatchEvent(new CustomEvent('tournament-team', { detail: this.team }));
         },
         shows(ids) { return this.team === null || ids.includes(this.team); },
     }"
+    x-on:tournament-team-pick.window="pick($event.detail)"
 >
-    {{-- FILTR DRUŻYNY --}}
-    @if($participants->count() > 1)
-        <div class="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5">
-            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-5">
-                <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase lg:shrink-0">{{ __('Pokaż mecze drużyny') }}</p>
-                <div class="flex min-w-0 flex-wrap items-center gap-2" role="group" aria-label="{{ __('Filtr drużyny') }}">
-                    <button type="button" x-on:click="pick(null)" :aria-pressed="team === null" aria-pressed="true"
-                        class="inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold ring-1 transition"
-                        :class="team === null ? 'bg-club-navy text-white ring-club-navy' : 'bg-white text-zinc-700 ring-zinc-200 hover:ring-sky-club'">
-                        {{ __('Wszystkie drużyny') }}
-                    </button>
-                    @foreach($ownTeams as $participant)
-                        <button type="button" x-on:click="pick(@js((string) $participant->id))" :aria-pressed="team === @js((string) $participant->id)" aria-pressed="false"
-                            title="{{ $participant->name() }}"
-                            class="inline-flex h-9 max-w-full items-center gap-2 rounded-full py-1 pr-4 pl-1 text-sm font-semibold ring-1 transition"
-                            :class="team === @js((string) $participant->id) ? 'bg-sky-club text-white ring-sky-club' : 'bg-sky-club/10 text-sky-club-dark ring-sky-club/30 hover:ring-sky-club'">
-                            <x-avatar logo :photo="$participant->logoPath()" :name="$participant->name()" class="h-7 w-7 shrink-0 rounded-full text-[10px]" />
-                            <span class="truncate">{{ $ownTeams->count() === 1 ? $site['club_short_name'] : $participant->name() }}</span>
-                        </button>
-                    @endforeach
-                    <label class="relative min-w-0 flex-1 basis-56 sm:max-w-xs">
-                        <span class="sr-only">{{ __('Wybierz drużynę') }}</span>
-                        <select x-on:change="pick($event.target.value || null)" :value="team ?? ''" x-effect="$el.value = team ?? ''"
-                            class="h-9 w-full appearance-none truncate rounded-full border-0 bg-zinc-100 pr-9 pl-4 text-sm font-semibold text-zinc-700 ring-1 ring-transparent transition hover:ring-sky-club focus:ring-2 focus:ring-sky-club"
-                            :class="team !== null && ! @js($ownTeams->pluck('id')->map(fn ($id) => (string) $id)->values()).includes(team) && 'bg-sky-club/10 text-sky-club-dark ring-sky-club/40!'">
-                            <option value="">{{ __('Wybierz drużynę…') }}</option>
-                            @foreach($participants as $participant)
-                                <option value="{{ $participant->id }}">{{ $participant->name() }}</option>
-                            @endforeach
-                        </select>
-                        <svg class="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-zinc-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd"/></svg>
-                    </label>
-                </div>
-            </div>
-            <p x-cloak x-show="team !== null" class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-zinc-100 pt-3 text-sm" aria-live="polite">
-                <span class="font-semibold text-zinc-900" x-text="team && info[team].name"></span>
-                <span class="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-600 tabular-nums" x-text="team && info[team].count"></span>
-                <span class="text-zinc-500 tabular-nums" x-show="team && info[team].next" x-text="team && info[team].next"></span>
-            </p>
-        </div>
-    @endif
+    {{-- Wybrana drużyna (filtr jest w pasku nad zakładkami): krótkie podsumowanie i powrót do wszystkich --}}
+    <p x-cloak x-show="team !== null" class="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-full bg-sky-club/10 px-4 py-2 text-sm" aria-live="polite">
+        <span class="font-semibold text-zinc-900" x-text="team && info[team].name"></span>
+        <span class="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-zinc-600 tabular-nums" x-text="team && info[team].count"></span>
+        <span class="text-zinc-500 tabular-nums" x-show="team && info[team].next" x-text="team && info[team].next"></span>
+        <button type="button" x-on:click="pick(null)" class="ml-auto text-xs font-semibold text-sky-club-dark hover:underline">{{ __('Wszystkie drużyny') }} ×</button>
+    </p>
 
     @forelse($days as $day => $dayRows)
         @php

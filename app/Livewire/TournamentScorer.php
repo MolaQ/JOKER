@@ -85,6 +85,7 @@ class TournamentScorer extends Component
             'home_sets' => $sets ? $home : null,
             'away_sets' => $sets ? $away : null,
             'is_live' => ! $finish,
+            'mvp' => mb_substr(trim((string) ($this->rows[$id]['mvp'] ?? '')), 0, 120) ?: null,
         ]);
 
         TournamentBracket::sync($match->category);
@@ -155,6 +156,7 @@ class TournamentScorer extends Component
             $this->rows[$match->id] ??= [
                 'start' => (($match->is_live || $match->home_sets !== null) ? $match->starts_at : ($match->planned_starts_at ?? $match->starts_at))?->format('H:i') ?? '',
                 'sets' => collect($match->sets_score ?? [])->map(fn (array $set) => $set[0].':'.$set[1])->implode(', '),
+                'mvp' => (string) $match->mvp,
             ];
         }
 

@@ -26,6 +26,7 @@
                 ['label' => 'Minisiatkówka', 'route' => 'admin.mini.index', 'icon' => 'star', 'can' => fn () => app(\App\Support\SiteSettings::class)['module_mini'] && auth()->user()->can('mini.manage')],
                 ['label' => 'Transmisje i zdjęcia meczów', 'route' => 'admin.media.index', 'icon' => 'video', 'can' => 'media.manage'],
                 ['label' => 'Galerie', 'route' => 'admin.galleries.index', 'icon' => 'photo', 'can' => 'media.manage'],
+                ['label' => 'Logotypy klubów', 'route' => 'logos.index', 'icon' => 'photo', 'can' => fn () => app(\App\Support\SiteSettings::class)['logos_page'] && auth()->user()->can('graphics.use')],
                 ['label' => 'Slajdy na stronie głównej', 'route' => 'admin.hero-slides.index', 'icon' => 'slides', 'can' => 'homepage.manage'],
             ],
             'Treści strony' => [

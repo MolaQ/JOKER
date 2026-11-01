@@ -60,6 +60,7 @@ class Game extends Model
         'result_note',
         'match_report',
         'video_url',
+        'mvp',
     ];
 
     protected function casts(): array

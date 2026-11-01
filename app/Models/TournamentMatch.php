@@ -52,6 +52,7 @@ class TournamentMatch extends Model
         'home_sets',
         'away_sets',
         'sets_score',
+        'mvp',
     ];
 
     /**

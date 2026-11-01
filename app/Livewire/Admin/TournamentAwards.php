@@ -34,7 +34,7 @@ class TournamentAwards extends Component
      */
     public static function names(): array
     {
-        return array_values(array_filter(array_map('trim', preg_split('/\R/', (string) app(SiteSettings::class)['tournament_award_names']))));
+        return array_values(array_filter(array_map('trim', preg_split('/\R/u', (string) app(SiteSettings::class)['tournament_award_names']))));
     }
 
     public function save(): void

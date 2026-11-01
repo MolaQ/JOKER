@@ -7,6 +7,7 @@ use App\Models\PlayerAchievement;
 use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\User;
+use App\Support\SiteSettings;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -50,4 +51,10 @@ test('saving a player in the panel keeps achievements that came from tournaments
         ->call('addAchievement')->set('achievements.0.title', 'Mistrzostwo Wielkopolski')->call('save');
 
     expect($this->player->achievements()->pluck('title')->all())->toHaveCount(2);
+});
+
+test('award names keep Polish letters', function () {
+    app(SiteSettings::class)->set(['tournament_award_names' => "Najlepsza przyjmująca\nNajlepszy rozgrywający"]);
+
+    expect(TournamentAwards::names())->toBe(['Najlepsza przyjmująca', 'Najlepszy rozgrywający']);
 });

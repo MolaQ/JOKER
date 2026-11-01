@@ -10,6 +10,7 @@ enum Permission: string
 {
     case Articles = 'articles.manage';
     case Media = 'media.manage';
+    case Graphics = 'graphics.use';
     case Homepage = 'homepage.manage';
     case Comments = 'comments.moderate';
     case ContentProposals = 'proposals.content';
@@ -41,6 +42,7 @@ enum Permission: string
         return match ($this) {
             self::Articles => 'Aktualności',
             self::Media => 'Transmisje i galerie',
+            self::Graphics => 'Grafiki do transmisji: logotypy i miniatury YouTube',
             self::Homepage => 'Slajdy na stronie głównej',
             self::Comments => 'Moderacja komentarzy i zgłoszonych wiadomości',
             self::ContentProposals => 'Zatwierdzanie artykułów, zdjęć i transmisji od rodziców i zawodników',
@@ -77,6 +79,7 @@ enum Permission: string
             self::Trainings => 'Trener i członek sztabu układają plan tylko swoich drużyn.',
             self::PhotoTags => 'Bez tego trener zatwierdza tylko oznaczenia zawodników swoich drużyn.',
             self::Roles => 'Kto nie jest administratorem, nie nada roli administratora.',
+            self::Graphics => 'Strony /logotypy i /miniatury. Bez tego uprawnienia nie otworzy ich nikt, także niezalogowany.',
             self::PagePreview => 'Widzi podstrony jeszcze nieopublikowane, razem z linkami w menu i stopce, i może zapisać je jako PDF do akceptacji.',
             self::MiniSubmit => 'Zakładka „Zgłoś” na stronie minisiatkówki. Zgłoszenia czekają w „Do zatwierdzenia”, chyba że zgłasza ktoś z uprawnieniem „Minisiatkówka: dzieci, wyjazdy i wyniki”.',
             self::WriteComments => 'Komentarze pod aktualnościami i meczami. Odbierz je, gdy ktoś łamie zasady.',
@@ -96,7 +99,7 @@ enum Permission: string
     public function group(): string
     {
         return match ($this) {
-            self::Articles, self::Media, self::Homepage, self::Comments, self::ContentProposals, self::PhotoTags => 'Treści',
+            self::Articles, self::Media, self::Graphics, self::Homepage, self::Comments, self::ContentProposals, self::PhotoTags => 'Treści',
             self::Teams, self::AllTeams, self::Trainings, self::Games, self::Tournaments, self::MiniVolleyball, self::MiniSubmit, self::Competitions, self::Proposals => 'Drużyny i rozgrywki',
             self::Documents, self::Sponsors => 'Klub',
             self::WriteComments, self::WriteMessages => 'Korzystanie ze strony',
