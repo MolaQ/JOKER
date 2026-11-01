@@ -33,6 +33,7 @@ class Tournament extends Model
         'city',
         'is_organizer',
         'description',
+        'about',
         'slug',
         'series',
         'image_path',
@@ -54,6 +55,15 @@ class Tournament extends Model
             'is_organizer' => 'boolean',
             'has_page' => 'boolean',
         ];
+    }
+
+    /**
+     * Partnerzy turnieju (strona turnieju i ekran TV), partner główny pierwszy.
+     */
+    public function sponsors(): BelongsToMany
+    {
+        return $this->belongsToMany(Sponsor::class, 'tournament_sponsor')->withPivot(['is_main', 'display_order'])->withTimestamps()
+            ->orderByPivot('is_main', 'desc')->orderByPivot('display_order');
     }
 
     public function season(): BelongsTo

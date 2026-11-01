@@ -219,7 +219,24 @@
         @yield('content')
     </main>
 
-    <footer class="relative mt-24 overflow-hidden bg-ink pb-20 text-zinc-400 lg:pb-0">
+    @php
+        $sponsorBlock = match ($site['sponsors_block']) {
+            'off' => false,
+            'home' => request()->routeIs('home'),
+            default => true,
+        } && ! View::hasSection('hide_sponsors');
+        $beforeFooter = $sponsorBlock || View::hasSection('before_sponsors');
+    @endphp
+    @if($beforeFooter)
+        <div class="mt-24">
+            @yield('before_sponsors')
+            @if($sponsorBlock)
+                <x-sponsor-block />
+            @endif
+        </div>
+    @endif
+
+    <footer @class(['relative overflow-hidden bg-ink pb-20 text-zinc-400 lg:pb-0', 'mt-24' => ! $beforeFooter])>
         <div class="net-pattern absolute inset-0" aria-hidden="true"></div>
         <div class="container-site relative py-16">
             <div class="grid gap-12 md:grid-cols-2 lg:grid-cols-4">

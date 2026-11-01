@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Livewire\TournamentPage;
-use App\Models\Sponsor;
+use App\Models\SponsorGroup;
 use App\Models\Tournament;
 use App\Models\TournamentCategory;
 use App\Models\TournamentMatch;
@@ -33,9 +33,24 @@ class TournamentTvController extends Controller
         $slides = $categories->flatMap(fn (TournamentCategory $category) => $this->categorySlides($category, $brackets[$category->id], $settings, $perSlide))->values();
 
         if ($settings['tv_sponsors']) {
-            $sponsors = Sponsor::active()->ordered()->whereNotNull('logo_path')->get();
+            $sponsors = $tournament->sponsors()->where('is_active', true)->whereNotNull('logo_path')->get()
+                ->concat(SponsorGroup::forBlock()->flatMap->sponsors)->unique('id')->values();
             if ($sponsors->isNotEmpty()) {
                 $slides->push(['type' => 'sponsors', 'category' => null, 'title' => __('Dziękujemy sponsorom'), 'sponsors' => $sponsors]);
+            }
+        }
+
+        // Pasek sponsorów u dołu: najpierw partnerzy turnieju, potem kategorie bloku „Wspierają nas”.
+        $sponsorBar = collect();
+        if ($settings['tv_sponsor_bar']) {
+            $partners = $tournament->sponsors()->where('is_active', true)->whereNotNull('logo_path')->get();
+            if ($partners->isNotEmpty()) {
+                $sponsorBar->push(['title' => __('Partnerzy turnieju'), 'sponsors' => $partners]);
+            }
+            foreach (SponsorGroup::forBlock() as $group) {
+                foreach ($group->sponsors->chunk(6) as $chunk) {
+                    $sponsorBar->push(['title' => __($group->name), 'sponsors' => $chunk->values()]);
+                }
             }
         }
 
@@ -54,6 +69,7 @@ class TournamentTvController extends Controller
             'perSlide' => $perSlide,
             'live' => $settings['tv_live_bar'] ? $live : collect(),
             'brackets' => $brackets,
+            'sponsorBar' => $sponsorBar,
             'colors' => [
                 'top' => $settings->color('tv_bg_top'),
                 'bottom' => $settings->color('tv_bg_bottom'),

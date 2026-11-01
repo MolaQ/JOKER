@@ -10,7 +10,6 @@ use App\Models\HeroSlide;
 use App\Models\MiniGroup;
 use App\Models\Player;
 use App\Models\Season;
-use App\Models\Sponsor;
 use App\Models\Team;
 use App\Models\User;
 use App\Support\SiteSettings;
@@ -41,8 +40,6 @@ class HomeController extends Controller
             ->orderBy('display_order')
             ->get();
 
-        $sponsors = Sponsor::active()->ordered()->get();
-
         $stats = [
             'teams' => $teams->count(),
             'players' => Player::where('is_active', true)->count(),
@@ -59,7 +56,7 @@ class HomeController extends Controller
 
         $miniGroups = $site['home_mini_enabled'] && $site['module_mini'] ? MiniGroup::where('is_active', true)->ordered()->withCount(['players' => fn ($query) => $query->where('is_active', true)])->get() : collect();
 
-        return view('home', compact('seasonName', 'heroSlides', 'upcoming_games', 'recent_results', 'articles', 'teams', 'sponsors', 'stats', 'countdownGame', 'alumni', 'lineup', 'miniGroups'));
+        return view('home', compact('seasonName', 'heroSlides', 'upcoming_games', 'recent_results', 'articles', 'teams', 'stats', 'countdownGame', 'alumni', 'lineup', 'miniGroups'));
     }
 
     /**

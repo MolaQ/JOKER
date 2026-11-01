@@ -51,6 +51,7 @@ class TournamentPage extends Component
         $standings = $bracket?->standings() ?? collect();
 
         $tabs = collect([
+            'about' => [__('O turnieju'), filled(strip_tags((string) $this->tournament->about))],
             'teams' => [__('Drużyny'), $current?->participants->isNotEmpty()],
             'groups' => [__('Grupy'), $current?->groups->isNotEmpty()],
             'matches' => [__('Mecze'), $matches->isNotEmpty()],
@@ -60,7 +61,11 @@ class TournamentPage extends Component
             'info' => [__('Informator'), filled($this->tournament->guest_info)],
         ])->filter(fn (array $entry) => $entry[1])->map(fn (array $entry) => $entry[0]);
 
-        $currentTab = $tabs->has($this->tab) ? $this->tab : ($tabs->keys()->first() ?? 'teams');
+        // „O turnieju” otwiera się domyślnie przed turniejem; od pierwszego dnia pierwsza jest zakładka z grą.
+        $defaultTab = $this->tournament->start_date?->isFuture() === false && $tabs->count() > 1
+            ? $tabs->keys()->reject(fn ($key) => $key === 'about')->first()
+            : $tabs->keys()->first();
+        $currentTab = $tabs->has($this->tab) ? $this->tab : ($defaultTab ?? 'teams');
 
         return view('livewire.tournament-page', [
             'categories' => $categories,

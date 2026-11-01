@@ -281,7 +281,7 @@
         @endif
 
         {{-- ZASADY I INFORMATOR --}}
-        @foreach(['rules' => $tournament->rules, 'info' => $tournament->guest_info] as $key => $content)
+        @foreach(['about' => $tournament->about, 'rules' => $tournament->rules, 'info' => $tournament->guest_info] as $key => $content)
             @if($currentTab === $key)
                 <div class="card mx-auto max-w-3xl p-8">
                     <h2 class="heading-md">{{ $tabs[$key] }}</h2>

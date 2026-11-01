@@ -1,61 +1,45 @@
 <div>
-    <!-- Toolbar -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border-b border-gray-200">
-        <input
-            type="text"
-            wire:model.live.debounce.300ms="search"
-            placeholder="Szukaj sponsora..."
-            class="w-full sm:w-64 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"
-        >
-        <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
-            + Dodaj sponsora
-        </button>
+    <div class="flex flex-col gap-3 border-b border-gray-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-sm text-gray-600">Kategorie i logotypy bloku „Wspierają nas” nad stopką strony, w tej kolejności. Gdzie blok się pokazuje, ustawisz w: Wygląd i ustawienia → Kontakt i stopka.</p>
+        <button type="button" wire:click="openCreateModal" class="inline-flex shrink-0 items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">+ Dodaj logo</button>
     </div>
 
-    <table class="min-w-full divide-y divide-gray-300">
-        <thead class="bg-gray-50">
-            <tr>
-                <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Logo</th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="nazwa" :current="$sortField" :direction="$sortDirection">Nazwa</x-sort-button></th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="poziom" :current="$sortField" :direction="$sortDirection">Poziom</x-sort-button></th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="status" :current="$sortField" :direction="$sortDirection">Status</x-sort-button></th>
-                <th class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Akcje</span></th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200 bg-white">
-            @forelse($sponsors as $sponsor)
-                <tr wire:key="sponsor-{{ $sponsor->id }}">
-                    <td class="py-4 pl-4 pr-3 sm:pl-6">
-                        <img src="{{ \App\Support\Media::url($sponsor->logo_path) }}" onerror="this.style.visibility='hidden'" class="h-10 w-10 object-contain" alt="{{ $sponsor->name }}">
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
-                        {{ $sponsor->name }}
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ \App\Models\Sponsor::TIERS[$sponsor->tier]['admin'] ?? $sponsor->tier }}
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm">
-                        @if($sponsor->is_active)
-                            <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Aktywny</span>
-                        @else
-                            <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">Nieaktywny</span>
-                        @endif
-                    </td>
-                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                        <button type="button" wire:click="openEditModal({{ $sponsor->id }})" class="text-sky-700 hover:text-sky-900 mr-4">Edytuj</button>
-                        <button type="button" wire:click="delete({{ $sponsor->id }})" wire:confirm="Czy na pewno chcesz usunąć sponsora {{ $sponsor->name }}?" class="text-red-600 hover:text-red-900">Usuń</button>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="5" class="px-3 py-4 text-sm text-gray-500 text-center">Brak sponsorów do wyświetlenia</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+    <div class="space-y-6 p-4">
+        @foreach($groups as $group)
+            <section wire:key="group-{{ $group->id }}" class="rounded-xl ring-1 ring-gray-200">
+                <div class="flex flex-wrap items-center gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2">
+                    <div class="flex flex-col">
+                        <button type="button" wire:click="moveGroup({{ $group->id }}, -1)" @disabled($loop->first) class="px-1 text-xs text-gray-400 hover:text-gray-900 disabled:opacity-25" aria-label="Kategoria wyżej">▲</button>
+                        <button type="button" wire:click="moveGroup({{ $group->id }}, 1)" @disabled($loop->last) class="px-1 text-xs text-gray-400 hover:text-gray-900 disabled:opacity-25" aria-label="Kategoria niżej">▼</button>
+                    </div>
+                    <input type="text" wire:model="groupNames.{{ $group->id }}" wire:blur="renameGroup({{ $group->id }})" class="min-w-0 flex-1 border-transparent bg-transparent text-sm font-semibold uppercase tracking-wide focus:border-gray-300 focus:bg-white" aria-label="Nazwa kategorii">
+                    <select wire:change="setGroupSize({{ $group->id }}, $event.target.value)" class="text-xs" aria-label="Wielkość logotypów">
+                        @foreach(\App\Models\SponsorGroup::SIZES as $size => $sizeLabel)
+                            <option value="{{ $size }}" @selected($group->size === $size)>logotypy {{ $sizeLabel }}</option>
+                        @endforeach
+                    </select>
+                    <button type="button" wire:click="openCreateModal({{ $group->id }})" class="admin-action">+ Logo</button>
+                    <button type="button" wire:click="deleteGroup({{ $group->id }})" wire:confirm="Usunąć kategorię „{{ $group->name }}”? Logotypy zostaną, trafią do „Bez kategorii”." class="admin-action admin-action-danger">Usuń kategorię</button>
+                </div>
+                @include('livewire.admin.partials.sponsor-rows', ['sponsors' => $group->sponsors])
+            </section>
+        @endforeach
 
-    <div class="mt-4 px-4 pb-4">
-        {{ $sponsors->links() }}
+        <form wire:submit="addGroup" class="flex flex-wrap items-center gap-2">
+            <input type="text" wire:model="newGroup" placeholder="Nowa kategoria, np. Partnerzy medialni" class="min-w-0 flex-1 text-sm">
+            <button type="submit" class="admin-action">+ Dodaj kategorię</button>
+            @error('newGroup') <p class="w-full text-sm text-red-600">{{ $message }}</p> @enderror
+        </form>
+
+        @if($loose->isNotEmpty())
+            <section class="rounded-xl ring-1 ring-gray-200">
+                <div class="border-b border-gray-200 bg-gray-50 px-4 py-2">
+                    <p class="text-sm font-semibold tracking-wide text-gray-700 uppercase">Bez kategorii</p>
+                    <p class="text-xs text-gray-500">Nie ma ich w bloku „Wspierają nas”. Tu są np. partnerzy tylko turniejów.</p>
+                </div>
+                @include('livewire.admin.partials.sponsor-rows', ['sponsors' => $loose])
+            </section>
+        @endif
     </div>
 
     <!-- Modal -->
@@ -68,7 +52,7 @@
                     <form wire:submit.prevent="save">
                         <div class="px-6 py-4 border-b border-gray-200">
                             <h3 class="text-lg font-semibold text-gray-900">
-                                {{ $editingId ? 'Edytuj sponsora' : 'Dodaj sponsora' }}
+                                {{ $editingId ? 'Edytuj logo' : 'Dodaj logo' }}
                             </h3>
                         </div>
 
@@ -85,30 +69,37 @@
                             </div>
 
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">Strona internetowa</label>
-                                <input type="url" wire:model="website_url" placeholder="https://..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                <label class="block text-sm font-medium text-gray-700">Link po kliknięciu w logo</label>
+                                <input type="text" wire:model="website_url" placeholder="https://… albo /page/klub-pro-2026" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                <p class="mt-1 text-xs text-gray-500">Strona partnera albo podstrona naszej strony (zaczyna się od /). Puste = logo bez linku.</p>
                                 @error('website_url') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid gap-4 sm:grid-cols-2">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700">Poziom sponsoringu</label>
-                                    <select wire:model="tier" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
-                                        @foreach(\App\Models\Sponsor::TIERS as $value => $tierInfo)
-                                            <option value="{{ $value }}">{{ $tierInfo['admin'] }} ({{ mb_strtolower($tierInfo['label']) }} na stronie)</option>
+                                    <label class="block text-sm font-medium text-gray-700">Kategoria</label>
+                                    <select wire:model="sponsor_group_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                        <option value="">— bez kategorii (np. tylko turnieje) —</option>
+                                        @foreach(\App\Models\SponsorGroup::orderBy('display_order')->get() as $groupOption)
+                                            <option value="{{ $groupOption->id }}">{{ $groupOption->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700">Kolejność</label>
-                                    <input type="number" wire:model="display_order" min="0" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                    <label class="block text-sm font-medium text-gray-700">Tło kafelka</label>
+                                    <div class="mt-1 flex items-center gap-2">
+                                        <input type="color" wire:model.live="tile_color" value="{{ $tile_color ?: '#ffffff' }}" class="h-9 w-12 cursor-pointer rounded border-gray-300 p-0.5">
+                                        <input type="text" wire:model.live.debounce.500ms="tile_color" placeholder="białe" class="block w-full rounded-md border-gray-300 font-mono text-sm">
+                                    </div>
+                                    <p class="mt-1 text-xs text-gray-500">Dla białego logo (np. KLUB PRO na granacie #1e2a8a).</p>
+                                    @error('tile_color') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 </div>
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Logo</label>
                                 @if($existingLogo && !$logo)
-                                    <img src="{{ \App\Support\Media::url($existingLogo) }}" onerror="this.style.visibility='hidden'" class="h-16 w-16 object-contain rounded mb-2" alt="Logo">
+                                    <span class="mb-2 inline-flex h-16 w-28 items-center justify-center rounded p-1 ring-1 ring-gray-200" style="{{ $tile_color ? 'background: '.$tile_color : '' }}"><img src="{{ \App\Support\Media::url($existingLogo) }}" onerror="this.style.visibility='hidden'" class="max-h-full max-w-full object-contain" alt="Logo"></span>
                                 @endif
                                 @if($logo)
                                     <img src="{{ $logo->temporaryUrl() }}" class="h-16 w-16 object-contain rounded mb-2" alt="Podgląd">
@@ -119,7 +110,7 @@
 
                             <div class="flex items-center">
                                 <input type="checkbox" wire:model="is_active" id="sponsor_is_active" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500">
-                                <label for="sponsor_is_active" class="ml-2 text-sm text-gray-700">Sponsor aktywny</label>
+                                <label for="sponsor_is_active" class="ml-2 text-sm text-gray-700">Widoczny na stronie</label>
                             </div>
                         </div>
 

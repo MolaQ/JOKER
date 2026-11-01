@@ -147,7 +147,7 @@
         @elseif($slide['type'] === 'sponsors')
             <div class="tv-in grid h-full grid-cols-4 content-center gap-10">
                 @foreach($slide['sponsors'] as $sponsor)
-                    <div class="flex h-56 items-center justify-center rounded-3xl bg-white p-8">
+                    <div class="flex h-56 items-center justify-center rounded-3xl bg-white p-8" @if($sponsor->tile_color) style="background: {{ $sponsor->tile_color }}" @endif>
                         <img src="{{ \App\Support\Media::url($sponsor->logo_path) }}" alt="{{ $sponsor->name }}" class="max-h-full max-w-full object-contain">
                     </div>
                 @endforeach
@@ -170,6 +170,27 @@
                     @endforeach
                 </div>
             </div>
+        </div>
+    @endif
+
+    {{-- Pasek sponsorów: grupy zmieniają się co 8 sekund; każda plansza zaczyna od kolejnej grupy --}}
+    @if($sponsorBar->isNotEmpty())
+        <div id="tv-sponsors" data-start="{{ $index % $sponsorBar->count() }}" class="relative h-36 shrink-0 bg-white text-zinc-900">
+            @foreach($sponsorBar as $barIndex => $bar)
+                <div data-sponsor-slide class="absolute inset-0 flex items-center gap-10 px-16 opacity-0 transition-opacity duration-700">
+                    <div class="w-72 shrink-0">
+                        <p class="text-base font-semibold tracking-[0.3em] text-zinc-400 uppercase">{{ __($site['sponsors_block_title'] ?: 'Wspierają nas') }}</p>
+                        <p class="mt-1 font-display text-3xl leading-tight font-bold uppercase">{{ $bar['title'] }}</p>
+                    </div>
+                    <div class="grid flex-1 items-center gap-8" style="grid-template-columns: repeat({{ max(3, $bar['sponsors']->count()) }}, minmax(0, 1fr))">
+                        @foreach($bar['sponsors'] as $sponsor)
+                            <div class="flex h-28 items-center justify-center rounded-2xl p-2" @if($sponsor->tile_color) style="background: {{ $sponsor->tile_color }}" @endif>
+                                <img src="{{ \App\Support\Media::url($sponsor->logo_path) }}" alt="{{ $sponsor->name }}" class="max-h-full max-w-full object-contain">
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endforeach
         </div>
     @endif
 
@@ -213,6 +234,17 @@
                 location.replace(next);
             }
         }, 250);
+
+        const bar = document.getElementById('tv-sponsors');
+        if (bar) {
+            const items = [...bar.querySelectorAll('[data-sponsor-slide]')];
+            let current = Number(bar.dataset.start) || 0;
+            const showSponsors = () => items.forEach((item, i) => item.classList.toggle('opacity-0', i !== current));
+            showSponsors();
+            if (items.length > 1) {
+                setInterval(() => { current = (current + 1) % items.length; showSponsors(); }, 8000);
+            }
+        }
 
         const ticker = document.getElementById('tv-ticker');
         if (ticker && ticker.scrollWidth > ticker.parentElement.clientWidth) {

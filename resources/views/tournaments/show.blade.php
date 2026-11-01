@@ -45,3 +45,7 @@
     </section>
 @endif
 @endsection
+
+@section('before_sponsors')
+    <x-tournament-partners :tournament="$tournament" />
+@endsection

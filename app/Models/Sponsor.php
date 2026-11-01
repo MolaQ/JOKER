@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\SponsorFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Sponsor extends Model
 {
@@ -32,6 +33,8 @@ class Sponsor extends Model
         'tier',
         'display_order',
         'is_active',
+        'sponsor_group_id',
+        'tile_color',
     ];
 
     protected function casts(): array
@@ -49,6 +52,24 @@ class Sponsor extends Model
     public function scopeByTier($query, string $tier)
     {
         return $query->where('tier', $tier);
+    }
+
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(SponsorGroup::class, 'sponsor_group_id');
+    }
+
+    /**
+     * Link logotypu: strona partnera albo podstrona klubu (np. /page/klub-pro-2026).
+     */
+    public function href(): ?string
+    {
+        return filled($this->website_url) ? $this->website_url : null;
+    }
+
+    public function isExternal(): bool
+    {
+        return (bool) preg_match('#^https?://#i', (string) $this->website_url);
     }
 
     public function scopeOrdered($query)

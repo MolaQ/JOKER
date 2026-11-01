@@ -81,3 +81,7 @@
     <a href="{{ route('tournaments.show', $tournament) }}" class="btn-dark">← {{ __('Wróć do turnieju') }}</a>
 </div>
 @endsection
+
+@section('before_sponsors')
+    <x-tournament-partners :tournament="$tournament" />
+@endsection

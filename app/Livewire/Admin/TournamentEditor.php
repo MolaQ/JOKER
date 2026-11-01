@@ -49,6 +49,9 @@ class TournamentEditor extends Component
 
     public string $guest_info = '';
 
+    /** „O turnieju”: tekst na stronę turnieju (pierwsza zakładka). */
+    public string $about = '';
+
     public $image = null;
 
     public string $newCategory = '';
@@ -141,6 +144,7 @@ class TournamentEditor extends Component
         $this->series = (string) $tournament->series;
         $this->rules = (string) $tournament->rules;
         $this->guest_info = (string) $tournament->guest_info;
+        $this->about = (string) $tournament->about;
         $this->scoring = self::scoringState(TournamentTable::scoring(tournament: $tournament));
         $this->categoryId ??= $tournament->categories()->value('id');
         $this->resetMatchForm();
@@ -152,7 +156,7 @@ class TournamentEditor extends Component
      */
     public function updated(string $property): void
     {
-        if (in_array($property, ['has_page', 'series', 'rules', 'guest_info', 'image'], true)) {
+        if (in_array($property, ['has_page', 'series', 'rules', 'guest_info', 'about', 'image'], true)) {
             $this->saveInfo();
         }
     }
@@ -169,6 +173,7 @@ class TournamentEditor extends Component
             'series' => 'nullable|string|max:60',
             'rules' => 'nullable|string',
             'guest_info' => 'nullable|string',
+            'about' => 'nullable|string',
             'image' => 'nullable|image|max:6144',
         ]);
 
@@ -177,6 +182,7 @@ class TournamentEditor extends Component
             'series' => trim($this->series) ?: null,
             'rules' => $this->rules ?: null,
             'guest_info' => $this->guest_info ?: null,
+            'about' => filled(strip_tags($this->about)) ? $this->about : null,
         ] + ($this->image ? ['image_path' => $this->image->store('tournaments', 'public')] : []));
 
         $this->image = null;
