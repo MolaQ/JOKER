@@ -34,6 +34,9 @@ class ThumbnailTemplate extends Model
         'same' => ['Jak reszta grafiki', null],
     ];
 
+    /** Wygląd napisu VS: komiksowy wybuch, sam napis albo własny obrazek (PNG z przezroczystym tłem). */
+    public const VS_STYLES = ['burst' => 'Wybuch: litery w kolorach drużyn', 'text' => 'Sam napis', 'image' => 'Własny obrazek'];
+
     /** Miejsce napisu o transmisji w zapowiedzi. */
     public const LIVE_POSITIONS = ['bl' => 'Lewy dolny róg', 'br' => 'Prawy dolny róg'];
 
@@ -53,12 +56,17 @@ class ThumbnailTemplate extends Model
         'summary_title' => 'Wynik meczu',
         'live_text' => 'Transmisja na żywo',
         'accent' => '#60a5fa',
+        'title_color' => '#ffffff',
         'bar_from' => '#0b1f4d',
         'bar_to' => '#1d4ed8',
         'panel' => '#080a10',
         'background' => null,
         'tint' => true,
         'tint_gradient' => false,
+        'vs_style' => 'burst',
+        'vs_image' => null,
+        'vs_size' => 100,
+        'vs_offset' => 0,
         'vs_font' => 'brush',
         'vs_color' => '#ffffff',
         'live_position' => 'bl',

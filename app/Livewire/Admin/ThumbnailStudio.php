@@ -6,6 +6,8 @@ use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Competition;
 use App\Models\Game;
 use App\Models\RivalTeam;
+use App\Models\Season;
+use App\Models\Team;
 use App\Models\ThumbnailTemplate;
 use App\Models\Tournament;
 use App\Models\TournamentMatch;
@@ -46,6 +48,17 @@ class ThumbnailStudio extends Component
     /** Wybrany mecz: „game:12”, „match:5” albo pusty (wpisywanie ręczne). */
     public string $pick = '';
 
+    /** Filtry listy meczów, jak na stronie meczów: sezon, drużyna, rozgrywki, okres, szukanie rywala. */
+    public string $fSeason = '';
+
+    public string $fTeam = '';
+
+    public string $fCompetition = '';
+
+    public string $fPeriod = 'all';
+
+    public string $fSearch = '';
+
     /** Wynik wpisywany w polach: sety wygrane przez gospodarzy i gości. */
     public string $scoreHome = '';
 
@@ -57,6 +70,8 @@ class ThumbnailStudio extends Component
     public $background = null;
 
     public $cornerImage = null;
+
+    public $vsImage = null;
 
     public string $cornerPosition = 'tl';
 
@@ -73,6 +88,7 @@ class ThumbnailStudio extends Component
     {
         $this->m = ThumbnailData::blank();
         $this->fillResultInputs();
+        $this->fSeason = (string) (Season::current()->value('id') ?? '');
         $this->loadTemplate(ThumbnailTemplate::query()->orderBy('name')->value('id'));
     }
 
@@ -209,6 +225,20 @@ class ThumbnailStudio extends Component
         $this->background = null;
     }
 
+    public function updatedVsImage(): void
+    {
+        $this->validate(['vsImage' => 'image|max:4096']);
+        $this->s['vs_image'] = $this->vsImage->store('miniatury/vs', 'public');
+        $this->s['vs_style'] = 'image';
+        $this->vsImage = null;
+    }
+
+    /** Przesuwa napis VS w górę (ujemnie) albo w dół o podaną liczbę pikseli grafiki 1920×1080. */
+    public function nudgeVs(int $step): void
+    {
+        $this->s['vs_offset'] = max(-400, min(400, (int) $this->s['vs_offset'] + $step));
+    }
+
     public function updatedCornerImage(): void
     {
         $this->validate(['cornerImage' => 'image|max:4096', 'cornerPosition' => Rule::in(array_keys(ThumbnailTemplate::POSITIONS))]);
@@ -282,12 +312,17 @@ class ThumbnailStudio extends Component
             's.summary_title' => 'nullable|string|max:60',
             's.live_text' => 'nullable|string|max:60',
             's.accent' => $color,
+            's.title_color' => $color,
             's.bar_from' => $color,
             's.bar_to' => $color,
             's.panel' => $color,
             's.images.*.size' => 'integer|min:60|max:400',
             's.vs_font' => ['required', Rule::in(array_keys(ThumbnailTemplate::VS_FONTS))],
             's.vs_color' => $color,
+            's.vs_style' => ['required', Rule::in(array_keys(ThumbnailTemplate::VS_STYLES))],
+            's.vs_size' => 'required|integer|min:30|max:250',
+            's.vs_offset' => 'required|integer|min:-400|max:400',
+            's.vs_image' => 'nullable|string|max:255',
             's.live_position' => ['required', Rule::in(array_keys(ThumbnailTemplate::LIVE_POSITIONS))],
         ], [], [
             'templateName' => __('nazwa szablonu'),
@@ -301,23 +336,46 @@ class ThumbnailStudio extends Component
      */
     private function choices(): array
     {
-        // Najpierw najbliższe (od dziś w przyszłość), potem rozegrane od najnowszego.
-        $games = Game::query()->with(['team', 'opponentTeam', 'competition'])
-            ->whereBetween('game_date', [now()->subDays(120), now()->addDays(120)])
-            ->limit(200)->get();
         $today = now()->startOfDay();
+        $search = trim($this->fSearch);
+        $tournamentsOnly = $this->fCompetition === 'turnieje';
+
+        $games = $tournamentsOnly ? collect() : Game::query()->with(['team', 'opponentTeam', 'competition'])
+            ->when($this->fSeason !== '', fn ($query) => $query->where('season_id', (int) $this->fSeason))
+            ->when($this->fTeam !== '', fn ($query) => $query->where('team_id', (int) $this->fTeam))
+            ->when($this->fCompetition === 'sparingi', fn ($query) => $query->whereNull('competition_id'))
+            ->when(ctype_digit($this->fCompetition), fn ($query) => $query->where('competition_id', (int) $this->fCompetition))
+            ->when($this->fPeriod === 'upcoming', fn ($query) => $query->where('game_date', '>=', $today))
+            ->when($this->fPeriod === 'results', fn ($query) => $query->where('game_date', '<', now()))
+            ->when($search !== '', fn ($query) => $query->where(fn ($inner) => $inner->where('opponent', 'like', "%{$search}%")
+                ->orWhereHas('opponentTeam', fn ($rival) => $rival->where('full_name', 'like', "%{$search}%"))))
+            ->orderByDesc('game_date')->limit(300)->get();
+
+        // Najpierw najbliższe (od dziś w przyszłość), potem rozegrane od najnowszego.
         $games = $games->filter(fn (Game $game) => $game->game_date >= $today)->sortBy('game_date')
             ->concat($games->filter(fn (Game $game) => $game->game_date < $today)->sortByDesc('game_date'))
             ->values();
 
-        $matches = TournamentMatch::query()->with(['category.tournament', 'home.competitor', 'away.competitor'])
-            ->whereHas('category.tournament', fn ($tournament) => $tournament->where('start_date', '>=', now()->subDays(120)->toDateString()))
+        $showTournaments = $this->fCompetition === '' || $tournamentsOnly;
+        $matches = ! $showTournaments ? collect() : TournamentMatch::query()->with(['category.tournament', 'home.competitor', 'away.competitor'])
+            ->whereHas('category.tournament', fn ($tournament) => $tournament->when($this->fSeason !== '', fn ($query) => $query->where(fn ($inner) => $inner->where('season_id', (int) $this->fSeason)->orWhereNull('season_id'))))
+            ->when($this->fPeriod === 'upcoming', fn ($query) => $query->where(fn ($inner) => $inner->whereNull('starts_at')->orWhere('starts_at', '>=', $today)))
+            ->when($this->fPeriod === 'results', fn ($query) => $query->whereNotNull('home_sets'))
             ->get()
-            ->sortBy(fn (TournamentMatch $match) => [$match->starts_at && $match->starts_at < now()->startOfDay() ? 1 : 0, $match->starts_at && $match->starts_at < now()->startOfDay() ? -$match->starts_at->getTimestamp() : (int) $match->starts_at?->getTimestamp()])
-            ->filter(fn (TournamentMatch $match) => $match->home?->isOwnTeam() || $match->away?->isOwnTeam())
+            ->filter(fn (TournamentMatch $match) => collect([$match->home, $match->away])->contains(fn ($side) => $side?->isOwnTeam()
+                && ($this->fTeam === '' || ($side->competitor_type !== 'rival_team' && (int) $side->competitor_id === (int) $this->fTeam))))
+            ->when($search !== '', fn ($all) => $all->filter(fn (TournamentMatch $match) => str_contains(mb_strtolower($match->homeName().' '.$match->awayName().' '.$match->category->tournament->name), mb_strtolower($search))))
+            ->sortBy(fn (TournamentMatch $match) => [$match->starts_at && $match->starts_at < $today ? 1 : 0, $match->starts_at && $match->starts_at < $today ? -$match->starts_at->getTimestamp() : (int) $match->starts_at?->getTimestamp()])
             ->groupBy(fn (TournamentMatch $match) => $match->category->tournament->name);
 
         return compact('games', 'matches');
+    }
+
+    public function resetFilters(): void
+    {
+        $this->fSeason = (string) (Season::current()->value('id') ?? '');
+        $this->fTeam = $this->fCompetition = $this->fSearch = '';
+        $this->fPeriod = 'all';
     }
 
     public function render(): View
@@ -329,6 +387,8 @@ class ThumbnailStudio extends Component
             'templates' => ThumbnailTemplate::query()->with('user:id,name')->orderBy('name')->get(),
             'canChange' => $template?->canBeChangedBy($user) ?? true,
             'logos' => ClubLogos::all()->map(fn (array $logo) => ['name' => $logo['name'], 'url' => ThumbnailData::src($logo['url'])])->values(),
+            'seasons' => Season::query()->orderByDesc('start_date')->get(['id', 'name']),
+            'teams' => Team::query()->orderBy('display_order')->get(['id', 'name']),
             'sponsors' => ThumbnailData::sponsorLogos($this->m['tournament_id'] ?? null),
             'competitions' => Competition::query()->orderBy('name')->get(['id', 'name']),
             'tournaments' => Tournament::query()->orderByDesc('start_date')->get(['id', 'name', 'edition']),

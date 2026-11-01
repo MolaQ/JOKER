@@ -10,21 +10,48 @@
         {{-- MECZ --}}
         <section class="{{ $card }} space-y-3">
             <h2 class="text-sm font-bold tracking-wide text-gray-900 uppercase">1. Mecz</h2>
+            {{-- Filtry listy jak na stronie meczów --}}
+            <div class="grid grid-cols-2 gap-2 rounded-lg bg-gray-50 p-2">
+                <select wire:model.live="fSeason" class="{{ $input }}" aria-label="Sezon">
+                    <option value="">Wszystkie sezony</option>
+                    @foreach($seasons as $season)<option value="{{ $season->id }}">{{ $season->name }}</option>@endforeach
+                </select>
+                <select wire:model.live="fTeam" class="{{ $input }}" aria-label="Drużyna">
+                    <option value="">Wszystkie drużyny</option>
+                    @foreach($teams as $team)<option value="{{ $team->id }}">{{ $team->name }}</option>@endforeach
+                </select>
+                <select wire:model.live="fCompetition" class="{{ $input }}" aria-label="Rozgrywki">
+                    <option value="">Wszystkie rozgrywki</option>
+                    @foreach($competitions as $competition)<option value="{{ $competition->id }}">{{ $competition->name }}</option>@endforeach
+                    <option value="turnieje">Turnieje</option>
+                    <option value="sparingi">Sparingi</option>
+                </select>
+                <div class="flex rounded-md bg-white p-0.5 text-xs font-semibold ring-1 ring-gray-300" role="group" aria-label="Okres">
+                    @foreach(['all' => 'Wszystkie', 'upcoming' => 'Nadchodzące', 'results' => 'Rozegrane'] as $value => $periodLabel)
+                        <button type="button" wire:click="$set('fPeriod', '{{ $value }}')" @class(['flex-1 rounded px-1 py-1.5', 'bg-sky-600 text-white' => $fPeriod === $value, 'text-gray-600 hover:bg-gray-100' => $fPeriod !== $value])>{{ $periodLabel }}</button>
+                    @endforeach
+                </div>
+                <input type="search" wire:model.live.debounce.400ms="fSearch" placeholder="Szukaj rywala…" class="{{ $input }} col-span-2">
+                <p class="col-span-2 flex justify-between text-[11px] text-gray-500">
+                    <span>{{ $games->count() + $matches->flatten()->count() }} meczów na liście</span>
+                    <button type="button" wire:click="resetFilters" class="hover:text-sky-700">Wyczyść filtry</button>
+                </p>
+            </div>
             <div>
                 <label class="{{ $label }}" for="ytt-pick">Z bazy meczów albo ręcznie</label>
                 <select id="ytt-pick" wire:model.live="pick" class="{{ $input }}">
                     <option value="">Wpiszę ręcznie</option>
                     @if($games->isNotEmpty())
-                        <optgroup label="Mecze klubu (najbliższe, potem rozegrane)">
+                        <optgroup label="Mecze klubu (najbliższe, potem rozegrane; z wynikiem ✓)">
                             @foreach($games as $game)
-                                <option value="game:{{ $game->id }}">{{ $game->game_date?->format('d.m') }} · {{ implode(' – ', $game->sidesNames()) }}@if($game->competition) · {{ $game->competition->name }}@endif</option>
+                                <option value="game:{{ $game->id }}">@if($game->isFinished() && $game->home_score !== null)✓ {{ $game->home_score }}:{{ $game->away_score }} · @endif{{ $game->game_date?->format('d.m.y') }} · {{ implode(' – ', $game->sidesNames()) }}@if($game->competition) · {{ $game->competition->name }}@endif</option>
                             @endforeach
                         </optgroup>
                     @endif
                     @foreach($matches as $tournamentName => $tournamentMatches)
                         <optgroup label="{{ $tournamentName }}">
                             @foreach($tournamentMatches as $tournamentMatch)
-                                <option value="match:{{ $tournamentMatch->id }}">{{ $tournamentMatch->starts_at?->format('d.m H:i') }} · {{ $tournamentMatch->category->name }} #{{ $tournamentMatch->number }} · {{ $tournamentMatch->homeName() }} – {{ $tournamentMatch->awayName() }}</option>
+                                <option value="match:{{ $tournamentMatch->id }}">@if($tournamentMatch->home_sets !== null)✓ {{ $tournamentMatch->home_sets }}:{{ $tournamentMatch->away_sets }} · @endif{{ $tournamentMatch->starts_at?->format('d.m H:i') }} · {{ $tournamentMatch->category->name }} #{{ $tournamentMatch->number }} · {{ $tournamentMatch->homeName() }} – {{ $tournamentMatch->awayName() }}</option>
                             @endforeach
                         </optgroup>
                     @endforeach
@@ -157,8 +184,18 @@
                 </div>
                 <div class="col-span-2"><label class="{{ $label }}">Nazwa rozgrywek na grafice</label><input type="text" wire:model.live.debounce.400ms="s.label" class="{{ $input }}" placeholder="np. Wielkopolska Liga Juniorów"><p class="mt-1 text-[11px] text-gray-500">W układzie z belkami znak | łamie linię.</p></div>
                 @if($s['layout'] === 'modern')
-                    <div><label class="{{ $label }}">Tytuł zapowiedzi</label><input type="text" wire:model.live.debounce.400ms="s.preview_title" class="{{ $input }}"></div>
-                    <div><label class="{{ $label }}">Tytuł podsumowania</label><input type="text" wire:model.live.debounce.400ms="s.summary_title" class="{{ $input }}"></div>
+                    <div><label class="{{ $label }}">Tytuł zapowiedzi</label><input type="text" wire:model.live.debounce.400ms="s.preview_title" class="{{ $input }}" placeholder="np. Zapowiedź meczu"></div>
+                    <div><label class="{{ $label }}">Tytuł podsumowania</label><input type="text" wire:model.live.debounce.400ms="s.summary_title" class="{{ $input }}" placeholder="np. Wynik meczu"></div>
+                    <div>
+                        <label class="{{ $label }}">Kolor tytułu (1. słowo)</label>
+                        <input type="color" wire:model.live.debounce.300ms="s.title_color" class="h-9 w-full cursor-pointer rounded-md border border-gray-300 p-0.5">
+                    </div>
+                    <div>
+                        <label class="{{ $label }}">Kolor tytułu (dalsze słowa)</label>
+                        <input type="color" wire:model.live.debounce.300ms="s.accent" class="h-9 w-full cursor-pointer rounded-md border border-gray-300 p-0.5">
+                    </div>
+                @else
+                    <p class="col-span-2 text-[11px] text-gray-500">Tytuły „Zapowiedź meczu” / „Wynik meczu” i ich kolory są w układzie nowoczesnym.</p>
                 @endif
                 <div><label class="{{ $label }}">Napis o transmisji (puste = brak)</label><input type="text" wire:model.live.debounce.400ms="s.live_text" class="{{ $input }}"></div>
                 <div>
@@ -176,6 +213,26 @@
                 <div>
                     <label class="{{ $label }}">Kolor napisu VS</label>
                     <input type="color" wire:model.live.debounce.300ms="s.vs_color" class="h-9 w-full cursor-pointer rounded-md border border-gray-300 p-0.5">
+                </div>
+                <div>
+                    <label class="{{ $label }}">Grafika VS</label>
+                    <select wire:model.live="s.vs_style" class="{{ $input }}">
+                        @foreach(\App\Models\ThumbnailTemplate::VS_STYLES as $value => $styleLabel)<option value="{{ $value }}">{{ $styleLabel }}</option>@endforeach
+                    </select>
+                </div>
+                <div class="flex items-end gap-2">
+                    @if($s['vs_image'])<img src="{{ \App\Support\ThumbnailData::src($s['vs_image']) }}" alt="" class="h-9 w-14 rounded bg-gray-800 object-contain">@endif
+                    <label class="cursor-pointer rounded-md px-2 py-2 text-xs font-semibold text-sky-700 ring-1 ring-sky-200 hover:bg-sky-50">{{ $s['vs_image'] ? 'Zmień obrazek VS' : 'Wgraj obrazek VS (PNG)' }}<input type="file" accept="image/*" wire:model="vsImage" class="sr-only"></label>
+                </div>
+                @error('vsImage') <p class="col-span-2 text-xs text-red-600">{{ $message }}</p> @enderror
+                <div class="col-span-2">
+                    <label class="{{ $label }}">Wielkość VS: {{ (int) $s['vs_size'] }}%</label>
+                    <div class="flex items-center gap-2">
+                        <input type="range" min="30" max="250" step="5" wire:model.live.debounce.150ms="s.vs_size" class="w-full">
+                        <button type="button" wire:click="nudgeVs(-20)" title="W górę" class="rounded-md px-2.5 py-1 text-sm font-bold text-gray-700 ring-1 ring-gray-300 hover:bg-gray-50">▲</button>
+                        <button type="button" wire:click="nudgeVs(20)" title="W dół" class="rounded-md px-2.5 py-1 text-sm font-bold text-gray-700 ring-1 ring-gray-300 hover:bg-gray-50">▼</button>
+                        <button type="button" wire:click="$set('s.vs_offset', 0)" class="whitespace-nowrap text-xs text-gray-500 hover:text-sky-700">Środek ({{ (int) $s['vs_offset'] }} px)</button>
+                    </div>
                 </div>
             </div>
 

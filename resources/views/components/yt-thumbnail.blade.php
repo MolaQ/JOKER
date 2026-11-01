@@ -32,15 +32,18 @@
         '--vsc:'.$color($s['vs_color'], '#ffffff'),
         '--vsfont:'.ThumbnailTemplate::vsFontFamily($s['vs_font'], $s['font']),
         '--hl:'.$color($s['accent'], '#60a5fa'),
+        '--tc:'.$color($s['title_color'] ?? null, '#ffffff'),
         '--bar1:'.$color($s['bar_from'], '#0b1f4d'),
         '--bar2:'.$color($s['bar_to'], '#1d4ed8'),
         '--panel:'.$color($s['panel'], '#080a10'),
         'font-family:'.ThumbnailTemplate::fontFamily($s['font']),
+        '--vss:'.max(30, min(250, (int) $s['vs_size'])) / 100,
+        '--vsy:'.max(-400, min(400, (int) $s['vs_offset'])).'px',
     ]);
     $background = ThumbnailData::src($s['background'] ?: '/img/miniatury/hala.jpg');
     $initials = fn (array $side) => mb_strtoupper(mb_substr($side['name'] ?? '', 0, 1).mb_substr($side['sub'] ?? '', 0, 1)) ?: '?';
 @endphp
-<div {{ $attributes->merge(['class' => 'ytt '.($bars ? 'ytt-bars' : 'ytt-modern').($summary ? ' ytt-summary' : '').($sponsors ? ' ytt-has-sponsors' : '')]) }} style="{{ $style }}">
+<div {{ $attributes->merge(['class' => 'ytt '.($bars ? 'ytt-bars' : 'ytt-modern').($summary ? ' ytt-summary' : '').($sponsors ? ' ytt-has-sponsors' : '').($s['show_names'] ? '' : ' ytt-no-names')]) }} style="{{ $style }}">
     <div class="ytt-bg" style="background-image: url('{{ $background }}')"></div>
     @if($s['tint'])
         <div class="ytt-half ytt-half-l"></div>
@@ -95,15 +98,27 @@
                 <div class="ytt-score ytt-score-empty">?<i>:</i>?</div>
             @endif
             @if($sets)
+                {{-- Sety: wygrana strona pogrubiona, kartka w kolorze zwycięzcy seta --}}
                 <div class="ytt-sets">
-                    @foreach($sets as [$a, $b])
-                        <span @class(['ytt-set-won' => $homeWon !== null && ($a > $b) === $homeWon])>{{ $a }}:{{ $b }}</span>
+                    @foreach($sets as $index => [$a, $b])
+                        <div @class(['ytt-set', 'ytt-set-home' => $a > $b, 'ytt-set-away' => $b > $a])>
+                            <small>{{ $index + 1 }}. set</small>
+                            <span><b @class(['ytt-set-win' => $a > $b])>{{ $a }}</b><i>:</i><b @class(['ytt-set-win' => $b > $a])>{{ $b }}</b></span>
+                        </div>
                     @endforeach
                 </div>
             @endif
             @if(filled($data['mvp'] ?? null))<div class="ytt-mvp">★ {{ $data['mvp'] }}</div>@endif
         @else
-            <div class="ytt-vs">VS</div>
+            <div class="ytt-vs-wrap">
+                @if($s['vs_style'] === 'image' && filled($s['vs_image']))
+                    <img src="{{ ThumbnailData::src($s['vs_image']) }}" alt="VS" class="ytt-vs-image">
+                @elseif($s['vs_style'] === 'burst')
+                    <x-ytt-vs-burst :uid="$attributes->get('id', 'vs')" />
+                @else
+                    <div class="ytt-vs">VS</div>
+                @endif
+            </div>
             @if($bars && ($dayName || $time))
                 <div class="ytt-when">{{ $dayName }}@if($time) · {{ $time }}@endif</div>
             @endif

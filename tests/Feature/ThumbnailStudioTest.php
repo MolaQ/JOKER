@@ -96,3 +96,50 @@ test('the result is typed in score and set fields', function () {
         ->assertSet('scoreHome', '1')
         ->assertSet('setRows.0.h', '20');
 });
+
+test('the VS graphic and the title colours are configurable and saved in the template', function () {
+    $this->actingAs(User::factory()->create(['role' => UserRole::Photographer]));
+
+    $component = Livewire::test(ThumbnailStudio::class)
+        ->set('templateId', null)
+        ->set('templateName', 'VS duże')
+        ->set('s.layout', 'modern')
+        ->set('s.vs_style', 'burst')
+        ->set('s.vs_size', 140)
+        ->call('nudgeVs', -20)
+        ->call('nudgeVs', -20)
+        ->set('s.preview_title', 'Wielki mecz')
+        ->set('s.title_color', '#ffcc00')
+        ->assertSet('s.vs_offset', -40)
+        ->assertSee('Wielki')
+        ->assertSee('--tc:#ffcc00', false)
+        ->assertSee('--vss:1.4', false)
+        ->assertSee('--vsy:-40px', false)
+        ->assertSeeHtml('ytt-vs-burst');
+
+    $component->call('nudgeVs', -1000)->assertSet('s.vs_offset', -400)
+        ->call('saveTemplate', true)->assertHasNoErrors();
+
+    $settings = ThumbnailTemplate::where('name', 'VS duże')->firstOrFail()->resolvedSettings();
+    expect($settings['vs_size'])->toBe(140)
+        ->and($settings['vs_offset'])->toBe(-400)
+        ->and($settings['title_color'])->toBe('#ffcc00');
+
+    $component->set('s.vs_style', 'nieznany')->call('saveTemplate')->assertHasErrors('s.vs_style');
+});
+
+test('finished games stay on the list and the period filter narrows it', function () {
+    $this->actingAs(User::factory()->create(['role' => UserRole::Photographer]));
+    $season = Season::factory()->create(['is_current' => true]);
+    $team = Team::factory()->create();
+    $past = Game::factory()->create(['season_id' => $season->id, 'team_id' => $team->id, 'opponent' => 'Dawny Rywal', 'game_date' => now()->subWeeks(3), 'status' => 'finished', 'home_score' => 3, 'away_score' => 0]);
+    $future = Game::factory()->create(['season_id' => $season->id, 'team_id' => $team->id, 'opponent' => 'Przyszły Rywal', 'game_date' => now()->addWeek()]);
+
+    Livewire::test(ThumbnailStudio::class)
+        ->set('fSeason', (string) $season->id)
+        ->assertSee('Dawny Rywal')->assertSee('Przyszły Rywal')
+        ->set('fPeriod', 'results')
+        ->assertSee('Dawny Rywal')->assertDontSee('Przyszły Rywal')
+        ->set('fPeriod', 'upcoming')
+        ->assertDontSee('Dawny Rywal')->assertSee('Przyszły Rywal');
+});
