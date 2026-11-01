@@ -890,3 +890,21 @@ test('a room can offer only some of its sectors when another event plays on the 
     $editor->call('toggleSector', 0, 0, 1)->call('toggleSector', 0, 0, 3);
     expect(TournamentHalls::extra($this->tournament->fresh())[0]['rooms'][0]['off'])->toBe([0, 2]);
 });
+
+test('the club hall can leave out its main court in a tournament', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id, 'number' => 1, 'court' => 'Sektor II']);
+
+    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
+        ->call('toggleMainVenue', 'main')
+        ->call('toggleMainVenue', 'court2')
+        ->assertSee('niedostępne');
+
+    expect(TournamentHalls::mainOff($this->tournament->fresh()))->toBe(['main'])
+        ->and(TournamentHalls::mainVenues($this->tournament->fresh()))->toBe(['court3', 'court2', 'court1']);
+
+    $editor->call('toggleMainVenue', 'main');
+    expect($this->tournament->fresh()->main_off)->toBeNull();
+});

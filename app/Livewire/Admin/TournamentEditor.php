@@ -259,6 +259,42 @@ class TournamentEditor extends Component
     }
 
     /**
+     * Część hali klubowej dostępna w turnieju albo nie (np. bez głównego boiska, gdy sala jest podzielona na sektory).
+     */
+    public function toggleMainVenue(string $venue): void
+    {
+        if (! in_array($venue, TournamentHalls::MAIN_VENUES, true)) {
+            return;
+        }
+
+        $off = TournamentHalls::mainOff($this->tournament);
+
+        if (in_array($venue, $off, true)) {
+            $off = array_values(array_diff($off, [$venue]));
+        } else {
+            if (count($off) + 1 >= count(TournamentHalls::MAIN_VENUES)) {
+                $this->toast('Co najmniej jedna część hali musi być dostępna.', 'warning');
+
+                return;
+            }
+
+            $used = TournamentMatch::whereIn('tournament_category_id', $this->tournament->categories()->select('id'))->whereNotNull('court')->pluck('court')
+                ->merge(TournamentGroup::whereIn('tournament_category_id', $this->tournament->categories()->select('id'))->whereNotNull('court')->pluck('court'))
+                ->contains(fn ($court) => TrainingSession::venueForCourt($court) === $venue);
+
+            if ($used) {
+                $this->toast('Na tej części hali są mecze albo grupy. Najpierw przenieś je gdzie indziej.', 'warning');
+
+                return;
+            }
+
+            $off[] = $venue;
+        }
+
+        $this->tournament->update(['main_off' => $off === [] ? null : array_values($off)]);
+    }
+
+    /**
      * Sektor sali dostępny dla turnieju albo nie (np. na pozostałych sektorach gra inny turniej).
      * Sektora z meczami nie wyłączymy; całe boisko jest tylko wtedy, gdy dostępna jest cała sala.
      */

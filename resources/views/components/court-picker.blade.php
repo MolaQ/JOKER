@@ -1,4 +1,4 @@
-@props(['model', 'value' => null, 'free' => true, 'halls' => []])
+@props(['model', 'value' => null, 'free' => true, 'halls' => [], 'main' => \App\Support\TournamentHalls::MAIN_VENUES])
 @php
     // Boisko meczu: na co dzień widać tylko wybrane boisko (ikona i nazwa w kolorze obiektu), a pełny wybór otwiera „Zmień”.
     // Po otwarciu najpierw obiekt (hala klubowa albo inny obiekt turnieju), potem jego sala i sektor; zmiany są rzadkie.
@@ -56,7 +56,7 @@
         @endif
 
         <div x-show="tab === 0" class="flex flex-wrap gap-1" role="group" aria-label="{{ $mainName }}">
-            @foreach(['court3', 'court2', 'court1', 'main'] as $venue)
+            @foreach($main as $venue)
                 <button type="button" wire:click="$set('{{ $model }}', '{{ $venues[$venue] }}')" x-on:click="open = false" title="{{ $venues[$venue] }}" aria-pressed="{{ $current === $venue ? 'true' : 'false' }}"
                     @class(['flex w-16 flex-col items-center rounded-md p-1 ring-1 transition', 'bg-sky-50 ring-2 ring-sky-500' => $current === $venue, 'ring-gray-200 hover:ring-gray-400' => $current !== $venue])>
                     <x-venue-icon :venue="$venue" small />

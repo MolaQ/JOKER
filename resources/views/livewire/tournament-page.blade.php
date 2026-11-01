@@ -182,7 +182,7 @@
         @if($currentTab === 'matches' && $current)
             <x-tournament-schedule :matches="$current->matches" :bracket="$bracket" />
             {{-- Legenda: hale, adresy i ikony boisk, żeby było wiadomo, gdzie gra się mecz --}}
-            <x-tournament-halls :tournament="$tournament" :matches="$current->matches" class="mt-10" />
+            <x-tournament-halls :tournament="$tournament" :matches="$current->matches" class="mt-4" />
             <x-tournament-scoring-note :groups="$current->groups" :tournament="$tournament" class="mt-10" />
         @endif
 
@@ -269,7 +269,7 @@
                     @endforeach
                 </ol>
 
-                <x-tournament-halls :tournament="$tournament" :matches="$knockout" class="mt-6" />
+                <x-tournament-halls :tournament="$tournament" :matches="$knockout" class="mt-4" />
             </div>
 
             @if($standings->isNotEmpty())

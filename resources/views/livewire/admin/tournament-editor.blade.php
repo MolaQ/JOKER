@@ -4,6 +4,7 @@
     $primary = 'inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700';
     $secondary = 'inline-flex items-center justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50';
     $extraHalls = \App\Support\TournamentHalls::extra($tournament);
+    $mainVenues = \App\Support\TournamentHalls::mainVenues($tournament);
     $sections = ['strona' => 'Strona i informator', 'kategorie' => 'Kategorie', 'druzyny' => 'Drużyny', 'grupy' => 'Grupy', 'mecze' => 'Mecze i wyniki', 'wyroznienia' => 'Wyróżnienia', 'partnerzy' => 'Partnerzy turnieju', 'wpisujacy' => 'Wpisujący wyniki'];
 @endphp
 
@@ -305,7 +306,7 @@
 
                         <div class="flex flex-wrap items-center gap-3">
                             <p class="text-xs font-semibold text-gray-500 uppercase">Domyślne boisko grupy</p>
-                            <x-court-picker :halls="$extraHalls" model="groupCourts.{{ $group->id }}" :value="$groupCourts[$group->id] ?? null" :free="false" />
+                            <x-court-picker :halls="$extraHalls" :main="$mainVenues" model="groupCourts.{{ $group->id }}" :value="$groupCourts[$group->id] ?? null" :free="false" />
                             @unless(filled($groupCourts[$group->id] ?? null))<span class="text-xs text-gray-500">brak: przy układaniu godzin mecze trafią na wolne sektory</span>@endunless
                         </div>
 
@@ -506,7 +507,7 @@
                     </div>
                     <div>
                         <label class="{{ $label }}">Boisko / hala</label>
-                        <x-court-picker :halls="$extraHalls" model="match.court" :value="$match['court'] ?? null" />
+                        <x-court-picker :halls="$extraHalls" :main="$mainVenues" model="match.court" :value="$match['court'] ?? null" />
                     </div>
                     <div class="sm:col-span-2 flex items-end">
                         <button type="submit" class="{{ $primary }}">Dodaj mecz</button>
@@ -519,6 +520,23 @@
                 <summary class="cursor-pointer font-semibold text-gray-900">Obiekty turnieju <span class="text-xs font-normal text-gray-500">· {{ \App\Support\TournamentHalls::mainName() }}@foreach($extraHalls as $hall), {{ $hall['name'] }}@endforeach</span></summary>
                 <p class="mt-2 text-xs text-gray-500">Gdy część meczów gra się poza {{ \App\Support\TournamentHalls::mainName() }}, dodaj obiekt (np. MOSiR, szkołę). Obiekt może mieć kilka sal; każdą salę dzielisz na sektory albo zostawiasz jako jedno boisko. Kolor obiektu widać przy wyborze boiska, w obłożeniu i w legendzie dla kibiców.</p>
                 <div class="mt-3 grid gap-3 lg:grid-cols-2">
+                    {{-- Hala klubowa: zawsze jest; w turnieju można wyłączyć sektory albo główne boisko --}}
+                    @php $mainOff = \App\Support\TournamentHalls::mainOff($tournament); $venueNames = \App\Models\TrainingSession::venueNames(); @endphp
+                    <div class="space-y-2 rounded-lg border-l-4 border-sky-500 bg-gray-50 p-3 ring-1 ring-gray-200 lg:col-span-2">
+                        <p class="font-semibold text-gray-900">{{ \App\Support\TournamentHalls::mainName() }} <span class="text-xs font-normal text-gray-500">· hala klubowa, adres z ustawień turnieju</span></p>
+                        <p class="text-[11px] text-gray-500">Kliknij część hali, której w tym turnieju nie będzie (np. główne boisko, gdy sala jest podzielona na trzy sektory).</p>
+                        <div class="flex flex-wrap items-end gap-2">
+                            @foreach(\App\Support\TournamentHalls::MAIN_VENUES as $venue)
+                                @php $isOff = in_array($venue, $mainOff, true); @endphp
+                                <button type="button" wire:click="toggleMainVenue('{{ $venue }}')" aria-pressed="{{ $isOff ? 'false' : 'true' }}" title="{{ $isOff ? 'Niedostępne: kliknij, żeby włączyć' : 'Dostępne: kliknij, żeby wyłączyć' }}"
+                                    @class(['flex flex-col items-center gap-0.5 rounded-md p-1 text-[11px] font-semibold ring-1 transition', 'text-gray-400 opacity-60 grayscale ring-0 outline-1 outline-gray-300 outline-dashed' => $isOff, 'text-gray-700 ring-gray-200 hover:ring-gray-400' => ! $isOff])>
+                                    <x-venue-icon :venue="$venue" />
+                                    <span>{{ $venueNames[$venue] }}</span>
+                                    <span @class(['text-[10px] font-medium', 'text-gray-400' => $isOff, 'text-emerald-700' => ! $isOff])>{{ $isOff ? 'niedostępne' : 'dostępne' }}</span>
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
                     @foreach($halls as $index => $hall)
                         <div class="space-y-3 rounded-lg border-l-4 bg-gray-50 p-3 ring-1 ring-gray-200" style="border-left-color: {{ $hall['color'] ?? '#f97316' }}" wire:key="hall-{{ $index }}">
                             <div class="flex items-center gap-2">
@@ -721,7 +739,7 @@
                                             <p class="mt-1 text-xs"><span class="rounded-full bg-amber-100 px-1.5 font-semibold text-amber-800">{{ $delay > 0 ? '+' : '−' }}{{ abs($delay) }} min</span> <span class="text-gray-500">plan {{ $tournamentMatch->planned_starts_at->format('H:i') }}</span></p>
                                         @endif
                                     </div>
-                                    <x-court-picker :halls="$extraHalls" model="results.{{ $tournamentMatch->id }}.court" :value="$results[$tournamentMatch->id]['court'] ?? null" :free="false" />
+                                    <x-court-picker :halls="$extraHalls" :main="$mainVenues" model="results.{{ $tournamentMatch->id }}.court" :value="$results[$tournamentMatch->id]['court'] ?? null" :free="false" />
                                     <div class="flex items-center gap-3">
                                         <label @class(['inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold ring-1', 'bg-red-50 text-red-700 ring-red-200' => $results[$tournamentMatch->id]['live'] ?? false, 'text-gray-500 ring-gray-200' => ! ($results[$tournamentMatch->id]['live'] ?? false)]) title="Włącz, gdy mecz się zaczął; wyłącz po wpisaniu wyniku końcowego">
                                             <input type="checkbox" wire:model.live="results.{{ $tournamentMatch->id }}.live" class="size-3.5 rounded border-gray-300 text-red-600">

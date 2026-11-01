@@ -23,7 +23,7 @@
     </div>
     <div>
         <label class="{{ $label }}">Boisko / hala</label>
-        <x-court-picker :halls="$extraHalls" model="editMatch.court" :value="$editMatch['court'] ?? null" />
+        <x-court-picker :halls="$extraHalls" :main="$mainVenues ?? \App\Support\TournamentHalls::MAIN_VENUES" model="editMatch.court" :value="$editMatch['court'] ?? null" />
     </div>
     @if($editMatch['stage'] === 'playoff')
         <div>

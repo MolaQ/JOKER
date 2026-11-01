@@ -32,6 +32,31 @@ class TournamentHalls
         return trim((string) app(SiteSettings::class)->get('venue_hall')) ?: __('Hala klubowa');
     }
 
+    /** Części hali klubowej w kolejności jak w sali. */
+    public const MAIN_VENUES = ['court3', 'court2', 'court1', 'main'];
+
+    /**
+     * Części hali klubowej wyłączone w turnieju (np. główne boisko, gdy sala jest podzielona); jedna zawsze zostaje.
+     *
+     * @return list<string>
+     */
+    public static function mainOff(?Tournament $tournament): array
+    {
+        $off = array_values(array_intersect(self::MAIN_VENUES, (array) ($tournament?->main_off ?? [])));
+
+        return count($off) >= count(self::MAIN_VENUES) ? [] : $off;
+    }
+
+    /**
+     * Części hali klubowej dostępne w turnieju.
+     *
+     * @return list<string>
+     */
+    public static function mainVenues(?Tournament $tournament): array
+    {
+        return array_values(array_diff(self::MAIN_VENUES, self::mainOff($tournament)));
+    }
+
     public static function wholeLabel(): string
     {
         return __('Całe boisko');
@@ -273,7 +298,7 @@ class TournamentHalls
             'name' => self::mainName(),
             'address' => trim(implode(', ', array_filter([(string) $tournament->venue, (string) $tournament->city]))),
             'color' => null,
-            'rooms' => [['name' => '', 'courts' => array_map(fn (string $venue) => ['value' => $names[$venue], 'label' => $names[$venue], 'icon' => ['venue' => $venue]], ['court3', 'court2', 'court1', 'main'])]],
+            'rooms' => [['name' => '', 'courts' => array_map(fn (string $venue) => ['value' => $names[$venue], 'label' => $names[$venue], 'icon' => ['venue' => $venue]], self::mainVenues($tournament))]],
         ]];
 
         foreach (self::extra($tournament) as $facility) {
