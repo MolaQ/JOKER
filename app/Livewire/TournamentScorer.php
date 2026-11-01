@@ -101,6 +101,31 @@ class TournamentScorer extends Component
         $this->match($id)->update(['is_live' => true]);
     }
 
+    /**
+     * Mecz rozpoczęty przez pomyłkę: wraca do nierozpoczętych z godziną z harmonogramu, bez wpisanych setów.
+     */
+    public function cancelStart(int $id): void
+    {
+        $match = $this->match($id);
+
+        if (! $match->is_live) {
+            return;
+        }
+
+        $match->update([
+            'starts_at' => $match->planned_starts_at ?? $match->starts_at,
+            'is_live' => false,
+            'sets_score' => null,
+            'home_sets' => null,
+            'away_sets' => null,
+        ]);
+
+        TournamentBracket::sync($match->category);
+        unset($this->rows[$id]);
+        $this->resetErrorBag("rows.{$id}.sets");
+        $this->toast(__('Cofnięto rozpoczęcie meczu nr :number.', ['number' => $match->number]));
+    }
+
     private function startTime(TournamentMatch $match): ?Carbon
     {
         $time = trim((string) ($this->rows[$match->id]['start'] ?? ''));

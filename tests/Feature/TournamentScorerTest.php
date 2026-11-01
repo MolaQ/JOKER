@@ -96,3 +96,22 @@ test('a match result can carry an optional highlight like MVP', function () {
     expect($this->first->fresh()->mvp)->toBe('MVP: Zofia Łęcka');
     $this->get(route('tournaments.matches.show', [$this->tournament, $this->first->number]))->assertSee('MVP: Zofia Łęcka');
 });
+
+test('a match started by mistake can be put back to not started', function () {
+    $this->actingAs(User::factory()->admin()->create());
+
+    Livewire::test(TournamentScorer::class, ['tournament' => $this->tournament])
+        ->set('rows.'.$this->first->id.'.start', '10:20')
+        ->call('start', $this->first->id)
+        ->set('rows.'.$this->first->id.'.sets', '25:20')
+        ->call('save', $this->first->id)
+        ->call('cancelStart', $this->first->id)
+        ->assertSee('Rozpocznij mecz')
+        ->assertSet('rows.'.$this->first->id.'.start', '10:00');
+
+    $first = $this->first->fresh();
+    expect($first->is_live)->toBeFalse()
+        ->and($first->starts_at->format('H:i'))->toBe('10:00')
+        ->and($first->sets_score)->toBeNull()
+        ->and($first->home_sets)->toBeNull();
+});

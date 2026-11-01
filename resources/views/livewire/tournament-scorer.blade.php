@@ -69,6 +69,8 @@
                     @elseif($live)
                         <button type="button" wire:click="save({{ $match->id }})" class="rounded-full px-4 py-2 text-sm font-semibold text-zinc-800 ring-1 ring-zinc-300">{{ __('Zapisz wynik') }}</button>
                         <button type="button" wire:click="save({{ $match->id }}, true)" wire:confirm="{{ __('Zakończyć mecz? Wynik trafi do tabeli i drabinki.') }}" class="btn-primary">{{ __('Zakończ mecz') }}</button>
+                        {{-- Pomyłka: mecz wraca do nierozpoczętych, z godziną z harmonogramu --}}
+                        <button type="button" wire:click="cancelStart({{ $match->id }})" wire:confirm="{{ __('Cofnąć rozpoczęcie? Mecz wróci do nierozpoczętych, a wpisane sety zostaną usunięte.') }}" class="ml-auto rounded-full px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">{{ __('Cofnij rozpoczęcie') }}</button>
                     @else
                         <button type="button" wire:click="save({{ $match->id }}, true)" class="rounded-full px-4 py-2 text-sm font-semibold text-zinc-800 ring-1 ring-zinc-300">{{ __('Popraw wynik') }}</button>
                         <button type="button" wire:click="reopen({{ $match->id }})" class="rounded-full px-4 py-2 text-sm font-semibold text-zinc-500">{{ __('Wznów mecz') }}</button>
