@@ -23,14 +23,22 @@
     $color = fn (?string $value, string $fallback) => preg_match('/^#[0-9a-fA-F]{6}$/', (string) $value) ? $value : $fallback;
     $home = $data['home'];
     $away = $data['away'];
-    // Litery VS: kolory z szablonu albo (przełącznik) z barw drużyn na krzyż: V w kolorze gości, S gospodarzy.
+    // Litery VS (3 kolory na literę: początek, środek, koniec). Przełącznik: na krzyż z gradientów połówek —
+    // V (po lewej) dostaje gradient prawej połówki, S gradient lewej. Bez gradientu: jaśniej, kolor, ciemniej.
     $vsLetters = [];
     foreach (['v' => 'vv', 's' => 'vs'] as $letter => $var) {
         if ($s['vs_team_colors']) {
             $team = $color(($letter === 'v' ? $away : $home)['color'] ?? null, $letter === 'v' ? ThumbnailData::RIVAL_COLOR : '#1d6ff2');
-            $tones = ["color-mix(in srgb, {$team} 45%, #fff)", $team, "color-mix(in srgb, {$team} 60%, #000)", "color-mix(in srgb, {$team} 25%, #fff)"];
+            $second = $s['tint_gradient'] ? $color(($letter === 'v' ? $away : $home)['color2'] ?? null, '') : '';
+            if ($second !== '') {
+                // prawa połówka: od koloru przy linii do drugiego przy brzegu; lewa: od brzegu do linii
+                [$start, $end] = $letter === 'v' ? [$team, $second] : [$second, $team];
+                $tones = [$start, "color-mix(in srgb, {$start} 50%, {$end})", $end];
+            } else {
+                $tones = ["color-mix(in srgb, {$team} 45%, #fff)", $team, "color-mix(in srgb, {$team} 55%, #000)"];
+            }
         } else {
-            $tones = array_map(fn ($i) => $color($s["vs_{$letter}{$i}"] ?? null, ThumbnailTemplate::DEFAULTS["vs_{$letter}{$i}"]), [1, 2, 3, 4]);
+            $tones = array_map(fn ($i) => $color($s["vs_{$letter}{$i}"] ?? null, ThumbnailTemplate::DEFAULTS["vs_{$letter}{$i}"]), [1, 2, 3]);
         }
         foreach ($tones as $i => $tone) {
             $vsLetters[] = "--{$var}".($i + 1).':'.$tone;
@@ -51,7 +59,6 @@
         '--bar2:'.$color($s['bar_to'], '#1d4ed8'),
         '--panel:'.$color($s['panel'], '#080a10'),
         'font-family:'.ThumbnailTemplate::fontFamily($s['font']),
-        '--vso:'.$color($s['vs_outline'] ?? null, '#0b0b0b'),
         ...$vsLetters,
         '--vss:'.max(30, min(250, (int) $s['vs_size'])) / 100,
         '--vsy:'.max(-400, min(400, (int) $s['vs_offset'])).'px',
@@ -115,7 +122,7 @@
             @endif
             @if($sets)
                 {{-- Sety: wygrana strona pogrubiona, kartka w kolorze zwycięzcy seta --}}
-                <div class="ytt-sets">
+                <div @class(['ytt-sets', 'ytt-sets-5' => count($sets) > 4])>
                     @foreach($sets as $index => [$a, $b])
                         <div @class(['ytt-set', 'ytt-set-home' => $a > $b, 'ytt-set-away' => $b > $a])>
                             <small>{{ $index + 1 }}. set</small>
@@ -130,7 +137,7 @@
                 @if($s['vs_style'] === 'image' && filled($s['vs_image']))
                     <img src="{{ ThumbnailData::src($s['vs_image']) }}" alt="VS" class="ytt-vs-image">
                 @elseif($s['vs_style'] === 'burst')
-                    <x-ytt-vs-burst :uid="$attributes->get('id', 'vs')" />
+                    <div class="ytt-vs-art-slot" data-ytt-vs-art="{{ asset('img/miniatury/vs-graffiti.svg') }}"></div>
                 @else
                     <div class="ytt-vs">VS</div>
                 @endif

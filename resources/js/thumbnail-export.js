@@ -13,7 +13,23 @@ function fit(frame) {
     }
 }
 
+/** Grafika VS (wektorowa, ok. 280 kB) jest pobierana raz i wstawiana w miniatury, żeby nie wysyłać jej przy każdej zmianie w edytorze. */
+let vsArt = null;
+
+async function fillVsArt() {
+    const slots = [...document.querySelectorAll('[data-ytt-vs-art]')].filter((slot) => ! slot.firstElementChild);
+
+    if (! slots.length) {
+        return;
+    }
+
+    vsArt ??= fetch(slots[0].dataset.yttVsArt).then((response) => response.text());
+    const markup = await vsArt;
+    slots.forEach((slot) => { slot.innerHTML = markup; });
+}
+
 function watchFrames() {
+    fillVsArt();
     document.querySelectorAll('[data-ytt-frame]').forEach((frame) => {
         if (! frame.dataset.fitted) {
             frame.dataset.fitted = '1';

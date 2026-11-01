@@ -1048,8 +1048,8 @@ table[data-sortable] > thead th:not([data-nosort]) {
 .ytt-center { position: absolute; left: 660px; right: 660px; top: 470px; display: flex; flex-direction: column; align-items: center; text-align: center; z-index: 2; }
 .ytt-summary .ytt-center { top: 350px; }
 .ytt-vs-wrap { display: flex; justify-content: center; transform: translateY(var(--vsy, 0px)) scale(var(--vss, 1)); transform-origin: center; }
-.ytt-vs-burst { width: 760px; height: auto; overflow: visible; }
-.ytt-vs-burst text { font-family: var(--vsfont); }
+.ytt-vs-art-slot { width: 1000px; margin: -220px -200px 0; aspect-ratio: 1420 / 1080; }
+.ytt-vs-art-slot svg { display: block; width: 100%; height: 100%; }
 .ytt-vs-image { max-width: 620px; max-height: 420px; object-fit: contain; }
 .ytt-modern:not(.ytt-summary) .ytt-center { top: 400px; }
 .ytt-modern.ytt-title-2:not(.ytt-summary) .ytt-center { top: 470px; }
@@ -1065,7 +1065,7 @@ table[data-sortable] > thead th:not([data-nosort]) {
 .ytt-score { font-weight: 700; font-size: 340px; line-height: .85; white-space: nowrap; text-shadow: 0 10px 40px rgba(0, 0, 0, .7); }
 .ytt-score i { font-style: normal; opacity: .6; margin: 0 6px; }
 .ytt-score-empty { opacity: .4; }
-.ytt-sets { margin-top: 40px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 640px; }
+.ytt-sets { margin-top: 40px; display: flex; flex-wrap: nowrap; justify-content: center; gap: 10px; max-width: 640px; }
 .ytt-set { position: relative; min-width: 118px; padding: 6px 12px 8px; border-radius: 14px; text-align: center; background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .05)); border: 2px solid rgba(255, 255, 255, .25); box-shadow: 0 10px 24px rgba(0, 0, 0, .4); overflow: hidden; }
 .ytt-set::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: rgba(255, 255, 255, .3); }
 .ytt-set-home { background: linear-gradient(180deg, color-mix(in srgb, var(--hc) 70%, transparent), color-mix(in srgb, var(--hc) 25%, rgba(0, 0, 0, .4))); border-color: color-mix(in srgb, var(--hc) 60%, #fff); }
@@ -1074,6 +1074,9 @@ table[data-sortable] > thead th:not([data-nosort]) {
 .ytt-set-away::before { background: var(--ac); }
 .ytt-set small { display: block; font-size: 17px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
 .ytt-set span { display: block; margin-top: 2px; font-size: 40px; font-weight: 600; white-space: nowrap; }
+.ytt-sets-5 { gap: 8px; }
+.ytt-sets-5 .ytt-set { min-width: 108px; padding: 6px 8px 8px; }
+.ytt-sets-5 .ytt-set span { font-size: 36px; }
 .ytt-set b { font-weight: 500; opacity: .7; }
 .ytt-set b.ytt-set-win { font-weight: 700; opacity: 1; }
 .ytt-set i { font-style: normal; opacity: .6; margin: 0 2px; }

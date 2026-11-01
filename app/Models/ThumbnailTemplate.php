@@ -35,7 +35,7 @@ class ThumbnailTemplate extends Model
     ];
 
     /** Wygląd napisu VS: komiksowy wybuch, sam napis albo własny obrazek (PNG z przezroczystym tłem). */
-    public const VS_STYLES = ['burst' => 'Graffiti: ostre litery z płomieniami', 'text' => 'Sam napis', 'image' => 'Własny obrazek'];
+    public const VS_STYLES = ['burst' => 'Graffiti (grafika ze wzoru)', 'text' => 'Sam napis', 'image' => 'Własny obrazek'];
 
     /** Miejsce napisu o transmisji w zapowiedzi. */
     public const LIVE_POSITIONS = ['bl' => 'Lewy dolny róg', 'br' => 'Prawy dolny róg'];
@@ -72,17 +72,14 @@ class ThumbnailTemplate extends Model
         'vs_offset' => 0,
         'vs_font' => 'brush',
         'vs_color' => '#ffffff',
-        // Wnętrze liter VS: góra, środek, dół gradientu i płomienie; obwódka wspólna.
-        'vs_team_colors' => false,
-        'vs_v1' => '#ffe14d',
-        'vs_v2' => '#ff8a00',
-        'vs_v3' => '#c8160b',
-        'vs_v4' => '#fff07a',
-        'vs_s1' => '#ffe14d',
-        'vs_s2' => '#ff8a00',
-        'vs_s3' => '#c8160b',
-        'vs_s4' => '#fff07a',
-        'vs_outline' => '#0b0b0b',
+        // Kolory liter VS (początek, środek, koniec gradientu); domyślnie na krzyż z barw drużyn.
+        'vs_team_colors' => true,
+        'vs_v1' => '#ffd21a',
+        'vs_v2' => '#ff7a00',
+        'vs_v3' => '#a3122a',
+        'vs_s1' => '#ffd21a',
+        'vs_s2' => '#ff7a00',
+        'vs_s3' => '#a3122a',
         'live_position' => 'bl',
         'show_names' => true,
         'show_sponsors' => false,

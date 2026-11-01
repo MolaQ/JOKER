@@ -232,12 +232,12 @@
                 @error('vsImage') <p class="col-span-2 text-xs text-red-600">{{ $message }}</p> @enderror
                 @if($s['vs_style'] === 'burst')
                     <div class="col-span-2 space-y-2 rounded-lg bg-gray-50 p-2">
-                        <label class="{{ $toggle }}"><input type="checkbox" wire:model.live="s.vs_team_colors" class="rounded border-gray-300"> Litery w barwach drużyn (V w kolorze gości, S gospodarzy)</label>
+                        <label class="{{ $toggle }}"><input type="checkbox" wire:model.live="s.vs_team_colors" class="rounded border-gray-300"> Litery w kolorach połówek na krzyż (V z prawego gradientu, S z lewego)</label>
                         @unless($s['vs_team_colors'])
                             @foreach(['v' => 'Litera V', 's' => 'Litera S'] as $letter => $letterLabel)
-                                <div class="grid grid-cols-5 items-end gap-1.5">
+                                <div class="grid grid-cols-4 items-end gap-1.5">
                                     <span class="pb-2 text-xs font-semibold text-gray-600">{{ $letterLabel }}</span>
-                                    @foreach([1 => 'Góra', 2 => 'Środek', 3 => 'Dół', 4 => 'Płomienie'] as $i => $toneLabel)
+                                    @foreach([1 => 'Początek', 2 => 'Środek', 3 => 'Koniec'] as $i => $toneLabel)
                                         <label class="text-center text-[10px] font-semibold text-gray-500">
                                             <input type="color" wire:model.live.debounce.300ms="s.vs_{{ $letter }}{{ $i }}" class="mb-0.5 block h-8 w-full cursor-pointer rounded-md border border-gray-300 p-0.5">{{ $toneLabel }}
                                         </label>
@@ -245,7 +245,6 @@
                                 </div>
                             @endforeach
                         @endunless
-                        <label class="flex items-center gap-2 text-xs font-semibold text-gray-600"><input type="color" wire:model.live.debounce.300ms="s.vs_outline" class="h-8 w-14 cursor-pointer rounded-md border border-gray-300 p-0.5"> Obwódka i cień liter</label>
                     </div>
                 @endif
                 <div class="col-span-2">
