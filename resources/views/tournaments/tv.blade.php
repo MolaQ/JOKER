@@ -25,7 +25,7 @@
     $bracket = $category ? $brackets[$category->id] : null;
     $logoUrl = $site->image('logo', asset('img/logo-256.webp'));
 @endphp
-<div id="tv-stage" class="flex flex-col overflow-hidden" style="--tv-live: {{ $colors['live'] }}; background: radial-gradient(1200px 700px at 85% -10%, {{ $color }}33, transparent 60%), linear-gradient(160deg, {{ $colors['top'] }} 0%, {{ $colors['bottom'] }} 60%)">
+<div id="tv-stage" data-seconds="{{ $seconds }}" data-next="{{ $next }}" class="flex flex-col overflow-hidden" style="--tv-live: {{ $colors['live'] }}; background: radial-gradient(1200px 700px at 85% -10%, {{ $color }}33, transparent 60%), linear-gradient(160deg, {{ $colors['top'] }} 0%, {{ $colors['bottom'] }} 60%)">
     {{-- Nagłówek: turniej, kategoria, tytuł planszy, zegar i odliczanie --}}
     <header class="flex items-center gap-8 px-16 pt-10 pb-6">
         <img src="{{ $logoUrl }}" alt="" class="h-24 w-24 object-contain">
@@ -51,7 +51,7 @@
         </div>
     </header>
 
-    <main class="min-h-0 flex-1 px-16 pb-6">
+    <main class="min-h-0 flex-1 overflow-hidden px-16 pb-6">
         @if(! $slide)
             <div class="flex h-full items-center justify-center font-display text-6xl text-white/60 uppercase">{{ __('Plansze pojawią się, gdy turniej będzie miał kategorie i mecze') }}</div>
 
@@ -145,9 +145,13 @@
             </div>
 
         @elseif($slide['type'] === 'sponsors')
-            <div class="tv-in grid h-full grid-cols-4 content-center gap-10">
+            {{-- Wszystkie logotypy mieszczą się na planszy: więcej sponsorów = więcej kolumn i niższe kafelki --}}
+            @php($sponsorCols = (int) min(7, max(4, ceil(sqrt($slide['sponsors']->count() * 1.6)))))
+            @php($sponsorRows = max(1, (int) ceil($slide['sponsors']->count() / $sponsorCols)))
+            @php($sponsorGap = $sponsorRows > 3 ? 'gap-5' : 'gap-8')
+            <div class="tv-in grid h-full {{ $sponsorGap }}" style="grid-template-columns: repeat({{ $sponsorCols }}, minmax(0, 1fr)); grid-template-rows: repeat({{ $sponsorRows }}, minmax(0, {{ $sponsorRows <= 2 ? '14rem' : '1fr' }})); align-content: center">
                 @foreach($slide['sponsors'] as $sponsor)
-                    <div class="flex h-56 items-center justify-center rounded-3xl bg-white p-8" @if($sponsor->tile_color) style="background: {{ $sponsor->tile_color }}" @endif>
+                    <div @class(['flex min-h-0 items-center justify-center rounded-3xl bg-white', 'p-8' => $sponsorRows <= 3, 'p-4' => $sponsorRows > 3]) @if($sponsor->tile_color) style="background: {{ $sponsor->tile_color }}" @endif>
                         <img src="{{ \App\Support\Media::url($sponsor->logo_path) }}" alt="{{ $sponsor->name }}" class="max-h-full max-w-full object-contain">
                     </div>
                 @endforeach
@@ -157,7 +161,7 @@
 
     {{-- Pasek „Teraz gramy”: mecze w trakcie ze wszystkich kategorii --}}
     @if($live->isNotEmpty())
-        <div class="flex h-20 items-center overflow-hidden" style="background: var(--tv-live)">
+        <div id="tv-live" class="flex h-20 items-center overflow-hidden" style="background: var(--tv-live)">
             <span class="z-10 flex h-full shrink-0 items-center gap-3 bg-black/25 px-8 font-display text-3xl font-bold uppercase"><span class="h-4 w-4 animate-pulse rounded-full bg-white"></span>{{ __('Teraz gramy') }}</span>
             <div class="min-w-0 flex-1 overflow-hidden">
                 {{-- Przewija się, gdy napis nie mieści się na szerokość ekranu (sprawdza skrypt na dole) --}}
@@ -175,12 +179,33 @@
 
     {{-- Pasek sponsorów: grupy zmieniają się co 8 sekund; każda plansza zaczyna od kolejnej grupy --}}
     @if($sponsorBar->isNotEmpty())
-        <div id="tv-sponsors" data-start="{{ $index % $sponsorBar->count() }}" class="relative h-36 shrink-0 bg-white text-zinc-900">
+        <div id="tv-sponsors" class="relative h-36 shrink-0 bg-white text-zinc-900">
+          @if($sponsorBar->first()['marquee'] ?? false)
+            {{-- Partnerzy turnieju: logotypy przewijają się powoli i bez przerw (także przy zmianie planszy) --}}
+            <div class="absolute inset-0 flex items-center">
+                <div class="z-10 flex h-full w-80 shrink-0 flex-col justify-center bg-white px-16 shadow-[24px_0_24px_-12px_white]">
+                    <p class="text-base font-semibold tracking-[0.3em] text-zinc-400 uppercase">{{ __('Dziękujemy') }}</p>
+                    <p class="mt-1 font-display text-3xl leading-tight font-bold uppercase">{{ __('Partnerzy turnieju') }}</p>
+                </div>
+                <div class="min-w-0 flex-1 overflow-hidden">
+                    <div id="tv-partners" class="flex w-max items-center">
+                        @foreach([1, 2] as $copy)
+                            @foreach($sponsorBar->first()['sponsors'] as $sponsor)
+                                <div @if($copy === 2) data-copy hidden @endif class="flex h-28 shrink-0 items-center justify-center rounded-2xl px-8 py-2" @if($sponsor->tile_color) style="background: {{ $sponsor->tile_color }}" @endif>
+                                    @if($sponsor->pivot?->role)<span class="mr-4 max-w-32 text-xs leading-tight font-semibold tracking-[0.15em] text-zinc-400 uppercase">{{ $sponsor->pivot->role }}</span>@endif
+                                    <img src="{{ \App\Support\Media::url($sponsor->logo_path) }}" alt="{{ $sponsor->name }}" class="h-full max-w-[28rem] object-contain">
+                                </div>
+                            @endforeach
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+          @else
             @foreach($sponsorBar as $barIndex => $bar)
                 <div data-sponsor-slide class="absolute inset-0 flex items-center gap-10 px-16 opacity-0 transition-opacity duration-700">
                     <div class="w-72 shrink-0">
                         <p class="text-base font-semibold tracking-[0.3em] text-zinc-400 uppercase">{{ __($site['sponsors_block_title'] ?: 'Wspierają nas') }}</p>
-                        <p class="mt-1 font-display text-3xl leading-tight font-bold uppercase">{{ $bar['title'] }}</p>
+                        <p @class(['mt-1 font-display leading-tight font-bold uppercase', 'text-3xl' => mb_strlen($bar['title']) <= 24, 'text-2xl' => mb_strlen($bar['title']) > 24])>{{ $bar['title'] }}</p>
                     </div>
                     <div class="grid flex-1 items-center gap-8" style="grid-template-columns: repeat({{ max(3, $bar['sponsors']->count()) }}, minmax(0, 1fr))">
                         @foreach($bar['sponsors'] as $sponsor)
@@ -191,6 +216,7 @@
                     </div>
                 </div>
             @endforeach
+          @endif
         </div>
     @endif
 
@@ -208,49 +234,125 @@
         fit();
         addEventListener('resize', fit);
 
-        // Długa nazwa kategorii i planszy: zmniejszamy napis, aż zmieści się w jednej linii.
-        const title = document.getElementById('tv-title');
-        for (let size = 72; size > 36 && title.scrollWidth > title.clientWidth; size -= 4) {
-            title.style.fontSize = `${size - 4}px`;
-        }
-
-        const total = {{ $seconds }};
-        const started = Date.now();
-        const ring = document.getElementById('tv-ring');
-        const label = document.getElementById('tv-seconds');
-        const clock = document.getElementById('tv-clock');
-        const next = new URL(location.href);
+        // Plansze zmieniają się bez przeładowania strony: nagłówek, treść i stopka są podmieniane,
+        // a pasek „Teraz gramy” i pasek sponsorów jadą dalej bez szarpnięcia.
+        const ring = () => document.getElementById('tv-ring');
+        const pageLoaded = Date.now();
+        let total = Number(stage.dataset.seconds) || 20;
+        let started = Date.now();
         let leaving = 0;
-        next.searchParams.set('s', {{ $next }});
+        let next = new URL(location.href);
+        next.searchParams.set('s', stage.dataset.next);
 
+        // Pasek „Teraz gramy”: faza przewijania liczona od zegara, więc po podmianie planszy jedzie dalej z tego samego miejsca.
+        const startTicker = () => {
+            const ticker = document.getElementById('tv-ticker');
+            if (! ticker) return;
+            ticker.querySelectorAll('[data-copy]').forEach((item) => item.hidden = true);
+            ticker.style.animation = '';
+            if (ticker.scrollWidth > ticker.parentElement.clientWidth) {
+                ticker.querySelectorAll('[data-copy]').forEach((item) => item.hidden = false);
+                const duration = Math.max(15, ticker.scrollWidth / 120);
+                ticker.style.animation = `tv-ticker ${duration}s linear ${-((Date.now() / 1000) % duration)}s infinite`;
+            }
+        };
+        startTicker();
+
+        // Pasek partnerów turnieju: powoli, płynnie, faza z zegara (bez skoku przy zmianie planszy).
+        const startPartners = () => {
+            const track = document.getElementById('tv-partners');
+            if (! track) return;
+            track.querySelectorAll('[data-copy]').forEach((item) => item.hidden = true);
+            track.style.animation = '';
+            if (track.scrollWidth > track.parentElement.clientWidth) {
+                track.querySelectorAll('[data-copy]').forEach((item) => item.hidden = false);
+                // ok. 35 pikseli na sekundę: wolniej niż pasek „Teraz gramy”
+                const duration = Math.max(20, track.offsetWidth / 2 / 35);
+                track.style.animation = `tv-ticker ${duration}s linear ${-((Date.now() / 1000) % duration)}s infinite`;
+            } else {
+                track.parentElement.classList.add('flex', 'justify-center');
+            }
+        };
+        startPartners();
+        // Szerokość paska znana dopiero po wczytaniu logotypów.
+        addEventListener('load', () => { startTicker(); startPartners(); });
+
+        // Pasek sponsorów: grupa wynika z zegara (co 8 sekund następna), więc też nie zaczyna od nowa.
+        const showSponsors = () => {
+            const items = [...document.querySelectorAll('#tv-sponsors [data-sponsor-slide]')];
+            const current = Math.floor(Date.now() / 8000) % Math.max(1, items.length);
+            items.forEach((item, i) => item.classList.toggle('opacity-0', i !== current));
+        };
+        showSponsors();
+        setInterval(showSponsors, 1000);
+
+        const fitTitle = () => {
+            const title = document.getElementById('tv-title');
+            for (let size = 72; size > 36 && title.scrollWidth > title.clientWidth; size -= 4) {
+                title.style.fontSize = `${size - 4}px`;
+            }
+        };
+
+        const swap = async () => {
+            // Raz na pół godziny pełne przeładowanie (nowa wersja strony, porządek w pamięci przeglądarki).
+            if (Date.now() - pageLoaded > 30 * 60 * 1000) {
+                location.replace(next);
+                return;
+            }
+            const response = await fetch(next, { headers: { 'X-Requested-With': 'tv' }, cache: 'no-store' });
+            if (! response.ok) throw new Error(response.status);
+            const fresh = new DOMParser().parseFromString(await response.text(), 'text/html').getElementById('tv-stage');
+            if (! fresh) throw new Error('stage');
+
+            stage.setAttribute('style', fresh.getAttribute('style'));
+            stage.style.transform = '';
+            fit();
+            for (const selector of ['header', 'main', 'footer']) {
+                stage.querySelector(selector).replaceWith(fresh.querySelector(selector));
+            }
+
+            // Pasek „Teraz gramy” podmieniamy tylko, gdy zmieniły się mecze albo wyniki.
+            const oldLive = document.getElementById('tv-live');
+            const newLive = fresh.querySelector('#tv-live');
+            const text = (element) => element?.querySelector('#tv-ticker')?.textContent.replace(/\s+/g, ' ').trim() ?? '';
+            if (text(oldLive) !== text(newLive)) {
+                if (oldLive && newLive) oldLive.replaceWith(newLive);
+                else if (oldLive) oldLive.remove();
+                else stage.querySelector('main').after(newLive);
+                startTicker();
+            }
+
+            // Pasek sponsorów zostaje, chyba że ktoś go włączył albo wyłączył.
+            const oldBar = document.getElementById('tv-sponsors');
+            const newBar = fresh.querySelector('#tv-sponsors');
+            if (!! oldBar !== !! newBar) {
+                if (oldBar) oldBar.remove();
+                else stage.querySelector('footer').before(newBar);
+                showSponsors();
+                startPartners();
+            }
+
+            history.replaceState(null, '', next);
+            total = Number(fresh.dataset.seconds) || total;
+            next = new URL(location.href);
+            next.searchParams.set('s', fresh.dataset.next);
+            started = Date.now();
+            leaving = 0;
+            fitTitle();
+        };
+
+        fitTitle();
         setInterval(() => {
             const left = Math.max(0, total - (Date.now() - started) / 1000);
-            label.textContent = Math.ceil(left);
-            ring.style.strokeDashoffset = 276.5 * (1 - left / total);
-            clock.textContent = new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('tv-seconds').textContent = Math.ceil(left);
+            ring().style.strokeDashoffset = 276.5 * (1 - left / total);
+            document.getElementById('tv-clock').textContent = new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
             // Raz; gdy serwer nie odpowie (np. chwilowy brak sieci), kolejna próba po 15 sekundach.
             if (left <= 0 && (! leaving || Date.now() - leaving > 15000)) {
                 leaving = Date.now();
-                location.replace(next);
+                swap().catch(() => {});
             }
         }, 250);
-
-        const bar = document.getElementById('tv-sponsors');
-        if (bar) {
-            const items = [...bar.querySelectorAll('[data-sponsor-slide]')];
-            let current = Number(bar.dataset.start) || 0;
-            const showSponsors = () => items.forEach((item, i) => item.classList.toggle('opacity-0', i !== current));
-            showSponsors();
-            if (items.length > 1) {
-                setInterval(() => { current = (current + 1) % items.length; showSponsors(); }, 8000);
-            }
-        }
-
-        const ticker = document.getElementById('tv-ticker');
-        if (ticker && ticker.scrollWidth > ticker.parentElement.clientWidth) {
-            ticker.querySelectorAll('[data-copy]').forEach((item) => item.hidden = false);
-            ticker.style.animation = `tv-ticker ${Math.max(15, ticker.scrollWidth / 120)}s linear infinite`;
-        }
     })();
 </script>
 </body>

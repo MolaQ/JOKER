@@ -76,5 +76,10 @@ test('a tournament has its own partners on its pages and on the tv bar', functio
     $this->get(route('tournaments.show', $tournament))->assertSeeInOrder(['Partnerzy turnieju', 'Patronat honorowy', 'Piekarnia Turniejowa']);
 
     $this->get(route('tournaments.tv', $tournament))->assertOk()
-        ->assertSeeInOrder(['tv-sponsors', 'Partnerzy turnieju', 'Piekarnia Turniejowa', 'Instytucje i samorządy'], false);
+        ->assertSeeInOrder(['tv-sponsors', 'Partnerzy turnieju', 'Piekarnia Turniejowa'], false)
+        // Turniej ma partnerów: na ekranie TV tylko oni, bez sponsorów klubu.
+        ->assertDontSee('Instytucje i samorządy')->assertDontSee('Miasto Piła');
+
+    $tournament->sponsors()->detach();
+    $this->get(route('tournaments.tv', $tournament))->assertSee('Instytucje i samorządy')->assertSee('Miasto Piła');
 });

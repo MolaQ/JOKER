@@ -32,24 +32,26 @@ class TournamentTvController extends Controller
 
         $slides = $categories->flatMap(fn (TournamentCategory $category) => $this->categorySlides($category, $brackets[$category->id], $settings, $perSlide))->values();
 
+        // Gdy turniej ma własnych partnerów, ekran pokazuje tylko ich (bez sponsorów i przyjaciół klubu).
+        $partners = $tournament->sponsors()->where('is_active', true)->whereNotNull('logo_path')->get();
+
         if ($settings['tv_sponsors']) {
-            $sponsors = $tournament->sponsors()->where('is_active', true)->whereNotNull('logo_path')->get()
-                ->concat(SponsorGroup::forBlock()->flatMap->sponsors)->unique('id')->values();
+            $sponsors = $partners->isNotEmpty() ? $partners : SponsorGroup::forBlock()->flatMap->sponsors->unique('id')->values();
             if ($sponsors->isNotEmpty()) {
-                $slides->push(['type' => 'sponsors', 'category' => null, 'title' => __('Dziękujemy sponsorom'), 'sponsors' => $sponsors]);
+                $slides->push(['type' => 'sponsors', 'category' => null, 'title' => $partners->isNotEmpty() ? __('Dziękujemy partnerom') : __('Dziękujemy sponsorom'), 'sponsors' => $sponsors]);
             }
         }
 
-        // Pasek sponsorów u dołu: najpierw partnerzy turnieju, potem kategorie bloku „Wspierają nas”.
+        // Pasek u dołu: partnerzy turnieju przewijają się płynnie; bez nich kategorie bloku „Wspierają nas” zmieniają się co 8 sekund.
         $sponsorBar = collect();
         if ($settings['tv_sponsor_bar']) {
-            $partners = $tournament->sponsors()->where('is_active', true)->whereNotNull('logo_path')->get();
             if ($partners->isNotEmpty()) {
-                $sponsorBar->push(['title' => __('Partnerzy turnieju'), 'sponsors' => $partners]);
-            }
-            foreach (SponsorGroup::forBlock() as $group) {
-                foreach ($group->sponsors->chunk(6) as $chunk) {
-                    $sponsorBar->push(['title' => __($group->name), 'sponsors' => $chunk->values()]);
+                $sponsorBar->push(['title' => __('Partnerzy turnieju'), 'sponsors' => $partners, 'marquee' => true]);
+            } else {
+                foreach (SponsorGroup::forBlock() as $group) {
+                    foreach ($group->sponsors->chunk(6) as $chunk) {
+                        $sponsorBar->push(['title' => __($group->name), 'sponsors' => $chunk->values()]);
+                    }
                 }
             }
         }
