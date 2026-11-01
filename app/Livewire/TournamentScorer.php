@@ -6,7 +6,9 @@ use App\Livewire\Admin\TournamentEditor;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Tournament;
 use App\Models\TournamentMatch;
+use App\Models\TrainingSession;
 use App\Support\TournamentBracket;
+use App\Support\TournamentHalls;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -174,7 +176,12 @@ class TournamentScorer extends Component
             ->filter(fn (TournamentMatch $match) => ($match->planned_starts_at ?? $match->starts_at)?->toDateString() === $this->day)
             ->sortBy(fn (TournamentMatch $match) => [($match->planned_starts_at ?? $match->starts_at)->getTimestamp(), (string) $match->court, $match->number]);
 
-        $courts = $matches->pluck('court')->filter()->unique()->sort()->values();
+        // Boiska dnia: najpierw hala klubowa (III, II, I, główne), potem inne obiekty po nazwie.
+        $order = array_flip(TournamentHalls::MAIN_VENUES);
+        $courts = $matches->pluck('court')->filter()->unique()
+            ->sortBy(fn (string $court) => [($venue = TrainingSession::venueForCourt($court)) ? 0 : 1, $venue ? $order[$venue] : 0, mb_strtolower($court)])
+            ->values();
+        $categoryIds = $matches->filter(fn (TournamentMatch $match) => filled($match->court))->mapWithKeys(fn (TournamentMatch $match) => [$match->court => $match->tournament_category_id])->all();
         $shown = $matches->when($this->court !== '', fn (Collection $all) => $all->where('court', $this->court))->values();
 
         foreach ($shown as $match) {
@@ -188,6 +195,7 @@ class TournamentScorer extends Component
         return view('livewire.tournament-scorer', [
             'matches' => $shown,
             'courts' => $courts,
+            'categoryIds' => $categoryIds,
             'days' => $this->days(),
         ]);
     }

@@ -15,7 +15,7 @@
         <nav class="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4" aria-label="{{ __('Boisko') }}">
             <button type="button" wire:click="$set('court', '')" class="{{ $chip }} {{ $court === '' ? $on : $off }}">{{ __('Wszystkie boiska') }}</button>
             @foreach($courts as $value)
-                <button type="button" wire:click="$set('court', @js($value))" class="{{ $chip }} {{ $court === $value ? $on : $off }}">{{ $value }}</button>
+                <button type="button" wire:click="$set('court', @js($value))" class="{{ $chip }} {{ $court === $value ? $on : $off }} inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap"><x-court-icon :court="$value" :category="$categoryIds[$value] ?? null" class="rounded-[3px] bg-white" />{{ \App\Support\TournamentHalls::label($value) }}</button>
             @endforeach
         </nav>
     @endif
