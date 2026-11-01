@@ -1061,7 +1061,6 @@ table[data-sortable] > thead th:not([data-nosort]) {
 .ytt-no-names .ytt-fallback { width: 600px; height: 600px; font-size: 250px; }
 .ytt-no-names.ytt-has-sponsors .ytt-logo { width: 600px; height: 600px; }
 .ytt-vs { font-family: var(--vsfont); font-weight: 400; font-size: 240px; line-height: 1.1; padding: 0 30px; color: var(--vsc); text-shadow: 0 10px 40px rgba(0, 0, 0, .75), 0 0 2px rgba(0, 0, 0, .4); }
-.ytt-when { margin-top: 10px; font-weight: 600; font-size: 40px; text-transform: uppercase; text-shadow: 0 4px 16px rgba(0, 0, 0, .6); }
 .ytt-score { font-weight: 700; font-size: 340px; line-height: .85; white-space: nowrap; text-shadow: 0 10px 40px rgba(0, 0, 0, .7); }
 .ytt-score i { font-style: normal; opacity: .6; margin: 0 6px; }
 .ytt-score-empty { opacity: .4; }
@@ -1086,7 +1085,8 @@ table[data-sortable] > thead th:not([data-nosort]) {
 .ytt-live-bl { left: 44px; }
 .ytt-live-br { right: 44px; }
 .ytt-has-sponsors .ytt-live { bottom: 146px; }
-.ytt-bars .ytt-live { bottom: 186px; }
+/* W belkach napis o transmisji stoi na środku nad dolną belką, żeby nie zasłaniał nazw drużyn. */
+.ytt-bars .ytt-live { bottom: 186px; left: 50%; right: auto; transform: translateX(-50%); }
 .ytt-bars.ytt-has-sponsors .ytt-live { bottom: 252px; }
 .ytt-info { position: absolute; left: 460px; right: 460px; bottom: 36px; display: flex; justify-content: center; gap: 18px; z-index: 2; }
 .ytt-has-sponsors .ytt-info { bottom: 136px; }
@@ -1102,7 +1102,7 @@ table[data-sortable] > thead th:not([data-nosort]) {
 .ytt-bars .ytt-shade { background: linear-gradient(90deg, color-mix(in srgb, var(--hc) 45%, transparent) 0%, transparent 40%, transparent 60%, color-mix(in srgb, var(--ac) 45%, transparent) 100%), radial-gradient(ellipse 30% 55% at 50% 52%, rgba(5, 7, 12, .7), transparent); }
 .ytt-bar { position: absolute; left: 0; right: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: linear-gradient(90deg, var(--bar1), var(--bar2)); box-shadow: 0 6px 18px rgba(0, 0, 0, .35); font-weight: 700; text-transform: uppercase; }
 .ytt-bar-top { top: 0; height: 215px; padding: 0 300px; font-size: 88px; line-height: .98; }
-.ytt-bar-bottom { bottom: 0; height: 160px; padding: 0 60px; font-size: 48px; }
+.ytt-bar-bottom { bottom: 0; height: 160px; padding: 0 60px; font-size: 44px; line-height: 1.1; }
 .ytt-has-sponsors.ytt-bars .ytt-bar-bottom { bottom: 120px; height: 110px; font-size: 42px; }
 .ytt-bars .ytt-team { top: 230px; }
 .ytt-bars .ytt-logo { width: 460px; height: 460px; }

@@ -159,3 +159,14 @@ test('finished games stay on the list and the period filter narrows it', functio
         ->set('fPeriod', 'upcoming')
         ->assertDontSee('Dawny Rywal')->assertSee('Przyszły Rywal');
 });
+
+test('the bars layout keeps the day and time in the bottom bar', function () {
+    $this->actingAs(User::factory()->create(['role' => UserRole::Photographer]));
+
+    Livewire::test(ThumbnailStudio::class)
+        ->set('s.layout', 'bars')
+        ->set('m.date', '2026-10-28')
+        ->set('m.time', '18:45')
+        ->set('m.place', 'Hala LOMS')
+        ->assertSee('Środa, 28 października 2026 · godz. 18:45 | Hala LOMS');
+});

@@ -142,15 +142,13 @@
                     <div class="ytt-vs">VS</div>
                 @endif
             </div>
-            @if($bars && ($dayName || $time))
-                <div class="ytt-when">{{ $dayName }}@if($time) · {{ $time }}@endif</div>
-            @endif
         @endif
     </div>
 
     @if($bars)
         <div class="ytt-bar ytt-bar-bottom">
-            <span>{{ collect([$dateLabel, collect([$place, $place2])->filter()->implode(', ')])->filter()->implode(' | ') }}</span>
+            {{-- Dzień, data i godzina w dolnej belce: VS w środku może być duży, więc nic pod nim nie ginie. --}}
+            <span>{{ collect([trim(($summary || ! $dayName ? '' : $dayName.', ').$dateLabel.(! $summary && $time ? ' · '.__('godz.').' '.$time : '')), collect([$place, $place2])->filter()->implode(', ')])->filter()->implode(' | ') }}</span>
         </div>
     @else
         <div class="ytt-info">
