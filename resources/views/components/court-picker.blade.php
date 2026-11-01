@@ -7,7 +7,7 @@
     $hallValue = fn (string $hall, string $court) => \App\Support\TournamentHalls::value($hall, $court);
 @endphp
 <div {{ $attributes->merge(['class' => 'space-y-1']) }}>
-    <div class="flex items-center gap-1" role="group" aria-label="Boisko">
+    <div class="flex flex-wrap items-center gap-1" role="group" aria-label="Boisko">
         @if($halls !== [])<span class="mr-1 w-16 shrink-0 text-[10px] leading-tight font-semibold break-words text-gray-500 uppercase" title="{{ \App\Support\TournamentHalls::mainName() }}">{{ \App\Support\TournamentHalls::mainName() }}</span>@endif
         @foreach(['court3', 'court2', 'court1', 'main'] as $venue)
             <button type="button" wire:click="$set('{{ $model }}', '{{ $current === $venue ? '' : $venues[$venue] }}')" title="{{ $venues[$venue] }}" aria-pressed="{{ $current === $venue ? 'true' : 'false' }}"

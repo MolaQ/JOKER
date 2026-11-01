@@ -12,6 +12,7 @@ use App\Models\TrainingSession;
 use App\Models\User;
 use App\Support\AgeColors;
 use App\Support\TournamentBracket;
+use App\Support\TournamentHalls;
 use App\Support\TournamentSchedule;
 use App\Support\TournamentTable;
 use Livewire\Livewire;
@@ -567,7 +568,7 @@ test('placement matches outside the bracket stand above it, and the bracket can 
         ->call('selectTab', 'bracket')
         ->assertSeeHtml('Mecze o dalsze miejsca')->assertSeeHtml('id="mecz-21"')->assertSee('Ćwierćfinał 1')
         ->assertSee('Po kolei')
-        ->assertSee('Sektory');
+        ->assertSee('Hala LOMS');
 });
 
 test('match times are arranged per sector every interval and a delay shifts the next matches on that sector', function () {
@@ -830,4 +831,18 @@ test('a tournament can use other halls: a category plays there by default and an
     // Hali z meczami nie da się usunąć.
     $editor->call('removeHall', 0);
     expect($this->tournament->fresh()->halls)->toHaveCount(1);
+});
+
+test('halls from earlier tournaments can be added again with one click', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    memorialGroup($this->tournament, $this->team);
+    Tournament::create(['name' => 'Turniej jesienny', 'start_date' => '2026-10-01', 'halls' => [['name' => 'MOSiR', 'courts' => ['Sektor I', 'Sektor II'], 'address' => 'ul. Sportowa 1, Piła']]]);
+
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
+        ->assertSee('z poprzednich turniejów')
+        ->call('addKnownHall', 'MOSiR')
+        ->assertSet('halls.0.address', 'ul. Sportowa 1, Piła');
+
+    expect(TournamentHalls::extra($this->tournament->fresh()))->toBe([['name' => 'MOSiR', 'courts' => ['Sektor I', 'Sektor II'], 'address' => 'ul. Sportowa 1, Piła']]);
+    $this->get(route('tournaments.show', [$this->tournament, 'tab' => 'matches']))->assertOk();
 });

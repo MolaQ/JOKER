@@ -42,16 +42,29 @@
                         <div class="sm:col-span-2">
                             <p class="text-xs text-gray-600">Logo</p>
                             <div class="mt-1 flex flex-wrap items-start gap-3">
-                                <span class="flex h-16 w-40 shrink-0 items-center justify-center rounded p-1 ring-1 ring-gray-200" style="background: {{ $editColor ?: '#fff' }}">
-                                    @if($editLogo && ! $errors->has('editLogo'))
+                                @if($editLogo && ! $errors->has('editLogo'))
+                                    {{-- Nowe logo wyraźnie oznaczone: zapisze się dopiero po „Zapisz” --}}
+                                    <span class="relative flex h-20 w-48 shrink-0 items-center justify-center rounded-md p-2 ring-2 ring-emerald-500" style="background: {{ $editColor ?: '#fff' }}">
+                                        <span class="absolute -top-2.5 left-2 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase">Nowe logo</span>
                                         <img src="{{ $editLogo->temporaryUrl() }}" alt="Nowe logo" class="max-h-full max-w-full object-contain">
-                                    @elseif($partner->logo_path)
-                                        <img src="{{ \App\Support\Media::url($partner->logo_path) }}" alt="Obecne logo" class="max-h-full max-w-full object-contain">
-                                    @else
-                                        <span class="text-xs text-gray-400">brak logo</span>
+                                    </span>
+                                    @if($partner->logo_path)
+                                        <span class="relative flex h-12 w-28 shrink-0 items-center justify-center self-center rounded p-1 opacity-50 ring-1 ring-gray-200 grayscale" title="Obecne logo zostanie zastąpione">
+                                            <span class="absolute -top-2 left-1 rounded bg-gray-200 px-1 text-[9px] font-semibold text-gray-600 uppercase">było</span>
+                                            <img src="{{ \App\Support\Media::url($partner->logo_path) }}" alt="Obecne logo" class="max-h-full max-w-full object-contain">
+                                        </span>
                                     @endif
-                                </span>
-                                <x-photo-cropper model="editLogo" class="min-w-0 flex-1" :preview="false" aspect="free" format="png" :width="1600" :label="$partner->logo_path ? 'Zmień logo' : 'Dodaj logo'" />
+                                    <p class="w-full text-xs font-semibold text-emerald-700">Nowe logo zapisze się po kliknięciu „Zapisz”.</p>
+                                @else
+                                    <span class="flex h-16 w-40 shrink-0 items-center justify-center rounded p-1 ring-1 ring-gray-200" style="background: {{ $editColor ?: '#fff' }}">
+                                        @if($partner->logo_path)
+                                            <img src="{{ \App\Support\Media::url($partner->logo_path) }}" alt="Obecne logo" class="max-h-full max-w-full object-contain">
+                                        @else
+                                            <span class="text-xs text-gray-400">brak logo</span>
+                                        @endif
+                                    </span>
+                                @endif
+                                <x-photo-cropper model="editLogo" class="min-w-0 flex-1" :preview="false" aspect="free" format="png" :width="1600" :label="$partner->logo_path || $editLogo ? 'Zmień logo' : 'Dodaj logo'" />
                             </div>
                             @error('editLogo') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>

@@ -517,20 +517,55 @@
             {{-- Hale turnieju: klubowa jest zawsze, dodatkowe (MOSiR, szkoła) z własnymi boiskami; dotyczy wszystkich kategorii --}}
             <details class="rounded-lg border border-gray-200 bg-white p-4" @if($halls !== []) open @endif>
                 <summary class="cursor-pointer font-semibold text-gray-900">Hale turnieju <span class="text-xs font-normal text-gray-500">· {{ \App\Support\TournamentHalls::mainName() }}@foreach($extraHalls as $hall), {{ $hall['name'] }}@endforeach</span></summary>
-                <p class="mt-2 text-xs text-gray-500">{{ \App\Support\TournamentHalls::mainName() }} z sektorami jest zawsze. Gdy część meczów gra się gdzie indziej, dodaj halę i jej boiska po przecinku, np. „Sektor I, Sektor II, Sektor III” albo „Hala 1, Hala 2”. Hala szkoły z dwiema salami podzielonymi na sektory to dwie hale, np. „SP 3 – sala duża” i „SP 3 – sala mała”. Każdy mecz przeniesiesz w dowolnej chwili do innej hali i na inne boisko.</p>
-                <div class="mt-3 space-y-2">
+                <p class="mt-2 text-xs text-gray-500">Gdy część meczów gra się poza {{ \App\Support\TournamentHalls::mainName() }}, dodaj halę. Dwie sale jednej szkoły to dwie hale. Kibice zobaczą pod terminarzem nazwę, adres i ikony boisk.</p>
+                <div class="mt-3 grid gap-3 lg:grid-cols-2">
                     @foreach($halls as $index => $hall)
-                        <div class="grid gap-2 rounded-md bg-gray-50 p-2 sm:grid-cols-[12rem_1fr_12rem_auto]" wire:key="hall-{{ $index }}">
-                            <input type="text" wire:model.blur.live="halls.{{ $index }}.name" maxlength="60" placeholder="Nazwa, np. MOSiR" class="{{ $input }}" aria-label="Nazwa hali">
-                            <input type="text" wire:model.blur.live="halls.{{ $index }}.courts" placeholder="Boiska po przecinku, np. Sektor I, Sektor II" class="{{ $input }}" aria-label="Boiska hali">
-                            <input type="text" wire:model.blur.live="halls.{{ $index }}.address" maxlength="160" placeholder="Adres (opcjonalnie)" class="{{ $input }}" aria-label="Adres hali">
-                            <button type="button" wire:click="removeHall({{ $index }})" wire:confirm="Usunąć tę halę?" class="text-sm text-red-600 hover:text-red-800">Usuń</button>
-                            @error("halls.{$index}.name") <p class="text-xs text-red-600 sm:col-span-4">{{ $message }}</p> @enderror
+                        @php $courtNames = array_values(array_filter(array_map('trim', explode(',', (string) $hall['courts'])), 'strlen')); @endphp
+                        <div class="space-y-2 rounded-lg bg-gray-50 p-3 ring-1 ring-gray-200" wire:key="hall-{{ $index }}">
+                            <div class="flex items-center gap-2">
+                                <input type="text" wire:model.blur.live="halls.{{ $index }}.name" maxlength="60" placeholder="Nazwa hali, np. MOSiR" class="{{ $input }} font-semibold" aria-label="Nazwa hali">
+                                <button type="button" wire:click="removeHall({{ $index }})" wire:confirm="Usunąć tę halę?" class="shrink-0 rounded-md px-2 py-1.5 text-sm text-red-600 hover:bg-red-50" aria-label="Usuń halę">Usuń</button>
+                            </div>
+                            @error("halls.{$index}.name") <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                            <input type="text" wire:model.blur.live="halls.{{ $index }}.address" maxlength="160" placeholder="Adres, np. ul. Żeromskiego 3, Piła" class="{{ $input }}" aria-label="Adres hali">
+                            <div>
+                                <p class="text-xs font-medium text-gray-600">Boiska</p>
+                                {{-- Gotowe podziały jednym kliknięciem; nazwy można potem zmienić w polu --}}
+                                <div class="mt-1 flex flex-wrap gap-1">
+                                    @foreach(['Sektor I, Sektor II, Sektor III' => '3 sektory', 'Boisko 1, Boisko 2' => '2 boiska', 'Hala 1, Hala 2' => 'Hala 1 i 2', 'Boisko' => '1 boisko'] as $preset => $presetLabel)
+                                        <button type="button" wire:click="$set('halls.{{ $index }}.courts', @js($preset))" @class(['rounded-full px-2.5 py-1 text-xs font-semibold ring-1', 'bg-sky-600 text-white ring-sky-600' => $hall['courts'] === $preset, 'bg-white text-gray-700 ring-gray-300 hover:bg-gray-100' => $hall['courts'] !== $preset])>{{ $presetLabel }}</button>
+                                    @endforeach
+                                </div>
+                                <input type="text" wire:model.blur.live="halls.{{ $index }}.courts" placeholder="albo wpisz nazwy po przecinku" class="{{ $input }} mt-1" aria-label="Boiska hali">
+                            </div>
+                            {{-- Podgląd: tak boiska wyglądają przy meczach i w legendzie dla kibiców --}}
+                            @if($courtNames !== [])
+                                <div class="flex flex-wrap items-end gap-3 rounded-md bg-white p-2 ring-1 ring-gray-200">
+                                    @foreach($courtNames as $courtIndex => $courtName)
+                                        <span class="flex flex-col items-center gap-0.5 text-[11px] font-semibold text-gray-600">
+                                            <x-venue-icon :parts="count($courtNames)" :index="count($courtNames) === 1 ? null : $courtIndex" />{{ $courtName }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
                     @endforeach
-                    @error('halls') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
-                    <button type="button" wire:click="addHall" class="text-sm font-semibold text-sky-700 hover:text-sky-900">+ Dodaj halę</button>
+                    <div class="flex min-h-24 flex-col items-stretch justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-3">
+                        <button type="button" wire:click="addHall" class="rounded-md py-1.5 text-sm font-semibold text-sky-700 hover:bg-sky-50">+ Dodaj nową halę</button>
+                        @if($knownHalls = $this->knownHalls())
+                            {{-- Hale z poprzednich turniejów: nazwa, adres i boiska przechodzą od razu --}}
+                            <p class="text-center text-xs text-gray-500">albo z poprzednich turniejów:</p>
+                            <div class="flex flex-wrap justify-center gap-1.5">
+                                @foreach($knownHalls as $known)
+                                    <button type="button" wire:click="addKnownHall(@js($known['name']))" title="{{ $known['address'] }} · {{ implode(', ', $known['courts']) }}" class="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-800 ring-1 ring-gray-300 hover:bg-gray-50">
+                                        <x-venue-icon :parts="count($known['courts'])" small />{{ $known['name'] }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
                 </div>
+                @error('halls') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
             </details>
 
             {{-- Harmonogram: pierwszy mecz i odstęp; zmiana godziny meczu przesuwa kolejne na tym samym sektorze --}}

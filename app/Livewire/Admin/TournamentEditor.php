@@ -178,6 +178,33 @@ class TournamentEditor extends Component
         $this->halls[] = ['name' => '', 'courts' => 'Sektor I, Sektor II, Sektor III', 'address' => ''];
     }
 
+    /**
+     * Hale z innych turniejów (ostatnio używana wersja każdej nazwy), do dodania jednym kliknięciem.
+     *
+     * @return list<array{name: string, courts: list<string>, address: string}>
+     */
+    public function knownHalls(): array
+    {
+        $used = collect($this->halls)->map(fn ($hall) => mb_strtolower(trim((string) $hall['name'])));
+
+        return Tournament::whereKeyNot($this->tournament->id)->whereNotNull('halls')->latest('start_date')->get(['id', 'halls'])
+            ->flatMap(fn (Tournament $tournament) => TournamentHalls::extra($tournament))
+            ->unique(fn (array $hall) => mb_strtolower($hall['name']))
+            ->reject(fn (array $hall) => $used->contains(mb_strtolower($hall['name'])))
+            ->values()->all();
+    }
+
+    public function addKnownHall(string $name): void
+    {
+        $hall = collect($this->knownHalls())->firstWhere('name', $name);
+
+        if ($hall) {
+            $this->halls[] = ['name' => $hall['name'], 'courts' => implode(', ', $hall['courts']), 'address' => $hall['address']];
+            $this->saveHalls();
+            $this->toast('Dodano halę '.$hall['name'].' z poprzedniego turnieju.');
+        }
+    }
+
     public function removeHall(int $index): void
     {
         $name = trim((string) ($this->halls[$index]['name'] ?? ''));

@@ -24,8 +24,7 @@
                     <span class="text-xs opacity-60">{{ __('Godzina do ustalenia') }}</span>
                 @endif
                 @if($match->court)
-                    @php $venue = \App\Models\TrainingSession::venueForCourt($match->court); @endphp
-                    <span class="inline-flex min-w-0 items-center gap-1.5 text-xs opacity-90">@if($venue)<x-venue-icon :venue="$venue" small class="rounded-[3px] bg-white" />@endif<span class="truncate">{{ \App\Models\TrainingSession::courtLabel($match->court) }}</span></span>
+                    <span class="inline-flex min-w-0 items-center gap-1.5 text-xs opacity-90"><x-court-icon :court="$match->court" :category="$match->tournament_category_id" class="rounded-[3px] bg-white" /><span class="truncate">{{ \App\Models\TrainingSession::courtLabel($match->court) }}</span></span>
                 @endif
             </p>
     </header>

@@ -181,6 +181,8 @@
         {{-- MECZE: terminarz dniami i godzinami, z filtrem drużyny --}}
         @if($currentTab === 'matches' && $current)
             <x-tournament-schedule :matches="$current->matches" :bracket="$bracket" />
+            {{-- Legenda: hale, adresy i ikony boisk, żeby było wiadomo, gdzie gra się mecz --}}
+            <x-tournament-halls :tournament="$tournament" :matches="$current->matches" class="mt-10" />
             <x-tournament-scoring-note :groups="$current->groups" :tournament="$tournament" class="mt-10" />
         @endif
 
@@ -253,7 +255,6 @@
 
                 <ol x-show="list" x-cloak class="mt-6 divide-y divide-zinc-100 overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200">
                     @foreach($knockout as $match)
-                        @php $venue = \App\Models\TrainingSession::venueForCourt($match->court); @endphp
                         <li class="grid grid-cols-[4rem_minmax(0,1fr)] items-center gap-x-3 gap-y-1 px-4 py-3 sm:grid-cols-[4.5rem_3.5rem_minmax(0,1fr)_9rem]" wire:key="list-{{ $match->id }}">
                             <span class="font-display text-xl font-semibold tabular-nums text-zinc-900">{{ $match->starts_at?->format('H:i') ?? '–' }}</span>
                             <span class="hidden sm:block"><span class="rounded-md bg-(--tm-number-bg) px-1.5 text-sm font-bold text-(--tm-number-text) tabular-nums">#{{ $match->number }}</span></span>
@@ -262,21 +263,13 @@
                                 <span class="block truncate text-sm text-zinc-500">{{ $bracket->side($match, 'home')['text'] }} – {{ $bracket->side($match, 'away')['text'] }}@if($match->home_sets !== null) · <b class="text-zinc-800 tabular-nums">{{ $match->home_sets }}:{{ $match->away_sets }}</b>@endif</span>
                             </span>
                             <span class="col-start-2 inline-flex items-center gap-2 text-sm text-zinc-600 sm:col-start-auto">
-                                @if($venue)<x-venue-icon :venue="$venue" small />@endif{{ \App\Models\TrainingSession::courtLabel($match->court) }}
+                                <x-court-icon :court="$match->court" :category="$match->tournament_category_id" />{{ \App\Models\TrainingSession::courtLabel($match->court) }}
                             </span>
                         </li>
                     @endforeach
                 </ol>
 
-                @php $usedVenues = $knockout->map(fn ($match) => \App\Models\TrainingSession::venueForCourt($match->court))->filter()->unique(); @endphp
-                @if($usedVenues->isNotEmpty())
-                    <p class="mt-6 inline-flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl bg-white px-4 py-2.5 text-sm text-zinc-600 ring-1 ring-zinc-200">
-                        <span class="font-semibold text-zinc-900">{{ __('Sektory') }}:</span>
-                        @foreach(['court3', 'court2', 'court1', 'main'] as $venue)
-                            <span class="inline-flex items-center gap-2"><x-venue-icon :venue="$venue" small />{{ \App\Models\TrainingSession::venueNames()[$venue] }}</span>
-                        @endforeach
-                    </p>
-                @endif
+                <x-tournament-halls :tournament="$tournament" :matches="$knockout" class="mt-6" />
             </div>
 
             @if($standings->isNotEmpty())
