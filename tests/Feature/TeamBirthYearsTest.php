@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Admin\TeamList;
+use App\Models\Game;
 use App\Models\Player;
 use App\Models\Season;
 use App\Models\Team;
@@ -57,4 +58,12 @@ test('zawodnik dopisany do drugiej drużyny liczy się w obu na liście drużyn'
 
     expect(Team::withActivePlayersCount()->pluck('active_players_count', 'id')->all())
         ->toBe([$juniors->id => 1, $seniors->id => 1]);
+});
+
+test('strona drużyny odlicza czas do najbliższego meczu', function () {
+    $season = Season::factory()->create(['is_current' => true]);
+    $team = Team::factory()->create();
+    $game = Game::factory()->create(['season_id' => $season->id, 'team_id' => $team->id, 'opponent' => 'Fort Tarnowo', 'game_date' => now()->addDays(3)->setTime(18, 45), 'status' => 'scheduled', 'home_score' => null, 'away_score' => null, 'sets_score' => null]);
+
+    $this->get(route('teams.show', $team))->assertOk()->assertSee('data-countdown="'.$game->game_date->toIso8601String().'"', false);
 });

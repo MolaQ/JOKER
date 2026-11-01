@@ -37,7 +37,18 @@
             <div><dt class="text-xs text-zinc-400 uppercase">{{ __('Zawodnicy') }}</dt><dd class="font-display text-4xl font-bold">{{ $roster->count() }}</dd></div>
             <div><dt class="text-xs text-zinc-400 uppercase">{{ __('Sztab') }}</dt><dd class="font-display text-4xl font-bold">{{ $staff->count() }}</dd></div>
             @if($upcoming_games->first())
-                <div><dt class="text-xs text-zinc-400 uppercase">{{ __('Najbliższy mecz') }}</dt><dd class="font-display text-2xl font-semibold uppercase">{{ $upcoming_games->first()->game_date?->translatedFormat('d M') }} · {{ $upcoming_games->first()->opponentShortName() }}</dd></div>
+                @php $nextGame = $upcoming_games->first(); @endphp
+                <div>
+                    <dt class="text-xs text-zinc-400 uppercase">{{ __('Najbliższy mecz') }}</dt>
+                    <dd class="font-display text-2xl font-semibold uppercase">{{ $nextGame->game_date?->translatedFormat('d M') }} · {{ $nextGame->opponentShortName() }}</dd>
+                    {{-- Odliczanie jak na stronie głównej (ten sam przełącznik w ustawieniach) --}}
+                    @if($site['home_show_countdown'] && $nextGame->game_date?->isFuture())
+                        <dd class="mt-3">
+                            <div data-countdown="{{ $nextGame->game_date->toIso8601String() }}" role="timer" aria-hidden="true"></div>
+                            <p data-countdown-text class="sr-only" aria-live="off"></p>
+                        </dd>
+                    @endif
+                </div>
             @endif
         </dl>
     </div>
