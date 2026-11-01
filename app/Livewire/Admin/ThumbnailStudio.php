@@ -46,6 +46,14 @@ class ThumbnailStudio extends Component
     /** Wybrany mecz: „game:12”, „match:5” albo pusty (wpisywanie ręczne). */
     public string $pick = '';
 
+    /** Wynik wpisywany w polach: sety wygrane przez gospodarzy i gości. */
+    public string $scoreHome = '';
+
+    public string $scoreAway = '';
+
+    /** @var list<array{h: string, a: string}> Punkty w setach (do pięciu). */
+    public array $setRows = [];
+
     public $background = null;
 
     public $cornerImage = null;
@@ -64,6 +72,7 @@ class ThumbnailStudio extends Component
     public function mount(): void
     {
         $this->m = ThumbnailData::blank();
+        $this->fillResultInputs();
         $this->loadTemplate(ThumbnailTemplate::query()->orderBy('name')->value('id'));
     }
 
@@ -92,6 +101,7 @@ class ThumbnailStudio extends Component
             'match' => ThumbnailData::fromTournamentMatch(TournamentMatch::findOrFail((int) $id)),
             default => ThumbnailData::blank(),
         };
+        $this->fillResultInputs();
 
         // Szablon przypisany do rozgrywek albo turnieju meczu wybiera się sam.
         $template = match (true) {
@@ -136,6 +146,42 @@ class ThumbnailStudio extends Component
         if (preg_match('/^\s*(\d)\s*:\s*(\d)\s*$/', (string) $this->m['score'], $score)) {
             $this->m['score'] = $score[2].':'.$score[1];
         }
+        $this->fillResultInputs();
+    }
+
+    /**
+     * Pola wyniku i setów z danych grafiki (po wyborze meczu albo zamianie stron).
+     */
+    private function fillResultInputs(): void
+    {
+        $score = preg_match('/^\s*(\d)\s*:\s*(\d)\s*$/', (string) $this->m['score'], $found) ? [$found[1], $found[2]] : ['', ''];
+        [$this->scoreHome, $this->scoreAway] = $score;
+        $sets = ThumbnailData::parseSets((string) $this->m['sets']);
+        $this->setRows = array_map(fn (int $index) => ['h' => (string) ($sets[$index][0] ?? ''), 'a' => (string) ($sets[$index][1] ?? '')], range(0, 4));
+    }
+
+    /**
+     * Wpisany wynik i sety trafiają do grafiki; pusty wynik liczy się z setów.
+     */
+    public function updated(string $name): void
+    {
+        if (! preg_match('/^(scoreHome|scoreAway|setRows)/', $name)) {
+            return;
+        }
+
+        $digits = fn ($value) => preg_replace('/\D/', '', (string) $value);
+        $this->m['score'] = $digits($this->scoreHome) !== '' && $digits($this->scoreAway) !== '' ? $digits($this->scoreHome).':'.$digits($this->scoreAway) : '';
+        $this->m['sets'] = collect($this->setRows)
+            ->filter(fn (array $row) => $digits($row['h'] ?? '') !== '' && $digits($row['a'] ?? '') !== '')
+            ->map(fn (array $row) => (int) $digits($row['h']).':'.(int) $digits($row['a']))
+            ->implode(', ');
+    }
+
+    public function clearResult(): void
+    {
+        $this->m['score'] = '';
+        $this->m['sets'] = '';
+        $this->fillResultInputs();
     }
 
     public function updatedHomeLogo(): void
@@ -255,13 +301,19 @@ class ThumbnailStudio extends Component
      */
     private function choices(): array
     {
+        // Najpierw najbliższe (od dziś w przyszłość), potem rozegrane od najnowszego.
         $games = Game::query()->with(['team', 'opponentTeam', 'competition'])
-            ->whereBetween('game_date', [now()->subDays(120), now()->addDays(90)])
-            ->orderByDesc('game_date')->limit(150)->get();
+            ->whereBetween('game_date', [now()->subDays(120), now()->addDays(120)])
+            ->limit(200)->get();
+        $today = now()->startOfDay();
+        $games = $games->filter(fn (Game $game) => $game->game_date >= $today)->sortBy('game_date')
+            ->concat($games->filter(fn (Game $game) => $game->game_date < $today)->sortByDesc('game_date'))
+            ->values();
 
         $matches = TournamentMatch::query()->with(['category.tournament', 'home.competitor', 'away.competitor'])
             ->whereHas('category.tournament', fn ($tournament) => $tournament->where('start_date', '>=', now()->subDays(120)->toDateString()))
-            ->orderBy('starts_at')->get()
+            ->get()
+            ->sortBy(fn (TournamentMatch $match) => [$match->starts_at && $match->starts_at < now()->startOfDay() ? 1 : 0, $match->starts_at && $match->starts_at < now()->startOfDay() ? -$match->starts_at->getTimestamp() : (int) $match->starts_at?->getTimestamp()])
             ->filter(fn (TournamentMatch $match) => $match->home?->isOwnTeam() || $match->away?->isOwnTeam())
             ->groupBy(fn (TournamentMatch $match) => $match->category->tournament->name);
 

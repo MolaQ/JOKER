@@ -80,3 +80,19 @@ test('names split into two lines and the score comes from sets', function () {
         ->and(ThumbnailData::splitName('MKS Kalisz'))->toBe(['MKS', 'Kalisz'])
         ->and(ThumbnailData::score('', ThumbnailData::parseSets('25:20, 23:25 15:12')))->toBe([2, 1]);
 });
+
+test('the result is typed in score and set fields', function () {
+    $this->actingAs(User::factory()->create(['role' => UserRole::Photographer]));
+
+    Livewire::test(ThumbnailStudio::class)
+        ->set('setRows.0.h', '25')->set('setRows.0.a', '20')
+        ->set('setRows.1.h', '23')->set('setRows.1.a', '25')
+        ->set('setRows.2.h', '15')->set('setRows.2.a', '12')
+        ->assertSet('m.sets', '25:20, 23:25, 15:12')
+        ->assertSet('m.score', '')
+        ->set('scoreHome', '2')->set('scoreAway', '1')
+        ->assertSet('m.score', '2:1')
+        ->call('swapSides')
+        ->assertSet('scoreHome', '1')
+        ->assertSet('setRows.0.h', '20');
+});

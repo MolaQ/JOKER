@@ -15,7 +15,7 @@
                 <select id="ytt-pick" wire:model.live="pick" class="{{ $input }}">
                     <option value="">Wpiszę ręcznie</option>
                     @if($games->isNotEmpty())
-                        <optgroup label="Mecze klubu">
+                        <optgroup label="Mecze klubu (najbliższe, potem rozegrane)">
                             @foreach($games as $game)
                                 <option value="game:{{ $game->id }}">{{ $game->game_date?->format('d.m') }} · {{ implode(' – ', $game->sidesNames()) }}@if($game->competition) · {{ $game->competition->name }}@endif</option>
                             @endforeach
@@ -79,16 +79,42 @@
                 <div class="col-span-2"><label class="{{ $label }}">Etap (opcjonalnie)</label><input type="text" wire:model.live.debounce.400ms="m.stage" class="{{ $input }}" placeholder="np. Kadetki · Grupa A · mecz #1"></div>
             </div>
 
-            <div class="grid grid-cols-[6rem_1fr] gap-2 border-t border-gray-100 pt-3">
-                <div><label class="{{ $label }}">Wynik</label><input type="text" wire:model.live.debounce.400ms="m.score" class="{{ $input }}" placeholder="z setów"></div>
-                <div><label class="{{ $label }}">Sety</label><input type="text" wire:model.live.debounce.400ms="m.sets" class="{{ $input }}" placeholder="25:20, 23:25, 15:12"></div>
-                <div class="col-span-2"><label class="{{ $label }}">Wyróżnienie (opcjonalnie)</label><input type="text" wire:model.live.debounce.400ms="m.mvp" class="{{ $input }}" placeholder="np. MVP: Jan Kowalski"></div>
+        </section>
+
+        {{-- WYNIK --}}
+        <section class="{{ $card }} space-y-3">
+            <div class="flex items-center justify-between gap-2">
+                <h2 class="text-sm font-bold tracking-wide text-gray-900 uppercase">2. Wynik (do podsumowania)</h2>
+                <button type="button" wire:click="clearResult" class="text-xs text-gray-500 hover:text-red-600">Wyczyść</button>
             </div>
+            <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+                <div>
+                    <label class="{{ $label }} truncate" for="ytt-score-home">{{ $m['home']['name'] ?: 'Gospodarze' }}</label>
+                    <input id="ytt-score-home" type="number" min="0" max="3" inputmode="numeric" wire:model.live.debounce.300ms="scoreHome" class="{{ $input }} text-center text-2xl font-bold" placeholder="–">
+                </div>
+                <span class="pb-2 text-2xl font-bold text-gray-400">:</span>
+                <div>
+                    <label class="{{ $label }} truncate text-right" for="ytt-score-away">{{ $m['away']['name'] ?: 'Goście' }}</label>
+                    <input id="ytt-score-away" type="number" min="0" max="3" inputmode="numeric" wire:model.live.debounce.300ms="scoreAway" class="{{ $input }} text-center text-2xl font-bold" placeholder="–">
+                </div>
+            </div>
+            <p class="text-[11px] text-gray-500">Puste pola wyniku: wynik policzy się z setów.</p>
+            <div class="space-y-1.5">
+                @foreach($setRows as $index => $row)
+                    <div wire:key="set-{{ $index }}" class="grid grid-cols-[3.5rem_1fr_auto_1fr] items-center gap-2">
+                        <span class="text-xs font-semibold text-gray-500">Set {{ $index + 1 }}</span>
+                        <input type="number" min="0" max="99" inputmode="numeric" wire:model.live.debounce.300ms="setRows.{{ $index }}.h" class="{{ $input }} text-center" aria-label="Set {{ $index + 1 }}, gospodarze">
+                        <span class="text-gray-400">:</span>
+                        <input type="number" min="0" max="99" inputmode="numeric" wire:model.live.debounce.300ms="setRows.{{ $index }}.a" class="{{ $input }} text-center" aria-label="Set {{ $index + 1 }}, goście">
+                    </div>
+                @endforeach
+            </div>
+            <div><label class="{{ $label }}">Wyróżnienie (opcjonalnie)</label><input type="text" wire:model.live.debounce.400ms="m.mvp" class="{{ $input }}" placeholder="np. MVP: Jan Kowalski"></div>
         </section>
 
         {{-- SZABLON --}}
         <section class="{{ $card }} space-y-3">
-            <h2 class="text-sm font-bold tracking-wide text-gray-900 uppercase">2. Szablon</h2>
+            <h2 class="text-sm font-bold tracking-wide text-gray-900 uppercase">3. Szablon</h2>
             <div>
                 <label class="{{ $label }}" for="ytt-template">Wygląd zapisany dla rozgrywek</label>
                 <select id="ytt-template" wire:model.live="templateId" class="{{ $input }}">
