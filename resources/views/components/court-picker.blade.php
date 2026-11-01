@@ -8,22 +8,26 @@
 @endphp
 <div {{ $attributes->merge(['class' => 'space-y-1']) }}>
     <div class="flex items-center gap-1" role="group" aria-label="Boisko">
-        @if($halls !== [])<span class="mr-1 max-w-24 truncate text-[10px] font-semibold text-gray-500 uppercase" title="{{ \App\Support\TournamentHalls::mainName() }}">{{ \App\Support\TournamentHalls::mainName() }}</span>@endif
+        @if($halls !== [])<span class="mr-1 w-16 shrink-0 text-[10px] leading-tight font-semibold break-words text-gray-500 uppercase" title="{{ \App\Support\TournamentHalls::mainName() }}">{{ \App\Support\TournamentHalls::mainName() }}</span>@endif
         @foreach(['court3', 'court2', 'court1', 'main'] as $venue)
             <button type="button" wire:click="$set('{{ $model }}', '{{ $current === $venue ? '' : $venues[$venue] }}')" title="{{ $venues[$venue] }}" aria-pressed="{{ $current === $venue ? 'true' : 'false' }}"
-                @class(['rounded-md p-1 ring-1 transition', 'bg-sky-50 ring-sky-500' => $current === $venue, 'ring-transparent opacity-50 hover:opacity-100 hover:ring-gray-300' => $current !== $venue])>
+                @class(['flex flex-col items-center rounded-md p-1 ring-1 transition', 'bg-sky-50 ring-sky-500' => $current === $venue, 'ring-transparent opacity-50 hover:opacity-100 hover:ring-gray-300' => $current !== $venue])>
                 <x-venue-icon :venue="$venue" small />
-                <span class="sr-only">{{ $venues[$venue] }}</span>
+                @if($halls !== [])<span class="mt-0.5 block max-w-14 truncate text-[9px] leading-none font-semibold text-gray-600">{{ $venues[$venue] }}</span>@else<span class="sr-only">{{ $venues[$venue] }}</span>@endif
             </button>
         @endforeach
     </div>
     @foreach($halls as $hall)
         <div class="flex flex-wrap items-center gap-1" role="group" aria-label="{{ $hall['name'] }}">
-            <span class="mr-1 max-w-24 truncate text-[10px] font-semibold text-gray-500 uppercase" title="{{ $hall['name'] }}">{{ $hall['name'] }}</span>
-            @foreach($hall['courts'] as $court)
+            <span class="mr-1 w-16 shrink-0 text-[10px] leading-tight font-semibold break-words text-gray-500 uppercase" title="{{ $hall['name'] }}">{{ $hall['name'] }}</span>
+            @foreach($hall['courts'] as $courtIndex => $court)
                 @php $courtValue = $hallValue($hall['name'], $court); @endphp
-                <button type="button" wire:click="$set('{{ $model }}', @js($value === $courtValue ? '' : $courtValue))" aria-pressed="{{ $value === $courtValue ? 'true' : 'false' }}"
-                    @class(['rounded-md px-1.5 py-0.5 text-[11px] font-semibold ring-1 transition', 'bg-sky-50 text-sky-800 ring-sky-500' => $value === $courtValue, 'text-gray-600 ring-gray-200 hover:ring-gray-400' => $value !== $courtValue])>{{ $court }}</button>
+                {{-- Ikona hali podzielonej na tyle części, ile ma boisk; podpis to nazwa boiska --}}
+                <button type="button" wire:click="$set('{{ $model }}', @js($value === $courtValue ? '' : $courtValue))" title="{{ $hall['name'] }} · {{ $court }}" aria-pressed="{{ $value === $courtValue ? 'true' : 'false' }}"
+                    @class(['flex flex-col items-center rounded-md p-1 ring-1 transition', 'bg-sky-50 ring-sky-500' => $value === $courtValue, 'ring-transparent opacity-60 hover:opacity-100 hover:ring-gray-300' => $value !== $courtValue])>
+                    <x-venue-icon :parts="count($hall['courts'])" :index="$courtIndex" small />
+                    <span class="mt-0.5 max-w-14 truncate text-[9px] leading-none font-semibold text-gray-600">{{ $court }}</span>
+                </button>
             @endforeach
         </div>
     @endforeach

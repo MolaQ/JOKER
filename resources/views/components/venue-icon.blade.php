@@ -1,4 +1,4 @@
-@props(['venue', 'small' => false])
+@props(['venue' => null, 'small' => false, 'parts' => null, 'index' => null])
 @php
     // Symbol miejsca treningu: sala podzielona w poprzek na trzy boiska (3 lewe, 2 środkowe, 1 prawe), główne boisko to cała sala, siłownia osobno.
     // Kolory i ikonę siłowni ustawia się w panelu: System → Ustawienia systemu → Kolory.
@@ -7,6 +7,13 @@
     $gym = $site->color('color_gym');
     $third = 46 / 3;
     $part = ['court1' => 2, 'court2' => 1, 'court3' => 0][$venue] ?? null;
+    // Inna hala turnieju: boisko podzielone na tyle części, ile ma boisk (parts), z zaznaczoną jedną (index); jedno boisko = całe.
+    if ($parts !== null) {
+        $parts = max(1, min(6, (int) $parts));
+        $venue = $parts === 1 ? 'main' : 'court';
+        $third = 46 / $parts;
+        $part = $index === null ? null : (int) $index;
+    }
 @endphp
 <svg {{ $attributes->merge(['class' => ($small ? 'h-[18px] w-[29px]' : 'h-[30px] w-12').' shrink-0']) }} viewBox="0 0 48 30" aria-hidden="true">
     @if($venue === 'gym')
@@ -33,7 +40,8 @@
         @if($part !== null)
             <rect x="{{ 1 + $part * $third + 1.5 }}" y="2.5" width="{{ $third - 3 }}" height="25" rx="2" fill="{{ $court }}"/>
         @endif
-        <line x1="{{ 1 + $third }}" y1="5" x2="{{ 1 + $third }}" y2="25" stroke="#d4d4d8" stroke-width="1.2"/>
-        <line x1="{{ 1 + 2 * $third }}" y1="5" x2="{{ 1 + 2 * $third }}" y2="25" stroke="#d4d4d8" stroke-width="1.2"/>
+        @for($line = 1; $line < (int) round(46 / $third); $line++)
+            <line x1="{{ 1 + $line * $third }}" y1="5" x2="{{ 1 + $line * $third }}" y2="25" stroke="#d4d4d8" stroke-width="1.2"/>
+        @endfor
     @endif
 </svg>
