@@ -12,6 +12,7 @@ use App\Models\TrainingSession;
 use App\Models\User;
 use App\Support\AgeColors;
 use App\Support\TournamentBracket;
+use App\Support\TournamentSchedule;
 use App\Support\TournamentTable;
 use Livewire\Livewire;
 
@@ -794,4 +795,39 @@ test('a corrected result clears the earlier set format error', function () {
         ->assertHasNoErrors();
 
     expect($match->fresh())->home_sets->toBe(3)->away_sets->toBe(1);
+});
+
+test('a tournament can use other halls: a category plays there by default and any match can move between halls', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $base = ['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id];
+    $matches = collect(range(1, 3))->map(fn ($number) => $category->matches()->create($base + ['number' => $number]));
+
+    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
+        ->call('addHall')
+        ->set('halls.0.name', 'MOSiR')
+        ->set('halls.0.courts', 'Boisko A, Boisko B')
+        ->set('categoryHall', 'MOSiR')
+        ->call('arrangeSchedule')
+        ->assertSee('Hale turnieju');
+
+    expect($category->fresh()->hall)->toBe('MOSiR')
+        ->and($matches->map(fn ($match) => $match->fresh()->court)->unique()->sort()->values()->all())->toBe(['MOSiR · Boisko A', 'MOSiR · Boisko B']);
+
+    // Jeden mecz przechodzi do hali klubowej; obłożenie pokazuje obie hale.
+    $editor->set("results.{$matches[2]->id}.court", 'Sektor I');
+    $day = TournamentSchedule::occupancy($this->tournament->fresh())->first();
+    expect($day['halls']->keys()->all())->toBe(['Hala LOMS', 'MOSiR'])
+        ->and($day['halls']['MOSiR']->keys()->all())->toBe(['Boisko A', 'Boisko B'])
+        ->and($day['halls']['Hala LOMS']['Sektor I'])->toHaveCount(1);
+
+    // Zmiana nazwy hali przenosi zapisane boiska.
+    $editor->set('halls.0.name', 'MOSiR Piła');
+    expect($matches[0]->fresh()->court)->toStartWith('MOSiR Piła · ')
+        ->and($category->fresh()->hall)->toBe('MOSiR Piła');
+
+    // Hali z meczami nie da się usunąć.
+    $editor->call('removeHall', 0);
+    expect($this->tournament->fresh()->halls)->toHaveCount(1);
 });

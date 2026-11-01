@@ -42,6 +42,7 @@ class Tournament extends Model
         'rules',
         'guest_info',
         'has_page',
+        'halls',
     ];
 
     /** Seria edycji Memoriału im. Włodzimierza Winklera (zakładka w menu). */
@@ -55,6 +56,7 @@ class Tournament extends Model
             'end_date' => 'date',
             'is_organizer' => 'boolean',
             'has_page' => 'boolean',
+            'halls' => 'array',
         ];
     }
 

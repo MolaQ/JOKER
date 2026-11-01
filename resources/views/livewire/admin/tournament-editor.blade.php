@@ -3,6 +3,7 @@
     $label = 'block text-sm font-medium text-gray-700 mb-1';
     $primary = 'inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700';
     $secondary = 'inline-flex items-center justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50';
+    $extraHalls = \App\Support\TournamentHalls::extra($tournament);
     $sections = ['strona' => 'Strona i informator', 'kategorie' => 'Kategorie', 'druzyny' => 'Drużyny', 'grupy' => 'Grupy', 'mecze' => 'Mecze i wyniki', 'wyroznienia' => 'Wyróżnienia', 'partnerzy' => 'Partnerzy turnieju', 'wpisujacy' => 'Wpisujący wyniki'];
 @endphp
 
@@ -304,7 +305,7 @@
 
                         <div class="flex flex-wrap items-center gap-3">
                             <p class="text-xs font-semibold text-gray-500 uppercase">Sektor grupy</p>
-                            <x-court-picker model="groupCourts.{{ $group->id }}" :value="$groupCourts[$group->id] ?? null" :free="false" />
+                            <x-court-picker :halls="$extraHalls" model="groupCourts.{{ $group->id }}" :value="$groupCourts[$group->id] ?? null" :free="false" />
                             <span class="text-xs text-gray-500">{{ filled($groupCourts[$group->id] ?? null) ? \App\Models\TrainingSession::courtLabel($groupCourts[$group->id]) : 'brak: przy układaniu godzin mecze trafią na wolne sektory' }}</span>
                         </div>
 
@@ -505,13 +506,32 @@
                     </div>
                     <div>
                         <label class="{{ $label }}">Boisko / hala</label>
-                        <x-court-picker model="match.court" :value="$match['court'] ?? null" />
+                        <x-court-picker :halls="$extraHalls" model="match.court" :value="$match['court'] ?? null" />
                     </div>
                     <div class="sm:col-span-2 flex items-end">
                         <button type="submit" class="{{ $primary }}">Dodaj mecz</button>
                     </div>
                 </div>
             </form>
+
+            {{-- Hale turnieju: klubowa jest zawsze, dodatkowe (MOSiR, szkoła) z własnymi boiskami; dotyczy wszystkich kategorii --}}
+            <details class="rounded-lg border border-gray-200 bg-white p-4" @if($halls !== []) open @endif>
+                <summary class="cursor-pointer font-semibold text-gray-900">Hale turnieju <span class="text-xs font-normal text-gray-500">· {{ \App\Support\TournamentHalls::mainName() }}@foreach($extraHalls as $hall), {{ $hall['name'] }}@endforeach</span></summary>
+                <p class="mt-2 text-xs text-gray-500">{{ \App\Support\TournamentHalls::mainName() }} z sektorami jest zawsze. Gdy część meczów gra się gdzie indziej, dodaj halę i jej boiska po przecinku, np. „Sektor I, Sektor II, Sektor III” albo „Hala 1, Hala 2”. Hala szkoły z dwiema salami podzielonymi na sektory to dwie hale, np. „SP 3 – sala duża” i „SP 3 – sala mała”. Każdy mecz przeniesiesz w dowolnej chwili do innej hali i na inne boisko.</p>
+                <div class="mt-3 space-y-2">
+                    @foreach($halls as $index => $hall)
+                        <div class="grid gap-2 rounded-md bg-gray-50 p-2 sm:grid-cols-[12rem_1fr_12rem_auto]" wire:key="hall-{{ $index }}">
+                            <input type="text" wire:model.blur.live="halls.{{ $index }}.name" maxlength="60" placeholder="Nazwa, np. MOSiR" class="{{ $input }}" aria-label="Nazwa hali">
+                            <input type="text" wire:model.blur.live="halls.{{ $index }}.courts" placeholder="Boiska po przecinku, np. Sektor I, Sektor II" class="{{ $input }}" aria-label="Boiska hali">
+                            <input type="text" wire:model.blur.live="halls.{{ $index }}.address" maxlength="160" placeholder="Adres (opcjonalnie)" class="{{ $input }}" aria-label="Adres hali">
+                            <button type="button" wire:click="removeHall({{ $index }})" wire:confirm="Usunąć tę halę?" class="text-sm text-red-600 hover:text-red-800">Usuń</button>
+                            @error("halls.{$index}.name") <p class="text-xs text-red-600 sm:col-span-4">{{ $message }}</p> @enderror
+                        </div>
+                    @endforeach
+                    @error('halls') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                    <button type="button" wire:click="addHall" class="text-sm font-semibold text-sky-700 hover:text-sky-900">+ Dodaj halę</button>
+                </div>
+            </details>
 
             {{-- Harmonogram: pierwszy mecz i odstęp; zmiana godziny meczu przesuwa kolejne na tym samym sektorze --}}
             @if($category->matches->isNotEmpty())
@@ -538,6 +558,17 @@
                         <button type="button" wire:click="addScheduleDay" class="text-sm font-semibold text-sky-700 hover:text-sky-900">+ Dodaj dzień</button>
                     </div>
                     <div class="mt-3 flex flex-wrap items-end gap-3 border-t border-gray-100 pt-3">
+                        @if($extraHalls !== [])
+                            <label class="block w-56 text-sm">
+                                <span class="text-gray-700">Hala kategorii</span>
+                                <select wire:model.live="categoryHall" class="{{ $input }} mt-1">
+                                    <option value="">{{ \App\Support\TournamentHalls::mainName() }}</option>
+                                    @foreach($extraHalls as $hall)
+                                        <option value="{{ $hall['name'] }}">{{ $hall['name'] }}</option>
+                                    @endforeach
+                                </select>
+                            </label>
+                        @endif
                         <label class="block w-40 text-sm">
                             <span class="text-gray-700">Odstęp na sektorze</span>
                             <input type="text" wire:model.blur.live="matchInterval" placeholder="1:30" class="{{ $input }} mt-1">
@@ -623,7 +654,7 @@
                                             <p class="mt-1 text-xs"><span class="rounded-full bg-amber-100 px-1.5 font-semibold text-amber-800">{{ $delay > 0 ? '+' : '−' }}{{ abs($delay) }} min</span> <span class="text-gray-500">plan {{ $tournamentMatch->planned_starts_at->format('H:i') }}</span></p>
                                         @endif
                                     </div>
-                                    <x-court-picker model="results.{{ $tournamentMatch->id }}.court" :value="$results[$tournamentMatch->id]['court'] ?? null" :free="false" />
+                                    <x-court-picker :halls="$extraHalls" model="results.{{ $tournamentMatch->id }}.court" :value="$results[$tournamentMatch->id]['court'] ?? null" :free="false" />
                                     <div class="flex items-center gap-3">
                                         <label @class(['inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold ring-1', 'bg-red-50 text-red-700 ring-red-200' => $results[$tournamentMatch->id]['live'] ?? false, 'text-gray-500 ring-gray-200' => ! ($results[$tournamentMatch->id]['live'] ?? false)]) title="Włącz, gdy mecz się zaczął; wyłącz po wpisaniu wyniku końcowego">
                                             <input type="checkbox" wire:model.live="results.{{ $tournamentMatch->id }}.live" class="size-3.5 rounded border-gray-300 text-red-600">

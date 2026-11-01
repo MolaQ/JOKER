@@ -152,7 +152,7 @@ class TournamentSchedule
      * Obłożenie sektorów hali w kolejnych dniach turnieju: mecze wszystkich kategorii z godziną i sektorem.
      * Mecz trwa tyle, ile odstęp w jego kategorii; mecze nakładające się na tej samej części hali są oznaczone.
      *
-     * @return Collection<string, array{start: Carbon, end: Carbon, sectors: Collection<string, Collection<int, array{match: TournamentMatch, starts: Carbon, ends: Carbon, conflict: bool}>>}>
+     * @return Collection<string, array{start: Carbon, end: Carbon, halls: Collection<string, Collection<string, Collection<int, array{match: TournamentMatch, starts: Carbon, ends: Carbon, conflict: bool}>>>}>
      */
     public static function occupancy(Tournament $tournament): Collection
     {
@@ -176,15 +176,34 @@ class TournamentSchedule
                 && $other['starts']->lt($block['ends']) && $other['ends']->gt($block['starts'])),
         ]);
 
+        $extra = TournamentHalls::extra($tournament);
+
         return $blocks->groupBy(fn (array $block) => $block['starts']->toDateString())->sortKeys()
-            ->map(fn (Collection $day) => [
-                'start' => $day->min('starts')->copy()->startOfHour(),
-                'end' => $day->max('ends'),
-                // Trzy sektory hali zawsze widoczne (wolny sektor też jest informacją), inne miejsca tylko gdy są w nich mecze.
-                'sectors' => collect(['court3', 'court2', 'court1'])->mapWithKeys(fn (string $hall) => [TrainingSession::venueNames()[$hall] => collect()])
-                    ->merge($day->groupBy(fn (array $block) => TrainingSession::courtLabel($block['match']->court))->map(fn (Collection $sector) => $sector->sortBy('starts')->values()))
-                    ->sortBy(fn (Collection $sector, string $name) => [$order[TrainingSession::venueForCourt($name) ?? ''] ?? 9, $name]),
-            ]);
+            ->map(function (Collection $day) use ($order, $tournament, $extra) {
+                $byHall = $day->groupBy(fn (array $block) => TournamentHalls::hallOf($tournament, $block['match']->court) ?? '');
+                $sorted = fn (Collection $sector) => $sector->sortBy('starts')->values();
+
+                // Hala klubowa: trzy sektory zawsze widoczne (wolny sektor też jest informacją), inne wpisane miejsca tylko gdy są w nich mecze.
+                $halls = collect([TournamentHalls::mainName() => collect(['court3', 'court2', 'court1'])->mapWithKeys(fn (string $hall) => [TrainingSession::venueNames()[$hall] => collect()])
+                    ->merge(($byHall[''] ?? collect())->groupBy(fn (array $block) => TrainingSession::courtLabel($block['match']->court))->map($sorted))
+                    ->sortBy(fn (Collection $sector, string $name) => [$order[TrainingSession::venueForCourt($name) ?? ''] ?? 9, $name])]);
+
+                // Inne hale: wszystkie ich boiska, gdy tego dnia gra się w nich choć jeden mecz.
+                foreach ($extra as $hall) {
+                    if (! $byHall->has($hall['name'])) {
+                        continue;
+                    }
+
+                    $halls[$hall['name']] = collect($hall['courts'])->mapWithKeys(fn (string $court) => [$court => collect()])
+                        ->merge($byHall[$hall['name']]->groupBy(fn (array $block) => TournamentHalls::courtName($tournament, $block['match']->court))->map($sorted));
+                }
+
+                return [
+                    'start' => $day->min('starts')->copy()->startOfHour(),
+                    'end' => $day->max('ends'),
+                    'halls' => $halls,
+                ];
+            });
     }
 
     /**
@@ -231,8 +250,10 @@ class TournamentSchedule
         $matches = $category->matches()->with('group')->get()->sortBy(fn (TournamentMatch $match) => [$match->number ?? PHP_INT_MAX, $match->id]);
         $days = collect($days)->filter(fn (array $day) => filled($day['from'] ?? null))->sortBy(fn (array $day) => (int) $day['from'])->values();
         $dayOf = fn (TournamentMatch $match) => $days->filter(fn (array $day) => (int) $day['from'] <= (int) $match->number)->keys()->last() ?? 0;
-        $halls = ['court1', 'court2', 'court3'];
-        $names = TrainingSession::venueNames();
+        // Kategoria grająca w innej hali dostaje boiska tej hali; inaczej trzy sektory hali klubowej.
+        $extraCourts = $category->hall ? TournamentHalls::courtValues($category->tournament, $category->hall) : [];
+        $halls = $extraCourts !== [] ? array_map(fn (string $court) => self::sector($court), $extraCourts) : ['court1', 'court2', 'court3'];
+        $names = $extraCourts !== [] ? array_combine($halls, $extraCourts) : TrainingSession::venueNames();
         $busy = new SectorOccupancy;
 
         TournamentMatch::with('category')

@@ -36,10 +36,15 @@
         @endphp
         <section x-show="day === @js($date)" @if($date !== $firstDay) x-cloak @endif>
             <h4 class="mb-2 text-sm font-semibold text-gray-900">{{ \Illuminate\Support\Str::ucfirst($day['start']->translatedFormat('l, j F')) }}</h4>
+            @foreach($day['halls'] as $hallName => $sectors)
+            @if($day['halls']->count() > 1)
+                {{-- Turniej w kilku halach: każda hala osobno, z własnymi boiskami --}}
+                <h5 class="mt-4 mb-1 text-xs font-semibold tracking-wide text-sky-800 uppercase">{{ $hallName }}</h5>
+            @endif
             <div class="overflow-x-auto">
-                <div class="grid min-w-[36rem] gap-2" style="grid-template-columns: 3rem repeat({{ $day['sectors']->count() }}, minmax(10rem, 1fr))">
+                <div class="grid min-w-[36rem] gap-2" style="grid-template-columns: 3rem repeat({{ $sectors->count() }}, minmax(10rem, 1fr))">
                     <div></div>
-                    @foreach($day['sectors'] as $name => $blocks)
+                    @foreach($sectors as $name => $blocks)
                         <p class="flex items-center justify-center gap-1.5 text-xs font-semibold tracking-wide text-gray-500 uppercase">
                             @if($venue = \App\Models\TrainingSession::venueForCourt($name))<x-venue-icon :venue="$venue" small />@endif{{ $name }}
                         </p>
@@ -51,7 +56,7 @@
                             <span class="absolute right-1 -translate-y-1/2 text-[11px] text-gray-400 tabular-nums" style="top: {{ (int) round($day['start']->diffInMinutes($hour) * $scale) }}px">{{ $hour->format('H:i') }}</span>
                         @endfor
                     </div>
-                    @foreach($day['sectors'] as $name => $blocks)
+                    @foreach($sectors as $name => $blocks)
                         <div class="relative rounded-md bg-gray-50 ring-1 ring-gray-200" style="height: {{ $height }}px; background-image: repeating-linear-gradient(to bottom, transparent 0, transparent {{ 60 * $scale - 1 }}px, rgb(229 231 235) {{ 60 * $scale - 1 }}px, rgb(229 231 235) {{ 60 * $scale }}px)">
                             @foreach($blocks as $block)
                                 @php $match = $block['match']; @endphp
@@ -69,6 +74,7 @@
                     @endforeach
                 </div>
             </div>
+            @endforeach
         </section>
     @endforeach
 </div>

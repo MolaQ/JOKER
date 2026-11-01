@@ -20,6 +20,7 @@ class TournamentCategory extends Model
         'display_order',
         'match_interval',
         'schedule_days',
+        'hall',
     ];
 
     protected function casts(): array

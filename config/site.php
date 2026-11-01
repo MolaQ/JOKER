@@ -59,6 +59,7 @@ return [
                 'alumni_intro' => ['type' => 'textarea', 'label' => 'Wychowankowie: wstęp', 'default' => 'Zaczynali w naszych grupach młodzieżowych, dziś grają na najwyższym poziomie. Każdy z nich przeszedł przez treningi w Pile.'],
                 'trainings_extra_label' => ['type' => 'text', 'label' => 'Plan treningów: dodatkowy przycisk', 'help' => 'Np. „Jesteś spoza Piły?”. Puste pole ukrywa przycisk.', 'default' => 'Jesteś spoza Piły?'],
                 'trainings_extra_url' => ['type' => 'url', 'label' => 'Plan treningów: adres dodatkowego przycisku', 'default' => '/page/spoza-pily'],
+                'venue_hall' => ['type' => 'text', 'label' => 'Nazwa hali klubowej', 'help' => 'Przy turniejach w kilku halach: hala z trzema sektorami poniżej (np. Hala LOMS).', 'default' => 'Hala LOMS'],
                 'venue_court1' => ['type' => 'text', 'label' => 'Sala: nazwa prawej części', 'help' => 'Sala jest podzielona w poprzek na trzy części. Nazwy pokazujemy w planie treningów i przy meczach turnieju.', 'default' => 'Sektor I'],
                 'venue_court2' => ['type' => 'text', 'label' => 'Sala: nazwa środkowej części', 'default' => 'Sektor II'],
                 'venue_court3' => ['type' => 'text', 'label' => 'Sala: nazwa lewej części', 'default' => 'Sektor III'],

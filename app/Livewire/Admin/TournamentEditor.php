@@ -7,6 +7,7 @@ use App\Models\RivalTeam;
 use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\TournamentCategory;
+use App\Models\TournamentGroup;
 use App\Models\TournamentMatch;
 use App\Models\TournamentParticipant;
 use App\Models\TournamentTemplate;
@@ -14,6 +15,7 @@ use App\Models\TrainingSession;
 use App\Support\AgeColors;
 use App\Support\SiteSettings;
 use App\Support\TournamentBracket;
+use App\Support\TournamentHalls;
 use App\Support\TournamentResults;
 use App\Support\TournamentSchedule;
 use App\Support\TournamentTable;
@@ -141,6 +143,12 @@ class TournamentEditor extends Component
     /** @var array{message?: string, matches?: array<int, array{starts_at: ?string, planned_starts_at: ?string}>} Ostatnie przesunięcie do cofnięcia. */
     public array $scheduleUndo = [];
 
+    /** @var list<array{name: string, courts: string, address: string}> dodatkowe hale turnieju (boiska po przecinku) */
+    public array $halls = [];
+
+    /** hala, w której domyślnie gra wybrana kategoria ('' = hala klubowa) */
+    public string $categoryHall = '';
+
     public function mount(Tournament $tournament): void
     {
         $this->tournament = $tournament;
@@ -153,6 +161,108 @@ class TournamentEditor extends Component
         $this->categoryId ??= $tournament->categories()->value('id');
         $this->resetMatchForm();
         $this->loadCategoryState();
+        $this->loadHalls();
+    }
+
+    private function loadHalls(): void
+    {
+        $this->halls = collect($this->tournament->halls ?? [])->map(fn ($hall) => [
+            'name' => (string) ($hall['name'] ?? ''),
+            'courts' => implode(', ', (array) ($hall['courts'] ?? [])),
+            'address' => (string) ($hall['address'] ?? ''),
+        ])->values()->all();
+    }
+
+    public function addHall(): void
+    {
+        $this->halls[] = ['name' => '', 'courts' => 'Sektor I, Sektor II, Sektor III', 'address' => ''];
+    }
+
+    public function removeHall(int $index): void
+    {
+        $name = trim((string) ($this->halls[$index]['name'] ?? ''));
+
+        if ($name !== '' && $this->hallMatches($name) > 0) {
+            $this->toast('W hali '.$name.' są jeszcze mecze. Najpierw przenieś je do innej hali.', 'warning');
+
+            return;
+        }
+
+        unset($this->halls[$index]);
+        $this->halls = array_values($this->halls);
+        $this->saveHalls();
+    }
+
+    private function hallMatches(string $name): int
+    {
+        return TournamentMatch::whereIn('tournament_category_id', $this->tournament->categories()->select('id'))
+            ->where('court', 'like', $name.TournamentHalls::SEPARATOR.'%')
+            ->count();
+    }
+
+    /**
+     * Hale zapisują się po każdej zmianie. Zmiana nazwy hali przenosi też zapisane przy meczach i grupach boiska.
+     */
+    public function updatedHalls(): void
+    {
+        $this->saveHalls();
+    }
+
+    private function saveHalls(): void
+    {
+        $this->validate([
+            'halls.*.name' => ['nullable', 'string', 'max:60', 'not_regex:/·/u'],
+            'halls.*.courts' => ['nullable', 'string', 'max:300'],
+            'halls.*.address' => ['nullable', 'string', 'max:160'],
+        ], ['halls.*.name.not_regex' => 'Nazwa hali nie może zawierać znaku „·”.']);
+
+        $old = TournamentHalls::extra($this->tournament);
+        $new = collect($this->halls)->map(fn (array $hall) => [
+            'name' => trim($hall['name']),
+            'courts' => array_values(array_filter(array_map('trim', explode(',', (string) $hall['courts'])), 'strlen')),
+            'address' => trim((string) $hall['address']),
+        ])->values()->all();
+
+        $names = array_map(fn ($hall) => mb_strtolower($hall['name']), array_filter($new, fn ($hall) => $hall['name'] !== ''));
+        if (count($names) !== count(array_unique($names)) || in_array(mb_strtolower(TournamentHalls::mainName()), $names, true)) {
+            $this->addError('halls', 'Każda hala musi mieć inną nazwę (także inną niż '.TournamentHalls::mainName().').');
+
+            return;
+        }
+
+        DB::transaction(function () use ($old, $new) {
+            // Zmieniona nazwa hali (ta sama pozycja na liście): boiska meczów, grup i hala kategorii idą za nią.
+            foreach ($old as $index => $hall) {
+                $renamed = $new[$index]['name'] ?? '';
+
+                if ($renamed === '' || $renamed === $hall['name']) {
+                    continue;
+                }
+
+                $categoryIds = $this->tournament->categories()->pluck('id');
+                $from = $hall['name'].TournamentHalls::SEPARATOR;
+                $to = $renamed.TournamentHalls::SEPARATOR;
+                TournamentMatch::whereIn('tournament_category_id', $categoryIds)->where('court', 'like', $from.'%')->get()
+                    ->each(fn (TournamentMatch $match) => $match->update(['court' => $to.mb_substr($match->court, mb_strlen($from))]));
+                TournamentGroup::whereIn('tournament_category_id', $categoryIds)->where('court', 'like', $from.'%')->get()
+                    ->each(fn ($group) => $group->update(['court' => $to.mb_substr($group->court, mb_strlen($from))]));
+                $this->tournament->categories()->where('hall', $hall['name'])->update(['hall' => $renamed]);
+            }
+
+            $this->tournament->update(['halls' => $new === [] ? null : $new]);
+        });
+
+        $this->resetErrorBag('halls');
+        $this->tournament->refresh();
+        $this->categoryHall = (string) $this->tournament->categories()->whereKey($this->categoryId)->value('hall');
+        $this->loadCategoryState();
+    }
+
+    public function updatedCategoryHall(): void
+    {
+        $hall = collect(TournamentHalls::extra($this->tournament))->firstWhere('name', $this->categoryHall);
+        $this->category()->update(['hall' => $hall['name'] ?? null]);
+        $this->toast($hall ? 'Kategoria gra w hali '.$hall['name'].'. Ułóż godziny, a mecze bez boiska trafią na jej boiska.' : 'Kategoria gra w hali '.TournamentHalls::mainName().'.');
     }
 
     /**
@@ -1251,6 +1361,7 @@ class TournamentEditor extends Component
         $this->groupScoring = $groups->mapWithKeys(fn ($group) => [$group->id => ['custom' => $group->scoring !== null] + self::scoringState(TournamentTable::scoring($group, $this->tournament))])->all();
         $this->groupPlaces = $groups->mapWithKeys(fn ($group) => [$group->id => collect($group->final_places ?? [])->map(fn ($place) => (string) $place)->all()])->all();
 
+        $this->categoryHall = (string) $category?->hall;
         $this->matchInterval = TournamentSchedule::formatInterval((int) ($category?->match_interval ?? 90));
         $this->scheduleDays = $category ? TournamentSchedule::days($category) : [];
 
