@@ -160,9 +160,9 @@
                 <div><label class="{{ $label }}">Graczy na boisku</label><select wire:model="group.players_on_court" class="{{ $input }}">@foreach([4 => 'czwórki (4)', 3 => 'trójki (3)', 2 => 'dwójki (2)', 1 => 'singielki (1)'] as $value => $name)<option value="{{ $value }}">{{ $name }}</option>@endforeach</select></div>
                 <div><label class="{{ $label }}">Kolor ikonek zawodników</label>
                     <div class="mt-1 flex items-center gap-2">
-                        <input type="color" wire:change="$set('group.color', $event.target.value)" value="{{ $group['color'] ?: (\App\Models\MiniGroup::DEFAULT_COLORS[(int) ($group['players_on_court'] ?? 4)] ?? '#f5b301') }}" class="h-10 w-14 cursor-pointer rounded border border-gray-300 bg-white p-1">
-                        <span class="flex gap-0.5" style="color: {{ $group['color'] ?: (\App\Models\MiniGroup::DEFAULT_COLORS[(int) ($group['players_on_court'] ?? 4)] ?? '#f5b301') }}">@for($i = 0; $i < (int) ($group['players_on_court'] ?? 4); $i++)<svg viewBox="0 0 24 24" class="size-6" fill="currentColor" aria-hidden="true"><circle cx="12" cy="7.2" r="4.6"/><path d="M3.5 22c0-5 3.8-8.6 8.5-8.6s8.5 3.6 8.5 8.6z"/></svg>@endfor</span>
-                        @if($group['color'])<button type="button" wire:click="$set('group.color', '')" class="text-xs text-gray-500 underline">domyślny</button>@endif
+                        <input type="color" wire:change="$set('group.color', $event.target.value)" value="{{ $group['color'] ?: \App\Support\AgeColors::forMini((int) ($group['players_on_court'] ?? 4)) }}" class="h-10 w-14 cursor-pointer rounded border border-gray-300 bg-white p-1">
+                        <span class="flex gap-0.5" style="color: {{ $group['color'] ?: \App\Support\AgeColors::forMini((int) ($group['players_on_court'] ?? 4)) }}">@for($i = 0; $i < (int) ($group['players_on_court'] ?? 4); $i++)<svg viewBox="0 0 24 24" class="size-6" fill="currentColor" aria-hidden="true"><circle cx="12" cy="7.2" r="4.6"/><path d="M3.5 22c0-5 3.8-8.6 8.5-8.6s8.5 3.6 8.5 8.6z"/></svg>@endfor</span>
+                        <span class="text-xs text-gray-500">Kolor wspólny dla wszystkich grup z tą liczbą graczy, także w planie treningów i na turniejach.</span>
                     </div>
                     @error('group.color') <p class="mt-1 text-xs text-red-600">Podaj kolor w formacie #RRGGBB.</p> @enderror
                 </div>
@@ -290,9 +290,9 @@
                 <div><label class="{{ $label }}">Graczy na boisku</label><select wire:model="group.players_on_court" class="{{ $input }}">@foreach([4 => 'czwórki (4)', 3 => 'trójki (3)', 2 => 'dwójki (2)', 1 => 'singielki (1)'] as $value => $name)<option value="{{ $value }}">{{ $name }}</option>@endforeach</select></div>
                 <div><label class="{{ $label }}">Kolor ikonek zawodników</label>
                     <div class="mt-1 flex items-center gap-2">
-                        <input type="color" wire:change="$set('group.color', $event.target.value)" value="{{ $group['color'] ?: (\App\Models\MiniGroup::DEFAULT_COLORS[(int) ($group['players_on_court'] ?? 4)] ?? '#f5b301') }}" class="h-10 w-14 cursor-pointer rounded border border-gray-300 bg-white p-1">
-                        <span class="flex gap-0.5" style="color: {{ $group['color'] ?: (\App\Models\MiniGroup::DEFAULT_COLORS[(int) ($group['players_on_court'] ?? 4)] ?? '#f5b301') }}">@for($i = 0; $i < (int) ($group['players_on_court'] ?? 4); $i++)<svg viewBox="0 0 24 24" class="size-6" fill="currentColor" aria-hidden="true"><circle cx="12" cy="7.2" r="4.6"/><path d="M3.5 22c0-5 3.8-8.6 8.5-8.6s8.5 3.6 8.5 8.6z"/></svg>@endfor</span>
-                        @if($group['color'])<button type="button" wire:click="$set('group.color', '')" class="text-xs text-gray-500 underline">domyślny</button>@endif
+                        <input type="color" wire:change="$set('group.color', $event.target.value)" value="{{ $group['color'] ?: \App\Support\AgeColors::forMini((int) ($group['players_on_court'] ?? 4)) }}" class="h-10 w-14 cursor-pointer rounded border border-gray-300 bg-white p-1">
+                        <span class="flex gap-0.5" style="color: {{ $group['color'] ?: \App\Support\AgeColors::forMini((int) ($group['players_on_court'] ?? 4)) }}">@for($i = 0; $i < (int) ($group['players_on_court'] ?? 4); $i++)<svg viewBox="0 0 24 24" class="size-6" fill="currentColor" aria-hidden="true"><circle cx="12" cy="7.2" r="4.6"/><path d="M3.5 22c0-5 3.8-8.6 8.5-8.6s8.5 3.6 8.5 8.6z"/></svg>@endfor</span>
+                        <span class="text-xs text-gray-500">Kolor wspólny dla wszystkich grup z tą liczbą graczy, także w planie treningów i na turniejach.</span>
                     </div>
                     @error('group.color') <p class="mt-1 text-xs text-red-600">Podaj kolor w formacie #RRGGBB.</p> @enderror
                 </div>

@@ -8,6 +8,7 @@ use App\Models\MiniPlayer;
 use App\Models\MiniTrip;
 use App\Models\MiniTripTeam;
 use App\Models\Tournament;
+use App\Support\AgeColors;
 use App\Support\SiteSettings;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
@@ -353,6 +354,12 @@ class MiniVolleyballManager extends Component
         ], [], ['group.name' => 'nazwa'])['group'];
 
         $attributes = collect($data)->except('photo_path')->map(fn ($value) => is_string($value) ? (trim($value) === '' ? null : trim($value)) : $value)->all();
+
+        // Kolor jest wspólny dla wszystkich grup z tą liczbą graczy (i dla treningów oraz turniejów): zapis w ustawieniach.
+        if (filled($attributes['color'] ?? null)) {
+            app(SiteSettings::class)->set([AgeColors::key('mini'.max(1, min(4, (int) $attributes['players_on_court']))) => strtolower($attributes['color'])]);
+        }
+        $attributes['color'] = null;
         $attributes['slug'] = $attributes['slug'] ?? Str::slug($attributes['name']);
         $attributes['display_order'] = (int) ($attributes['display_order'] ?? 0);
 

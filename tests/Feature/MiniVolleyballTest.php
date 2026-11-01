@@ -6,6 +6,7 @@ use App\Models\MiniPlayer;
 use App\Models\MiniTrip;
 use App\Models\MiniTripTeam;
 use App\Models\User;
+use App\Support\AgeColors;
 use App\Support\SiteSettings;
 use Livewire\Livewire;
 
@@ -117,7 +118,8 @@ test('each group has its own tab with an editor page and its children, and can b
 });
 
 test('children show their number instead of initials and trips take the light colour of their groups', function () {
-    $group = MiniGroup::create(['name' => 'Trójki testowe', 'players_on_court' => 3, 'color' => '#ff0000']);
+    $group = MiniGroup::create(['name' => 'Trójki testowe', 'players_on_court' => 3]);
+    app(SiteSettings::class)->set([AgeColors::key('mini3') => '#ff0000']);
     MiniPlayer::create(['mini_group_id' => $group->id, 'first_name' => 'Jan', 'last_name' => 'Kowalski', 'number' => 7, 'is_active' => true]);
     MiniPlayer::create(['mini_group_id' => $group->id, 'first_name' => 'Ola', 'last_name' => 'Nowak', 'is_active' => true]);
     $trip = MiniTrip::create(['title' => 'Turniej', 'starts_on' => now()->addWeek()->toDateString()]);

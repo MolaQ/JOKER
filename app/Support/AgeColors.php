@@ -6,8 +6,8 @@ use App\Models\Team;
 use Illuminate\Support\Str;
 
 /**
- * Kolory kategorii wiekowych w jednym miejscu (Ustawienia → Moduły): te same w obłożeniu sali na treningach
- * i w obłożeniu sektorów na turnieju. Kategoria turnieju dostaje kolor po nazwie (np. „Kadeci” → kadeci).
+ * Kolory kategorii wiekowych w jednym miejscu (Ustawienia → Moduły): te same w obłożeniu sali na treningach,
+ * w obłożeniu sektorów na turnieju i w minisiatkówce (czwórki, trójki, dwójki, singielki). Kategoria turnieju dostaje kolor po nazwie (np. „Kadeci” → kadeci).
  */
 class AgeColors
 {
@@ -17,16 +17,23 @@ class AgeColors
         'junior' => ['Juniorzy', '#f59e0b'],
         'junior_mlodszy' => ['Kadeci (juniorzy młodsi)', '#10b981'],
         'mlodzik' => ['Młodzicy', '#8b5cf6'],
-        'mini' => ['Minisiatkówka i dzieci', '#f43f5e'],
+        'mini4' => ['Minisiatkówka: czwórki', '#f5b301'],
+        'mini3' => ['Minisiatkówka: trójki', '#4fa3e0'],
+        'mini2' => ['Minisiatkówka: dwójki', '#22c55e'],
+        'mini1' => ['Minisiatkówka: singielki', '#f472b6'],
     ];
 
-    /** @var array<string, list<string>> słowa w nazwie (bez polskich znaków), sprawdzane po kolei */
+    /** @var list<array{0: string, 1: list<string>}> słowa w nazwie (bez polskich znaków), sprawdzane po kolei */
     private const WORDS = [
-        'junior_mlodszy' => ['juniorzy mlodsi', 'juniorki mlodsze', 'junior mlodszy', 'kadet'],
-        'junior' => ['junior'],
-        'mlodzik' => ['mlodzi', 'mlodzik', 'trampkar'],
-        'mini' => ['mini', 'dzieci', 'zak', 'skrzat'],
-        'senior' => ['senior', 'open', 'liga mezczyzn', 'liga kobiet'],
+        ['junior_mlodszy', ['juniorzy mlodsi', 'juniorki mlodsze', 'junior mlodszy', 'kadet']],
+        ['junior', ['junior']],
+        ['mlodzik', ['mlodzi', 'mlodzik', 'trampkar']],
+        ['mini4', ['czworki', 'czworek', 'mini 4', '4x4', '4 na 4']],
+        ['mini3', ['trojki', 'trojek', 'mini 3', '3x3', '3 na 3']],
+        ['mini2', ['dwojki', 'dwojek', 'mini 2', '2x2', '2 na 2']],
+        ['mini1', ['singiel', 'jedynki', 'mini 1', '1x1', '1 na 1']],
+        ['mini4', ['mini', 'dzieci', 'zak', 'skrzat']],
+        ['senior', ['senior', 'open', 'liga mezczyzn', 'liga kobiet']],
     ];
 
     public static function key(string $group): string
@@ -49,7 +56,7 @@ class AgeColors
     {
         $name = Str::lower(Str::ascii((string) $name));
 
-        foreach (self::WORDS as $group => $words) {
+        foreach (self::WORDS as [$group, $words]) {
             foreach ($words as $word) {
                 if (str_contains($name, $word)) {
                     return $group;
@@ -58,6 +65,14 @@ class AgeColors
         }
 
         return null;
+    }
+
+    /**
+     * Kolor grupy minisiatkówki według liczby graczy na boisku (czwórki, trójki, dwójki, singielki).
+     */
+    public static function forMini(int $playersOnCourt): string
+    {
+        return self::color('mini'.max(1, min(4, $playersOnCourt)));
     }
 
     public static function forTeam(?Team $team): string

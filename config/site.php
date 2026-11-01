@@ -68,7 +68,10 @@ return [
                 'color_age_junior' => ['type' => 'color', 'label' => 'Kolor kategorii: juniorzy', 'default' => '#f59e0b'],
                 'color_age_junior_mlodszy' => ['type' => 'color', 'label' => 'Kolor kategorii: kadeci (juniorzy młodsi)', 'default' => '#10b981'],
                 'color_age_mlodzik' => ['type' => 'color', 'label' => 'Kolor kategorii: młodzicy', 'default' => '#8b5cf6'],
-                'color_age_mini' => ['type' => 'color', 'label' => 'Kolor kategorii: minisiatkówka i dzieci', 'default' => '#f43f5e'],
+                'color_age_mini4' => ['type' => 'color', 'label' => 'Kolor kategorii: minisiatkówka, czwórki', 'help' => 'Kolory minisiatkówki są też kolorami ikonek graczy w grupach i na wyjazdach.', 'default' => '#f5b301'],
+                'color_age_mini3' => ['type' => 'color', 'label' => 'Kolor kategorii: minisiatkówka, trójki', 'default' => '#4fa3e0'],
+                'color_age_mini2' => ['type' => 'color', 'label' => 'Kolor kategorii: minisiatkówka, dwójki', 'default' => '#22c55e'],
+                'color_age_mini1' => ['type' => 'color', 'label' => 'Kolor kategorii: minisiatkówka, singielki', 'default' => '#f472b6'],
             ],
         ],
 

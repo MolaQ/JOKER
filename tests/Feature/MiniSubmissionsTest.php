@@ -9,6 +9,8 @@ use App\Models\MiniGroup;
 use App\Models\MiniPlayer;
 use App\Models\MiniTrip;
 use App\Models\User;
+use App\Support\AgeColors;
+use App\Support\SiteSettings;
 use App\UserRole;
 use Livewire\Livewire;
 
@@ -105,7 +107,7 @@ test('a mini coordinator adds, moves and retires children without profiles', fun
 });
 
 test('group icons use the colour set in the panel', function () {
-    $this->group->update(['color' => '#123abc']);
+    app(SiteSettings::class)->set([AgeColors::key('mini4') => '#123abc']);
     $this->get(route('mini.show', $this->group))->assertOk()->assertSee('color: #123abc', false);
-    expect(MiniGroup::firstWhere('slug', 'trojki')->iconColor())->toBe(MiniGroup::DEFAULT_COLORS[3]);
+    expect(MiniGroup::firstWhere('slug', 'trojki')->iconColor())->toBe(AgeColors::forMini(3));
 });

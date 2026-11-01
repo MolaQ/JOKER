@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\AgeColors;
 use App\Support\DeadLinks;
 use App\Support\Media;
 use Illuminate\Database\Eloquent\Builder;
@@ -61,15 +62,13 @@ class MiniGroup extends Model
         $query->orderBy('display_order')->orderByDesc('players_on_court')->orderBy('name');
     }
 
-    /** @var array<int, string> domyślne kolory ikonek według liczby graczy na boisku */
-    public const DEFAULT_COLORS = [4 => '#f5b301', 3 => '#4fa3e0', 2 => '#22c55e', 1 => '#f472b6'];
-
     /**
-     * Kolor ikonek zawodników (z panelu albo domyślny dla czwórek, trójek, dwójek i singielek).
+     * Kolor ikonek zawodników: wspólny kolor czwórek, trójek, dwójek albo singielek z ustawień
+     * (ten sam w obłożeniu sali na treningach i w kategoriach turnieju).
      */
     public function iconColor(): string
     {
-        return $this->color ?: (self::DEFAULT_COLORS[(int) $this->players_on_court] ?? '#f5b301');
+        return AgeColors::forMini((int) $this->players_on_court);
     }
 
     /**
