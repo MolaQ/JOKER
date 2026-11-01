@@ -3,8 +3,10 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
+use App\Models\MiniGroup;
 use App\Models\Team;
 use App\Models\TrainingSession;
+use App\Support\SiteSettings;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -21,7 +23,11 @@ class TrainingPlanner extends Component
 
     public ?int $editingId = null;
 
-    public ?int $team_id = null;
+    /** id drużyny albo „mini” (trening minisiatkówki) */
+    public string $team_id = '';
+
+    /** @var list<int> grupy mini na wspólnym treningu; pusta lista = wszystkie grupy */
+    public array $mini_groups = [];
 
     /** @var list<int> */
     public array $weekdays = [];
@@ -38,7 +44,24 @@ class TrainingPlanner extends Component
 
     public function mount(): void
     {
-        $this->team_id = $this->teams->first()?->id;
+        $this->team_id = (string) ($this->teams->first()?->id ?? ($this->canMini() ? 'mini' : ''));
+    }
+
+    /**
+     * Treningi minisiatkówki układa ten, kto prowadzi minisiatkówkę (gdy moduł jest włączony).
+     */
+    public function canMini(): bool
+    {
+        return (bool) app(SiteSettings::class)['module_mini'] && (Auth::user()?->can('mini.manage') ?? false);
+    }
+
+    /**
+     * @return Collection<int, MiniGroup>
+     */
+    #[Computed]
+    public function miniGroupOptions(): Collection
+    {
+        return $this->canMini() ? MiniGroup::ordered()->get(['id', 'name', 'players_on_court', 'is_active']) : collect();
     }
 
     /**
@@ -53,7 +76,9 @@ class TrainingPlanner extends Component
     protected function rules(): array
     {
         return [
-            'team_id' => ['required', Rule::in($this->teams->pluck('id')->all())],
+            'team_id' => ['required', Rule::in([...$this->teams->pluck('id')->map(fn ($id) => (string) $id)->all(), ...($this->canMini() ? ['mini'] : [])])],
+            'mini_groups' => ['array'],
+            'mini_groups.*' => ['integer', Rule::in($this->miniGroupOptions->pluck('id')->all())],
             'weekdays' => ['required', 'array', 'min:1'],
             'weekdays.*' => ['integer', 'between:1,7'],
             'starts_at' => ['required', 'date_format:H:i'],
@@ -91,8 +116,7 @@ class TrainingPlanner extends Component
     public function save(): void
     {
         $data = $this->validate();
-        $attributes = [
-            'team_id' => $data['team_id'],
+        $attributes = $this->who($data) + [
             'starts_at' => $data['starts_at'].':00',
             'ends_at' => $data['ends_at'].':00',
             'venue' => $data['venue'],
@@ -119,13 +143,12 @@ class TrainingPlanner extends Component
      */
     public function updated(string $property): void
     {
-        if ($this->editingId === null || ! in_array(explode('.', $property)[0], ['team_id', 'weekdays', 'starts_at', 'ends_at', 'venue', 'note'], true)) {
+        if ($this->editingId === null || ! in_array(explode('.', $property)[0], ['team_id', 'mini_groups', 'weekdays', 'starts_at', 'ends_at', 'venue', 'note'], true)) {
             return;
         }
 
         $data = $this->validate();
-        $this->editable($this->editingId)->update([
-            'team_id' => $data['team_id'],
+        $this->editable($this->editingId)->update($this->who($data) + [
             'weekday' => (int) $data['weekdays'][0],
             'starts_at' => $data['starts_at'].':00',
             'ends_at' => $data['ends_at'].':00',
@@ -141,7 +164,8 @@ class TrainingPlanner extends Component
         $session = $this->editable($id);
 
         $this->editingId = $session->id;
-        $this->team_id = $session->team_id;
+        $this->team_id = $session->isMini() ? 'mini' : (string) $session->team_id;
+        $this->mini_groups = array_map('intval', $session->mini_group_ids ?? []);
         $this->weekdays = [$session->weekday];
         $this->starts_at = substr((string) $session->starts_at, 0, 5);
         $this->ends_at = substr((string) $session->ends_at, 0, 5);
@@ -173,23 +197,47 @@ class TrainingPlanner extends Component
     private function editable(int $id): TrainingSession
     {
         $session = TrainingSession::findOrFail($id);
-        abort_unless($this->teams->contains('id', $session->team_id), 403);
+        abort_unless($this->canEdit($session), 403);
 
         return $session;
+    }
+
+    public function canEdit(TrainingSession $session): bool
+    {
+        return $session->isMini() ? $this->canMini() : $this->teams->contains('id', $session->team_id);
+    }
+
+    /**
+     * Kto trenuje: drużyna albo grupy minisiatkówki (bez drużyny).
+     *
+     * @param  array<string, mixed>  $data
+     * @return array{team_id: int|null, mini_group_ids: list<int>|null}
+     */
+    private function who(array $data): array
+    {
+        if ($data['team_id'] === 'mini') {
+            return ['team_id' => null, 'mini_group_ids' => array_values(array_unique(array_map('intval', $data['mini_groups'] ?? [])))];
+        }
+
+        return ['team_id' => (int) $data['team_id'], 'mini_group_ids' => null];
     }
 
     public function render()
     {
         $sessions = TrainingSession::with('team')
-            ->when($this->filterTeam !== '', fn ($query) => $query->where('team_id', (int) $this->filterTeam))
+            ->when($this->filterTeam === 'mini', fn ($query) => $query->whereNull('team_id'))
+            ->when($this->filterTeam !== '' && $this->filterTeam !== 'mini', fn ($query) => $query->where('team_id', (int) $this->filterTeam))
             ->ordered()
             ->get();
 
         return view('livewire.admin.training-planner', [
             'days' => $sessions->groupBy('weekday')->sortKeys(),
-            'allTeams' => Team::whereIn('id', TrainingSession::distinct()->pluck('team_id'))->orderBy('display_order')->get(['id', 'name']),
-            'managedIds' => $this->teams->pluck('id'),
+            'allTeams' => Team::whereIn('id', TrainingSession::whereNotNull('team_id')->distinct()->pluck('team_id'))->orderBy('display_order')->get(['id', 'name']),
+            'hasMini' => TrainingSession::whereNull('team_id')->exists(),
             'allSessions' => $this->filterTeam === '' ? $sessions : TrainingSession::with('team')->ordered()->get(),
+            'highlight' => match ($this->filterTeam) {
+                '' => null, 'mini' => 'mini', default => (int) $this->filterTeam
+            },
         ]);
     }
 }

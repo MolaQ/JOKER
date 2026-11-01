@@ -306,7 +306,7 @@ class ChangeLog
                 $record instanceof TournamentParticipant => $record->name(),
                 $record instanceof PhotoTag => $record->label(),
                 $record instanceof Player => $record->full_name,
-                $record instanceof TrainingSession => trim(($record->team?->name ?? '').' '.$record->weekdayLabel().' '.$record->timeRange()),
+                $record instanceof TrainingSession => trim($record->label().' '.$record->weekdayLabel().' '.$record->timeRange()),
                 default => $record->getAttribute('name') ?? $record->getAttribute('title') ?? $record->getAttribute('key') ?? $record->getAttribute('caption') ?? $record->getAttribute('content'),
             };
         } catch (Throwable) {

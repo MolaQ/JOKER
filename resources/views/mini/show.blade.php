@@ -19,6 +19,16 @@
             @if($site['mini_show_trips'] && $upcoming->first())
                 <div><dt class="text-xs text-zinc-400 uppercase">{{ __('Najbliższy wyjazd') }}</dt><dd class="font-display text-2xl font-semibold uppercase">{{ $upcoming->first()->dateLabel() }}@if($upcoming->first()->city) · {{ $upcoming->first()->city }}@endif</dd></div>
             @endif
+            @if($trainings->isNotEmpty())
+                <div>
+                    <dt class="text-xs text-zinc-400 uppercase">{{ __('Treningi') }}</dt>
+                    <dd class="mt-1 space-y-0.5 text-sm">
+                        @foreach($trainings as $training)
+                            <p><span class="font-semibold">{{ mb_substr($training->weekdayLabel(), 0, 3) }} {{ $training->timeRange() }}</span> <span class="text-zinc-400">· {{ $training->venueLabel() }}@if($training->miniGroups()->count() > 1) · {{ __('razem z') }}: {{ $training->miniGroups()->reject(fn ($other) => $other->is($group))->pluck('name')->implode(', ') }}@endif</span></p>
+                        @endforeach
+                    </dd>
+                </div>
+            @endif
         </dl>
     </div>
 </section>

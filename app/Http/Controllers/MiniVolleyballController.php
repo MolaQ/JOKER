@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MiniGroup;
 use App\Models\MiniTrip;
 use App\Models\MiniTripTeam;
+use App\Models\TrainingSession;
 use App\Support\SiteSettings;
 use Illuminate\Support\Facades\Auth;
 
@@ -43,6 +44,9 @@ class MiniVolleyballController extends Controller
             'upcoming' => $trips->reject(fn (MiniTrip $trip) => $trip->isPast())->sortBy('starts_on')->values(),
             'past' => $trips->filter(fn (MiniTrip $trip) => $trip->isPast())->values(),
             'medals' => $miniGroup->medals(),
+            // Treningi z planu: tej grupy albo wspólne z innymi grupami.
+            'trainings' => TrainingSession::whereNull('team_id')->whereNotNull('mini_group_ids')->ordered()->get()
+                ->filter(fn (TrainingSession $session) => $session->miniGroups()->contains('id', $miniGroup->id))->values(),
             'groups' => MiniGroup::where('is_active', true)->ordered()->get(),
             'showParentInfo' => MiniTrip::canSeeParentInfo(Auth::user()),
         ]);

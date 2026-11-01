@@ -25,11 +25,18 @@ class ClubInfoController extends Controller
     public function trainings(Request $request)
     {
         $sessions = TrainingSession::with('team')->ordered()->get();
-        $team = $request->filled('team') ? Team::firstWhere('slug', $request->query('team')) : null;
+        // „?team=minisiatkowka” pokazuje treningi minisiatkówki (nie są przypisane do drużyny).
+        $mini = $request->query('team') === 'minisiatkowka' && $sessions->contains(fn (TrainingSession $session) => $session->isMini());
+        $team = $request->filled('team') && ! $mini ? Team::firstWhere('slug', $request->query('team')) : null;
 
         return view('club.trainings', [
-            'days' => $sessions->when($team, fn ($all) => $all->where('team_id', $team->id))->groupBy('weekday')->sortKeys(),
-            'teams' => Team::whereIn('id', $sessions->pluck('team_id')->unique())->orderBy('display_order')->get(),
+            'days' => $sessions
+                ->when($team, fn ($all) => $all->where('team_id', $team->id))
+                ->when($mini, fn ($all) => $all->filter(fn (TrainingSession $session) => $session->isMini()))
+                ->groupBy('weekday')->sortKeys(),
+            'teams' => Team::whereIn('id', $sessions->pluck('team_id')->filter()->unique())->orderBy('display_order')->get(),
+            'hasMini' => $sessions->contains(fn (TrainingSession $session) => $session->isMini()),
+            'mini' => $mini,
             'team' => $team,
             'allSessions' => $sessions,
         ]);

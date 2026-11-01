@@ -4,7 +4,7 @@
     <form id="training-form" wire:submit="save" class="scroll-mt-6 rounded-lg bg-white p-5 shadow ring-1 ring-zinc-200">
         <h2 class="text-lg font-semibold text-gray-900">{{ $editingId ? 'Edytuj trening' : 'Dodaj trening' }}</h2>
 
-        @if($this->teams->isEmpty())
+        @if($this->teams->isEmpty() && ! $this->canMini())
             <p class="text-sm text-gray-600">Nie prowadzisz żadnej drużyny. Poproś szefa lub administratora o przypisanie do drużyny.</p>
         @else
           <div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-[minmax(10rem,14rem)_minmax(18rem,1fr)_minmax(14rem,16rem)]">
@@ -14,8 +14,25 @@
                     @foreach($this->teams as $team)
                         <option value="{{ $team->id }}">{{ $team->name }}</option>
                     @endforeach
+                    @if($this->canMini())
+                        <option value="mini">Minisiatkówka</option>
+                    @endif
                 </select>
                 @error('team_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                @if($team_id === 'mini' && $this->miniGroupOptions->isNotEmpty())
+                    {{-- Grupy mogą trenować razem: zaznacz kilka albo żadnej (wszystkie razem) --}}
+                    <fieldset class="mt-2">
+                        <legend class="text-xs text-gray-500">Grupy (bez zaznaczenia: wszystkie razem)</legend>
+                        <div class="mt-1 flex flex-wrap gap-1">
+                            @foreach($this->miniGroupOptions as $group)
+                                <label class="flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs font-semibold ring-1 ring-gray-200 has-[:checked]:bg-sky-50 has-[:checked]:text-sky-800 has-[:checked]:ring-2 has-[:checked]:ring-sky-600">
+                                    <input type="checkbox" wire:model.live="mini_groups" value="{{ $group->id }}" class="sr-only">
+                                    <span class="size-2.5 rounded-full" style="background: {{ $group->iconColor() }}"></span>{{ $group->name }}
+                                </label>
+                            @endforeach
+                        </div>
+                    </fieldset>
+                @endif
             </div>
 
             <fieldset>
@@ -68,7 +85,7 @@
                     <p class="font-semibold">To miejsce jest już zajęte:</p>
                     <ul class="mt-1 list-disc pl-5">
                         @foreach($this->conflicts as $conflict)
-                            <li>{{ $conflict->weekdayLabel() }} {{ $conflict->timeRange() }}: {{ $conflict->team->name }}</li>
+                            <li>{{ $conflict->weekdayLabel() }} {{ $conflict->timeRange() }}: {{ $conflict->label() }}</li>
                         @endforeach
                     </ul>
                     <p class="mt-1 text-xs">Możesz zapisać mimo to, np. gdy drużyny dzielą boisko.</p>
@@ -96,6 +113,9 @@
                 @foreach($allTeams as $team)
                     <option value="{{ $team->id }}">{{ $team->name }}</option>
                 @endforeach
+                @if($hasMini)
+                    <option value="mini">Minisiatkówka</option>
+                @endif
             </select>
             <a href="{{ route('trainings.index') }}" target="_blank" class="ml-auto text-sm font-semibold text-sky-700 hover:text-sky-900">Zobacz na stronie ↗</a>
         </div>
@@ -114,8 +134,8 @@
                                 <li wire:key="session-{{ $session->id }}" @class(['rounded-md p-2 text-xs ring-1', 'bg-sky-50 ring-sky-300' => $editingId === $session->id, 'bg-gray-50 ring-gray-200' => $editingId !== $session->id])>
                                     <p class="font-semibold tabular-nums text-gray-900">{{ $session->timeRange() }}</p>
                                     <p class="text-gray-500">{{ $session->venueLabel() }}</p>
-                                    <p class="mt-0.5 font-medium text-gray-800">{{ $session->team->name }}@if($session->note) <span class="text-gray-500">· {{ $session->note }}</span>@endif</p>
-                                    @if($managedIds->contains($session->team_id))
+                                    <p class="mt-0.5 font-medium text-gray-800">{{ $session->label() }}@if($session->note) <span class="text-gray-500">· {{ $session->note }}</span>@endif</p>
+                                    @if($this->canEdit($session))
                                         <div class="mt-1.5 flex flex-wrap gap-1">
                                             <button type="button" wire:click="edit({{ $session->id }})" onclick="document.getElementById('training-form').scrollIntoView({ behavior: 'smooth' })" class="admin-action !px-2 !py-0.5">Edytuj</button>
                                             <button type="button" wire:click="delete({{ $session->id }})" wire:confirm="Usunąć ten trening z planu?" class="admin-action admin-action-danger !px-2 !py-0.5">Usuń</button>
@@ -135,7 +155,7 @@
         <section class="rounded-lg bg-white p-5 shadow ring-1 ring-zinc-200">
             <h2 class="text-lg font-semibold text-gray-900">Obłożenie sektorów i siłowni</h2>
             <p class="mt-1 text-sm text-gray-500">Kolory kategorii wiekowych są wspólne z obłożeniem sektorów na turnieju. @can('system')Zmienisz je w <a href="{{ route('admin.settings.index') }}" class="font-semibold text-sky-700 hover:underline">ustawieniach (Moduły)</a> albo przy kategorii turnieju.@endcan</p>
-            <x-training-occupancy :sessions="$allSessions" :highlight="$filterTeam !== '' ? (int) $filterTeam : null" class="mt-4" wire:key="occupancy-{{ $filterTeam }}-{{ $allSessions->max('updated_at') }}" />
+            <x-training-occupancy :sessions="$allSessions" :highlight="$highlight" class="mt-4" wire:key="occupancy-{{ $filterTeam }}-{{ $allSessions->max('updated_at') }}" />
         </section>
     @endif
 </div>

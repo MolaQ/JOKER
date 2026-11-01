@@ -27,7 +27,8 @@ class TrainingOccupancy
                 'from' => self::minutes($session->starts_at),
                 'to' => self::minutes($session->ends_at),
                 'span' => self::span($session->venue),
-                'color' => AgeColors::forTeam($session->team),
+                'color' => $session->colors()[0],
+                'colors' => $session->colors(),
             ])->filter(fn (array $block) => $block['to'] > $block['from']);
 
             return [

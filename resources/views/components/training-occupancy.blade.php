@@ -11,7 +11,7 @@
     $today = now()->isoWeekday();
     $firstDay = $days->has($today) ? $today : $days->keys()->first();
     $scale = 1.2; // piksele na minutę
-    $groups = $sessions->map(fn ($session) => $session->team?->category && isset(AgeColors::GROUPS[$session->team->category]) ? $session->team->category : (AgeColors::groupForName($session->team?->name) ?? 'senior'))->unique();
+    $groups = $sessions->flatMap(fn ($session) => $session->ageGroups())->unique();
 @endphp
 @if($days->isNotEmpty())
 <div {{ $attributes->merge(['class' => 'space-y-4']) }} x-data="{ day: {{ (int) $firstDay }} }">
@@ -59,12 +59,24 @@
                     @foreach(['courts' => $day['courts'], 'gym' => $day['gym']] as $part => $blocks)
                         <div class="relative rounded-md bg-zinc-50 ring-1 ring-zinc-200" style="height: {{ $height }}px; background-image: repeating-linear-gradient(to bottom, transparent 0, transparent {{ 60 * $scale - 1 }}px, rgb(228 228 231) {{ 60 * $scale - 1 }}px, rgb(228 228 231) {{ 60 * $scale }}px){{ $part === 'courts' ? ', linear-gradient(to right, transparent calc(33.333% - 1px), rgb(212 212 216) calc(33.333% - 1px), rgb(212 212 216) 33.333%, transparent 33.333%, transparent calc(66.666% - 1px), rgb(212 212 216) calc(66.666% - 1px), rgb(212 212 216) 66.666%, transparent 66.666%)' : '' }}">
                             @foreach($blocks as $block)
-                                @php $session = $block['session']; $dim = $highlight && $session->team_id !== (int) $highlight; @endphp
-                                <div @class(['absolute overflow-hidden rounded border-l-4 px-1 py-1 text-[10px] leading-tight sm:px-1.5 sm:text-[11px] text-zinc-900', 'ring-1' => ! $block['conflict'], 'ring-2 ring-red-500' => $block['conflict'], 'opacity-35' => $dim])
-                                    style="top: {{ (int) round(($block['from'] - $day['start']) * $scale) }}px; height: {{ max(18, (int) round(($block['to'] - $block['from']) * $scale) - 2) }}px; left: calc({{ round($block['left'], 3) }}% + 2px); width: calc({{ round($block['width'], 3) }}% - 4px); background: color-mix(in srgb, {{ $block['color'] }} 20%, white); border-left-color: {{ $block['color'] }}; @if(! $block['conflict']) --tw-ring-color: color-mix(in srgb, {{ $block['color'] }} 45%, white); @endif"
-                                    title="{{ $session->timeRange() }} · {{ $session->team?->name }} · {{ $session->venueLabel() }}@if($session->note) · {{ $session->note }}@endif">
+                                @php
+                                    $session = $block['session'];
+                                    $dim = $highlight && ($highlight === 'mini' ? ! $session->isMini() : $session->team_id !== (int) $highlight);
+                                    // Pasek z lewej: przy wspólnym treningu grup mini kolory wszystkich grup jeden pod drugim.
+                                    $step = 100 / count($block['colors']);
+                                    $stripe = collect($block['colors'])->map(fn ($color, $i) => $color.' '.round($i * $step, 2).'% '.round(($i + 1) * $step, 2).'%')->implode(', ');
+                                @endphp
+                                <div @class(['absolute overflow-hidden rounded py-1 pr-1 pl-2 sm:pr-1.5 sm:pl-2.5 text-[10px] leading-tight sm:text-[11px] text-zinc-900', 'ring-1' => ! $block['conflict'], 'ring-2 ring-red-500' => $block['conflict'], 'opacity-35' => $dim])
+                                    style="top: {{ (int) round(($block['from'] - $day['start']) * $scale) }}px; height: {{ max(18, (int) round(($block['to'] - $block['from']) * $scale) - 2) }}px; left: calc({{ round($block['left'], 3) }}% + 2px); width: calc({{ round($block['width'], 3) }}% - 4px); background: linear-gradient(to bottom, {{ $stripe }}) left / 4px 100% no-repeat, color-mix(in srgb, {{ $block['color'] }} 20%, white); @if(! $block['conflict']) --tw-ring-color: color-mix(in srgb, {{ $block['color'] }} 45%, white); @endif"
+                                    title="{{ $session->timeRange() }} · {{ $session->label() }} · {{ $session->venueLabel() }}@if($session->note) · {{ $session->note }}@endif">
                                     <p class="font-semibold tabular-nums">{{ $session->timeRange() }}</p>
-                                    <p class="truncate font-medium">{{ $session->team?->name }}</p>
+                                    @if($session->isMini() && $session->mini_group_ids !== [])
+                                        {{-- Wspólny trening grup mini: nazwa i grupy w osobnych wierszach --}}
+                                        <p class="truncate font-medium">{{ __('Minisiatkówka') }}</p>
+                                        <p class="truncate opacity-75">{{ $session->miniGroups()->pluck('name')->implode(' + ') }}</p>
+                                    @else
+                                        <p class="truncate font-medium">{{ $session->label() }}</p>
+                                    @endif
                                     @if($session->venue === 'main')<p class="truncate opacity-75">{{ $names['main'] }}</p>@endif
                                     @if($session->note)<p class="truncate opacity-75">{{ $session->note }}</p>@endif
                                 </div>

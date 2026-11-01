@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\AgeColors;
 use App\Support\SiteSettings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -33,8 +34,12 @@ class TrainingSession extends Model
         7 => 'Niedziela',
     ];
 
+    /** @var Collection<int, MiniGroup>|null */
+    private ?Collection $miniGroupsCache = null;
+
     protected $fillable = [
         'team_id',
+        'mini_group_ids',
         'weekday',
         'starts_at',
         'ends_at',
@@ -47,12 +52,92 @@ class TrainingSession extends Model
     {
         return [
             'weekday' => 'integer',
+            'mini_group_ids' => 'array',
         ];
     }
 
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    /**
+     * Trening minisiatkówki zamiast drużyny (grupy mogą ćwiczyć razem).
+     */
+    public function isMini(): bool
+    {
+        return $this->team_id === null && $this->mini_group_ids !== null;
+    }
+
+    /**
+     * Grupy minisiatkówki na tym treningu; pusta lista grup w zapisie oznacza wszystkie aktywne grupy.
+     *
+     * @return Collection<int, MiniGroup>
+     */
+    public function miniGroups(): Collection
+    {
+        if (! $this->isMini()) {
+            return collect();
+        }
+
+        $ids = array_map('intval', $this->mini_group_ids);
+
+        return $this->miniGroupsCache ??= MiniGroup::query()
+            ->when($ids === [], fn (Builder $query) => $query->where('is_active', true), fn (Builder $query) => $query->whereKey($ids))
+            ->ordered()->get();
+    }
+
+    /**
+     * Kto trenuje: nazwa drużyny albo „Minisiatkówka: Czwórki + Trójki”.
+     */
+    public function label(): string
+    {
+        if (! $this->isMini()) {
+            return (string) $this->team?->name;
+        }
+
+        if ($this->mini_group_ids === [] || $this->miniGroups()->isEmpty()) {
+            return __('Minisiatkówka');
+        }
+
+        return __('Minisiatkówka').': '.$this->miniGroups()->pluck('name')->implode(' + ');
+    }
+
+    public function url(): ?string
+    {
+        if (! $this->isMini()) {
+            return $this->team ? route('teams.show', $this->team) : null;
+        }
+
+        $groups = $this->miniGroups();
+
+        return count($this->mini_group_ids) === 1 && $groups->count() === 1 ? route('mini.show', $groups->first()) : route('mini.index');
+    }
+
+    /**
+     * Kategorie wiekowe treningu (dla kolorów i legendy): przy wspólnym treningu mini każda grupa osobno.
+     *
+     * @return list<string>
+     */
+    public function ageGroups(): array
+    {
+        if (! $this->isMini()) {
+            $team = $this->team;
+
+            return [$team?->category && isset(AgeColors::GROUPS[$team->category]) ? $team->category : (AgeColors::groupForName($team?->name) ?? 'senior')];
+        }
+
+        $groups = $this->miniGroups()->map(fn (MiniGroup $group) => 'mini'.max(1, min(4, (int) $group->players_on_court)))->unique()->values()->all();
+
+        return $groups ?: ['mini4'];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function colors(): array
+    {
+        return array_map(fn (string $group) => AgeColors::color($group), $this->ageGroups());
     }
 
     public function scopeOrdered(Builder $query): void
