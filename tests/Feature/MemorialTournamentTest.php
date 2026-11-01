@@ -538,7 +538,7 @@ test('court is picked with the hall symbol and named courts get the symbol on th
     $match = $joker->category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id]);
 
     Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
-        ->assertSeeHtml('aria-label="Boisko"')
+        ->assertSeeHtml('x-on:click="open = ! open"')
         ->set("results.{$match->id}.court", 'Sektor I');
 
     expect($match->fresh()->court)->toBe('Sektor I');
@@ -859,4 +859,34 @@ test('facilities from earlier tournaments can be added again with one click, old
     $facility = TournamentHalls::extra($this->tournament->fresh())[0];
     expect($facility['name'])->toBe('MOSiR')
         ->and(collect($facility['rooms'])->flatMap(fn ($room) => collect($room['courts'])->pluck('value'))->all())->toBe(['MOSiR · Boisko 1', 'MOSiR · Boisko 2']);
+});
+
+test('a room can offer only some of its sectors when another event plays on the rest', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $base = ['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id];
+    $matches = collect(range(1, 3))->map(fn ($number) => $category->matches()->create($base + ['number' => $number]));
+
+    // MOSiR: cztery sektory, ale do dyspozycji tylko sektor II (na pozostałych gra inny turniej).
+    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
+        ->call('addHall')
+        ->set('halls.0.name', 'MOSiR')
+        ->set('halls.0.rooms.0.sectors', 4)
+        ->call('toggleSector', 0, 0, 0)
+        ->call('toggleSector', 0, 0, 2)
+        ->call('toggleSector', 0, 0, 3)
+        ->call('toggleSector', 0, 0, 1)
+        ->assertSee('niedostępny');
+
+    $room = TournamentHalls::extra($this->tournament->fresh())[0]['rooms'][0];
+    expect($room['off'])->toBe([0, 2, 3])
+        ->and(collect($room['courts'])->pluck('value')->all())->toBe(['MOSiR · Sektor II']);
+
+    $editor->set('categoryHall', 'MOSiR')->call('arrangeSchedule');
+    expect($matches->map(fn ($match) => $match->fresh()->court)->unique()->values()->all())->toBe(['MOSiR · Sektor II']);
+
+    // Sektora z meczami nie da się wyłączyć; zwolniony sektor wraca do wyboru.
+    $editor->call('toggleSector', 0, 0, 1)->call('toggleSector', 0, 0, 3);
+    expect(TournamentHalls::extra($this->tournament->fresh())[0]['rooms'][0]['off'])->toBe([0, 2]);
 });

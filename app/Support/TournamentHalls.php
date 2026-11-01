@@ -46,7 +46,7 @@ class TournamentHalls
      * Dodatkowe obiekty turnieju z salami i boiskami gotowymi do wyboru.
      * Starszy zapis (obiekt z listą boisk) czytamy jako sale bez podziału o tych nazwach, więc zapisane mecze się nie zmieniają.
      *
-     * @return list<array{name: string, address: string, color: string, rooms: list<array{name: string, sectors: int, whole: bool, courts: list<array{value: string, label: string, whole: bool, index: int|null}>}>}>
+     * @return list<array{name: string, address: string, color: string, rooms: list<array{name: string, sectors: int, whole: bool, off: list<int>, courts: list<array{value: string, label: string, whole: bool, index: int|null}>}>}>
      */
     public static function extra(?Tournament $tournament): array
     {
@@ -60,8 +60,8 @@ class TournamentHalls
             }
 
             $rooms = isset($raw['rooms'])
-                ? array_map(fn ($room) => ['name' => trim((string) ($room['name'] ?? '')), 'sectors' => max(1, min(4, (int) ($room['sectors'] ?? 1))), 'whole' => (bool) ($room['whole'] ?? false)], (array) $raw['rooms'])
-                : array_map(fn ($court) => ['name' => trim((string) $court), 'sectors' => 1, 'whole' => false], array_filter((array) ($raw['courts'] ?? []), fn ($court) => trim((string) $court) !== ''));
+                ? array_map(fn ($room) => self::room($room), (array) $raw['rooms'])
+                : array_map(fn ($court) => ['name' => trim((string) $court), 'sectors' => 1, 'whole' => false, 'off' => []], array_filter((array) ($raw['courts'] ?? []), fn ($court) => trim((string) $court) !== ''));
 
             if ($rooms === []) {
                 continue;
@@ -81,7 +81,27 @@ class TournamentHalls
     }
 
     /**
-     * Boiska sali: sektory (gdy podzielona) i całe boisko (gdy niepodzielona albo zaznaczone).
+     * Sala z zapisu: nazwa, liczba sektorów, całe boisko i sektory niedostępne dla turnieju (off, numerowane od 0),
+     * np. gdy na pozostałych sektorach gra inny turniej. Co najmniej jeden sektor zostaje dostępny.
+     *
+     * @return array{name: string, sectors: int, whole: bool, off: list<int>}
+     */
+    public static function room(array $room): array
+    {
+        $sectors = max(1, min(4, (int) ($room['sectors'] ?? 1)));
+        $off = array_values(array_unique(array_filter(array_map('intval', (array) ($room['off'] ?? [])), fn (int $index) => $index >= 0 && $index < $sectors)));
+        sort($off);
+
+        return [
+            'name' => trim((string) ($room['name'] ?? '')),
+            'sectors' => $sectors,
+            'whole' => (bool) ($room['whole'] ?? false),
+            'off' => $sectors === 1 || count($off) >= $sectors ? [] : $off,
+        ];
+    }
+
+    /**
+     * Boiska sali: dostępne sektory (gdy podzielona) i całe boisko (gdy niepodzielona albo zaznaczone i cała sala jest dostępna).
      *
      * @param  array{name: string, sectors: int, whole: bool}  $room
      * @return list<array{value: string, label: string, whole: bool, index: int|null}>
@@ -96,10 +116,13 @@ class TournamentHalls
 
         $courts = [];
         for ($number = 1; $number <= $room['sectors']; $number++) {
+            if (in_array($number - 1, $room['off'], true)) {
+                continue;
+            }
             $courts[] = ['value' => $prefix.self::SEPARATOR.self::sectorLabel($number), 'label' => self::sectorLabel($number), 'whole' => false, 'index' => $number - 1];
         }
 
-        if ($room['whole']) {
+        if ($room['whole'] && $room['off'] === []) {
             $whole = $prefix.self::SEPARATOR.self::wholeLabel();
             // Całe boisko zajmuje wszystkie sektory sali: tak liczymy nakładanie i układanie godzin.
             self::$whole[mb_strtolower($whole)] = array_map(fn (array $court) => mb_strtolower($court['value']), $courts);
@@ -216,11 +239,11 @@ class TournamentHalls
      * @param  array<string, mixed>  $facility
      * @param  array<string, mixed>  $room
      * @param  array<string, mixed>  $court
-     * @return array{parts: int, index: int|null, whole: bool, color: string}
+     * @return array{parts: int, index: int|null, whole: bool, color: string, off: list<int>}
      */
     public static function iconFor(array $facility, array $room, array $court): array
     {
-        return ['parts' => $room['sectors'], 'index' => $court['index'], 'whole' => $court['whole'], 'color' => $facility['color']];
+        return ['parts' => $room['sectors'], 'index' => $court['index'], 'whole' => $court['whole'], 'color' => $facility['color'], 'off' => $room['off'] ?? []];
     }
 
     private static function tournamentOfCategory(int $categoryId): ?Tournament

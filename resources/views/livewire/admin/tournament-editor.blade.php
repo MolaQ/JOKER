@@ -304,9 +304,9 @@
                         </div>
 
                         <div class="flex flex-wrap items-center gap-3">
-                            <p class="text-xs font-semibold text-gray-500 uppercase">Sektor grupy</p>
+                            <p class="text-xs font-semibold text-gray-500 uppercase">Domyślne boisko grupy</p>
                             <x-court-picker :halls="$extraHalls" model="groupCourts.{{ $group->id }}" :value="$groupCourts[$group->id] ?? null" :free="false" />
-                            <span class="text-xs text-gray-500">{{ filled($groupCourts[$group->id] ?? null) ? \App\Models\TrainingSession::courtLabel($groupCourts[$group->id]) : 'brak: przy układaniu godzin mecze trafią na wolne sektory' }}</span>
+                            @unless(filled($groupCourts[$group->id] ?? null))<span class="text-xs text-gray-500">brak: przy układaniu godzin mecze trafią na wolne sektory</span>@endunless
                         </div>
 
                         <div>
@@ -532,9 +532,7 @@
                             @foreach($hall['rooms'] as $roomIndex => $room)
                                 @php
                                     $sectors = max(1, min(4, (int) $room['sectors']));
-                                    $previewCourts = $sectors === 1 ? [['index' => null, 'whole' => true, 'label' => trim($room['name']) ?: 'Całe boisko']] : array_merge(
-                                        array_map(fn ($n) => ['index' => $n - 1, 'whole' => false, 'label' => \App\Support\TournamentHalls::sectorLabel($n)], range(1, $sectors)),
-                                        $room['whole'] ? [['index' => null, 'whole' => true, 'label' => 'Całe boisko']] : []);
+                                    $roomOff = \App\Support\TournamentHalls::room($room)['off'];
                                 @endphp
                                 <div class="space-y-2 rounded-md bg-white p-2.5 ring-1 ring-gray-200" wire:key="hall-{{ $index }}-room-{{ $roomIndex }}">
                                     <div class="flex items-center gap-2">
@@ -546,7 +544,7 @@
                                     <div class="flex flex-wrap items-center gap-2 text-xs">
                                         {{-- Podział sali: bez podziału (jedno boisko) albo 2–4 sektory --}}
                                         <span class="inline-flex overflow-hidden rounded-md font-semibold ring-1 ring-gray-300" role="group" aria-label="Podział sali">
-                                            @foreach([1 => 'Jedno boisko', 2 => '2 sektory', 3 => '3 sektory', 4 => '4'] as $count => $countLabel)
+                                            @foreach([1 => 'Jedno boisko', 2 => '2 sektory', 3 => '3 sektory', 4 => '4 sektory'] as $count => $countLabel)
                                                 <button type="button" wire:click="$set('halls.{{ $index }}.rooms.{{ $roomIndex }}.sectors', {{ $count }})" aria-pressed="{{ $sectors === $count ? 'true' : 'false' }}" @class(['px-2.5 py-1.5 not-first:border-l not-first:border-gray-300', 'bg-sky-600 text-white' => $sectors === $count, 'bg-white text-gray-700 hover:bg-gray-50' => $sectors !== $count])>{{ $countLabel }}</button>
                                             @endforeach
                                         </span>
@@ -554,13 +552,30 @@
                                             <label class="inline-flex items-center gap-1.5 text-gray-700"><input type="checkbox" wire:model.live="halls.{{ $index }}.rooms.{{ $roomIndex }}.whole" class="rounded border-gray-300"> także całe boisko</label>
                                         @endif
                                     </div>
-                                    {{-- Podgląd: tak boiska wyglądają przy meczach i w legendzie --}}
-                                    <div class="flex flex-wrap items-end gap-3">
-                                        @foreach($previewCourts as $preview)
+                                    {{-- Podgląd boisk; przy sali z sektorami kliknięcie sektora włącza go albo wyłącza dla turnieju --}}
+                                    @if($sectors > 1)<p class="text-[11px] text-gray-500">Kliknij sektor, którego nie macie do dyspozycji (np. gra tam inny turniej).</p>@endif
+                                    <div class="flex flex-wrap items-end gap-2">
+                                        @if($sectors === 1)
                                             <span class="flex flex-col items-center gap-0.5 text-[11px] font-semibold text-gray-600">
-                                                <x-venue-icon :parts="$sectors" :index="$preview['index']" :whole="$preview['whole']" :color="$hall['color'] ?? null" />{{ $preview['label'] }}
+                                                <x-venue-icon :parts="1" :whole="true" :color="$hall['color'] ?? null" />{{ trim($room['name']) ?: 'Całe boisko' }}
                                             </span>
-                                        @endforeach
+                                        @else
+                                            @foreach(range(0, $sectors - 1) as $sectorIndex)
+                                                @php $isOff = in_array($sectorIndex, $roomOff, true); @endphp
+                                                <button type="button" wire:click="toggleSector({{ $index }}, {{ $roomIndex }}, {{ $sectorIndex }})" aria-pressed="{{ $isOff ? 'false' : 'true' }}" title="{{ $isOff ? 'Niedostępny: kliknij, żeby włączyć' : 'Dostępny: kliknij, żeby wyłączyć' }}"
+                                                    @class(['flex flex-col items-center gap-0.5 rounded-md p-1 text-[11px] font-semibold ring-1 transition', 'text-gray-400 ring-0 outline-1 outline-gray-300 outline-dashed' => $isOff, 'text-gray-700 ring-gray-200 hover:ring-gray-400' => ! $isOff])>
+                                                    <x-venue-icon :parts="$sectors" :index="$isOff ? null : $sectorIndex" :color="$hall['color'] ?? null" :off="$isOff ? [$sectorIndex] : []" />
+                                                    <span>{{ \App\Support\TournamentHalls::sectorLabel($sectorIndex + 1) }}</span>
+                                                    <span @class(['text-[10px] font-medium', 'text-gray-400' => $isOff, 'text-emerald-700' => ! $isOff])>{{ $isOff ? 'niedostępny' : 'dostępny' }}</span>
+                                                </button>
+                                            @endforeach
+                                            @if($room['whole'] ?? false)
+                                                <span @class(['flex flex-col items-center gap-0.5 p-1 text-[11px] font-semibold', 'text-gray-600' => $roomOff === [], 'text-gray-400' => $roomOff !== []])>
+                                                    <x-venue-icon :parts="$sectors" :whole="$roomOff === []" :color="$roomOff === [] ? ($hall['color'] ?? null) : '#d4d4d8'" :off="$roomOff" />Całe boisko
+                                                    @if($roomOff !== [])<span class="text-[10px] font-medium">tylko gdy cała sala</span>@endif
+                                                </span>
+                                            @endif
+                                        @endif
                                     </div>
                                 </div>
                             @endforeach
@@ -669,7 +684,7 @@
                         <h3 class="mb-2 font-semibold text-gray-900">{{ $stageName }} <span class="text-xs font-normal text-gray-500">· kolejność i numery zmieniasz, przeciągając mecz za uchwyt ⠿ albo strzałkami</span></h3>
                         <div class="space-y-2" wire:sort="moveMatch">
                             @foreach($stageMatches as $tournamentMatch)
-                                <div class="grid gap-2 rounded-lg border border-gray-200 bg-white p-3 lg:grid-cols-[minmax(0,2fr)_10rem_11rem_10rem_auto] lg:items-center" wire:key="match-{{ $tournamentMatch->id }}" wire:sort:item="{{ $tournamentMatch->id }}">
+                                <div class="grid gap-2 rounded-lg border border-gray-200 bg-white p-3 lg:grid-cols-[minmax(0,1.6fr)_minmax(8rem,1fr)_16rem_12rem_auto] lg:items-center" wire:key="match-{{ $tournamentMatch->id }}" wire:sort:item="{{ $tournamentMatch->id }}">
                                     <div class="flex items-center gap-2 text-sm">
                                         <div class="flex shrink-0 flex-col items-center text-gray-400">
                                             <button type="button" wire:click="moveMatchBy({{ $tournamentMatch->id }}, -1)" @disabled($loop->first) class="leading-none hover:text-gray-900 disabled:opacity-30" aria-label="Przesuń wyżej">▲</button>

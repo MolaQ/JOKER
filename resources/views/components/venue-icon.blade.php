@@ -1,4 +1,4 @@
-@props(['venue' => null, 'small' => false, 'parts' => null, 'index' => null, 'whole' => false, 'color' => null])
+@props(['venue' => null, 'small' => false, 'parts' => null, 'index' => null, 'whole' => false, 'color' => null, 'off' => []])
 @php
     // Symbol miejsca treningu: sala podzielona w poprzek na trzy boiska (3 lewe, 2 środkowe, 1 prawe), główne boisko to cała sala, siłownia osobno.
     // Kolory i ikonę siłowni ustawia się w panelu: System → Ustawienia systemu → Kolory.
@@ -41,6 +41,13 @@
         <rect x="1" y="1" width="46" height="28" rx="4" fill="{{ $court }}" stroke="{{ $court }}" stroke-width="1.5"/>
     @else
         <rect x="1" y="1" width="46" height="28" rx="4" fill="#fff" stroke="#a1a1aa" stroke-width="1.5"/>
+        {{-- Sektory niedostępne dla turnieju (np. gra tam inny turniej): szare, przekreślone --}}
+        @if($parts !== null)
+            @foreach($off as $offPart)
+                <rect x="{{ 1 + $offPart * $third + 1.5 }}" y="2.5" width="{{ $third - 3 }}" height="25" rx="2" fill="#e4e4e7"/>
+                <line x1="{{ 1 + $offPart * $third + 3 }}" y1="5" x2="{{ 1 + ($offPart + 1) * $third - 1.5 }}" y2="25" stroke="#a1a1aa" stroke-width="1.2"/>
+            @endforeach
+        @endif
         @if($part !== null)
             <rect x="{{ 1 + $part * $third + 1.5 }}" y="2.5" width="{{ $third - 3 }}" height="25" rx="2" fill="{{ $court }}"/>
         @endif
