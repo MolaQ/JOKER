@@ -19,38 +19,45 @@
     <x-photo :src="Media::teamPhoto($team)" :alt="__('Drużyna').' '.$team->name" eager width="1800" height="1000" class="absolute inset-0 -z-20 h-full w-full opacity-60" />
     <div class="absolute inset-0 -z-10 bg-gradient-to-t from-ink via-ink/70 to-ink/30"></div>
 
-    <div class="container-site pt-24 pb-14 lg:pt-36 lg:pb-20">
-        <a href="{{ route('teams.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ __('Wszystkie drużyny') }}</a>
-        @if($team->birthYearsLabel() || $currentSeason)
-            <p class="eyebrow mt-6">{{ collect([$team->birthYearsLabel(), $currentSeason ? __('Sezon').' '.$currentSeason->name : null])->filter()->implode(' · ') }}</p>
-        @endif
-        <h1 class="heading-xl mt-3">{{ $team->name }}</h1>
-        <div class="mt-3 flex flex-wrap items-center gap-4">
-            <x-view-count :model="$team" class="text-white/70" />
-            @livewire('like-button', ['type' => 'team', 'id' => $team->id, 'dark' => true], key('team-like-'.$team->id))
-        </div>
-        @if($team->description)
-            <div class="mt-5 max-w-2xl text-lg text-zinc-300">{!! strip_tags($team->description, '<p><br><strong><em><b><i>') !!}</div>
-        @endif
-
-        <dl class="mt-10 flex flex-wrap gap-x-10 gap-y-4">
-            <div><dt class="text-xs text-zinc-400 uppercase">{{ __('Zawodnicy') }}</dt><dd class="font-display text-4xl font-bold">{{ $roster->count() }}</dd></div>
-            <div><dt class="text-xs text-zinc-400 uppercase">{{ __('Sztab') }}</dt><dd class="font-display text-4xl font-bold">{{ $staff->count() }}</dd></div>
-            @if($upcoming_games->first())
-                @php $nextGame = $upcoming_games->first(); @endphp
-                <div>
-                    <dt class="text-xs text-zinc-400 uppercase">{{ __('Najbliższy mecz') }}</dt>
-                    <dd class="font-display text-2xl font-semibold uppercase">{{ $nextGame->game_date?->translatedFormat('d M') }} · {{ $nextGame->opponentShortName() }}</dd>
-                    {{-- Odliczanie jak na stronie głównej (ten sam przełącznik w ustawieniach) --}}
-                    @if($site['home_show_countdown'] && $nextGame->game_date?->isFuture())
-                        <dd class="mt-3">
-                            <div data-countdown="{{ $nextGame->game_date->toIso8601String() }}" role="timer" aria-hidden="true"></div>
-                            <p data-countdown-text class="sr-only" aria-live="off"></p>
-                        </dd>
-                    @endif
-                </div>
+    @php $nextGame = $upcoming_games->first(); @endphp
+    {{-- Na komputerze najbliższy mecz z odliczaniem stoi po prawej na wysokości nazwy drużyny, na telefonie pod liczbami. --}}
+    <div class="container-site grid gap-10 pt-24 pb-14 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end lg:gap-16 lg:pt-36 lg:pb-20">
+        <div class="min-w-0">
+            <a href="{{ route('teams.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ __('Wszystkie drużyny') }}</a>
+            @if($team->birthYearsLabel() || $currentSeason)
+                <p class="eyebrow mt-6">{{ collect([$team->birthYearsLabel(), $currentSeason ? __('Sezon').' '.$currentSeason->name : null])->filter()->implode(' · ') }}</p>
             @endif
-        </dl>
+            <h1 class="heading-xl mt-3">{{ $team->name }}</h1>
+            <div class="mt-3 flex flex-wrap items-center gap-4">
+                <x-view-count :model="$team" class="text-white/70" />
+                @livewire('like-button', ['type' => 'team', 'id' => $team->id, 'dark' => true], key('team-like-'.$team->id))
+            </div>
+            @if($team->description)
+                <div class="mt-5 max-w-2xl text-lg text-zinc-300">{!! strip_tags($team->description, '<p><br><strong><em><b><i>') !!}</div>
+            @endif
+
+            <dl class="mt-10 flex flex-wrap gap-x-10 gap-y-4">
+                <div><dt class="text-xs text-zinc-400 uppercase">{{ __('Zawodnicy') }}</dt><dd class="font-display text-4xl font-bold">{{ $roster->count() }}</dd></div>
+                <div><dt class="text-xs text-zinc-400 uppercase">{{ __('Sztab') }}</dt><dd class="font-display text-4xl font-bold">{{ $staff->count() }}</dd></div>
+            </dl>
+        </div>
+
+        @if($nextGame)
+            <aside class="w-full rounded-2xl bg-ink/70 p-5 ring-1 ring-white/10 backdrop-blur sm:p-6 lg:w-auto lg:max-w-[32rem] lg:min-w-[22rem] lg:self-center" aria-label="{{ __('Najbliższy mecz') }}">
+                <p class="text-xs font-semibold tracking-widest text-sky-club uppercase">{{ __('Najbliższy mecz') }} · {{ $nextGame->kickoffLabel() }}</p>
+                <a href="{{ route('games.show', $nextGame) }}" class="mt-2 block font-display text-2xl leading-tight font-semibold uppercase transition hover:text-sky-club-light sm:text-3xl">
+                    {{ $nextGame->ourLabel()['name'] }} <span class="text-zinc-500">{{ __('vs') }}</span> {{ $nextGame->opponentShortName() }}
+                </a>
+                {{-- Odliczanie jak na stronie głównej (ten sam przełącznik w ustawieniach) --}}
+                @if($site['home_show_countdown'] && $nextGame->game_date?->isFuture())
+                    <div class="mt-4">
+                        <div data-countdown="{{ $nextGame->game_date->toIso8601String() }}" role="timer" aria-hidden="true"></div>
+                        <p data-countdown-text class="sr-only" aria-live="off"></p>
+                    </div>
+                @endif
+                <a href="{{ route('games.calendar', $nextGame) }}" class="mt-3 inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-sky-club-light">+ {{ __('Dodaj do kalendarza') }}</a>
+            </aside>
+        @endif
     </div>
 </section>
 
