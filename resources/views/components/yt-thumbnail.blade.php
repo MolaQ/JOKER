@@ -23,6 +23,20 @@
     $color = fn (?string $value, string $fallback) => preg_match('/^#[0-9a-fA-F]{6}$/', (string) $value) ? $value : $fallback;
     $home = $data['home'];
     $away = $data['away'];
+    // Litery VS: kolory z szablonu albo (przełącznik) z barw drużyn na krzyż: V w kolorze gości, S gospodarzy.
+    $vsLetters = [];
+    foreach (['v' => 'vv', 's' => 'vs'] as $letter => $var) {
+        if ($s['vs_team_colors']) {
+            $team = $color(($letter === 'v' ? $away : $home)['color'] ?? null, $letter === 'v' ? ThumbnailData::RIVAL_COLOR : '#1d6ff2');
+            $tones = ["color-mix(in srgb, {$team} 45%, #fff)", $team, "color-mix(in srgb, {$team} 60%, #000)", "color-mix(in srgb, {$team} 25%, #fff)"];
+        } else {
+            $tones = array_map(fn ($i) => $color($s["vs_{$letter}{$i}"] ?? null, ThumbnailTemplate::DEFAULTS["vs_{$letter}{$i}"]), [1, 2, 3, 4]);
+        }
+        foreach ($tones as $i => $tone) {
+            $vsLetters[] = "--{$var}".($i + 1).':'.$tone;
+        }
+    }
+    $stage = $s['show_stage'] ? (trim((string) $s['stage_text']) ?: (string) ($data['stage'] ?? '')) : '';
     $style = implode(';', [
         '--hc:'.$color($home['color'] ?? null, '#1d6ff2'),
         '--ac:'.$color($away['color'] ?? null, ThumbnailData::RIVAL_COLOR),
@@ -37,13 +51,15 @@
         '--bar2:'.$color($s['bar_to'], '#1d4ed8'),
         '--panel:'.$color($s['panel'], '#080a10'),
         'font-family:'.ThumbnailTemplate::fontFamily($s['font']),
+        '--vso:'.$color($s['vs_outline'] ?? null, '#0b0b0b'),
+        ...$vsLetters,
         '--vss:'.max(30, min(250, (int) $s['vs_size'])) / 100,
         '--vsy:'.max(-400, min(400, (int) $s['vs_offset'])).'px',
     ]);
     $background = ThumbnailData::src($s['background'] ?: '/img/miniatury/hala.jpg');
     $initials = fn (array $side) => mb_strtoupper(mb_substr($side['name'] ?? '', 0, 1).mb_substr($side['sub'] ?? '', 0, 1)) ?: '?';
 @endphp
-<div {{ $attributes->merge(['class' => 'ytt '.($bars ? 'ytt-bars' : 'ytt-modern').($summary ? ' ytt-summary' : '').($sponsors ? ' ytt-has-sponsors' : '').($s['show_names'] ? '' : ' ytt-no-names')]) }} style="{{ $style }}">
+<div {{ $attributes->merge(['class' => 'ytt '.($bars ? 'ytt-bars' : 'ytt-modern').($summary ? ' ytt-summary' : '').($sponsors ? ' ytt-has-sponsors' : '').($s['show_names'] ? '' : ' ytt-no-names').($s['title_two_lines'] ? ' ytt-title-2' : '')]) }} style="{{ $style }}">
     <div class="ytt-bg" style="background-image: url('{{ $background }}')"></div>
     @if($s['tint'])
         <div class="ytt-half ytt-half-l"></div>
@@ -66,7 +82,7 @@
             @if(filled($s['label']))<div class="ytt-label">{{ $s['label'] }}</div>@endif
             @php $title = (string) ($summary ? $s['summary_title'] : $s['preview_title']); $words = preg_split('/\s+/u', trim($title), 2); @endphp
             <div class="ytt-h1">{{ $words[0] ?? '' }} @if(isset($words[1]))<b>{{ $words[1] }}</b>@endif</div>
-            @if(filled($data['stage'] ?? null))<div class="ytt-stage">{{ $data['stage'] }}</div>@endif
+            @if($stage !== '')<div class="ytt-stage">{{ $stage }}</div>@endif
         </div>
     @endif
 
@@ -90,7 +106,7 @@
     @endforeach
 
     <div class="ytt-center">
-        @if($bars && filled($data['stage'] ?? null))<div class="ytt-stage">{{ $data['stage'] }}</div>@endif
+        @if($bars && $stage !== '')<div class="ytt-stage">{{ $stage }}</div>@endif
         @if($summary)
             @if($score)
                 <div class="ytt-score">{{ $score[0] }}<i>:</i>{{ $score[1] }}</div>

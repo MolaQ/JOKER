@@ -115,7 +115,18 @@ test('the VS graphic and the title colours are configurable and saved in the tem
         ->assertSee('--tc:#ffcc00', false)
         ->assertSee('--vss:1.4', false)
         ->assertSee('--vsy:-40px', false)
-        ->assertSeeHtml('ytt-vs-burst');
+        ->assertSeeHtml('ytt-vs-burst')
+        ->set('s.vs_v2', '#00ff00')
+        ->assertSee('--vv2:#00ff00', false)
+        ->set('s.show_stage', false)
+        ->set('m.stage', 'Grupa Z')
+        ->assertDontSee('Grupa Z')
+        ->set('s.show_stage', true)
+        ->set('s.stage_text', 'Półfinał')
+        ->assertSee('Półfinał')
+        ->set('s.vs_team_colors', true)
+        ->set('m.home.color', '#112233')
+        ->assertSee('--vs2:#112233', false);
 
     $component->call('nudgeVs', -1000)->assertSet('s.vs_offset', -400)
         ->call('saveTemplate', true)->assertHasNoErrors();
@@ -123,7 +134,9 @@ test('the VS graphic and the title colours are configurable and saved in the tem
     $settings = ThumbnailTemplate::where('name', 'VS duże')->firstOrFail()->resolvedSettings();
     expect($settings['vs_size'])->toBe(140)
         ->and($settings['vs_offset'])->toBe(-400)
-        ->and($settings['title_color'])->toBe('#ffcc00');
+        ->and($settings['title_color'])->toBe('#ffcc00')
+        ->and($settings['stage_text'])->toBe('Półfinał')
+        ->and($settings['vs_team_colors'])->toBeTrue();
 
     $component->set('s.vs_style', 'nieznany')->call('saveTemplate')->assertHasErrors('s.vs_style');
 });

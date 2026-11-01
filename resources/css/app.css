@@ -1024,10 +1024,11 @@ table[data-sortable] > thead th:not([data-nosort]) {
 .ytt-streak { position: absolute; height: 26px; transform: skewX(-28deg); }
 .ytt-title { position: absolute; top: 58px; left: 260px; right: 260px; text-align: center; }
 .ytt-label { display: inline-block; max-width: 100%; font-weight: 500; font-size: 34px; letter-spacing: .16em; text-transform: uppercase; padding: 10px 26px; border-radius: 999px; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .25); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ytt-h1 { margin-top: 18px; color: var(--tc); font-weight: 700; font-size: 150px; line-height: .9; text-transform: uppercase; text-shadow: 0 8px 30px rgba(0, 0, 0, .6); }
-.ytt-h1 b { display: block; color: var(--hl); }
+.ytt-h1 { margin-top: 18px; color: var(--tc); font-weight: 700; font-size: 128px; line-height: .9; white-space: nowrap; text-transform: uppercase; text-shadow: 0 8px 30px rgba(0, 0, 0, .6); }
+.ytt-h1 b { color: var(--hl); }
+.ytt-title-2 .ytt-h1 { font-size: 150px; white-space: normal; }
+.ytt-title-2:not(.ytt-summary) .ytt-h1 b { display: block; }
 .ytt-summary .ytt-h1 { font-size: 96px; }
-.ytt-summary .ytt-h1 b { display: inline; }
 .ytt-stage { margin-top: 14px; font-weight: 500; font-size: 34px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255, 255, 255, .85); }
 .ytt-corner { position: absolute; z-index: 3; display: flex; align-items: flex-start; justify-content: center; }
 .ytt-corner img { max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .5)); }
@@ -1040,36 +1041,39 @@ table[data-sortable] > thead th:not([data-nosort]) {
 .ytt-team-a { right: 20px; }
 .ytt-logo { position: relative; width: 520px; height: 520px; display: flex; align-items: center; justify-content: center; }
 .ytt-logo::before { content: ""; position: absolute; inset: 8%; border-radius: 50%; background: radial-gradient(circle, var(--glow) 0%, transparent 68%); opacity: .9; }
-.ytt-logo img { position: relative; max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 14px 24px rgba(0, 0, 0, .55)); }
+.ytt-logo img { position: relative; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 14px 24px rgba(0, 0, 0, .55)); }
 .ytt-fallback { position: relative; width: 420px; height: 420px; border-radius: 50%; background: linear-gradient(150deg, #fff, #cbd5e1); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 180px; color: #1e293b; box-shadow: 0 14px 30px rgba(0, 0, 0, .5); }
 .ytt-name { margin-top: 14px; max-width: 640px; font-weight: 700; font-size: 60px; text-transform: uppercase; text-shadow: 0 4px 16px rgba(0, 0, 0, .6); }
 .ytt-name b { display: block; color: color-mix(in srgb, var(--glow) 70%, #fff); }
 .ytt-center { position: absolute; left: 660px; right: 660px; top: 470px; display: flex; flex-direction: column; align-items: center; text-align: center; z-index: 2; }
-.ytt-summary .ytt-center { top: 280px; }
+.ytt-summary .ytt-center { top: 350px; }
 .ytt-vs-wrap { display: flex; justify-content: center; transform: translateY(var(--vsy, 0px)) scale(var(--vss, 1)); transform-origin: center; }
-.ytt-vs-burst { width: 620px; height: auto; overflow: visible; }
+.ytt-vs-burst { width: 760px; height: auto; overflow: visible; }
 .ytt-vs-burst text { font-family: var(--vsfont); }
 .ytt-vs-image { max-width: 620px; max-height: 420px; object-fit: contain; }
-.ytt-modern:not(.ytt-summary) .ytt-center { top: 470px; }
+.ytt-modern:not(.ytt-summary) .ytt-center { top: 400px; }
+.ytt-modern.ytt-title-2:not(.ytt-summary) .ytt-center { top: 470px; }
 /* Bez nazw drużyn logotypy zajmują też miejsce podpisu. */
-.ytt-no-names .ytt-team { top: 250px; }
-.ytt-no-names .ytt-logo { width: 640px; height: 640px; }
-.ytt-no-names .ytt-fallback { width: 520px; height: 520px; font-size: 220px; }
-.ytt-no-names.ytt-has-sponsors .ytt-logo { width: 560px; height: 560px; }
+.ytt-no-names .ytt-team { top: 220px; width: 720px; }
+.ytt-no-names .ytt-team-h { left: 0; }
+.ytt-no-names .ytt-team-a { right: 0; }
+.ytt-no-names .ytt-logo { width: 700px; height: 700px; }
+.ytt-no-names .ytt-fallback { width: 600px; height: 600px; font-size: 250px; }
+.ytt-no-names.ytt-has-sponsors .ytt-logo { width: 600px; height: 600px; }
 .ytt-vs { font-family: var(--vsfont); font-weight: 400; font-size: 240px; line-height: 1.1; padding: 0 30px; color: var(--vsc); text-shadow: 0 10px 40px rgba(0, 0, 0, .75), 0 0 2px rgba(0, 0, 0, .4); }
 .ytt-when { margin-top: 10px; font-weight: 600; font-size: 40px; text-transform: uppercase; text-shadow: 0 4px 16px rgba(0, 0, 0, .6); }
 .ytt-score { font-weight: 700; font-size: 340px; line-height: .85; white-space: nowrap; text-shadow: 0 10px 40px rgba(0, 0, 0, .7); }
 .ytt-score i { font-style: normal; opacity: .6; margin: 0 6px; }
 .ytt-score-empty { opacity: .4; }
-.ytt-sets { margin-top: 26px; display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; max-width: 760px; }
-.ytt-set { position: relative; min-width: 160px; padding: 12px 20px 14px; border-radius: 20px; text-align: center; background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .05)); border: 2px solid rgba(255, 255, 255, .25); box-shadow: 0 10px 24px rgba(0, 0, 0, .4); overflow: hidden; }
+.ytt-sets { margin-top: 40px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 640px; }
+.ytt-set { position: relative; min-width: 118px; padding: 6px 12px 8px; border-radius: 14px; text-align: center; background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .05)); border: 2px solid rgba(255, 255, 255, .25); box-shadow: 0 10px 24px rgba(0, 0, 0, .4); overflow: hidden; }
 .ytt-set::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: rgba(255, 255, 255, .3); }
 .ytt-set-home { background: linear-gradient(180deg, color-mix(in srgb, var(--hc) 70%, transparent), color-mix(in srgb, var(--hc) 25%, rgba(0, 0, 0, .4))); border-color: color-mix(in srgb, var(--hc) 60%, #fff); }
 .ytt-set-home::before { background: var(--hc); }
 .ytt-set-away { background: linear-gradient(180deg, color-mix(in srgb, var(--ac) 70%, transparent), color-mix(in srgb, var(--ac) 25%, rgba(0, 0, 0, .4))); border-color: color-mix(in srgb, var(--ac) 60%, #fff); }
 .ytt-set-away::before { background: var(--ac); }
-.ytt-set small { display: block; font-size: 24px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
-.ytt-set span { display: block; margin-top: 4px; font-size: 64px; font-weight: 600; white-space: nowrap; }
+.ytt-set small { display: block; font-size: 17px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
+.ytt-set span { display: block; margin-top: 2px; font-size: 40px; font-weight: 600; white-space: nowrap; }
 .ytt-set b { font-weight: 500; opacity: .7; }
 .ytt-set b.ytt-set-win { font-weight: 700; opacity: 1; }
 .ytt-set i { font-style: normal; opacity: .6; margin: 0 2px; }

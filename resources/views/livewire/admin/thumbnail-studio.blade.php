@@ -194,8 +194,13 @@
                         <label class="{{ $label }}">Kolor tytułu (dalsze słowa)</label>
                         <input type="color" wire:model.live.debounce.300ms="s.accent" class="h-9 w-full cursor-pointer rounded-md border border-gray-300 p-0.5">
                     </div>
+                    <label class="{{ $toggle }} col-span-2"><input type="checkbox" wire:model.live="s.title_two_lines" class="rounded border-gray-300"> Tytuł zapowiedzi w dwóch wierszach</label>
                 @else
                     <p class="col-span-2 text-[11px] text-gray-500">Tytuły „Zapowiedź meczu” / „Wynik meczu” i ich kolory są w układzie nowoczesnym.</p>
+                @endif
+                <label class="{{ $toggle }} col-span-2"><input type="checkbox" wire:model.live="s.show_stage" class="rounded border-gray-300"> Pokaż etap / grupę pod tytułem</label>
+                @if($s['show_stage'])
+                    <div class="col-span-2"><label class="{{ $label }}">Własny tekst zamiast etapu (puste = z meczu)</label><input type="text" wire:model.live.debounce.400ms="s.stage_text" class="{{ $input }}" placeholder="np. Półfinał"></div>
                 @endif
                 <div><label class="{{ $label }}">Napis o transmisji (puste = brak)</label><input type="text" wire:model.live.debounce.400ms="s.live_text" class="{{ $input }}"></div>
                 <div>
@@ -225,6 +230,24 @@
                     <label class="cursor-pointer rounded-md px-2 py-2 text-xs font-semibold text-sky-700 ring-1 ring-sky-200 hover:bg-sky-50">{{ $s['vs_image'] ? 'Zmień obrazek VS' : 'Wgraj obrazek VS (PNG)' }}<input type="file" accept="image/*" wire:model="vsImage" class="sr-only"></label>
                 </div>
                 @error('vsImage') <p class="col-span-2 text-xs text-red-600">{{ $message }}</p> @enderror
+                @if($s['vs_style'] === 'burst')
+                    <div class="col-span-2 space-y-2 rounded-lg bg-gray-50 p-2">
+                        <label class="{{ $toggle }}"><input type="checkbox" wire:model.live="s.vs_team_colors" class="rounded border-gray-300"> Litery w barwach drużyn (V w kolorze gości, S gospodarzy)</label>
+                        @unless($s['vs_team_colors'])
+                            @foreach(['v' => 'Litera V', 's' => 'Litera S'] as $letter => $letterLabel)
+                                <div class="grid grid-cols-5 items-end gap-1.5">
+                                    <span class="pb-2 text-xs font-semibold text-gray-600">{{ $letterLabel }}</span>
+                                    @foreach([1 => 'Góra', 2 => 'Środek', 3 => 'Dół', 4 => 'Płomienie'] as $i => $toneLabel)
+                                        <label class="text-center text-[10px] font-semibold text-gray-500">
+                                            <input type="color" wire:model.live.debounce.300ms="s.vs_{{ $letter }}{{ $i }}" class="mb-0.5 block h-8 w-full cursor-pointer rounded-md border border-gray-300 p-0.5">{{ $toneLabel }}
+                                        </label>
+                                    @endforeach
+                                </div>
+                            @endforeach
+                        @endunless
+                        <label class="flex items-center gap-2 text-xs font-semibold text-gray-600"><input type="color" wire:model.live.debounce.300ms="s.vs_outline" class="h-8 w-14 cursor-pointer rounded-md border border-gray-300 p-0.5"> Obwódka i cień liter</label>
+                    </div>
+                @endif
                 <div class="col-span-2">
                     <label class="{{ $label }}">Wielkość VS: {{ (int) $s['vs_size'] }}%</label>
                     <div class="flex items-center gap-2">
