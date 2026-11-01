@@ -1,4 +1,4 @@
-@props(['venue' => null, 'small' => false, 'parts' => null, 'index' => null])
+@props(['venue' => null, 'small' => false, 'parts' => null, 'index' => null, 'whole' => false, 'color' => null])
 @php
     // Symbol miejsca treningu: sala podzielona w poprzek na trzy boiska (3 lewe, 2 środkowe, 1 prawe), główne boisko to cała sala, siłownia osobno.
     // Kolory i ikonę siłowni ustawia się w panelu: System → Ustawienia systemu → Kolory.
@@ -8,9 +8,13 @@
     $third = 46 / 3;
     $part = ['court1' => 2, 'court2' => 1, 'court3' => 0][$venue] ?? null;
     // Inna hala turnieju: boisko podzielone na tyle części, ile ma boisk (parts), z zaznaczoną jedną (index); jedno boisko = całe.
+    // Kolor obiektu (inne obiekty turnieju) zamiast koloru hali klubowej; całe boisko = cała ikona wypełniona.
+    if ($color) {
+        $court = $color;
+    }
     if ($parts !== null) {
         $parts = max(1, min(6, (int) $parts));
-        $venue = $parts === 1 ? 'main' : 'court';
+        $venue = $parts === 1 || $whole ? 'main' : 'court';
         $third = 46 / $parts;
         $part = $index === null ? null : (int) $index;
     }

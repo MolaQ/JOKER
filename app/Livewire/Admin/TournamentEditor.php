@@ -166,22 +166,55 @@ class TournamentEditor extends Component
 
     private function loadHalls(): void
     {
-        $this->halls = collect($this->tournament->halls ?? [])->map(fn ($hall) => [
-            'name' => (string) ($hall['name'] ?? ''),
-            'courts' => implode(', ', (array) ($hall['courts'] ?? [])),
-            'address' => (string) ($hall['address'] ?? ''),
-        ])->values()->all();
-    }
-
-    public function addHall(): void
-    {
-        $this->halls[] = ['name' => '', 'courts' => 'Sektor I, Sektor II, Sektor III', 'address' => ''];
+        $this->halls = array_map(fn (array $facility) => [
+            'name' => $facility['name'],
+            'address' => $facility['address'],
+            'color' => $facility['color'],
+            'rooms' => array_map(fn (array $room) => ['name' => $room['name'], 'sectors' => $room['sectors'], 'whole' => $room['whole']], $facility['rooms']),
+        ], TournamentHalls::extra($this->tournament));
     }
 
     /**
-     * Hale z innych turniejów (ostatnio używana wersja każdej nazwy), do dodania jednym kliknięciem.
+     * Nowy obiekt: jedna sala bez nazwy podzielona na trzy sektory, z całym boiskiem (jak hala klubowa).
+     */
+    public function addHall(): void
+    {
+        $this->halls[] = ['name' => '', 'address' => '', 'color' => TournamentHalls::COLORS[count($this->halls) % count(TournamentHalls::COLORS)], 'rooms' => [['name' => '', 'sectors' => 3, 'whole' => true]]];
+    }
+
+    public function addRoom(int $index): void
+    {
+        $rooms = $this->halls[$index]['rooms'] ?? [];
+
+        // Druga sala: obie dostają nazwy, żeby dało się je odróżnić.
+        if (count($rooms) === 1 && trim((string) $rooms[0]['name']) === '') {
+            $rooms[0]['name'] = 'Hala 1';
+        }
+
+        $rooms[] = ['name' => 'Hala '.(count($rooms) + 1), 'sectors' => 1, 'whole' => true];
+        $this->halls[$index]['rooms'] = $rooms;
+        $this->saveHalls();
+    }
+
+    public function removeRoom(int $index, int $room): void
+    {
+        $values = collect(TournamentHalls::extra($this->tournament)[$index]['rooms'][$room]['courts'] ?? [])->pluck('value');
+
+        if ($values->isNotEmpty() && $this->matchesOn($values->all()) > 0) {
+            $this->toast('W tej sali są jeszcze mecze. Najpierw przenieś je gdzie indziej.', 'warning');
+
+            return;
+        }
+
+        unset($this->halls[$index]['rooms'][$room]);
+        $this->halls[$index]['rooms'] = array_values($this->halls[$index]['rooms']);
+        $this->saveHalls();
+    }
+
+    /**
+     * Obiekty z innych turniejów (ostatnio używana wersja każdej nazwy), do dodania jednym kliknięciem.
      *
-     * @return list<array{name: string, courts: list<string>, address: string}>
+     * @return list<array<string, mixed>>
      */
     public function knownHalls(): array
     {
@@ -199,18 +232,23 @@ class TournamentEditor extends Component
         $hall = collect($this->knownHalls())->firstWhere('name', $name);
 
         if ($hall) {
-            $this->halls[] = ['name' => $hall['name'], 'courts' => implode(', ', $hall['courts']), 'address' => $hall['address']];
+            $this->halls[] = [
+                'name' => $hall['name'],
+                'address' => $hall['address'],
+                'color' => $hall['color'],
+                'rooms' => array_map(fn (array $room) => ['name' => $room['name'], 'sectors' => $room['sectors'], 'whole' => $room['whole']], $hall['rooms']),
+            ];
             $this->saveHalls();
-            $this->toast('Dodano halę '.$hall['name'].' z poprzedniego turnieju.');
+            $this->toast('Dodano obiekt '.$hall['name'].' z poprzedniego turnieju.');
         }
     }
 
     public function removeHall(int $index): void
     {
-        $name = trim((string) ($this->halls[$index]['name'] ?? ''));
+        $values = collect(TournamentHalls::extra($this->tournament)[$index]['rooms'] ?? [])->flatMap(fn ($room) => collect($room['courts'])->pluck('value'));
 
-        if ($name !== '' && $this->hallMatches($name) > 0) {
-            $this->toast('W hali '.$name.' są jeszcze mecze. Najpierw przenieś je do innej hali.', 'warning');
+        if ($values->isNotEmpty() && $this->matchesOn($values->all()) > 0) {
+            $this->toast('W obiekcie '.($this->halls[$index]['name'] ?? '').' są jeszcze mecze. Najpierw przenieś je gdzie indziej.', 'warning');
 
             return;
         }
@@ -220,63 +258,81 @@ class TournamentEditor extends Component
         $this->saveHalls();
     }
 
-    private function hallMatches(string $name): int
+    /**
+     * @param  list<string>  $courts
+     */
+    private function matchesOn(array $courts): int
     {
-        return TournamentMatch::whereIn('tournament_category_id', $this->tournament->categories()->select('id'))
-            ->where('court', 'like', $name.TournamentHalls::SEPARATOR.'%')
-            ->count();
+        return TournamentMatch::whereIn('tournament_category_id', $this->tournament->categories()->select('id'))->whereIn('court', $courts)->count();
     }
 
     /**
-     * Hale zapisują się po każdej zmianie. Zmiana nazwy hali przenosi też zapisane przy meczach i grupach boiska.
+     * Obiekty zapisują się po każdej zmianie.
      */
     public function updatedHalls(): void
     {
         $this->saveHalls();
     }
 
+    /**
+     * Zapis obiektów. Zmiana nazwy obiektu, sali albo podziału przenosi zapisane przy meczach i grupach boiska
+     * na boisko w tym samym miejscu (ten sam sektor albo całe boisko); boisko, które zniknęło, zostaje jako wpisany tekst.
+     */
     private function saveHalls(): void
     {
         $this->validate([
             'halls.*.name' => ['nullable', 'string', 'max:60', 'not_regex:/·/u'],
-            'halls.*.courts' => ['nullable', 'string', 'max:300'],
             'halls.*.address' => ['nullable', 'string', 'max:160'],
-        ], ['halls.*.name.not_regex' => 'Nazwa hali nie może zawierać znaku „·”.']);
+            'halls.*.color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'halls.*.rooms.*.name' => ['nullable', 'string', 'max:40', 'not_regex:/·/u'],
+            'halls.*.rooms.*.sectors' => ['integer', 'between:1,4'],
+        ], [
+            'halls.*.name.not_regex' => 'Nazwa nie może zawierać znaku „·”.',
+            'halls.*.rooms.*.name.not_regex' => 'Nazwa nie może zawierać znaku „·”.',
+        ]);
 
-        $old = TournamentHalls::extra($this->tournament);
-        $new = collect($this->halls)->map(fn (array $hall) => [
-            'name' => trim($hall['name']),
-            'courts' => array_values(array_filter(array_map('trim', explode(',', (string) $hall['courts'])), 'strlen')),
-            'address' => trim((string) $hall['address']),
-        ])->values()->all();
-
-        $names = array_map(fn ($hall) => mb_strtolower($hall['name']), array_filter($new, fn ($hall) => $hall['name'] !== ''));
-        if (count($names) !== count(array_unique($names)) || in_array(mb_strtolower(TournamentHalls::mainName()), $names, true)) {
-            $this->addError('halls', 'Każda hala musi mieć inną nazwę (także inną niż '.TournamentHalls::mainName().').');
+        $names = collect($this->halls)->map(fn ($hall) => mb_strtolower(trim((string) $hall['name'])))->filter();
+        if ($names->count() !== $names->unique()->count() || $names->contains(mb_strtolower(TournamentHalls::mainName()))) {
+            $this->addError('halls', 'Każdy obiekt musi mieć inną nazwę (także inną niż '.TournamentHalls::mainName().').');
 
             return;
         }
 
-        DB::transaction(function () use ($old, $new) {
-            // Zmieniona nazwa hali (ta sama pozycja na liście): boiska meczów, grup i hala kategorii idą za nią.
-            foreach ($old as $index => $hall) {
-                $renamed = $new[$index]['name'] ?? '';
+        $old = TournamentHalls::extra($this->tournament);
+        $raw = array_map(fn (array $hall) => [
+            'name' => trim((string) $hall['name']),
+            'address' => trim((string) ($hall['address'] ?? '')),
+            'color' => (string) ($hall['color'] ?? ''),
+            'rooms' => array_values(array_map(fn (array $room) => [
+                'name' => trim((string) ($room['name'] ?? '')),
+                'sectors' => max(1, min(4, (int) ($room['sectors'] ?? 1))),
+                'whole' => (bool) ($room['whole'] ?? false),
+            ], $hall['rooms'] ?? [])),
+        ], array_values($this->halls));
+        $new = TournamentHalls::extra(new Tournament(['halls' => $raw]));
 
-                if ($renamed === '' || $renamed === $hall['name']) {
-                    continue;
-                }
+        // To samo miejsce (obiekt, sala, sektor albo całe boisko) przed i po zmianie.
+        $spot = fn (array $facilities) => collect($facilities)->flatMap(fn ($facility, $f) => collect($facility['rooms'])->flatMap(fn ($room, $r) => collect($room['courts'])->mapWithKeys(fn ($court) => [$f.'|'.$r.'|'.($court['whole'] ? 'w' : $court['index']) => $court['value']])));
+        $before = $spot($old);
+        $after = $spot($new);
+        $moves = $before->mapWithKeys(fn ($value, $key) => [$value => $after[$key] ?? null])->filter(fn ($to, $from) => $to !== null && $to !== $from);
 
-                $categoryIds = $this->tournament->categories()->pluck('id');
-                $from = $hall['name'].TournamentHalls::SEPARATOR;
-                $to = $renamed.TournamentHalls::SEPARATOR;
-                TournamentMatch::whereIn('tournament_category_id', $categoryIds)->where('court', 'like', $from.'%')->get()
-                    ->each(fn (TournamentMatch $match) => $match->update(['court' => $to.mb_substr($match->court, mb_strlen($from))]));
-                TournamentGroup::whereIn('tournament_category_id', $categoryIds)->where('court', 'like', $from.'%')->get()
-                    ->each(fn ($group) => $group->update(['court' => $to.mb_substr($group->court, mb_strlen($from))]));
-                $this->tournament->categories()->where('hall', $hall['name'])->update(['hall' => $renamed]);
+        DB::transaction(function () use ($moves, $raw) {
+            $categoryIds = $this->tournament->categories()->pluck('id');
+
+            foreach ($moves as $from => $to) {
+                TournamentMatch::whereIn('tournament_category_id', $categoryIds)->where('court', $from)->update(['court' => $to]);
+                TournamentGroup::whereIn('tournament_category_id', $categoryIds)->where('court', $from)->update(['court' => $to]);
             }
 
-            $this->tournament->update(['halls' => $new === [] ? null : $new]);
+            foreach (TournamentHalls::extra($this->tournament) as $index => $facility) {
+                $renamed = $raw[$index]['name'] ?? '';
+                if ($renamed !== '' && $renamed !== $facility['name']) {
+                    $this->tournament->categories()->where('hall', $facility['name'])->update(['hall' => $renamed]);
+                }
+            }
+
+            $this->tournament->update(['halls' => $raw === [] ? null : $raw]);
         });
 
         $this->resetErrorBag('halls');
@@ -289,7 +345,7 @@ class TournamentEditor extends Component
     {
         $hall = collect(TournamentHalls::extra($this->tournament))->firstWhere('name', $this->categoryHall);
         $this->category()->update(['hall' => $hall['name'] ?? null]);
-        $this->toast($hall ? 'Kategoria gra w hali '.$hall['name'].'. Ułóż godziny, a mecze bez boiska trafią na jej boiska.' : 'Kategoria gra w hali '.TournamentHalls::mainName().'.');
+        $this->toast($hall ? 'Kategoria gra w obiekcie '.$hall['name'].'. Ułóż godziny, a mecze bez boiska trafią na jego boiska.' : 'Kategoria gra w obiekcie '.TournamentHalls::mainName().'.');
     }
 
     /**

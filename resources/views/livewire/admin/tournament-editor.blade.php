@@ -514,51 +514,68 @@
                 </div>
             </form>
 
-            {{-- Hale turnieju: klubowa jest zawsze, dodatkowe (MOSiR, szkoła) z własnymi boiskami; dotyczy wszystkich kategorii --}}
+            {{-- Obiekty turnieju: hala klubowa jest zawsze; inne obiekty mają kolor, adres i dowolne sale (sektory, całe boisko) --}}
             <details class="rounded-lg border border-gray-200 bg-white p-4" @if($halls !== []) open @endif>
-                <summary class="cursor-pointer font-semibold text-gray-900">Hale turnieju <span class="text-xs font-normal text-gray-500">· {{ \App\Support\TournamentHalls::mainName() }}@foreach($extraHalls as $hall), {{ $hall['name'] }}@endforeach</span></summary>
-                <p class="mt-2 text-xs text-gray-500">Gdy część meczów gra się poza {{ \App\Support\TournamentHalls::mainName() }}, dodaj halę. Dwie sale jednej szkoły to dwie hale. Kibice zobaczą pod terminarzem nazwę, adres i ikony boisk.</p>
+                <summary class="cursor-pointer font-semibold text-gray-900">Obiekty turnieju <span class="text-xs font-normal text-gray-500">· {{ \App\Support\TournamentHalls::mainName() }}@foreach($extraHalls as $hall), {{ $hall['name'] }}@endforeach</span></summary>
+                <p class="mt-2 text-xs text-gray-500">Gdy część meczów gra się poza {{ \App\Support\TournamentHalls::mainName() }}, dodaj obiekt (np. MOSiR, szkołę). Obiekt może mieć kilka sal; każdą salę dzielisz na sektory albo zostawiasz jako jedno boisko. Kolor obiektu widać przy wyborze boiska, w obłożeniu i w legendzie dla kibiców.</p>
                 <div class="mt-3 grid gap-3 lg:grid-cols-2">
                     @foreach($halls as $index => $hall)
-                        @php $courtNames = array_values(array_filter(array_map('trim', explode(',', (string) $hall['courts'])), 'strlen')); @endphp
-                        <div class="space-y-2 rounded-lg bg-gray-50 p-3 ring-1 ring-gray-200" wire:key="hall-{{ $index }}">
+                        <div class="space-y-3 rounded-lg border-l-4 bg-gray-50 p-3 ring-1 ring-gray-200" style="border-left-color: {{ $hall['color'] ?? '#f97316' }}" wire:key="hall-{{ $index }}">
                             <div class="flex items-center gap-2">
-                                <input type="text" wire:model.blur.live="halls.{{ $index }}.name" maxlength="60" placeholder="Nazwa hali, np. MOSiR" class="{{ $input }} font-semibold" aria-label="Nazwa hali">
-                                <button type="button" wire:click="removeHall({{ $index }})" wire:confirm="Usunąć tę halę?" class="shrink-0 rounded-md px-2 py-1.5 text-sm text-red-600 hover:bg-red-50" aria-label="Usuń halę">Usuń</button>
+                                <input type="color" wire:model.live.debounce.400ms="halls.{{ $index }}.color" class="h-9 w-10 shrink-0 cursor-pointer rounded border border-gray-300 bg-white p-0.5" title="Kolor obiektu" aria-label="Kolor obiektu">
+                                <input type="text" wire:model.blur.live="halls.{{ $index }}.name" maxlength="60" placeholder="Nazwa obiektu, np. MOSiR" class="{{ $input }} font-semibold" aria-label="Nazwa obiektu">
+                                <button type="button" wire:click="removeHall({{ $index }})" wire:confirm="Usunąć ten obiekt?" class="shrink-0 rounded-md px-2 py-1.5 text-sm text-red-600 hover:bg-red-50">Usuń</button>
                             </div>
                             @error("halls.{$index}.name") <p class="text-xs text-red-600">{{ $message }}</p> @enderror
-                            <input type="text" wire:model.blur.live="halls.{{ $index }}.address" maxlength="160" placeholder="Adres, np. ul. Żeromskiego 3, Piła" class="{{ $input }}" aria-label="Adres hali">
-                            <div>
-                                <p class="text-xs font-medium text-gray-600">Boiska</p>
-                                {{-- Gotowe podziały jednym kliknięciem; nazwy można potem zmienić w polu --}}
-                                <div class="mt-1 flex flex-wrap gap-1">
-                                    @foreach(['Sektor I, Sektor II, Sektor III' => '3 sektory', 'Boisko 1, Boisko 2' => '2 boiska', 'Hala 1, Hala 2' => 'Hala 1 i 2', 'Boisko' => '1 boisko'] as $preset => $presetLabel)
-                                        <button type="button" wire:click="$set('halls.{{ $index }}.courts', @js($preset))" @class(['rounded-full px-2.5 py-1 text-xs font-semibold ring-1', 'bg-sky-600 text-white ring-sky-600' => $hall['courts'] === $preset, 'bg-white text-gray-700 ring-gray-300 hover:bg-gray-100' => $hall['courts'] !== $preset])>{{ $presetLabel }}</button>
-                                    @endforeach
-                                </div>
-                                <input type="text" wire:model.blur.live="halls.{{ $index }}.courts" placeholder="albo wpisz nazwy po przecinku" class="{{ $input }} mt-1" aria-label="Boiska hali">
-                            </div>
-                            {{-- Podgląd: tak boiska wyglądają przy meczach i w legendzie dla kibiców --}}
-                            @if($courtNames !== [])
-                                <div class="flex flex-wrap items-end gap-3 rounded-md bg-white p-2 ring-1 ring-gray-200">
-                                    @foreach($courtNames as $courtIndex => $courtName)
-                                        <span class="flex flex-col items-center gap-0.5 text-[11px] font-semibold text-gray-600">
-                                            <x-venue-icon :parts="count($courtNames)" :index="count($courtNames) === 1 ? null : $courtIndex" />{{ $courtName }}
+                            <input type="text" wire:model.blur.live="halls.{{ $index }}.address" maxlength="160" placeholder="Adres, np. ul. Żeromskiego 3, Piła" class="{{ $input }}" aria-label="Adres obiektu">
+
+                            @foreach($hall['rooms'] as $roomIndex => $room)
+                                @php
+                                    $sectors = max(1, min(4, (int) $room['sectors']));
+                                    $previewCourts = $sectors === 1 ? [['index' => null, 'whole' => true, 'label' => trim($room['name']) ?: 'Całe boisko']] : array_merge(
+                                        array_map(fn ($n) => ['index' => $n - 1, 'whole' => false, 'label' => \App\Support\TournamentHalls::sectorLabel($n)], range(1, $sectors)),
+                                        $room['whole'] ? [['index' => null, 'whole' => true, 'label' => 'Całe boisko']] : []);
+                                @endphp
+                                <div class="space-y-2 rounded-md bg-white p-2.5 ring-1 ring-gray-200" wire:key="hall-{{ $index }}-room-{{ $roomIndex }}">
+                                    <div class="flex items-center gap-2">
+                                        <input type="text" wire:model.blur.live="halls.{{ $index }}.rooms.{{ $roomIndex }}.name" maxlength="40" placeholder="{{ count($hall['rooms']) > 1 ? 'Nazwa sali, np. Hala 1' : 'Nazwa sali (opcjonalnie)' }}" class="{{ $input }}" aria-label="Nazwa sali">
+                                        @if(count($hall['rooms']) > 1)
+                                            <button type="button" wire:click="removeRoom({{ $index }}, {{ $roomIndex }})" wire:confirm="Usunąć tę salę?" class="shrink-0 rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50">Usuń salę</button>
+                                        @endif
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                                        {{-- Podział sali: bez podziału (jedno boisko) albo 2–4 sektory --}}
+                                        <span class="inline-flex overflow-hidden rounded-md font-semibold ring-1 ring-gray-300" role="group" aria-label="Podział sali">
+                                            @foreach([1 => 'Jedno boisko', 2 => '2 sektory', 3 => '3 sektory', 4 => '4'] as $count => $countLabel)
+                                                <button type="button" wire:click="$set('halls.{{ $index }}.rooms.{{ $roomIndex }}.sectors', {{ $count }})" aria-pressed="{{ $sectors === $count ? 'true' : 'false' }}" @class(['px-2.5 py-1.5 not-first:border-l not-first:border-gray-300', 'bg-sky-600 text-white' => $sectors === $count, 'bg-white text-gray-700 hover:bg-gray-50' => $sectors !== $count])>{{ $countLabel }}</button>
+                                            @endforeach
                                         </span>
-                                    @endforeach
+                                        @if($sectors > 1)
+                                            <label class="inline-flex items-center gap-1.5 text-gray-700"><input type="checkbox" wire:model.live="halls.{{ $index }}.rooms.{{ $roomIndex }}.whole" class="rounded border-gray-300"> także całe boisko</label>
+                                        @endif
+                                    </div>
+                                    {{-- Podgląd: tak boiska wyglądają przy meczach i w legendzie --}}
+                                    <div class="flex flex-wrap items-end gap-3">
+                                        @foreach($previewCourts as $preview)
+                                            <span class="flex flex-col items-center gap-0.5 text-[11px] font-semibold text-gray-600">
+                                                <x-venue-icon :parts="$sectors" :index="$preview['index']" :whole="$preview['whole']" :color="$hall['color'] ?? null" />{{ $preview['label'] }}
+                                            </span>
+                                        @endforeach
+                                    </div>
                                 </div>
-                            @endif
+                            @endforeach
+                            <button type="button" wire:click="addRoom({{ $index }})" class="text-sm font-semibold text-sky-700 hover:text-sky-900">+ Dodaj salę</button>
                         </div>
                     @endforeach
                     <div class="flex min-h-24 flex-col items-stretch justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-3">
-                        <button type="button" wire:click="addHall" class="rounded-md py-1.5 text-sm font-semibold text-sky-700 hover:bg-sky-50">+ Dodaj nową halę</button>
+                        <button type="button" wire:click="addHall" class="rounded-md py-1.5 text-sm font-semibold text-sky-700 hover:bg-sky-50">+ Dodaj obiekt</button>
                         @if($knownHalls = $this->knownHalls())
-                            {{-- Hale z poprzednich turniejów: nazwa, adres i boiska przechodzą od razu --}}
+                            {{-- Obiekty z poprzednich turniejów: adres, kolor i sale przechodzą od razu --}}
                             <p class="text-center text-xs text-gray-500">albo z poprzednich turniejów:</p>
                             <div class="flex flex-wrap justify-center gap-1.5">
                                 @foreach($knownHalls as $known)
-                                    <button type="button" wire:click="addKnownHall(@js($known['name']))" title="{{ $known['address'] }} · {{ implode(', ', $known['courts']) }}" class="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-800 ring-1 ring-gray-300 hover:bg-gray-50">
-                                        <x-venue-icon :parts="count($known['courts'])" small />{{ $known['name'] }}
+                                    <button type="button" wire:click="addKnownHall(@js($known['name']))" title="{{ $known['address'] }}" class="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-800 ring-1 ring-gray-300 hover:bg-gray-50">
+                                        <span class="size-2.5 rounded-full" style="background: {{ $known['color'] }}"></span>{{ $known['name'] }}
                                     </button>
                                 @endforeach
                             </div>
@@ -595,7 +612,7 @@
                     <div class="mt-3 flex flex-wrap items-end gap-3 border-t border-gray-100 pt-3">
                         @if($extraHalls !== [])
                             <label class="block w-56 text-sm">
-                                <span class="text-gray-700">Hala kategorii</span>
+                                <span class="text-gray-700">Obiekt kategorii</span>
                                 <select wire:model.live="categoryHall" class="{{ $input }} mt-1">
                                     <option value="">{{ \App\Support\TournamentHalls::mainName() }}</option>
                                     @foreach($extraHalls as $hall)

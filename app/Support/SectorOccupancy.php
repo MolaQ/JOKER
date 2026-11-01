@@ -17,7 +17,8 @@ class SectorOccupancy
      */
     public static function physical(string $sector): array
     {
-        return $sector === 'main' ? ['court1', 'court2', 'court3'] : [$sector];
+        // Całe boisko hali klubowej i całe boisko sali innego obiektu zajmują wszystkie jej sektory.
+        return $sector === 'main' ? ['court1', 'court2', 'court3'] : (TournamentHalls::physical($sector) ?? [$sector]);
     }
 
     public function add(?string $sector, int $starts, int $minutes): void

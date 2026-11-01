@@ -798,51 +798,65 @@ test('a corrected result clears the earlier set format error', function () {
     expect($match->fresh())->home_sets->toBe(3)->away_sets->toBe(1);
 });
 
-test('a tournament can use other halls: a category plays there by default and any match can move between halls', function () {
+test('a tournament can use other facilities with freely divided rooms; a category plays there and any match can move', function () {
     $this->actingAs(User::factory()->admin()->create());
     [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
     $category = $joker->category;
     $base = ['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id];
-    $matches = collect(range(1, 3))->map(fn ($number) => $category->matches()->create($base + ['number' => $number]));
+    $matches = collect(range(1, 4))->map(fn ($number) => $category->matches()->create($base + ['number' => $number]));
 
+    // Obiekt z dwiema salami: Hala 1 na trzy sektory z całym boiskiem, Hala 2 jako jedno boisko.
     $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
         ->call('addHall')
-        ->set('halls.0.name', 'MOSiR')
-        ->set('halls.0.courts', 'Boisko A, Boisko B')
-        ->set('categoryHall', 'MOSiR')
+        ->set('halls.0.name', 'SP 6')
+        ->set('halls.0.address', 'ul. Szkolna 6, Piła')
+        ->call('addRoom', 0)
+        ->set('halls.0.rooms.0.sectors', 3)
+        ->set('categoryHall', 'SP 6')
         ->call('arrangeSchedule')
-        ->assertSee('Hale turnieju');
+        ->assertSee('Obiekty turnieju')->assertSee('także całe boisko');
 
-    expect($category->fresh()->hall)->toBe('MOSiR')
-        ->and($matches->map(fn ($match) => $match->fresh()->court)->unique()->sort()->values()->all())->toBe(['MOSiR · Boisko A', 'MOSiR · Boisko B']);
+    $facility = TournamentHalls::extra($this->tournament->fresh())[0];
+    expect(collect($facility['rooms'])->pluck('name')->all())->toBe(['Hala 1', 'Hala 2'])
+        ->and(collect($facility['rooms'][0]['courts'])->pluck('value')->all())->toBe(['SP 6 · Hala 1 · Sektor I', 'SP 6 · Hala 1 · Sektor II', 'SP 6 · Hala 1 · Sektor III', 'SP 6 · Hala 1 · Całe boisko'])
+        ->and($facility['rooms'][1]['courts'][0]['value'])->toBe('SP 6 · Hala 2')
+        ->and($category->fresh()->hall)->toBe('SP 6')
+        // Układanie godzin używa sektorów i sal bez podziału, nie całego boiska.
+        ->and($matches->map(fn ($match) => $match->fresh()->court)->unique()->sort()->values()->all())->toBe(['SP 6 · Hala 1 · Sektor I', 'SP 6 · Hala 1 · Sektor II', 'SP 6 · Hala 1 · Sektor III', 'SP 6 · Hala 2']);
 
-    // Jeden mecz przechodzi do hali klubowej; obłożenie pokazuje obie hale.
-    $editor->set("results.{$matches[2]->id}.court", 'Sektor I');
+    // Całe boisko sali nakłada się z jej sektorami.
+    expect(TournamentSchedule::sameSector(mb_strtolower('SP 6 · Hala 1 · Całe boisko'), mb_strtolower('SP 6 · Hala 1 · Sektor II')))->toBeTrue()
+        ->and(TournamentSchedule::sameSector(mb_strtolower('SP 6 · Hala 1 · Całe boisko'), mb_strtolower('SP 6 · Hala 2')))->toBeFalse();
+
+    // Mecz przechodzi do hali klubowej; obłożenie pokazuje osobno halę klubową i salę z sektorami.
+    $editor->set("results.{$matches[0]->id}.court", 'Sektor I');
     $day = TournamentSchedule::occupancy($this->tournament->fresh())->first();
-    expect($day['halls']->keys()->all())->toBe(['Hala LOMS', 'MOSiR'])
-        ->and($day['halls']['MOSiR']->keys()->all())->toBe(['Boisko A', 'Boisko B'])
+    expect($day['halls']->keys()->all())->toContain('Hala LOMS', 'SP 6 · Hala 1')
         ->and($day['halls']['Hala LOMS']['Sektor I'])->toHaveCount(1);
 
-    // Zmiana nazwy hali przenosi zapisane boiska.
-    $editor->set('halls.0.name', 'MOSiR Piła');
-    expect($matches[0]->fresh()->court)->toStartWith('MOSiR Piła · ')
-        ->and($category->fresh()->hall)->toBe('MOSiR Piła');
+    // Zmiana nazwy sali przenosi zapisane boiska.
+    $editor->set('halls.0.rooms.1.name', 'Sala mała');
+    $moved = $matches->first(fn ($match) => $match->fresh()->court === 'SP 6 · Sala mała');
+    expect($moved)->not->toBeNull();
 
-    // Hali z meczami nie da się usunąć.
+    // Obiektu z meczami nie da się usunąć; legenda dla kibiców pokazuje adres.
     $editor->call('removeHall', 0);
     expect($this->tournament->fresh()->halls)->toHaveCount(1);
+    $this->get(route('tournaments.show', [$this->tournament, 'tab' => 'matches']))->assertOk()->assertSee('ul. Szkolna 6, Piła')->assertSee('Sala mała');
 });
 
-test('halls from earlier tournaments can be added again with one click', function () {
+test('facilities from earlier tournaments can be added again with one click, older saved halls still work', function () {
     $this->actingAs(User::factory()->admin()->create());
     memorialGroup($this->tournament, $this->team);
-    Tournament::create(['name' => 'Turniej jesienny', 'start_date' => '2026-10-01', 'halls' => [['name' => 'MOSiR', 'courts' => ['Sektor I', 'Sektor II'], 'address' => 'ul. Sportowa 1, Piła']]]);
+    // Starszy zapis: obiekt z listą boisk = sale bez podziału o tych nazwach.
+    Tournament::create(['name' => 'Turniej jesienny', 'start_date' => '2026-10-01', 'halls' => [['name' => 'MOSiR', 'courts' => ['Boisko 1', 'Boisko 2'], 'address' => 'ul. Sportowa 1, Piła']]]);
 
     Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
         ->assertSee('z poprzednich turniejów')
         ->call('addKnownHall', 'MOSiR')
         ->assertSet('halls.0.address', 'ul. Sportowa 1, Piła');
 
-    expect(TournamentHalls::extra($this->tournament->fresh()))->toBe([['name' => 'MOSiR', 'courts' => ['Sektor I', 'Sektor II'], 'address' => 'ul. Sportowa 1, Piła']]);
-    $this->get(route('tournaments.show', [$this->tournament, 'tab' => 'matches']))->assertOk();
+    $facility = TournamentHalls::extra($this->tournament->fresh())[0];
+    expect($facility['name'])->toBe('MOSiR')
+        ->and(collect($facility['rooms'])->flatMap(fn ($room) => collect($room['courts'])->pluck('value'))->all())->toBe(['MOSiR · Boisko 1', 'MOSiR · Boisko 2']);
 });
