@@ -71,6 +71,10 @@ test('a tournament has its own partners on its pages and on the tv bar', functio
         ->assertSeeInOrder(['Partnerzy turnieju', 'Partner główny', 'Piekarnia Turniejowa', 'Wspierają nas'])
         ->assertSee('O turnieju')->assertSee('Turniej pamięci trenera.');
 
+    // Podpis nad logo zamiast „Partner główny”, np. patronat honorowy.
+    Livewire::test(TournamentPartners::class, ['tournamentId' => $tournament->id])->call('setRole', $partner->id, ' Patronat honorowy ');
+    $this->get(route('tournaments.show', $tournament))->assertSeeInOrder(['Partnerzy turnieju', 'Patronat honorowy', 'Piekarnia Turniejowa']);
+
     $this->get(route('tournaments.tv', $tournament))->assertOk()
         ->assertSeeInOrder(['tv-sponsors', 'Partnerzy turnieju', 'Piekarnia Turniejowa', 'Instytucje i samorządy'], false);
 });

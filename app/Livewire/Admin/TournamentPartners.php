@@ -104,6 +104,16 @@ class TournamentPartners extends Component
         $this->tournament()->sponsors()->updateExistingPivot($sponsorId, ['is_main' => ! $partner->pivot->is_main]);
     }
 
+    /**
+     * Podpis nad logo (np. „Patronat honorowy”); pusty = „Partner główny” albo bez podpisu.
+     */
+    public function setRole(int $sponsorId, string $role): void
+    {
+        $this->tournament()->sponsors()->whereKey($sponsorId)->firstOrFail();
+        $this->tournament()->sponsors()->updateExistingPivot($sponsorId, ['role' => mb_substr(trim(strip_tags($role)), 0, 60) ?: null]);
+        $this->toast('Zapisano podpis.');
+    }
+
     public function move(int $sponsorId, int $direction): void
     {
         $ids = $this->tournament()->sponsors()->pluck('sponsors.id')->all();

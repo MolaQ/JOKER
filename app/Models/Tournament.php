@@ -63,7 +63,7 @@ class Tournament extends Model
      */
     public function sponsors(): BelongsToMany
     {
-        return $this->belongsToMany(Sponsor::class, 'tournament_sponsor')->withPivot(['is_main', 'display_order'])->withTimestamps()
+        return $this->belongsToMany(Sponsor::class, 'tournament_sponsor')->withPivot(['is_main', 'role', 'display_order'])->withTimestamps()
             ->orderByPivot('is_main', 'desc')->orderByPivot('display_order');
     }
 

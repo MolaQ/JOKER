@@ -1,5 +1,5 @@
 <div class="space-y-6">
-    <p class="text-sm text-gray-600">Logotypy partnerów są na dole każdej strony turnieju (nad klubowym blokiem „Wspierają nas”) i jako pierwsze na pasku ekranu TV. Partner główny dostaje duży, wyróżniony kafelek.</p>
+    <p class="text-sm text-gray-600">Logotypy partnerów są na dole każdej strony turnieju (nad klubowym blokiem „Wspierają nas”) i jako pierwsze na pasku ekranu TV. Partner główny dostaje duży, wyróżniony kafelek. Kolejność zmienisz strzałkami ▲▼ przy partnerze. Podpis (np. „Patronat honorowy”) pokazuje się nad logo.</p>
 
     <ul class="divide-y divide-gray-200 rounded-lg ring-1 ring-gray-200">
         @forelse($partners as $partner)
@@ -17,6 +17,7 @@
                         @unless($partner->is_active)<span class="ml-1 rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">ukryty</span>@endunless
                     </p>
                     <p class="text-xs text-gray-500">{{ $partner->sponsor_group_id ? 'także sponsor klubu' : 'tylko turnieje' }}</p>
+                    <input type="text" value="{{ $partner->pivot->role }}" wire:change="setRole({{ $partner->id }}, $event.target.value)" maxlength="60" list="partner-roles" placeholder="Podpis, np. Patronat honorowy" aria-label="Podpis nad logo" class="mt-1 block w-64 max-w-full py-1 text-xs">
                 </div>
                 <div class="flex gap-1.5">
                     <button type="button" wire:click="toggleMain({{ $partner->id }})" class="admin-action">{{ $partner->pivot->is_main ? 'Zwykły partner' : 'Partner główny' }}</button>
@@ -27,6 +28,11 @@
             <li class="px-4 py-6 text-center text-sm text-gray-500">Turniej nie ma jeszcze partnerów.</li>
         @endforelse
     </ul>
+    <datalist id="partner-roles">
+        @foreach(['Patronat honorowy', 'Partner główny', 'Partner strategiczny', 'Partner medialny', 'Sponsor nagród', 'Współorganizator'] as $role)
+            <option value="{{ $role }}"></option>
+        @endforeach
+    </datalist>
 
     <div class="grid gap-6 lg:grid-cols-2">
         <div class="rounded-lg border border-gray-200 p-4">
@@ -46,7 +52,14 @@
             @error('name') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
             <input type="text" wire:model="website_url" placeholder="Link, np. https://firma.pl" class="block w-full">
             @error('website_url') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
-            <x-photo-cropper model="logo" :preview="false" aspect="free" format="png" :width="800" label="Wybierz logo" />
+            @if($logo && ! $errors->has('logo'))
+                {{-- Przycięte logo czeka na zapis: zapisze się dopiero po „Dodaj partnera” --}}
+                <div class="flex items-center gap-3 rounded-md bg-emerald-50 p-2 ring-1 ring-emerald-200">
+                    <span class="flex h-16 w-40 shrink-0 items-center justify-center rounded p-1 ring-1 ring-gray-200" style="background: {{ $tile_color ?: '#fff' }}"><img src="{{ $logo->temporaryUrl() }}" alt="Podgląd logo" class="max-h-full max-w-full object-contain"></span>
+                    <p class="text-xs text-emerald-900">Logo gotowe. Wpisz nazwę i kliknij „Dodaj partnera”.</p>
+                </div>
+            @endif
+            <x-photo-cropper model="logo" :preview="false" aspect="free" format="png" :width="1600" :label="$logo ? 'Zmień logo' : 'Wybierz logo'" />
             @error('logo') <p class="text-sm text-red-600">{{ $message }}</p> @enderror
             <label class="block text-xs text-gray-600">Tło kafelka (dla białego logo, np. #1e2a8a; puste = białe)
                 <input type="text" wire:model="tile_color" placeholder="#RRGGBB" class="mt-1 block w-40 font-mono text-sm">

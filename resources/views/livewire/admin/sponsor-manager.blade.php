@@ -102,9 +102,9 @@
                                     <span class="mb-2 inline-flex h-16 w-28 items-center justify-center rounded p-1 ring-1 ring-gray-200" style="{{ $tile_color ? 'background: '.$tile_color : '' }}"><img src="{{ \App\Support\Media::url($existingLogo) }}" onerror="this.style.visibility='hidden'" class="max-h-full max-w-full object-contain" alt="Logo"></span>
                                 @endif
                                 @if($logo)
-                                    <img src="{{ $logo->temporaryUrl() }}" class="h-16 w-16 object-contain rounded mb-2" alt="Podgląd">
+                                    <span class="mb-2 inline-flex h-16 w-40 items-center justify-center rounded p-1 ring-1 ring-gray-200" style="{{ $tile_color ? 'background: '.$tile_color : '' }}"><img src="{{ $logo->temporaryUrl() }}" class="max-h-full max-w-full object-contain" alt="Podgląd"></span>
                                 @endif
-                                <x-photo-cropper model="logo" class="mt-1" :preview="false" aspect="free" format="png" :width="800" label="Wybierz logo" />
+                                <x-photo-cropper model="logo" class="mt-1" :preview="false" aspect="free" format="png" :width="1600" label="Wybierz logo" />
                                 @error('logo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 

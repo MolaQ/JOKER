@@ -20,7 +20,7 @@
                             <{{ $sponsor->href() ? 'a' : 'div' }} @if($sponsor->href()) href="{{ $sponsor->href() }}" @if($sponsor->isExternal()) target="_blank" rel="noopener" @endif @endif title="{{ $sponsor->name }}"
                                 @if($sponsor->tile_color) style="background: {{ $sponsor->tile_color }}" @endif
                                 @class(['group mx-auto flex h-40 max-w-xl flex-col items-center justify-center gap-3 rounded-3xl p-5 ring-2 ring-[var(--color-countdown,#ffd600)] transition sm:h-48', 'bg-white' => ! $sponsor->tile_color, 'hover:-translate-y-1 hover:shadow-xl' => $sponsor->href()])>
-                                <span @class(['text-[10px] font-semibold tracking-[0.25em] uppercase', 'text-zinc-500' => ! $sponsor->tile_color, 'text-white/70' => $sponsor->tile_color])>{{ __('Partner główny') }}</span>
+                                <span @class(['text-[10px] font-semibold tracking-[0.25em] uppercase', 'text-zinc-500' => ! $sponsor->tile_color, 'text-white/70' => $sponsor->tile_color])>{{ $sponsor->pivot->role ?: __('Partner główny') }}</span>
                                 @if($sponsor->logo_path)
                                     <img src="{{ \App\Support\Media::url($sponsor->logo_path) }}" alt="{{ $sponsor->name }}" loading="lazy" class="min-h-0 max-w-full flex-1 object-contain">
                                 @else
@@ -37,9 +37,12 @@
                         <li>
                             <{{ $sponsor->href() ? 'a' : 'div' }} @if($sponsor->href()) href="{{ $sponsor->href() }}" @if($sponsor->isExternal()) target="_blank" rel="noopener" @endif @endif title="{{ $sponsor->name }}"
                                 @if($sponsor->tile_color) style="background: {{ $sponsor->tile_color }}" @endif
-                                @class(['flex h-24 items-center justify-center rounded-2xl p-3 ring-1 transition sm:h-28', 'bg-white ring-zinc-200' => ! $sponsor->tile_color, 'ring-black/10' => $sponsor->tile_color, 'hover:-translate-y-1 hover:shadow-lg' => $sponsor->href()])>
+                                @class(['flex h-24 flex-col items-center justify-center gap-1 rounded-2xl p-3 ring-1 transition sm:h-28', 'bg-white ring-zinc-200' => ! $sponsor->tile_color, 'ring-black/10' => $sponsor->tile_color, 'hover:-translate-y-1 hover:shadow-lg' => $sponsor->href()])>
+                                @if($sponsor->pivot->role)
+                                    <span @class(['shrink-0 text-[9px] font-semibold tracking-[0.2em] uppercase', 'text-zinc-500' => ! $sponsor->tile_color, 'text-white/70' => $sponsor->tile_color])>{{ $sponsor->pivot->role }}</span>
+                                @endif
                                 @if($sponsor->logo_path)
-                                    <img src="{{ \App\Support\Media::url($sponsor->logo_path) }}" alt="{{ $sponsor->name }}" loading="lazy" class="max-h-full max-w-full object-contain">
+                                    <img src="{{ \App\Support\Media::url($sponsor->logo_path) }}" alt="{{ $sponsor->name }}" loading="lazy" class="min-h-0 max-w-full flex-1 object-contain">
                                 @else
                                     <span class="text-center font-semibold text-zinc-800">{{ $sponsor->name }}</span>
                                 @endif
