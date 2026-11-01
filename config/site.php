@@ -48,6 +48,7 @@ return [
             'icon' => 'window',
             'fields' => [
                 'logos_page' => ['type' => 'toggle', 'label' => 'Strona z logotypami klubów (/logotypy)', 'help' => 'Logotypy naszego klubu i wszystkich rywali do pobrania pojedynczo albo w paczce ZIP, np. do grafik transmisji. Strona nie trafia do Google. Otwierają ją tylko zalogowani z uprawnieniem „Grafiki do transmisji” (link w panelu).', 'default' => true],
+                'thumbnail_club_color' => ['type' => 'color', 'label' => 'Miniatury transmisji: kolor naszego klubu', 'help' => 'Barwi połowę grafiki z naszą drużyną na stronie /miniatury. Kolory rywali zapamiętują się przy klubach.', 'default' => '#1d6ff2'],
                 'module_derby' => ['type' => 'toggle', 'label' => 'Derby', 'help' => 'Mecz dwóch naszych drużyn (np. Joker - ASBL) pokazujemy jako derby z serduszkiem, a nie jako wygraną albo porażkę.', 'default' => true],
                 'derby_short' => ['type' => 'text', 'label' => 'Derby: krótki napis przy wyniku', 'default' => 'Pilska siatkówka'],
                 'derby_winner' => ['type' => 'text', 'label' => 'Derby: napis o zwycięzcy', 'help' => 'W wynikach i w powiadomieniu na telefon.', 'default' => 'Wygrała pilska siatkówka'],

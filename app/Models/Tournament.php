@@ -37,6 +37,7 @@ class Tournament extends Model
         'slug',
         'series',
         'image_path',
+        'logo_path',
         'scoring',
         'rules',
         'guest_info',

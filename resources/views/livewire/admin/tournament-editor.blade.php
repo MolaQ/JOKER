@@ -65,6 +65,18 @@
                 @error('image') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
 
+            <div>
+                <label class="{{ $label }}">Logo turnieju <span class="font-normal text-gray-400">(opcjonalnie, np. na miniatury transmisji)</span></label>
+                @if($tournament->logo_path)
+                    <div class="mb-2 flex items-center gap-3">
+                        <img src="{{ \App\Support\Media::url($tournament->logo_path) }}" alt="" class="h-20 w-20 rounded-md bg-gray-100 object-contain p-1">
+                        <button type="button" wire:click="removeLogo" wire:confirm="Usunąć logo turnieju?" class="text-sm text-red-600 hover:underline">Usuń</button>
+                    </div>
+                @endif
+                <x-photo-cropper model="logo" :preview="false" aspect="free" format="png" :width="800" />
+                @error('logo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+            </div>
+
             <div class="rounded-lg border border-gray-200 p-4">
                 @php $scoringFields = ['win' => 'Wygrana', 'win_tiebreak' => 'Wygrana w tie-breaku', 'loss_tiebreak' => 'Porażka w tie-breaku', 'loss' => 'Porażka', 'per_set' => 'Za każdy wygrany set']; @endphp
                 <p class="text-sm font-semibold text-gray-900">Punktacja meczów grupowych (domyślna dla wszystkich grup)</p>

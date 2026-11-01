@@ -2,6 +2,7 @@ import { initAdminTables } from './admin-tables';
 import { registerConfirmModal } from './confirm-modal';
 import { initCountdowns } from './countdown';
 import { initDailyLineup } from './daily-lineup';
+import { initThumbnailExport } from './thumbnail-export';
 import { initPageStats } from './page-stats';
 import { initPush } from './push';
 import { registerPhotoCropper } from './photo-cropper';
@@ -26,6 +27,7 @@ initPush();
 initAdminTables();
 initTableSort();
 initDailyLineup();
+initThumbnailExport();
 initShareCards();
 
 // Pojawianie się sekcji przy przewijaniu.

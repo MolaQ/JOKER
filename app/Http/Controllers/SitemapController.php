@@ -25,6 +25,7 @@ class SitemapController extends Controller
             'Disallow: /szukaj',
             'Disallow: /jezyk/',
             'Disallow: /logotypy',
+            'Disallow: /miniatury',
             '',
             'Sitemap: '.route('sitemap'),
         ];

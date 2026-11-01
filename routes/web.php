@@ -99,6 +99,7 @@ Route::get('/page/{page}', [PageController::class, 'show'])->name('pages.show');
 // Contact
 // Logotypy klubów do pobrania (np. do transmisji), poza wyszukiwarkami.
 Route::get('/logotypy', [LogoController::class, 'index'])->name('logos.index');
+Route::view('/miniatury', 'admin.thumbnails.index')->middleware(['auth', 'can:graphics.use'])->name('thumbnails.index');
 Route::get('/logotypy/wszystkie.zip', [LogoController::class, 'zip'])->name('logos.zip');
 Route::get('/logotypy/{key}', [LogoController::class, 'download'])->where('key', '[a-z0-9-]+')->name('logos.download');
 Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');

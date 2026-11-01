@@ -54,6 +54,8 @@ class TournamentEditor extends Component
 
     public $image = null;
 
+    public $logo = null;
+
     public string $newCategory = '';
 
     /** Szablon wstawiany do nowej kategorii (id) i formularz zapisu szablonu z kategorii. */
@@ -175,6 +177,7 @@ class TournamentEditor extends Component
             'guest_info' => 'nullable|string',
             'about' => 'nullable|string',
             'image' => 'nullable|image|max:6144',
+            'logo' => 'nullable|image|max:4096',
         ]);
 
         $this->tournament->update([
@@ -183,10 +186,18 @@ class TournamentEditor extends Component
             'rules' => $this->rules ?: null,
             'guest_info' => $this->guest_info ?: null,
             'about' => filled(strip_tags($this->about)) ? $this->about : null,
-        ] + ($this->image ? ['image_path' => $this->image->store('tournaments', 'public')] : []));
+        ] + ($this->image ? ['image_path' => $this->image->store('tournaments', 'public')] : [])
+          + ($this->logo ? ['logo_path' => $this->logo->store('tournaments/logo', 'public')] : []));
 
         $this->image = null;
+        $this->logo = null;
         $this->toast('Zapisano informacje o turnieju.');
+    }
+
+    public function removeLogo(): void
+    {
+        $this->tournament->update(['logo_path' => null]);
+        $this->toast('Usunięto logo turnieju.');
     }
 
     public function addCategory(): void
