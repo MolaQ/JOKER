@@ -541,10 +541,11 @@
                         <div class="space-y-3 rounded-lg border-l-4 bg-gray-50 p-3 ring-1 ring-gray-200" style="border-left-color: {{ $hall['color'] ?? '#f97316' }}" wire:key="hall-{{ $index }}">
                             <div class="flex items-center gap-2">
                                 <input type="color" wire:model.live.debounce.400ms="halls.{{ $index }}.color" class="h-9 w-10 shrink-0 cursor-pointer rounded border border-gray-300 bg-white p-0.5" title="Kolor obiektu" aria-label="Kolor obiektu">
-                                <input type="text" wire:model.blur.live="halls.{{ $index }}.name" maxlength="60" placeholder="Nazwa obiektu, np. MOSiR" class="{{ $input }} font-semibold" aria-label="Nazwa obiektu">
+                                <input type="text" wire:model.blur.live="halls.{{ $index }}.name" maxlength="60" placeholder="Krótka nazwa, np. SP 6" class="{{ $input }} font-semibold" aria-label="Krótka nazwa obiektu" title="Krótka nazwa: w nagłówkach terminarza i przy meczach">
                                 <button type="button" wire:click="removeHall({{ $index }})" wire:confirm="Usunąć ten obiekt?" class="shrink-0 rounded-md px-2 py-1.5 text-sm text-red-600 hover:bg-red-50">Usuń</button>
                             </div>
                             @error("halls.{$index}.name") <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+                            <input type="text" wire:model.blur.live="halls.{{ $index }}.full_name" maxlength="160" placeholder="Pełna nazwa (opcjonalnie), np. Szkoła Podstawowa nr 6 im. Lotników Polskich" class="{{ $input }}" aria-label="Pełna nazwa obiektu">
                             <input type="text" wire:model.blur.live="halls.{{ $index }}.address" maxlength="160" placeholder="Adres, np. ul. Żeromskiego 3, Piła" class="{{ $input }}" aria-label="Adres obiektu">
 
                             @foreach($hall['rooms'] as $roomIndex => $room)

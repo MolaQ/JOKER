@@ -23,6 +23,7 @@
             @endphp
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span class="inline-flex items-center gap-1.5 font-semibold text-zinc-700"><span class="size-2 rounded-full" style="background: {{ $facility['color'] ?? 'var(--color-sky-club, #45a0e0)' }}"></span>{{ $facility['name'] }}</span>
+                @if($facility['full_name'] ?? '')<span class="text-zinc-600">{{ $facility['full_name'] }}</span>@endif
                 @if($facility['address'])
                     <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($facility['address']) }}" target="_blank" rel="noopener" class="hover:text-sky-club-dark hover:underline">{{ $facility['address'] }}</a>
                 @endif

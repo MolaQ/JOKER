@@ -114,6 +114,7 @@
                         @foreach($sheet['facilities'] as $facility)
                             <div class="rounded-md border-l-4 bg-zinc-50 px-3 py-2" style="border-color: {{ $facility['color'] ?? '#0ea5e9' }}">
                                 <p class="font-semibold">{{ $facility['name'] }}</p>
+                                @if($facility['full_name'] ?? '')<p class="text-zinc-800">{{ $facility['full_name'] }}</p>@endif
                                 @if($facility['address'])<p class="text-zinc-700">{{ $facility['address'] }}</p>@endif
                                 <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-600">
                                     @foreach($facility['used'] as $court)

@@ -927,3 +927,21 @@ test('organizer prints a schedule sheet for guests with matches, groups and hall
 
     Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')->assertSee('Rozpiska dla gości');
 });
+
+test('other facilities show a short name in headers and the full name with address in the legend', function () {
+    [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $this->tournament->update(['has_page' => true, 'halls' => [
+        ['name' => 'SP 6', 'full_name' => 'Szkoła Podstawowa nr 6 im. Lotników Polskich', 'address' => 'ul. Żeromskiego 41', 'rooms' => [['name' => 'Sala gimnastyczna', 'sectors' => 1]]],
+        ['name' => 'MOSiR', 'rooms' => [['name' => 'Hala 1', 'sectors' => 2], ['name' => 'Hala 2', 'sectors' => 1]]],
+    ]]);
+
+    expect(TournamentHalls::label('SP 6 · Sala gimnastyczna', $category->id))->toBe('SP 6')
+        ->and(TournamentHalls::label('MOSiR · Hala 1 · Sektor II', $category->id))->toBe('MOSiR · Hala 1 · Sektor II')
+        ->and(TournamentHalls::label('Sektor III', $category->id))->toBe('Hala LOMS · Sektor III');
+
+    $category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id, 'number' => 1, 'court' => 'SP 6 · Sala gimnastyczna', 'starts_at' => '2026-11-06 11:00']);
+
+    $this->get(route('tournaments.show', [$this->tournament, 'tab' => 'matches']))->assertOk()
+        ->assertSee('Szkoła Podstawowa nr 6 im. Lotników Polskich')->assertSee('ul. Żeromskiego 41');
+});

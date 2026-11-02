@@ -96,6 +96,7 @@ class TournamentHalls
 
             $facilities[] = [
                 'name' => $name,
+                'full_name' => trim((string) ($raw['full_name'] ?? '')),
                 'address' => trim((string) ($raw['address'] ?? '')),
                 'color' => $color,
                 'rooms' => array_map(fn (array $room) => $room + ['courts' => self::roomCourts($name, $room)], array_values($rooms)),
@@ -296,6 +297,7 @@ class TournamentHalls
         $names = TrainingSession::venueNames();
         $legend = [[
             'name' => self::mainName(),
+            'full_name' => '',
             'address' => trim(implode(', ', array_filter([(string) $tournament->venue, (string) $tournament->city]))),
             'color' => null,
             'rooms' => [['name' => '', 'courts' => array_map(fn (string $venue) => ['value' => $names[$venue], 'label' => $names[$venue], 'icon' => ['venue' => $venue]], self::mainVenues($tournament))]],
@@ -304,6 +306,7 @@ class TournamentHalls
         foreach (self::extra($tournament) as $facility) {
             $legend[] = [
                 'name' => $facility['name'],
+                'full_name' => $facility['full_name'],
                 'address' => $facility['address'],
                 'color' => $facility['color'],
                 'rooms' => array_map(fn (array $room) => [
@@ -319,11 +322,35 @@ class TournamentHalls
     /**
      * Pełna nazwa boiska dla kibiców: przy hali klubowej z jej nazwą („Hala LOMS · Sektor III”), inne obiekty mają ją już w zapisie.
      */
-    public static function label(?string $court): string
+    public static function label(?string $court, ?int $categoryId = null): string
     {
         $label = (string) TrainingSession::courtLabel($court);
 
-        return TrainingSession::venueForCourt($court) ? self::mainName().self::SEPARATOR.$label : $label;
+        if (TrainingSession::venueForCourt($court)) {
+            return self::mainName().self::SEPARATOR.$label;
+        }
+
+        return ($categoryId ? self::shortName(self::tournamentOfCategory($categoryId), $court) : null) ?? $label;
+    }
+
+    /**
+     * Krótka nazwa boiska innego obiektu do nagłówków i przy meczach: obiekt, sala (gdy obiekt ma kilka sal)
+     * i sektor (gdy sala jest podzielona), np. „SP 6”, „SP 6 · Sektor II”, „MOSiR · Hala 1 · Całe boisko”.
+     * Pełna nazwa obiektu i adres są w legendzie.
+     */
+    public static function shortName(?Tournament $tournament, ?string $court): ?string
+    {
+        $found = self::find($tournament, $court);
+
+        if (! $found) {
+            return null;
+        }
+
+        return implode(self::SEPARATOR, array_filter([
+            $found['facility']['name'],
+            count($found['facility']['rooms']) > 1 && $found['room']['name'] !== '' ? $found['room']['name'] : null,
+            $found['room']['sectors'] > 1 ? $found['court']['label'] : null,
+        ]));
     }
 
     /**

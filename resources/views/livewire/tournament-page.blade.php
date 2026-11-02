@@ -263,7 +263,7 @@
                                 <span class="block truncate text-sm text-zinc-500">{{ $bracket->side($match, 'home')['text'] }} – {{ $bracket->side($match, 'away')['text'] }}@if($match->home_sets !== null) · <b class="text-zinc-800 tabular-nums">{{ $match->home_sets }}:{{ $match->away_sets }}</b>@endif</span>
                             </span>
                             <span class="col-start-2 inline-flex items-center gap-2 text-sm text-zinc-600 sm:col-start-auto">
-                                <x-court-icon :court="$match->court" :category="$match->tournament_category_id" />{{ \App\Support\TournamentHalls::label($match->court) }}
+                                <x-court-icon :court="$match->court" :category="$match->tournament_category_id" />{{ \App\Support\TournamentHalls::label($match->court, $match->tournament_category_id) }}
                             </span>
                         </li>
                     @endforeach

@@ -168,6 +168,7 @@ class TournamentEditor extends Component
     {
         $this->halls = array_map(fn (array $facility) => [
             'name' => $facility['name'],
+            'full_name' => $facility['full_name'],
             'address' => $facility['address'],
             'color' => $facility['color'],
             'rooms' => array_map(fn (array $room) => ['name' => $room['name'], 'sectors' => $room['sectors'], 'whole' => $room['whole'], 'off' => $room['off']], $facility['rooms']),
@@ -179,7 +180,7 @@ class TournamentEditor extends Component
      */
     public function addHall(): void
     {
-        $this->halls[] = ['name' => '', 'address' => '', 'color' => TournamentHalls::COLORS[count($this->halls) % count(TournamentHalls::COLORS)], 'rooms' => [['name' => '', 'sectors' => 3, 'whole' => true, 'off' => []]]];
+        $this->halls[] = ['name' => '', 'full_name' => '', 'address' => '', 'color' => TournamentHalls::COLORS[count($this->halls) % count(TournamentHalls::COLORS)], 'rooms' => [['name' => '', 'sectors' => 3, 'whole' => true, 'off' => []]]];
     }
 
     public function addRoom(int $index): void
@@ -234,6 +235,7 @@ class TournamentEditor extends Component
         if ($hall) {
             $this->halls[] = [
                 'name' => $hall['name'],
+                'full_name' => $hall['full_name'] ?? '',
                 'address' => $hall['address'],
                 'color' => $hall['color'],
                 'rooms' => array_map(fn (array $room) => ['name' => $room['name'], 'sectors' => $room['sectors'], 'whole' => $room['whole'], 'off' => $room['off']], $hall['rooms']),
@@ -352,6 +354,7 @@ class TournamentEditor extends Component
     {
         $this->validate([
             'halls.*.name' => ['nullable', 'string', 'max:60', 'not_regex:/·/u'],
+            'halls.*.full_name' => ['nullable', 'string', 'max:160'],
             'halls.*.address' => ['nullable', 'string', 'max:160'],
             'halls.*.color' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'halls.*.rooms.*.name' => ['nullable', 'string', 'max:40', 'not_regex:/·/u'],
@@ -371,6 +374,7 @@ class TournamentEditor extends Component
         $old = TournamentHalls::extra($this->tournament);
         $raw = array_map(fn (array $hall) => [
             'name' => trim((string) $hall['name']),
+            'full_name' => trim((string) ($hall['full_name'] ?? '')),
             'address' => trim((string) ($hall['address'] ?? '')),
             'color' => (string) ($hall['color'] ?? ''),
             'rooms' => array_values(array_map(fn (array $room) => TournamentHalls::room($room), $hall['rooms'] ?? [])),

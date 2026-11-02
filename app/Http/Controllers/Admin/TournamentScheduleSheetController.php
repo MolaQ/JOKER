@@ -59,7 +59,7 @@ class TournamentScheduleSheetController extends Controller
         $rows = $matches->map(fn (TournamentMatch $match) => [
             'day' => $match->starts_at?->toDateString(),
             'time' => $match->starts_at?->format('G:i'),
-            'court' => $match->court ? TournamentHalls::label($match->court) : null,
+            'court' => $match->court ? TournamentHalls::label($match->court, $category->id) : null,
             'icon' => TournamentHalls::icon($match->court, $category->id),
             'title' => $match->group ? null : $match->title(),
             'group' => $match->group?->name,
@@ -81,7 +81,7 @@ class TournamentScheduleSheetController extends Controller
         $groups = $category->groups->count() > 1
             ? $category->groups->sortBy('name', SORT_NATURAL)->map(fn ($group) => [
                 'name' => $group->name,
-                'court' => $group->court ? TournamentHalls::label($group->court) : null,
+                'court' => $group->court ? TournamentHalls::label($group->court, $category->id) : null,
                 'teams' => $bracket->members($group)->pluck('text')->all(),
             ])->values()
             : collect();
