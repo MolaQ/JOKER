@@ -908,3 +908,22 @@ test('the club hall can leave out its main court in a tournament', function () {
     $editor->call('toggleMainVenue', 'main');
     expect($this->tournament->fresh()->main_off)->toBeNull();
 });
+
+test('organizer prints a schedule sheet for guests with matches, groups and hall addresses', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $this->tournament->update(['halls' => [['name' => 'SP 6', 'address' => 'ul. Szkolna 6, Piła', 'rooms' => [['name' => '', 'sectors' => 1]]]]]);
+    $category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id, 'number' => 1, 'court' => 'SP 6', 'starts_at' => '2026-11-06 11:00']);
+    $category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'home_participant_id' => $kalisz->id, 'away_participant_id' => $joker->id, 'number' => 2, 'court' => 'Sektor III', 'starts_at' => '2026-11-06 12:30']);
+
+    $this->followingRedirects()->get(route('admin.tournaments.schedule-sheet', [$this->tournament->fresh(), 'category' => $category->id]))
+        ->assertOk()
+        ->assertSee($category->name)
+        ->assertSee('Hala LOMS · Sektor III')
+        ->assertSee('ul. Szkolna 6, Piła')
+        ->assertSee('11:00')
+        ->assertSee($kalisz->name());
+
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')->assertSee('Rozpiska dla gości');
+});

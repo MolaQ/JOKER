@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ApprovalsController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\TournamentScheduleSheetController;
 use App\Models\Tournament;
 use App\Support\DataImport;
 use App\Support\Mentions;
@@ -32,6 +33,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     // Turnieje i sparingi w trakcie sezonu
     Route::middleware('can:tournaments.manage')->group(function () {
         Route::view('/tournaments', 'admin.tournaments.index')->name('tournaments.index');
+        Route::get('/tournaments/{tournament}/rozpiska', TournamentScheduleSheetController::class)->where('tournament', Slug::ROUTE_PATTERN)->name('tournaments.schedule-sheet');
         Route::get('/tournaments/{tournament}', fn (Tournament $tournament) => view('admin.tournaments.edit', ['tournament' => $tournament]))->where('tournament', Slug::ROUTE_PATTERN)->name('tournaments.edit');
     });
 
