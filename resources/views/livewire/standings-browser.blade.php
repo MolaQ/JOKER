@@ -80,10 +80,10 @@
                                     @foreach($group['rows'] as $standing)
                                         @php $isOurs = $standing->isOwnTeam(); $ownTeams = $group['rows']->filter(fn ($row) => $row->isOwnTeam())->count(); @endphp
                                         <tr wire:key="standing-{{ $standing->id }}" @class(['bg-sky-club/10 font-semibold' => $isOurs])>
-                                            <td @class(['py-3 pr-2 pl-4 sm:sticky sm:left-0', 'bg-[color-mix(in_oklab,var(--color-sky-club)_10%,white)]' => $isOurs, 'bg-white' => ! $isOurs])>
+                                            <td @class(['py-3 pr-2 pl-4 sm:sticky sm:left-0', 'bg-[color-mix(in_oklab,var(--color-sky-club)_10%,var(--tint-base,white))]' => $isOurs, 'bg-white' => ! $isOurs])>
                                                 <span @class(['inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold', 'bg-ink text-white' => $standing->position <= 3, 'bg-zinc-100 text-zinc-600' => $standing->position > 3])>{{ $standing->position }}</span>
                                             </td>
-                                            <td @class(['px-2 py-3 leading-snug sm:sticky sm:left-10 sm:whitespace-nowrap', 'bg-[color-mix(in_oklab,var(--color-sky-club)_10%,white)]' => $isOurs, 'bg-white' => ! $isOurs])>
+                                            <td @class(['px-2 py-3 leading-snug sm:sticky sm:left-10 sm:whitespace-nowrap', 'bg-[color-mix(in_oklab,var(--color-sky-club)_10%,var(--tint-base,white))]' => $isOurs, 'bg-white' => ! $isOurs])>
                                                 @if($isOurs && $standing->competitor)
                                                     <a href="{{ route('teams.show', $standing->competitor) }}" class="text-zinc-900 hover:text-sky-club-dark"><x-team-label :label="$standing->competitorLabel($ownTeams > 1)" /></a>
                                                     @if($standing->source_name && ! $standing->competition?->teams->firstWhere('id', $standing->competitor_id)?->pivot?->display_name)

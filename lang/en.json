@@ -477,5 +477,10 @@
     ":club · wszystkie roczniki": ":club · all age groups",
     "Od :club do PlusLigi": "From :club to the PlusLiga",
     "wzrost :value cm": "height :value cm",
-    "zasięg w ataku :value cm": "spike reach :value cm"
+    "zasięg w ataku :value cm": "spike reach :value cm",
+    "Motyw": "Theme",
+    "Jasny": "Light",
+    "Ciemny": "Dark",
+    "Auto": "Auto",
+    "pokaż na liście": "show in the list"
 }

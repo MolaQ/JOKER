@@ -1,3 +1,4 @@
+import { initAdminApp } from './admin-app';
 import { initAdminTables } from './admin-tables';
 import { registerConfirmModal } from './confirm-modal';
 import { initCountdowns } from './countdown';
@@ -10,6 +11,7 @@ import { registerRichEditor } from './rich-editor';
 import { initSearch } from './search';
 import { registerSearchSelect } from './search-select';
 import { initShareCards } from './share-card';
+import { initTheme } from './theme';
 import { initTableSort } from './table-sort';
 import { registerTimeInputs } from './time-input';
 import { registerToasts } from './toasts';
@@ -25,10 +27,12 @@ initSearch();
 initPageStats();
 initPush();
 initAdminTables();
+initAdminApp();
 initTableSort();
 initDailyLineup();
 initThumbnailExport();
 initShareCards();
+initTheme();
 
 // Pojawianie się sekcji przy przewijaniu.
 const revealObserver = 'IntersectionObserver' in window

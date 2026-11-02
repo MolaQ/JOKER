@@ -139,7 +139,7 @@ class MiniTrip extends Model
         $step = 100 / count($colors);
         $stripes = collect($colors)->map(fn (string $color, int $index) => $color.' '.round($index * $step, 2).'% '.round(($index + 1) * $step, 2).'%')->implode(', ');
 
-        return '--mini-tint: '.$colors[0].'; --tw-ring-color: color-mix(in srgb, '.$colors[0].' 45%, white); '
-            .'background: linear-gradient(to bottom, '.$stripes.') left / 5px 100% no-repeat, color-mix(in srgb, '.$colors[0].' '.$strength.'%, white);';
+        return '--mini-tint: '.$colors[0].'; --tw-ring-color: color-mix(in srgb, '.$colors[0].' 45%, var(--tint-base, white)); '
+            .'background: linear-gradient(to bottom, '.$stripes.') left / 5px 100% no-repeat, color-mix(in srgb, '.$colors[0].' '.$strength.'%, var(--tint-base, white));';
     }
 }

@@ -38,3 +38,24 @@ it('shows the add button on admin lists as a floating button on phones', functio
         ->assertOk()
         ->assertSee('admin-fab', false);
 });
+
+it('serves a panel manifest so the panel opens like an app from the home screen', function () {
+    $this->get(route('admin.manifest'))
+        ->assertOk()
+        ->assertHeader('Content-Type', 'application/manifest+json')
+        ->assertJsonPath('display', 'standalone')
+        ->assertJsonPath('start_url', route('admin.dashboard', absolute: false));
+});
+
+it('offers the light, dark and auto theme switch in the panel and on the site', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+    $this->actingAs($admin)->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee('data-theme-set="light"', false)
+        ->assertSee('data-theme-set="dark"', false)
+        ->assertSee('data-theme-set="auto"', false)
+        ->assertSee(route('admin.manifest'), false);
+
+    $this->get(route('home'))->assertOk()->assertSee('data-theme-set="auto"', false);
+});

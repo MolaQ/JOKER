@@ -47,6 +47,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="{{ $site['club_name'] }}">
     <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+    @include('partials.theme-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     {{-- Kolory z panelu: Wygląd i ustawienia → Kolory --}}
     <style>
@@ -190,6 +191,10 @@
                     <span>{{ __('Język strony') }}:</span>
                     <x-language-switch />
                 </div>
+                <div class="mt-4 flex items-center gap-3 text-sm text-zinc-300">
+                    <span>{{ __('Motyw') }}:</span>
+                    <x-theme-switch dark />
+                </div>
                 @if($site['push_enabled'])
                     <button type="button" data-push-toggle hidden aria-pressed="false" data-label-on="{{ __('Powiadomienia włączone (kliknij, aby zmienić)') }}" data-label-off="{{ __('Włącz powiadomienia o wynikach i aktualnościach') }}" class="mt-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2.5 text-sm font-semibold text-white">
                         <span data-push-off>🔔 {{ __('Włącz powiadomienia') }}</span>
@@ -331,7 +336,10 @@
                         <img src="{{ $logoUrl }}" alt="" width="28" height="28" loading="lazy" class="h-7 w-7 shrink-0 object-contain">
                         <span><span class="text-zinc-200">&copy; {{ date('Y') }} {{ $site['club_name'] }}</span>@if(filled($site['footer_note']) && $site['footer_note'] !== $site['club_name']) · {{ $site['footer_note'] }}@endif</span>
                     </p>
-                    <livewire:visit-counter />
+                    <div class="flex flex-wrap items-center gap-3">
+                        <x-theme-switch dark />
+                        <livewire:visit-counter />
+                    </div>
                 </div>
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <p class="flex flex-wrap items-center gap-x-2 gap-y-1">

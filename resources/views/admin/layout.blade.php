@@ -2,11 +2,18 @@
 <html lang="pl" class="h-full bg-zinc-50">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ $site->image('logo', asset('img/logo-32.png')) }}">
+    <link rel="manifest" href="{{ route('admin.manifest') }}">
+    <meta name="theme-color" content="{{ $site->color('color_dark') }}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Panel">
     <link rel="apple-touch-icon" href="{{ $site->image('logo', asset('img/logo-180.png')) }}">
     <title>@yield('title', 'Panel Administracyjny') - {{ $site['club_name'] }}</title>
+    @include('partials.theme-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>:root { --color-like: {{ $site->color('color_like') }}; }</style>
     @livewireStyles
@@ -85,11 +92,14 @@
             ->map(fn (string $route) => [...$navItems[$route], 'label' => $bottomLabels[$route] ?? $navItems[$route]['label']]);
     @endphp
 
+    {{-- Pasek ładowania u góry: przejście na inną stronę i zapis w Livewire (resources/js/admin-app.js). --}}
+    <div data-admin-progress class="pointer-events-none fixed inset-x-0 top-0 z-[70] h-0.5" aria-hidden="true"><div class="h-full w-0 bg-gradient-to-r from-sky-400 to-sky-600 opacity-0 shadow-[0_0_8px] shadow-sky-500/60"></div></div>
+
     <div x-data="{ menu: false }" @keydown.escape.window="menu = false">
         {{-- Menu boczne: stałe na dużym ekranie, wysuwane na telefonie. --}}
         <div x-show="menu" x-cloak x-transition.opacity class="fixed inset-0 z-40 bg-zinc-950/50 backdrop-blur-sm lg:hidden" @click="menu = false"></div>
 
-        <aside :class="menu ? 'translate-x-0' : '-translate-x-full'" class="admin-sidebar fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col bg-ink text-zinc-300 transition-transform duration-200 lg:w-64 lg:translate-x-0">
+        <aside :class="menu ? 'translate-x-0' : '-translate-x-full'" class="admin-sidebar fixed inset-y-0 left-0 z-50 flex pt-[env(safe-area-inset-top)] w-72 -translate-x-full flex-col bg-ink text-zinc-300 transition-transform duration-200 lg:w-64 lg:translate-x-0">
             <div class="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-white/[0.06] px-5">
                 <a href="{{ route('admin.dashboard') }}" class="flex min-w-0 items-center gap-3">
                     <img src="{{ $site->image('logo', asset('img/logo-96.png')) }}" alt="" class="size-9 shrink-0 object-contain">
@@ -108,6 +118,7 @@
             </nav>
 
             <div class="shrink-0 border-t border-white/[0.06] p-3">
+                <x-theme-switch dark class="mb-2 flex w-full" />
                 <div class="flex items-center gap-3 rounded-lg px-2 py-2">
                     <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-sky-500/15 text-xs font-semibold text-sky-300 ring-1 ring-sky-400/30">{{ $initials }}</span>
                     <a href="{{ route('profile.edit') }}" class="min-w-0 flex-1 leading-tight hover:text-white">
@@ -126,7 +137,7 @@
 
         <div class="lg:pl-64">
             {{-- Górny pasek: ścieżka, podgląd strony i rzeczy do zatwierdzenia. --}}
-            <header class="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-zinc-200/80 bg-white/80 px-4 backdrop-blur-md sm:px-6 lg:px-8">
+            <header data-admin-header class="sticky top-0 z-30 flex h-[calc(4rem+env(safe-area-inset-top))] items-center gap-3 border-b border-zinc-200/80 bg-white/80 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-md sm:px-6 lg:px-8">
                 <button type="button" class="-ml-1 rounded-md p-2 text-zinc-600 hover:bg-zinc-100 lg:hidden" @click="menu = true" aria-label="Otwórz menu">
                     <x-admin-icon name="menu" />
                 </button>
@@ -150,7 +161,7 @@
                 </div>
             </header>
 
-            <main class="mx-auto max-w-7xl pt-6 pb-28 lg:py-8">
+            <main data-admin-main class="mx-auto max-w-7xl pt-6 pb-28 lg:py-8">
                 @yield('content')
             </main>
         </div>
@@ -163,17 +174,16 @@
                         $isActive = request()->routeIs(...(array) ($item['active'] ?? (str_ends_with($item['route'], '.index') ? \Illuminate\Support\Str::beforeLast($item['route'], '.').'.*' : $item['route'])));
                         $badge = isset($item['badge']) ? value($item['badge']) : null;
                     @endphp
-                    <a href="{{ route($item['route']) }}" @if($isActive) aria-current="page" @endif @class(['relative flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium', 'text-sky-700' => $isActive])>
-                        @if($isActive)<span class="absolute inset-x-4 top-0 h-0.5 rounded-full bg-sky-600" aria-hidden="true"></span>@endif
-                        <span class="relative">
+                    <a href="{{ route($item['route']) }}" @if($isActive) aria-current="page" @endif @class(['relative flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium', 'font-semibold text-sky-700' => $isActive])>
+                        <span data-pill class="relative flex h-8 w-14 items-center justify-center rounded-full">
                             <x-admin-icon :name="$item['icon']" class="size-6" />
-                            @if(! empty($badge))<span class="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-zinc-900">{{ $badge }}</span>@endif
+                            @if(! empty($badge))<span class="absolute -top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-zinc-900">{{ $badge }}</span>@endif
                         </span>
                         <span class="max-w-full truncate">{{ $item['label'] }}</span>
                     </a>
                 @endforeach
-                <button type="button" @click="menu = true" class="flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium" aria-label="Całe menu panelu">
-                    <x-admin-icon name="menu" class="size-6" />
+                <button type="button" @click="menu = true" class="flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-medium" aria-label="Całe menu panelu">
+                    <span class="flex h-8 w-14 items-center justify-center"><x-admin-icon name="menu" class="size-6" /></span>
                     <span>Menu</span>
                 </button>
             </div>

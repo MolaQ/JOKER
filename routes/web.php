@@ -18,6 +18,7 @@ use App\Http\Controllers\LogoController;
 use App\Http\Controllers\MiniVolleyballController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\PageViewController;
+use App\Http\Controllers\PanelManifestController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\ProfileController;
@@ -44,6 +45,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 // Dla wyszukiwarek: mapa strony i zasady indeksowania (adres mapy zależy od domeny).
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
 Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');
+Route::get('/panel.webmanifest', PanelManifestController::class)->name('admin.manifest');
 
 // Język strony (flagi w nagłówku)
 Route::get('/language/{locale}', LocaleController::class)->whereIn('locale', ['pl', 'en'])->name('locale.switch');

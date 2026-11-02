@@ -11,7 +11,7 @@
 <div class="space-y-6">
 
     {{-- Sekcje: na telefonie jeden przewijany w bok pasek przyklejony pod nagłówkiem panelu --}}
-    <div class="sticky top-16 z-20 -mx-4 border-b border-gray-200 bg-zinc-50/95 px-4 py-2 backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pt-0 sm:pb-3 sm:backdrop-blur-none">
+    <div class="sticky top-[calc(4rem+env(safe-area-inset-top))] z-20 -mx-4 border-b border-gray-200 bg-zinc-50/95 px-4 py-2 backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pt-0 sm:pb-3 sm:backdrop-blur-none">
         <div class="flex items-center gap-2">
             <div data-scroll-fade x-data x-init="const active = $el.querySelector('[aria-current]'); if (active) $el.scrollLeft += active.getBoundingClientRect().left - $el.getBoundingClientRect().left - ($el.clientWidth - active.offsetWidth) / 2" class="-my-1 flex min-w-0 flex-1 gap-2 overflow-x-auto py-1 whitespace-nowrap [scrollbar-width:none] sm:flex-wrap sm:overflow-visible sm:whitespace-normal [&::-webkit-scrollbar]:hidden">
                 @foreach($sections as $key => $name)
