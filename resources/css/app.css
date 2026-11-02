@@ -1375,3 +1375,45 @@ table[data-sortable] > thead th:not([data-nosort]) {
         transform: translateY(1.5rem);
     }
 }
+
+/*
+ * Ładowanie w panelu: przycisk, który wysłał zapis, lekko przygasa z pulsującym kursorem, a lista
+ * komponentu, który właśnie się odświeża (filtr, wyszukiwanie, sortowanie), przygasa z delikatnym
+ * połyskiem. Opóźnienie sprawia, że szybkie odpowiedzi nie migają.
+ */
+.admin-panel {
+    & :is(button, a)[data-loading] {
+        cursor: progress;
+        opacity: 0.65;
+        transition: opacity 0.15s 0.15s;
+    }
+
+    & [wire\:id]:has(> * :is(input, select, button)[data-loading]) :is(table > tbody, ul.divide-y) {
+        position: relative;
+        opacity: 0.55;
+        transition: opacity 0.2s 0.2s;
+
+        &::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.5) 50%, transparent 70%) 0 0 / 250% 100%;
+            animation: admin-shimmer 1.1s 0.2s linear infinite;
+        }
+    }
+}
+
+:root.dark .admin-panel [wire\:id] :is(table > tbody, ul.divide-y)::after {
+    background-image: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.06) 50%, transparent 70%);
+}
+
+@keyframes admin-shimmer {
+    from {
+        background-position: 100% 0;
+    }
+
+    to {
+        background-position: -150% 0;
+    }
+}

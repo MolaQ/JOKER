@@ -135,6 +135,8 @@ return [
                 'color_like' => ['type' => 'color', 'label' => 'Serduszka (polubienia)', 'default' => '#45a0e0'],
                 'color_venue' => ['type' => 'color', 'label' => 'Plan treningów: zajęta część boiska', 'default' => '#45a0e0'],
                 'color_gym' => ['type' => 'color', 'label' => 'Plan treningów: siłownia', 'default' => '#45a0e0'],
+                'color_panel' => ['type' => 'color', 'label' => 'Panel klubu: kolor przycisków i wyróżnień', 'help' => 'Główne przyciski, zaznaczenia i dolne menu w panelu. Odcienie jaśniejsze i ciemniejsze dobierają się same, także w trybie ciemnym.', 'default' => '#0284c7'],
+                'theme_default' => ['type' => 'select', 'label' => 'Motyw dla osób, które same go nie wybrały', 'help' => 'Każdy może zmienić motyw w menu (Jasny, Ciemny, Auto); wybór zapamiętuje jego przeglądarka. „Auto” idzie za ustawieniem telefonu lub komputera.', 'default' => 'light', 'options' => ['light' => 'Jasny', 'dark' => 'Ciemny', 'auto' => 'Auto']],
                 'gym_icon' => ['type' => 'select', 'label' => 'Plan treningów: ikona siłowni', 'default' => 'dumbbell', 'options' => [
                     'dumbbell' => 'Hantla',
                     'kettlebell' => 'Kettlebell',

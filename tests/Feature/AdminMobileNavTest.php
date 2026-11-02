@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Support\SiteSettings;
 use App\UserRole;
 
 it('shows the admin bottom menu with shortcuts for the admin role', function () {
@@ -58,4 +59,17 @@ it('offers the light, dark and auto theme switch in the panel and on the site', 
         ->assertSee(route('admin.manifest'), false);
 
     $this->get(route('home'))->assertOk()->assertSee('data-theme-set="auto"', false);
+});
+
+it('colours the panel with the club colour from settings and keeps the default untouched', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
+
+    $this->actingAs($admin)->get(route('admin.dashboard'))->assertOk()->assertDontSee('--color-sky-600:', false);
+
+    app(SiteSettings::class)->set(['color_panel' => '#e30613', 'theme_default' => 'auto']);
+
+    $this->actingAs($admin)->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee('--color-sky-600: #e30613', false)
+        ->assertSee('"auto"', false);
 });

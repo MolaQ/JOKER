@@ -6,9 +6,9 @@ const media = window.matchMedia('(prefers-color-scheme: dark)');
 
 const stored = () => {
     try {
-        return localStorage.getItem('theme') || 'light';
+        return localStorage.getItem('theme') || document.documentElement.dataset.themeDefault || 'light';
     } catch (e) {
-        return 'light';
+        return document.documentElement.dataset.themeDefault || 'light';
     }
 };
 
