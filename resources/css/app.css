@@ -1307,3 +1307,59 @@ table[data-sortable] > thead th:not([data-nosort]) {
         animation: none !important;
     }
 }
+
+/*
+ * Zwarte listy w panelu na telefonie: wiersz tabeli to jedna pozycja listy, tytuł (data-primary
+ * z resources/js/admin-tables.js) pogrubiony na górze, reszta drobnym tekstem w jednym ciągu,
+ * akcje w rzędzie pod spodem. Na ekran mieści się kilka razy więcej pozycji niż w kartach.
+ */
+@media (width < 40rem) {
+    .admin-panel main table:not([data-scroll-table]) > tbody > tr {
+        display: flex !important;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.25rem 0.75rem;
+        @apply px-4 py-3;
+
+        & > td,
+        & > td[data-label]:not([data-label='']) {
+            width: auto !important;
+            padding: 0 !important;
+            font-size: 0.8125rem;
+            @apply text-zinc-500;
+        }
+
+        & > td[data-label]:not([data-label=''])::before {
+            content: none;
+        }
+
+        & > td[data-short][data-label]:not([data-label=''])::before {
+            content: attr(data-label) ' ';
+            float: none;
+            margin: 0;
+            width: auto;
+            padding: 0;
+            @apply text-[11px] font-medium tracking-normal text-zinc-400 normal-case;
+        }
+
+        & > td[data-primary] {
+            order: -1;
+            flex-basis: 100%;
+            font-size: 0.9375rem;
+            @apply font-semibold text-zinc-900;
+        }
+
+        & > td[data-blank] {
+            display: none !important;
+        }
+
+        /* Akcje na końcu wiersza, po prawej; gdy brak miejsca, przechodzą do nowej linii. */
+        & > td:last-child:not([data-primary]):has(> :is(a, button)) {
+            @apply ml-auto;
+
+            & > :is(a, button) {
+                @apply min-h-9! py-1! text-[13px]!;
+            }
+        }
+    }
+}
