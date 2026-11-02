@@ -15,6 +15,8 @@ use App\Support\TournamentBracket;
 use App\Support\TournamentHalls;
 use App\Support\TournamentSchedule;
 use App\Support\TournamentTable;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -944,4 +946,16 @@ test('other facilities show a short name in headers and the full name with addre
 
     $this->get(route('tournaments.show', [$this->tournament, 'tab' => 'matches']))->assertOk()
         ->assertSee('Szkoła Podstawowa nr 6 im. Lotników Polskich')->assertSee('ul. Żeromskiego 41');
+});
+
+test('a cropped tournament logo is saved right away', function () {
+    Storage::fake('public');
+    $this->actingAs(User::factory()->admin()->create());
+
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])
+        ->set('logo', UploadedFile::fake()->image('logo.png', 400, 400))
+        ->assertHasNoErrors()
+        ->assertSet('logo', null);
+
+    expect($this->tournament->fresh()->logo_path)->toStartWith('tournaments/logo/');
 });

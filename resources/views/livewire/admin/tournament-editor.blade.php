@@ -75,7 +75,7 @@
                         <button type="button" wire:click="removeLogo" wire:confirm="Usunąć logo turnieju?" class="text-sm text-red-600 hover:underline">Usuń</button>
                     </div>
                 @endif
-                <x-photo-cropper model="logo" :preview="false" aspect="free" format="png" :width="800" />
+                <x-photo-cropper model="logo" :preview="false" aspect="free" format="png" :width="800" :label="$tournament->logo_path ? 'Zmień logo' : 'Wybierz logo'" />
                 @error('logo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
 

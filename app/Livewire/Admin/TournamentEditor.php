@@ -459,6 +459,32 @@ class TournamentEditor extends Component
         $this->toast('Zapisano informacje o turnieju.');
     }
 
+    /**
+     * Logo i zdjęcie turnieju zapisują się od razu po „Użyj tego kadru” (bez czekania na „Zapisz”),
+     * żeby przycięty obrazek nie znikał bez śladu.
+     */
+    public function updatedLogo(): void
+    {
+        $this->validateOnly('logo', ['logo' => 'nullable|image|max:4096']);
+
+        if ($this->logo) {
+            $this->tournament->update(['logo_path' => $this->logo->store('tournaments/logo', 'public')]);
+            $this->logo = null;
+            $this->toast('Zapisano logo turnieju.');
+        }
+    }
+
+    public function updatedImage(): void
+    {
+        $this->validateOnly('image', ['image' => 'nullable|image|max:6144']);
+
+        if ($this->image) {
+            $this->tournament->update(['image_path' => $this->image->store('tournaments', 'public')]);
+            $this->image = null;
+            $this->toast('Zapisano zdjęcie turnieju.');
+        }
+    }
+
     public function removeLogo(): void
     {
         $this->tournament->update(['logo_path' => null]);
