@@ -2,7 +2,7 @@
     @if($this->competitions->isNotEmpty())
         <div class="sticky top-16 z-30 border-y border-zinc-200 bg-white/90 backdrop-blur-xl lg:top-20">
             <div class="container-site py-3">
-                <div class="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" role="tablist" aria-label="{{ __('Rozgrywki') }}">
+                <div data-scroll-fade class="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" role="tablist" aria-label="{{ __('Rozgrywki') }}">
                     @foreach($this->competitions as $competitionOption)
                         <button type="button" role="tab" wire:click="select('{{ $competitionOption->getRouteKey() }}')" aria-selected="{{ $this->selected?->is($competitionOption) ? 'true' : 'false' }}" @class([
                             'chip shrink-0 transition',

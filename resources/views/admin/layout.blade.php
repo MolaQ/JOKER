@@ -64,6 +64,25 @@
         $me = auth()->user();
         $initials = collect(preg_split('/\s+/', trim($me->name)))->filter()->take(2)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->join('');
         $pendingApprovals = \App\Support\Approvals::pendingCountFor($me);
+
+        // Dolne menu na telefonie: 4 skróty dobrane do głównej roli konta (tylko to, do czego ma dostęp) i „Menu”.
+        $navAllowed = fn (array $item) => ! isset($item['can']) || ($item['can'] instanceof \Closure ? ($item['can'])() : $me->can($item['can']));
+        $navItems = collect($adminNavigation)->flatten(1)->filter($navAllowed)->keyBy('route');
+        $bottomLabels = ['admin.dashboard' => 'Pulpit', 'admin.approvals.index' => 'Zatwierdź', 'admin.games.index' => 'Mecze', 'admin.articles.index' => 'Aktualności', 'admin.trainings.index' => 'Treningi', 'admin.players.index' => 'Zawodnicy', 'admin.tournaments.index' => 'Turnieje', 'admin.mini.index' => 'Mini', 'admin.galleries.index' => 'Galerie', 'admin.media.index' => 'Transmisje', 'thumbnails.index' => 'Miniatury', 'admin.teams.index' => 'Drużyny'];
+        $bottomPresets = [
+            'admin' => ['admin.dashboard', 'admin.approvals.index', 'admin.games.index', 'admin.articles.index'],
+            'boss' => ['admin.dashboard', 'admin.approvals.index', 'admin.games.index', 'admin.articles.index'],
+            'trainer' => ['admin.dashboard', 'admin.trainings.index', 'admin.games.index', 'admin.players.index'],
+            'staff' => ['admin.dashboard', 'admin.trainings.index', 'admin.games.index', 'admin.players.index'],
+            'editor' => ['admin.dashboard', 'admin.articles.index', 'admin.galleries.index', 'admin.approvals.index'],
+            'photographer' => ['admin.dashboard', 'admin.galleries.index', 'admin.media.index', 'thumbnails.index'],
+            'coordinator' => ['admin.dashboard', 'admin.mini.index', 'admin.players.index', 'admin.approvals.index'],
+            'moderator' => ['admin.dashboard', 'admin.approvals.index', 'admin.articles.index', 'admin.players.index'],
+        ];
+        $bottomNav = collect($bottomPresets[$me->roles()->first()?->value] ?? [])
+            ->merge(['admin.dashboard', 'admin.approvals.index', 'admin.games.index', 'admin.trainings.index', 'admin.articles.index', 'admin.tournaments.index', 'admin.players.index', 'admin.mini.index', 'admin.galleries.index'])
+            ->unique()->filter(fn (string $route) => $navItems->has($route))->take(4)
+            ->map(fn (string $route) => [...$navItems[$route], 'label' => $bottomLabels[$route] ?? $navItems[$route]['label']]);
     @endphp
 
     <div x-data="{ menu: false }" @keydown.escape.window="menu = false">
@@ -131,10 +150,34 @@
                 </div>
             </header>
 
-            <main class="mx-auto max-w-7xl py-6 lg:py-8">
+            <main class="mx-auto max-w-7xl pt-6 pb-28 lg:py-8">
                 @yield('content')
             </main>
         </div>
+
+        {{-- Dolne menu na telefonie: najczęstsze miejsca pod kciukiem, reszta pod „Menu”. --}}
+        <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 pb-[env(safe-area-inset-bottom)] text-zinc-500 backdrop-blur-xl lg:hidden" aria-label="Menu dolne panelu" data-admin-bottom-nav>
+            <div class="grid" style="grid-template-columns: repeat({{ $bottomNav->count() + 1 }}, minmax(0, 1fr))">
+                @foreach($bottomNav as $item)
+                    @php
+                        $isActive = request()->routeIs(...(array) ($item['active'] ?? (str_ends_with($item['route'], '.index') ? \Illuminate\Support\Str::beforeLast($item['route'], '.').'.*' : $item['route'])));
+                        $badge = isset($item['badge']) ? value($item['badge']) : null;
+                    @endphp
+                    <a href="{{ route($item['route']) }}" @if($isActive) aria-current="page" @endif @class(['relative flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium', 'text-sky-700' => $isActive])>
+                        @if($isActive)<span class="absolute inset-x-4 top-0 h-0.5 rounded-full bg-sky-600" aria-hidden="true"></span>@endif
+                        <span class="relative">
+                            <x-admin-icon :name="$item['icon']" class="size-6" />
+                            @if(! empty($badge))<span class="absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-zinc-900">{{ $badge }}</span>@endif
+                        </span>
+                        <span class="max-w-full truncate">{{ $item['label'] }}</span>
+                    </a>
+                @endforeach
+                <button type="button" @click="menu = true" class="flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-[11px] font-medium" aria-label="Całe menu panelu">
+                    <x-admin-icon name="menu" class="size-6" />
+                    <span>Menu</span>
+                </button>
+            </div>
+        </nav>
     </div>
 
     <x-toasts />

@@ -78,7 +78,7 @@
     @if($site['topbar_enabled'])
         <div class="relative z-[51] bg-[var(--color-topbar-bg)] text-[var(--color-topbar-text)]">
             <div class="container-site flex h-10 items-center gap-6 text-[13px] font-semibold">
-                <nav class="-mx-4 flex min-w-0 flex-1 items-center gap-5 overflow-x-auto px-4 whitespace-nowrap [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden" aria-label="{{ __('Na skróty') }}">
+                <nav data-topbar-scroll class="-mx-4 flex h-10 min-w-0 flex-1 items-center gap-5 overflow-x-auto px-4 whitespace-nowrap [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [&>a]:flex [&>a]:h-full [&>a]:items-center" aria-label="{{ __('Na skróty') }}">
                     @foreach($topbarLeft as $link)
                         <a href="{{ $site->href($link['url']) }}" @if($site->isExternal($link['url'])) target="_blank" rel="noopener" @endif class="transition hover:opacity-70">{{ __($link['label']) }}</a>
                     @endforeach

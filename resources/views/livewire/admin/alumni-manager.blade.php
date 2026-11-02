@@ -1,7 +1,7 @@
 <div class="space-y-6">
     <div class="flex items-center justify-between">
         <h2 class="flex items-center gap-2 text-lg font-semibold text-gray-900"><x-admin-icon name="star" class="text-zinc-400" /> Lista wychowanków <span class="text-sm font-normal text-zinc-500">({{ $alumni->count() }})</span></h2>
-        <button type="button" wire:click="create" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">+ Dodaj wychowanka</button>
+        <button type="button" wire:click="create" class="admin-fab rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">+ Dodaj wychowanka</button>
     </div>
 
     @if($showForm)

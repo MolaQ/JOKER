@@ -59,7 +59,7 @@
                     </div>
                 </div>
             @endif
-            <div class="scrollbar-none -mx-4 flex gap-1 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="tablist">
+            <div data-scroll-fade class="scrollbar-none -mx-4 flex gap-1 overflow-x-auto px-4 sm:mx-0 sm:px-0" role="tablist">
                 @foreach($tabs as $key => $label)
                     <button type="button" role="tab" aria-selected="{{ $currentTab === $key ? 'true' : 'false' }}" wire:click="selectTab('{{ $key }}')" @class([
                         'shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition',

@@ -1,6 +1,6 @@
 <div class="bg-white">
     <div class="flex items-center justify-end border-b border-gray-200 p-4">
-        <button type="button" wire:click="openCreateModal" class="inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
+        <button type="button" wire:click="openCreateModal" class="admin-fab inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
             + Dodaj podstronę
         </button>
     </div>
@@ -22,7 +22,7 @@
         <div class="fixed inset-0 z-50 overflow-y-auto">
             <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="closeModal"></div>
 
-            <div class="flex min-h-full items-center justify-center p-4">
+            <div class="admin-sheet flex min-h-full items-center justify-center p-4">
                 <div class="relative w-full max-w-3xl rounded-2xl bg-white shadow-2xl ring-1 ring-zinc-900/5">
                     <form wire:submit="save">
                         <div class="border-b border-gray-200 px-6 py-4">

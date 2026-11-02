@@ -192,6 +192,7 @@ class TrainingPlanner extends Component
         $this->weekdays = [];
         $this->note = '';
         $this->resetErrorBag();
+        $this->dispatch('training-saved');
     }
 
     private function editable(int $id): TrainingSession

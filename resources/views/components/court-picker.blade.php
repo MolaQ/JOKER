@@ -41,7 +41,7 @@
         @else
             <span class="text-xs text-gray-400">bez boiska</span>
         @endif
-        <button type="button" x-on:click="open = ! open" class="shrink-0 text-xs font-semibold text-sky-600 hover:text-sky-800" x-text="open ? 'Zamknij' : '{{ filled($value) ? 'Zmień' : 'Wybierz' }}'">{{ filled($value) ? 'Zmień' : 'Wybierz' }}</button>
+        <button type="button" x-on:click="open = ! open" class="inline-flex min-h-10 shrink-0 items-center rounded-md px-3 text-xs font-semibold text-sky-700 ring-1 ring-sky-200 ring-inset hover:bg-sky-50 sm:min-h-0 sm:px-2 sm:py-1" x-text="open ? 'Zamknij' : '{{ filled($value) ? 'Zmień' : 'Wybierz' }}'">{{ filled($value) ? 'Zmień' : 'Wybierz' }}</button>
     </div>
 
     {{-- Pełny wybór: obiekt, potem boisko --}}

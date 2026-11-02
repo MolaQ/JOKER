@@ -1,7 +1,7 @@
 <div>
     <div class="flex items-center justify-between gap-4 border-b border-gray-200 bg-white p-4">
         <p class="text-sm text-gray-600">Turnieje pokazują się w kalendarzu meczów. Mecze rozegrane na turnieju dodasz w „Mecze i wyniki” (rodzaj: turniejowy).</p>
-        <button type="button" wire:click="openCreateModal" class="inline-flex shrink-0 items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">+ Dodaj turniej</button>
+        <button type="button" wire:click="openCreateModal" class="admin-fab inline-flex shrink-0 items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">+ Dodaj turniej</button>
     </div>
 
     <table class="min-w-full divide-y divide-gray-300 bg-white">
@@ -43,7 +43,7 @@
     @if($showModal)
         <div class="fixed inset-0 z-50 overflow-y-auto">
             <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="closeModal"></div>
-            <div class="flex min-h-full items-center justify-center p-4">
+            <div class="admin-sheet flex min-h-full items-center justify-center p-4">
                 <div class="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl ring-1 ring-zinc-900/5" @click.stop>
                     <form wire:submit.prevent="save">
                         <div class="border-b border-gray-200 px-6 py-4">

@@ -10,25 +10,38 @@
 
 <div class="space-y-6">
 
-    <div class="flex flex-wrap gap-2 border-b border-gray-200 pb-3">
-        @foreach($sections as $key => $name)
-            <button type="button" wire:click="$set('section', '{{ $key }}')"
-                class="rounded-full px-4 py-1.5 text-sm font-semibold {{ $section === $key ? 'bg-sky-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
-                {{ $name }}
-            </button>
-        @endforeach
-        @if($tournament->has_page)
-            <a href="{{ route('tournaments.tv', $tournament) }}" target="_blank" class="ml-auto text-sm font-semibold text-sky-700 hover:underline self-center" title="Otwórz na komputerze podłączonym do telewizora i naciśnij F11 (pełny ekran)">Ekran TV ↗</a>
-            <a href="{{ route('tournaments.show', $tournament) }}" target="_blank" class="text-sm font-semibold text-sky-700 hover:underline self-center">Zobacz stronę ↗</a>
-        @endif
+    {{-- Sekcje: na telefonie jeden przewijany w bok pasek przyklejony pod nagłówkiem panelu --}}
+    <div class="sticky top-16 z-20 -mx-4 border-b border-gray-200 bg-zinc-50/95 px-4 py-2 backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pt-0 sm:pb-3 sm:backdrop-blur-none">
+        <div class="flex items-center gap-2">
+            <div data-scroll-fade x-data x-init="const active = $el.querySelector('[aria-current]'); if (active) $el.scrollLeft += active.getBoundingClientRect().left - $el.getBoundingClientRect().left - ($el.clientWidth - active.offsetWidth) / 2" class="-my-1 flex min-w-0 flex-1 gap-2 overflow-x-auto py-1 whitespace-nowrap [scrollbar-width:none] sm:flex-wrap sm:overflow-visible sm:whitespace-normal [&::-webkit-scrollbar]:hidden">
+                @foreach($sections as $key => $name)
+                    <button type="button" wire:click="$set('section', '{{ $key }}')" @if($section === $key) aria-current="page" @endif
+                        class="min-h-10 shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold sm:min-h-0 {{ $section === $key ? 'bg-sky-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                        {{ $name }}
+                    </button>
+                @endforeach
+            </div>
+            @if($tournament->has_page)
+                <div class="hidden shrink-0 gap-3 sm:flex">
+                    <a href="{{ route('tournaments.tv', $tournament) }}" target="_blank" class="text-sm font-semibold text-sky-700 hover:underline" title="Otwórz na komputerze podłączonym do telewizora i naciśnij F11 (pełny ekran)">Ekran TV ↗</a>
+                    <a href="{{ route('tournaments.show', $tournament) }}" target="_blank" class="text-sm font-semibold text-sky-700 hover:underline">Zobacz stronę ↗</a>
+                </div>
+            @endif
+        </div>
     </div>
+    @if($tournament->has_page)
+        <div class="-mt-3 flex gap-2 sm:hidden">
+            <a href="{{ route('tournaments.show', $tournament) }}" target="_blank" class="admin-action">Zobacz stronę ↗</a>
+            <a href="{{ route('tournaments.tv', $tournament) }}" target="_blank" class="admin-action">Ekran TV ↗</a>
+        </div>
+    @endif
 
     @if(! in_array($section, ['strona', 'kategorie', 'wpisujacy', 'partnerzy'], true))
-        <div class="flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 p-3">
-            <span class="text-sm font-medium text-gray-700">Kategoria:</span>
+        <div data-scroll-fade class="flex items-center gap-3 overflow-x-auto rounded-lg bg-gray-50 p-3 whitespace-nowrap [scrollbar-width:none] sm:flex-wrap sm:whitespace-normal [&::-webkit-scrollbar]:hidden">
+            <span class="shrink-0 text-sm font-medium text-gray-700">Kategoria:</span>
             @forelse($categories as $cat)
                 <button type="button" wire:click="$set('categoryId', {{ $cat->id }})"
-                    class="rounded-md px-3 py-1 text-sm font-semibold {{ $categoryId === $cat->id ? 'bg-sky-600 text-white' : 'bg-white text-gray-700 ring-1 ring-gray-300' }}">
+                    class="min-h-10 shrink-0 rounded-md px-3 py-1 text-sm font-semibold sm:min-h-0 {{ $categoryId === $cat->id ? 'bg-sky-600 text-white' : 'bg-white text-gray-700 ring-1 ring-gray-300' }}">
                     {{ $cat->name }}
                 </button>
             @empty
@@ -131,8 +144,8 @@
                         @error('categoryNames.'.$cat->id) <span class="text-xs text-red-600">{{ $message }}</span> @enderror
                         <span class="ml-auto flex gap-3">
                         <button type="button" wire:click="startTemplate({{ $cat->id }})" class="text-sm text-sky-700 hover:text-blue-800" title="Zapisz grupy, mecze, drabinkę i dni do użycia w kolejnych turniejach">Zapisz jako szablon</button>
-                        <button type="button" wire:click="$set('renaming', 'category:{{ $cat->id }}')" class="text-sm text-sky-700 hover:text-blue-800">Edytuj</button>
-                        <button type="button" wire:click="deleteCategory({{ $cat->id }})" wire:confirm="Usunąć kategorię {{ $cat->name }} razem z drużynami, grupami i meczami?" class="text-sm text-red-600 hover:text-red-800">Usuń</button>
+                        <button type="button" wire:click="$set('renaming', 'category:{{ $cat->id }}')" class="admin-action">Edytuj</button>
+                        <button type="button" wire:click="deleteCategory({{ $cat->id }})" wire:confirm="Usunąć kategorię {{ $cat->name }} razem z drużynami, grupami i meczami?" class="admin-action admin-action-danger">Usuń</button>
                         </span>
                     </li>
                     @if($templateFrom === $cat->id)
@@ -188,7 +201,7 @@
                                         <p class="text-sm text-gray-600">{{ $template->description }}</p>
                                     @endif
                                 </div>
-                                <button type="button" wire:click="deleteTemplate({{ $template->id }})" wire:confirm="Usunąć szablon {{ $template->name }}? Turnieje już z niego zrobione zostaną bez zmian." class="text-sm text-red-600 hover:text-red-800">Usuń</button>
+                                <button type="button" wire:click="deleteTemplate({{ $template->id }})" wire:confirm="Usunąć szablon {{ $template->name }}? Turnieje już z niego zrobione zostaną bez zmian." class="admin-action admin-action-danger">Usuń</button>
                             </li>
                         @endforeach
                     </ul>
@@ -299,8 +312,8 @@
                             @endif
                             @error('groupNames.'.$group->id) <span class="text-xs text-red-600">{{ $message }}</span> @enderror
                             <span class="ml-auto flex gap-3">
-                                <button type="button" wire:click="$set('renaming', 'group:{{ $group->id }}')" class="text-sm text-sky-700 hover:text-blue-800">Edytuj</button>
-                                <button type="button" wire:click="deleteGroup({{ $group->id }})" wire:confirm="Usunąć {{ $group->name }}? Drużyny zostaną bez grupy, a mecze grupy zostaną usunięte." class="text-sm text-red-600 hover:text-red-800">Usuń</button>
+                                <button type="button" wire:click="$set('renaming', 'group:{{ $group->id }}')" class="admin-action">Edytuj</button>
+                                <button type="button" wire:click="deleteGroup({{ $group->id }})" wire:confirm="Usunąć {{ $group->name }}? Drużyny zostaną bez grupy, a mecze grupy zostaną usunięte." class="admin-action admin-action-danger">Usuń</button>
                             </span>
                         </div>
 
@@ -713,9 +726,9 @@
                                 <div class="grid gap-2 rounded-lg border border-gray-200 bg-white p-3 lg:grid-cols-[minmax(0,1.6fr)_minmax(8rem,1fr)_16rem_12rem_auto] lg:items-center" wire:key="match-{{ $tournamentMatch->id }}" wire:sort:item="{{ $tournamentMatch->id }}">
                                     <div class="flex items-center gap-2 text-sm">
                                         <div class="flex shrink-0 flex-col items-center text-gray-400">
-                                            <button type="button" wire:click="moveMatchBy({{ $tournamentMatch->id }}, -1)" @disabled($loop->first) class="leading-none hover:text-gray-900 disabled:opacity-30" aria-label="Przesuń wyżej">▲</button>
+                                            <button type="button" wire:click="moveMatchBy({{ $tournamentMatch->id }}, -1)" @disabled($loop->first) class="flex size-8 items-center justify-center rounded leading-none hover:bg-gray-100 hover:text-gray-900 disabled:opacity-30 lg:size-auto lg:hover:bg-transparent" aria-label="Przesuń wyżej">▲</button>
                                             <span wire:sort:handle class="cursor-grab text-lg leading-none hover:text-gray-900 active:cursor-grabbing" title="Przeciągnij, żeby zmienić kolejność">⠿</span>
-                                            <button type="button" wire:click="moveMatchBy({{ $tournamentMatch->id }}, 1)" @disabled($loop->last) class="leading-none hover:text-gray-900 disabled:opacity-30" aria-label="Przesuń niżej">▼</button>
+                                            <button type="button" wire:click="moveMatchBy({{ $tournamentMatch->id }}, 1)" @disabled($loop->last) class="flex size-8 items-center justify-center rounded leading-none hover:bg-gray-100 hover:text-gray-900 disabled:opacity-30 lg:size-auto lg:hover:bg-transparent" aria-label="Przesuń niżej">▼</button>
                                         </div>
                                         <div class="min-w-0">
                                         <span class="text-xs font-semibold uppercase text-gray-500"><span class="mr-1 rounded bg-gray-900 px-1.5 py-0.5 text-white">#{{ $tournamentMatch->number }}</span>{{ $tournamentMatch->group?->name ?? $tournamentMatch->title() }}</span>
@@ -731,7 +744,7 @@
                                                         @endforeach
                                                     </select>
                                                 @endif
-                                                @if($side === 'home') <button type="button" wire:click="swapMatchSides({{ $tournamentMatch->id }})" class="rounded px-1 text-gray-400 hover:bg-gray-100 hover:text-gray-900" title="Zamień gospodarza z gościem">⇄</button> @endif
+                                                @if($side === 'home') <button type="button" wire:click="swapMatchSides({{ $tournamentMatch->id }})" class="flex size-8 items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-gray-900 lg:size-auto lg:px-1" title="Zamień gospodarza z gościem" aria-label="Zamień gospodarza z gościem">⇄</button> @endif
                                             @endforeach
                                         </div>
                                         </div>
@@ -748,14 +761,14 @@
                                         @endif
                                     </div>
                                     <x-court-picker :halls="$extraHalls" :main="$mainVenues" model="results.{{ $tournamentMatch->id }}.court" :value="$results[$tournamentMatch->id]['court'] ?? null" :free="false" />
-                                    <div class="flex items-center gap-3">
-                                        <label @class(['inline-flex cursor-pointer items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold ring-1', 'bg-red-50 text-red-700 ring-red-200' => $results[$tournamentMatch->id]['live'] ?? false, 'text-gray-500 ring-gray-200' => ! ($results[$tournamentMatch->id]['live'] ?? false)]) title="Włącz, gdy mecz się zaczął; wyłącz po wpisaniu wyniku końcowego">
+                                    <div class="flex flex-wrap items-center gap-2 lg:gap-3">
+                                        <label @class(['inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full px-3 py-0.5 text-xs lg:min-h-0 lg:px-2 font-semibold ring-1', 'bg-red-50 text-red-700 ring-red-200' => $results[$tournamentMatch->id]['live'] ?? false, 'text-gray-500 ring-gray-200' => ! ($results[$tournamentMatch->id]['live'] ?? false)]) title="Włącz, gdy mecz się zaczął; wyłącz po wpisaniu wyniku końcowego">
                                             <input type="checkbox" wire:model.live="results.{{ $tournamentMatch->id }}.live" class="size-3.5 rounded border-gray-300 text-red-600">
                                             Trwa
                                         </label>
                                         @if($tournamentMatch->hasStreams())<span class="text-xs text-red-600" title="Mecz ma transmisję">▶</span>@endif
-                                        <button type="button" wire:click="startMatchEdit({{ $tournamentMatch->id }})" class="text-sm text-sky-700 hover:text-blue-800">Edytuj</button>
-                                        <button type="button" wire:click="deleteMatch({{ $tournamentMatch->id }})" wire:confirm="Usunąć ten mecz?" class="text-sm text-red-600 hover:text-red-800">Usuń</button>
+                                        <button type="button" wire:click="startMatchEdit({{ $tournamentMatch->id }})" class="admin-action">Edytuj</button>
+                                        <button type="button" wire:click="deleteMatch({{ $tournamentMatch->id }})" wire:confirm="Usunąć ten mecz?" class="admin-action admin-action-danger">Usuń</button>
                                     </div>
                                     @if($editingMatchId === $tournamentMatch->id)
                                         @include('livewire.admin.tournament-match-edit', ['tournamentMatch' => $tournamentMatch])

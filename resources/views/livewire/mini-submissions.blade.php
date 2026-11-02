@@ -24,7 +24,7 @@
                 <svg class="pointer-events-none absolute top-1/2 left-3.5 size-5 -translate-y-1/2 text-zinc-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd"/></svg>
                 <input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('Szukaj turnieju albo miejscowości') }}" aria-label="{{ __('Szukaj turnieju') }}" class="{{ $field }} mt-0 pl-11">
             </div>
-            <div class="scrollbar-none -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            <div data-scroll-fade class="scrollbar-none -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                 @foreach(['' => __('Wszystkie'), 'upcoming' => __('Zaplanowane'), 'past' => __('Zakończone')] as $when => $whenLabel)
                     <button type="button" wire:click="$set('filterWhen', '{{ $when }}')" @class(['shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1 transition', 'bg-club-navy text-white ring-club-navy' => $filterWhen === $when, 'bg-white text-zinc-700 ring-zinc-200 hover:bg-zinc-50' => $filterWhen !== $when])>{{ $whenLabel }}</button>
                 @endforeach

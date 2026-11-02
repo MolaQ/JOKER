@@ -175,7 +175,7 @@
         </div>
 
         @if($upcoming_games->isNotEmpty())
-            <div class="scrollbar-none -mx-4 mt-10 flex snap-x gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
+            <div data-scroll-fade class="scrollbar-none -mx-4 mt-10 flex snap-x gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
                 @foreach($upcoming_games as $game)
                     <x-match-card :game="$game" dark class="w-[85%] shrink-0 snap-start sm:w-auto" />
                 @endforeach

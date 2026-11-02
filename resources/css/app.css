@@ -1134,3 +1134,80 @@ table[data-sortable] > thead th:not([data-nosort]) {
 /* Obłożenie sali w planie treningów: oś godzin, trzy sektory, siłownia */
 .ytto-grid { grid-template-columns: 2.25rem minmax(0, 3fr) minmax(4.25rem, 1fr); }
 @media (min-width: 640px) { .ytto-grid { grid-template-columns: 3rem minmax(0, 3fr) minmax(7rem, 1fr); } }
+
+/* Paski przewijane w bok: zanikająca krawędź, gdy dalej są kolejne linki (resources/js/app.js). */
+:is([data-topbar-scroll], [data-scroll-fade])[data-more-end] {
+    mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+}
+
+:is([data-topbar-scroll], [data-scroll-fade])[data-more-start] {
+    mask-image: linear-gradient(to right, transparent, #000 2.5rem);
+}
+
+:is([data-topbar-scroll], [data-scroll-fade])[data-more-start][data-more-end] {
+    mask-image: linear-gradient(to right, transparent, #000 2.5rem, #000 calc(100% - 2.5rem), transparent);
+}
+
+/* Telefon: wygodne cele dotyku na stronie (filtry jako pigułki). */
+@media (width < 40rem) {
+    :is(a, button).chip {
+        @apply min-h-9 px-3.5;
+    }
+}
+
+/*
+ * Panel na telefonie: przyciski i pola wygodne dla kciuka (min. 40–44 px), pola z tekstem 16 px
+ * (iPhone nie powiększa wtedy strony przy wpisywaniu), okna jako panele wysuwane od dołu
+ * i główny przycisk „+ Dodaj” pływający nad dolnym menu.
+ */
+@media (width < 40rem) {
+    .admin-panel main {
+        & :is(input:not([type='checkbox'], [type='radio'], [type='file'], [type='color'], [type='range']), select, textarea) {
+            font-size: 1rem;
+            min-height: 2.75rem;
+        }
+
+        & input:is([type='checkbox'], [type='radio']) {
+            @apply size-5;
+        }
+
+        & .admin-action,
+        & table tbody td:last-child > :is(a, button):not([class*='bg-']) {
+            @apply min-h-10 px-3.5! py-1.5! text-sm;
+        }
+
+        & table tbody td:last-child:is(:not([data-label]), [data-label='']):has(> :is(a, button)) {
+            @apply flex flex-wrap gap-2;
+        }
+
+        & table tbody td:last-child > :is(a, button):not([class*='bg-']) {
+            @apply m-0!;
+        }
+    }
+
+    /* Okno edycji jako panel od dołu ekranu, z uchwytem u góry. */
+    .admin-panel .admin-sheet {
+        @apply items-end p-0 pt-10;
+
+        & > * {
+            @apply max-w-none rounded-t-2xl rounded-b-none pb-[env(safe-area-inset-bottom)];
+            animation: admin-sheet-in 0.22s ease-out;
+        }
+
+        & > *::before {
+            content: '';
+            @apply mx-auto mt-2 block h-1.5 w-10 rounded-full bg-zinc-300;
+        }
+    }
+
+    .admin-panel .admin-fab {
+        @apply fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-30 rounded-full! px-5! py-3.5! text-base! shadow-xl! shadow-sky-900/30!;
+    }
+}
+
+@keyframes admin-sheet-in {
+    from {
+        transform: translateY(2rem);
+        opacity: 0;
+    }
+}

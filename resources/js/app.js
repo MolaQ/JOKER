@@ -71,6 +71,17 @@ if (header) {
     window.addEventListener('scroll', onScroll, { passive: true });
 }
 
+// Paski przewijane w bok (np. górny pasek i filtry na telefonie): zanikająca krawędź pokazuje, że jest dalej.
+const fadeStrip = (strip) => {
+    strip.toggleAttribute('data-more-start', strip.scrollLeft > 4);
+    strip.toggleAttribute('data-more-end', strip.scrollLeft + strip.clientWidth < strip.scrollWidth - 4);
+};
+const fadeStrips = () => document.querySelectorAll('[data-topbar-scroll], [data-scroll-fade]').forEach(fadeStrip);
+fadeStrips();
+window.addEventListener('resize', fadeStrips, { passive: true });
+document.addEventListener('scroll', (event) => event.target instanceof Element && event.target.matches('[data-topbar-scroll], [data-scroll-fade]') && fadeStrip(event.target), { capture: true, passive: true });
+document.addEventListener('livewire:init', () => window.Livewire.hook('morphed', () => requestAnimationFrame(fadeStrips)));
+
 // Slider na stronie głównej.
 const slider = document.querySelector('[data-hero-slider]');
 

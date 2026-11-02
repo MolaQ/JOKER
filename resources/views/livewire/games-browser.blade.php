@@ -25,7 +25,7 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-                <div class="scrollbar-none -mx-4 flex min-w-0 flex-1 basis-full gap-2 overflow-x-auto px-4 sm:mx-0 sm:basis-auto sm:px-0">
+                <div data-scroll-fade class="scrollbar-none -mx-4 flex min-w-0 flex-1 basis-full gap-2 overflow-x-auto px-4 sm:mx-0 sm:basis-auto sm:px-0">
                     <button type="button" wire:click="$set('team', '')" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $team === '', 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => $team !== ''])>{{ __('Wszystkie drużyny') }}</button>
                     @foreach($teams as $teamOption)
                         <button type="button" data-track="{{ __('Mecze') }}: {{ $teamOption->name }}" wire:click="toggleTeam('{{ $teamOption->slug }}')" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $team === $teamOption->slug, 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => $team !== $teamOption->slug])>{{ $teamOption->name }}</button>
@@ -114,7 +114,7 @@
                             <div class="grid grid-cols-7">
                                 @foreach($week as $day)
                                     <div @class([
-                                        'min-h-14 border-b border-zinc-100 p-1 sm:min-h-20 sm:p-2 lg:min-h-32',
+                                        'relative min-h-14 border-b border-zinc-100 p-1 sm:min-h-20 sm:p-2 lg:min-h-32',
                                         'border-r' => ! $loop->last,
                                         'bg-zinc-50/70' => ! $day['inMonth'],
                                         'bg-sky-club/5' => $day['inMonth'] && $day['games']->isNotEmpty(),
@@ -129,8 +129,14 @@
                                         </p>
 
                                         @if($day['inMonth'] && ($day['games']->isNotEmpty() || $day['tournaments']->isNotEmpty() || $day['mini']->isNotEmpty() || $day['birthdays']->isNotEmpty()))
-                                            {{-- Telefon i tablet: znaczniki (granat = u siebie, szary = wyjazd, V/X = wynik), dotknięcie przewija do meczu na liście --}}
-                                            <div class="mt-1 flex flex-wrap gap-1 lg:hidden">
+                                            {{-- Telefon i tablet: znaczniki (granat = u siebie, szary = wyjazd, V/X = wynik); dotknięcie całego dnia przewija do pierwszego wydarzenia na liście --}}
+                                            @php
+                                                $dayTarget = ($first = $day['games']->first()) ? '#mecz-'.$first->id
+                                                    : (($first = $day['mini']->first()) ? '#mini-'.$first->id
+                                                    : (($first = $day['tournaments']->first()) ? '#turniej-'.$first->id : '#urodziny-'.$month['key']));
+                                            @endphp
+                                            <a href="{{ $dayTarget }}" class="absolute inset-0 z-10 rounded-sm active:bg-sky-club/10 lg:hidden" aria-label="{{ $day['date']->translatedFormat('j F') }}: {{ __('pokaż na liście') }}"></a>
+                                            <div class="pointer-events-none mt-1 flex flex-wrap gap-1 lg:hidden">
                                                 @foreach($day['games'] as $game)
                                                     @php $outcome = $game->outcome(); $won = $outcome === 'derby' ? null : ($outcome ? $outcome === 'win' : null); @endphp
                                                     <a href="#mecz-{{ $game->id }}" @class([

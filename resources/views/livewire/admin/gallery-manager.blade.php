@@ -107,7 +107,7 @@
         <div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-zinc-200">
             <div class="flex flex-wrap items-center justify-between gap-3 border-b p-4">
                 <input type="search" wire:model.live.debounce.300ms="search" placeholder="Szukaj galerii..." class="w-full rounded-md border-gray-300 text-sm sm:w-64">
-                <button type="button" wire:click="create" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">+ Nowa galeria</button>
+                <button type="button" wire:click="create" class="admin-fab rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">+ Nowa galeria</button>
             </div>
             <ul class="divide-y divide-gray-200">
                 @forelse($galleries as $item)

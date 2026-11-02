@@ -1,8 +1,12 @@
 @php use App\Models\TrainingSession; @endphp
-<div class="space-y-6">
-    {{-- Formularz: pola w dwóch rzędach nad planem tygodnia --}}
-    <form id="training-form" wire:submit="save" class="scroll-mt-6 rounded-lg bg-white p-5 shadow ring-1 ring-zinc-200">
-        <h2 class="text-lg font-semibold text-gray-900">{{ $editingId ? 'Edytuj trening' : 'Dodaj trening' }}</h2>
+<div class="space-y-6" x-data="{ open: false }" x-on:training-saved.window="open = false">
+    {{-- Formularz: pola w dwóch rzędach nad planem tygodnia; na telefonie zwinięty, otwiera go „+ Dodaj trening” albo „Edytuj” --}}
+    <form id="training-form" wire:submit="save" x-effect="if ($wire.editingId) { open = true; $nextTick(() => $el.scrollIntoView({ behavior: 'smooth' })) }"
+        :class="open ? '' : 'max-sm:hidden'" class="scroll-mt-20 rounded-lg bg-white p-5 shadow ring-1 ring-zinc-200">
+        <div class="flex items-center justify-between gap-3">
+            <h2 class="text-lg font-semibold text-gray-900">{{ $editingId ? 'Edytuj trening' : 'Dodaj trening' }}</h2>
+            <button type="button" x-on:click="open = false; $wire.editingId && $wire.resetForm()" class="admin-action sm:hidden">Zwiń</button>
+        </div>
 
         @if($this->teams->isEmpty() && ! $this->canMini())
             <p class="text-sm text-gray-600">Nie prowadzisz żadnej drużyny. Poproś szefa lub administratora o przypisanie do drużyny.</p>
@@ -104,6 +108,9 @@
         @endif
     </form>
 
+    <button type="button" x-show="! open" x-on:click="open = true; $nextTick(() => document.getElementById('training-form').scrollIntoView({ behavior: 'smooth' }))"
+        class="admin-fab rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white sm:hidden">+ Dodaj trening</button>
+
     {{-- Plan tygodnia --}}
     <div class="min-w-0">
         <div class="mb-4 flex flex-wrap items-center gap-2">
@@ -137,8 +144,8 @@
                                     <p class="mt-0.5 font-medium text-gray-800">{{ $session->label() }}@if($session->note) <span class="text-gray-500">· {{ $session->note }}</span>@endif</p>
                                     @if($this->canEdit($session))
                                         <div class="mt-1.5 flex flex-wrap gap-1">
-                                            <button type="button" wire:click="edit({{ $session->id }})" onclick="document.getElementById('training-form').scrollIntoView({ behavior: 'smooth' })" class="admin-action !px-2 !py-0.5">Edytuj</button>
-                                            <button type="button" wire:click="delete({{ $session->id }})" wire:confirm="Usunąć ten trening z planu?" class="admin-action admin-action-danger !px-2 !py-0.5">Usuń</button>
+                                            <button type="button" wire:click="edit({{ $session->id }})" class="admin-action sm:!px-2 sm:!py-0.5">Edytuj</button>
+                                            <button type="button" wire:click="delete({{ $session->id }})" wire:confirm="Usunąć ten trening z planu?" class="admin-action admin-action-danger sm:!px-2 sm:!py-0.5">Usuń</button>
                                         </div>
                                     @endif
                                 </li>

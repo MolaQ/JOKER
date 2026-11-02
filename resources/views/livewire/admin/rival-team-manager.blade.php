@@ -14,7 +14,7 @@
         </div>
         <div class="flex gap-2">
             <button type="button" wire:click="openClubModal" class="rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">+ Klub</button>
-            <button type="button" wire:click="openCreateModal" class="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">+ Drużyna rywali</button>
+            <button type="button" wire:click="openCreateModal" class="admin-fab rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">+ Drużyna rywali</button>
         </div>
     </div>
 
@@ -131,7 +131,7 @@
     @if($showModal)
         <div class="fixed inset-0 z-50 overflow-y-auto">
             <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="closeModal"></div>
-            <div class="flex min-h-full items-center justify-center p-4">
+            <div class="admin-sheet flex min-h-full items-center justify-center p-4">
                 <div class="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl ring-1 ring-zinc-900/5" @click.stop>
                     <form wire:submit.prevent="save">
                         <div class="border-b border-gray-200 px-6 py-4">
@@ -187,7 +187,7 @@
     @if($showClubModal)
         <div class="fixed inset-0 z-50 overflow-y-auto">
             <div class="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm" wire:click="$set('showClubModal', false)"></div>
-            <div class="flex min-h-full items-center justify-center p-4">
+            <div class="admin-sheet flex min-h-full items-center justify-center p-4">
                 <div class="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl ring-1 ring-zinc-900/5" @click.stop>
                     <form wire:submit.prevent="saveClub">
                         <div class="border-b border-gray-200 px-6 py-4">
