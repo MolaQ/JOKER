@@ -114,7 +114,7 @@
 
 {{-- DRUŻYNY --}}
 @if($site['home_teams_enabled'])
-<section class="container-site py-20 lg:py-28" data-reveal>
+<section class="container-site py-12 sm:py-20 lg:py-28" data-reveal>
     <div class="flex flex-wrap items-end justify-between gap-6">
         <div>
             <p class="eyebrow">{{ __($site['home_teams_eyebrow']) }}</p>
@@ -123,10 +123,11 @@
         <a href="{{ route('teams.index') }}" class="link-underline pb-1 text-sm font-semibold">{{ __('Wszystkie drużyny') }} →</a>
     </div>
 
-    <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    {{-- Na telefonie drużyny przesuwane w bok zamiast długiej kolumny kart --}}
+    <div data-scroll-fade class="scrollbar-none -mx-4 mt-8 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 sm:mx-0 sm:mt-10 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
         @foreach($teams as $team)
             <a href="{{ route('teams.show', $team) }}" @class([
-                'group relative isolate flex min-h-72 flex-col justify-end overflow-hidden rounded-3xl p-6 text-white',
+                'group relative isolate flex min-h-64 w-[78%] shrink-0 snap-start flex-col justify-end overflow-hidden rounded-3xl p-6 text-white sm:min-h-72 sm:w-auto',
                 'sm:col-span-2 lg:min-h-80' => $loop->first,
             ])>
                 <x-photo :src="Media::teamPhoto($team)" :alt="$team->name" sizes="(min-width: 1024px) 50vw, 100vw" class="absolute inset-0 -z-10 h-full w-full transition duration-700 group-hover:scale-105" />
@@ -135,7 +136,7 @@
                 @if($team->birthYearsLabel())
                     <p class="text-xs font-semibold tracking-widest text-sky-club-light uppercase">{{ $team->birthYearsLabel() }}</p>
                 @endif
-                <h3 @class(['mt-1 font-display font-bold uppercase', 'text-5xl' => $loop->first, 'text-2xl' => ! $loop->first])>{{ $team->name }}</h3>
+                <h3 @class(['mt-1 font-display font-bold uppercase', 'text-3xl sm:text-5xl' => $loop->first, 'text-2xl' => ! $loop->first])>{{ $team->name }}</h3>
                 <span class="mt-4 inline-flex items-center gap-2 text-sm font-semibold opacity-0 transition group-hover:opacity-100">{{ __('Skład i sztab') }} <span aria-hidden="true">→</span></span>
             </a>
         @endforeach
@@ -145,7 +146,7 @@
 
 {{-- MINISIATKÓWKA --}}
 @if($site['home_mini_enabled'] && $miniGroups->isNotEmpty())
-<section class="container-site pb-20 lg:pb-28" data-reveal>
+<section class="container-site pb-12 sm:pb-20 lg:pb-28" data-reveal>
     <div class="flex flex-wrap items-end justify-between gap-6">
         <div>
             <p class="eyebrow">{{ __($site['home_mini_eyebrow']) }}</p>
@@ -153,9 +154,9 @@
         </div>
         <a href="{{ route('mini.index') }}" class="link-underline pb-1 text-sm font-semibold">{{ __('Wszystko o minisiatkówce') }} →</a>
     </div>
-    <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div data-scroll-fade class="scrollbar-none -mx-4 mt-8 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 sm:mx-0 sm:mt-10 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
         @foreach($miniGroups as $miniGroup)
-            <x-mini-group-tile :group="$miniGroup" />
+            <x-mini-group-tile :group="$miniGroup" class="w-[70%] shrink-0 snap-start sm:w-auto" />
         @endforeach
     </div>
 </section>
@@ -163,7 +164,7 @@
 
 {{-- TERMINARZ I WYNIKI --}}
 @if($site['home_games_enabled'] && ($upcoming_games->isNotEmpty() || $recent_results->isNotEmpty()))
-<section class="relative overflow-hidden bg-ink py-20 text-white lg:py-28">
+<section class="relative overflow-hidden bg-ink py-12 text-white sm:py-20 lg:py-28">
     <div class="net-pattern absolute inset-0" aria-hidden="true"></div>
     <div class="container-site relative" data-reveal>
         <div class="flex flex-wrap items-end justify-between gap-6">
@@ -175,7 +176,7 @@
         </div>
 
         @if($upcoming_games->isNotEmpty())
-            <div data-scroll-fade class="scrollbar-none -mx-4 mt-10 flex snap-x gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
+            <div data-scroll-fade class="scrollbar-none -mx-4 mt-8 flex snap-x gap-3 sm:mt-10 sm:gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-3">
                 @foreach($upcoming_games as $game)
                     <x-match-card :game="$game" dark class="w-[85%] shrink-0 snap-start sm:w-auto" />
                 @endforeach
@@ -183,10 +184,10 @@
         @endif
 
         @if($recent_results->isNotEmpty())
-            <h3 class="heading-md mt-14 text-zinc-300">{{ __('Ostatnie wyniki') }}</h3>
-            <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <h3 class="heading-md mt-10 text-zinc-300 sm:mt-14">{{ __('Ostatnie wyniki') }}</h3>
+            <div data-scroll-fade class="scrollbar-none -mx-4 mt-5 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
                 @foreach($recent_results as $game)
-                    <x-match-card :game="$game" dark />
+                    <x-match-card :game="$game" dark class="w-[85%] shrink-0 snap-start sm:w-auto" />
                 @endforeach
             </div>
         @endif
@@ -196,7 +197,7 @@
 
 {{-- AKTUALNOŚCI --}}
 @if($site['home_news_enabled'] && $articles->isNotEmpty())
-<section class="container-site py-20 lg:py-28" data-reveal>
+<section class="container-site py-12 sm:py-20 lg:py-28" data-reveal>
     <div class="flex flex-wrap items-end justify-between gap-6">
         <div>
             <p class="eyebrow">{{ __($site['home_news_eyebrow']) }}</p>
@@ -205,9 +206,9 @@
         <a href="{{ route('articles.index') }}" class="link-underline pb-1 text-sm font-semibold">{{ __('Wszystkie wpisy') }} →</a>
     </div>
 
-    <div class="mt-10 grid gap-6 lg:grid-cols-2">
+    <div class="mt-8 grid gap-4 sm:mt-10 sm:gap-6 lg:grid-cols-2">
         @php $lead = $articles->first(); @endphp
-        <a href="{{ route('articles.show', $lead) }}" class="group relative isolate flex min-h-[28rem] flex-col justify-end overflow-hidden rounded-3xl p-8 text-white">
+        <a href="{{ route('articles.show', $lead) }}" class="group relative isolate flex min-h-80 flex-col justify-end overflow-hidden rounded-3xl p-6 text-white sm:min-h-[28rem] sm:p-8">
             <x-photo :src="Media::articleImage($lead)" :focus="$lead->imageFocus()" :alt="$lead->localizedTitle()" sizes="(min-width: 1024px) 50vw, 100vw" class="absolute inset-0 -z-10 h-full w-full transition duration-700 group-hover:scale-105" />
             <div class="absolute inset-0 -z-10 bg-gradient-to-t from-ink via-ink/50 to-transparent"></div>
             <p class="text-xs font-semibold tracking-widest text-sky-club-light uppercase">{{ $lead->published_at?->translatedFormat('d F Y') }}</p>
@@ -241,7 +242,7 @@
     }
     $lineupFile = 'sklad-dnia-'.$lineup->date->toDateString().'.png';
 @endphp
-<section class="container-site py-16 lg:py-24" data-reveal>
+<section class="container-site py-12 sm:py-16 lg:py-24" data-reveal>
     <div class="grid items-center gap-10 lg:grid-cols-[minmax(0,26rem)_1fr]">
         <x-daily-lineup-graphic :lineup="$lineup" class="rounded-3xl shadow-2xl shadow-ink/30 ring-1 ring-black/5" />
         <div>
@@ -272,7 +273,7 @@
 
 {{-- DOŁĄCZ --}}
 @if($alumni->isNotEmpty())
-    <section class="container-site py-16 lg:py-20" data-reveal>
+    <section class="container-site py-12 sm:py-16 lg:py-20" data-reveal>
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
                 <p class="eyebrow">{{ $site['alumni_eyebrow'] ?: __('Od :club do PlusLigi', ['club' => $site['club_name_genitive']]) }}</p>
@@ -280,9 +281,9 @@
             </div>
             <a href="{{ route('alumni.index') }}" class="text-sm font-semibold text-sky-club-dark hover:underline">{{ __('Wszyscy wychowankowie') }} →</a>
         </div>
-        <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div data-scroll-fade class="scrollbar-none -mx-4 mt-8 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 lg:grid-cols-4">
             @foreach($alumni as $alumnus)
-                <a href="{{ route('alumni.index') }}" class="card card-hover flex items-center gap-4 p-4">
+                <a href="{{ route('alumni.index') }}" class="card card-hover flex w-[80%] shrink-0 snap-start items-center gap-4 p-4 sm:w-auto">
                     @if($alumnus->photoUrl())
                         <img src="{{ $alumnus->photoUrl() }}" alt="" loading="lazy" class="h-16 w-16 shrink-0 rounded-2xl object-cover object-top">
                     @else
@@ -299,8 +300,8 @@
 @endif
 
 @if($site['home_join_enabled'])
-<section class="container-site pt-20 lg:pt-28" data-reveal>
-    <div class="relative isolate overflow-hidden rounded-[2rem] bg-sky-club px-8 py-14 text-white sm:px-14 lg:py-20">
+<section class="container-site pt-12 sm:pt-20 lg:pt-28" data-reveal>
+    <div class="relative isolate overflow-hidden rounded-[2rem] bg-sky-club px-6 py-10 text-white sm:px-14 sm:py-14 lg:py-20">
         <x-photo :src="$site->image('home_join_image', Media::photo('ball-court')['url'])" alt="" sizes="100vw" class="absolute inset-0 -z-20 h-full w-full opacity-30 mix-blend-multiply" />
         <div class="absolute inset-0 -z-10 bg-gradient-to-r from-sky-club-dark via-sky-club-dark/80 to-transparent"></div>
         <p class="font-display text-sm font-semibold tracking-[0.25em] uppercase opacity-80">{{ __($site['home_join_eyebrow']) }}</p>

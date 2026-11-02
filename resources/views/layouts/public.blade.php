@@ -375,6 +375,22 @@
         </div>
     </dialog>
 
+    {{-- Pasek „Na żywo”: trwający turniej albo mecz (App\Support\LiveNow), nad dolnym menu; nie pokazuje się na stronie, do której prowadzi. --}}
+    @php $liveNow = \App\Support\LiveNow::current(); @endphp
+    @if($liveNow && ! str_starts_with(url()->current(), $liveNow['url']))
+        <a href="{{ $liveNow['url'] }}" data-live-bar class="live-bar fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 flex items-center gap-3 rounded-2xl bg-ink/95 py-2.5 pr-4 pl-3 text-white shadow-2xl ring-1 ring-white/10 backdrop-blur-xl lg:inset-x-auto lg:right-5 lg:bottom-5 lg:max-w-sm">
+            <span class="relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-red-600 text-[10px] font-bold tracking-wider uppercase">
+                <span class="absolute inset-0 animate-ping rounded-xl bg-red-600/60" aria-hidden="true"></span>
+                <span class="relative">{{ __('Live') }}</span>
+            </span>
+            <span class="min-w-0 flex-1 leading-tight">
+                <span class="block truncate text-sm font-semibold">{{ $liveNow['title'] }}</span>
+                <span class="block truncate text-xs text-zinc-400">{{ $liveNow['detail'] }} · {{ __('wyniki na żywo') }}</span>
+            </span>
+            <span class="shrink-0 text-sky-club-light" aria-hidden="true">→</span>
+        </a>
+    @endif
+
     {{-- Dolne menu na telefonie: najważniejsze miejsca pod kciukiem --}}
     <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-ink/95 pb-[env(safe-area-inset-bottom)] text-zinc-400 backdrop-blur-xl lg:hidden" aria-label="{{ __('Menu dolne') }}">
         <div class="grid grid-cols-5">

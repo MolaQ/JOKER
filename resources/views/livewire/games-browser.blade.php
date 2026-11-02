@@ -1,7 +1,23 @@
 @php $birthdayIcon = trim((string) $site['cal_birthday_icon']) ?: '🎂'; @endphp
-<div style="--cal-home-bg: {{ $site->color('cal_home_bg') }}; --cal-home-border: {{ $site->color('cal_home_border') }}; --cal-home-text: {{ $site->color('cal_home_text') }}; --cal-away-bg: {{ $site->color('cal_away_bg') }}; --cal-away-text: {{ $site->color('cal_away_text') }}; --cal-away-border: {{ $site->color('cal_away_border') }}; --cal-bday-bg: {{ $site->color('cal_birthday_bg') }}; --cal-bday-text: {{ $site->color('cal_birthday_text') }};">
+<div x-data="{ away: false }" style="--cal-home-bg: {{ $site->color('cal_home_bg') }}; --cal-home-border: {{ $site->color('cal_home_border') }}; --cal-home-text: {{ $site->color('cal_home_text') }}; --cal-away-bg: {{ $site->color('cal_away_bg') }}; --cal-away-text: {{ $site->color('cal_away_text') }}; --cal-away-border: {{ $site->color('cal_away_border') }}; --cal-bday-bg: {{ $site->color('cal_birthday_bg') }}; --cal-bday-text: {{ $site->color('cal_birthday_text') }};">
+    {{-- Telefon: po przewinięciu filtrów zostaje u góry zwarty pasek z drużynami i przyciskiem powrotu do wszystkich filtrów --}}
+    <div x-show="away" x-cloak x-transition.opacity.duration.200ms class="fixed inset-x-0 top-16 z-40 border-b border-zinc-200 bg-white/95 py-2 shadow-sm backdrop-blur-xl lg:hidden">
+        <div class="flex items-center gap-2 pl-4">
+            <div data-scroll-fade x-on:click="if ($event.target.closest('button')) setTimeout(() => document.querySelector('[data-games-list]')?.scrollIntoView({ behavior: 'smooth' }), 400)" class="scrollbar-none flex min-w-0 flex-1 gap-2 overflow-x-auto">
+                <button type="button" wire:click="$set('team', '')" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $team === '', 'bg-zinc-100 text-zinc-700' => $team !== ''])>{{ __('Wszystkie') }}</button>
+                @foreach($teams as $teamOption)
+                    <button type="button" wire:click="toggleTeam('{{ $teamOption->slug }}')" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $team === $teamOption->slug, 'bg-zinc-100 text-zinc-700' => $team !== $teamOption->slug])>{{ $teamOption->name }}</button>
+                @endforeach
+            </div>
+            <button type="button" x-on:click="window.scrollTo({ top: 0, behavior: 'smooth' })" class="mr-3 flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-ink px-3 text-xs font-semibold text-white" aria-label="{{ __('Pokaż wszystkie filtry') }}">
+                <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
+                {{ __('Filtry') }}
+            </button>
+        </div>
+    </div>
+
     {{-- Filtry: działają od razu, bez przeładowania strony; na komputerze przyklejone pod menu (na telefonie zajęłyby pół ekranu) --}}
-    <div class="relative z-30 lg:sticky border-y border-zinc-200 bg-white/90 backdrop-blur-xl lg:top-20">
+    <div x-init="new IntersectionObserver(([entry]) => away = ! entry.isIntersecting && entry.boundingClientRect.top < 136, { rootMargin: '-136px 0px 0px 0px' }).observe($el)" class="relative z-30 lg:sticky border-y border-zinc-200 bg-white/90 backdrop-blur-xl lg:top-20">
         <div class="container-site space-y-3 py-3">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
                 <label class="relative flex-1">
@@ -67,7 +83,7 @@
         </div>
     </div>
 
-    <section class="container-site py-10 transition-opacity" wire:loading.class="opacity-50" wire:target="search,team,competition,place,season,setPeriod,toggleTeam,resetFilters">
+    <section data-games-list class="container-site scroll-mt-32 py-10 transition-opacity" wire:loading.class="opacity-50" wire:target="search,team,competition,place,season,setPeriod,toggleTeam,resetFilters">
         <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
             <p class="text-sm text-zinc-500" aria-live="polite">
                 {{ trans_choice(':count mecz|:count mecze|:count meczów', $total) }}

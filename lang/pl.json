@@ -13,5 +13,6 @@
     "of": "z",
     "results": "pozycji",
     "Pagination Navigation": "Strony wyników",
-    "Go to page :page": "Przejdź do strony :page"
+    "Go to page :page": "Przejdź do strony :page",
+    "Trwa :count mecz|Trwają :count mecze|Trwa :count meczów": "Trwa :count mecz|Trwają :count mecze|Trwa :count meczów"
 }

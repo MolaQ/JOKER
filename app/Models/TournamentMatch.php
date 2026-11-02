@@ -4,9 +4,11 @@ namespace App\Models;
 
 use App\Models\Concerns\HasMatchMedia;
 use App\Models\Concerns\Likeable;
+use App\Support\LiveNow;
 use App\Support\TournamentSchedule;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Mecz turnieju: grupowy, w drabince (ćwierćfinał, półfinał…) albo o konkretne miejsce (np. o 7. miejsce).
@@ -64,6 +66,14 @@ class TournamentMatch extends Model
             $match->number ??= (int) static::query()->where('tournament_category_id', $match->tournament_category_id)->max('number') + 1;
             $match->planned_starts_at ??= $match->starts_at;
         });
+
+        // Pasek „Na żywo” na stronie od razu po przełączeniu „Trwa”.
+        static::saved(function (TournamentMatch $match) {
+            if ($match->wasChanged('is_live') || ($match->wasRecentlyCreated && $match->is_live)) {
+                Cache::forget(LiveNow::CACHE_KEY);
+            }
+        });
+        static::deleted(fn () => Cache::forget(LiveNow::CACHE_KEY));
     }
 
     protected function casts(): array

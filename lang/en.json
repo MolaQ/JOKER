@@ -482,5 +482,10 @@
     "Jasny": "Light",
     "Ciemny": "Dark",
     "Auto": "Auto",
-    "pokaż na liście": "show in the list"
+    "pokaż na liście": "show in the list",
+    "Live": "Live",
+    "wyniki na żywo": "live scores",
+    "Mecz trwa": "Match in progress",
+    "Trwa :count mecz|Trwają :count mecze|Trwa :count meczów": ":count match in progress|:count matches in progress|:count matches in progress",
+    "Filtry": "Filters"
 }
