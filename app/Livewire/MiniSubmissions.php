@@ -7,6 +7,7 @@ use App\Models\ContentProposal;
 use App\Models\MiniGroup;
 use App\Models\MiniPlayer;
 use App\Models\MiniTrip;
+use App\Support\MessageHtml;
 use App\Support\MiniResults;
 use App\Support\SiteSettings;
 use Illuminate\Contracts\View\View;
@@ -52,6 +53,9 @@ class MiniSubmissions extends Component
     public string $reportTrip = '';
 
     public string $reportTitle = '';
+
+    /** Lead: dwa, trzy zdania na kafelek w aktualnościach. */
+    public string $reportLead = '';
 
     public string $reportContent = '';
 
@@ -225,11 +229,17 @@ class MiniSubmissions extends Component
         $this->validate([
             'reportTrip' => 'required',
             'reportTitle' => 'required|string|max:160',
-            'reportContent' => 'required|string|min:20|max:20000',
+            'reportLead' => 'nullable|string|max:2000',
+            'reportContent' => ['required', 'string', 'max:40000', function (string $attribute, mixed $value, \Closure $fail) {
+                if (mb_strlen(trim(html_entity_decode(strip_tags((string) $value)))) < 20) {
+                    $fail(__('Napisz choć kilka zdań relacji.'));
+                }
+            }],
             'reportPhoto' => 'nullable|image|max:10240',
-        ], ['reportTrip.required' => __('Wybierz turniej.')], ['reportTitle' => __('tytuł'), 'reportContent' => __('treść')]);
+        ], ['reportTrip.required' => __('Wybierz turniej.')], ['reportTitle' => __('tytuł'), 'reportLead' => __('lead'), 'reportContent' => __('treść')]);
 
         $trip = $this->tripQuery()->findOrFail((int) $this->reportTrip);
+        $lead = MessageHtml::sanitize($this->reportLead);
 
         ContentProposal::create([
             'user_id' => Auth::id(),
@@ -237,12 +247,14 @@ class MiniSubmissions extends Component
             'match_type' => $trip->getMorphClass(),
             'match_id' => $trip->id,
             'title' => trim($this->reportTitle),
-            'content' => trim($this->reportContent),
+            'excerpt' => trim(strip_tags($lead)) !== '' ? $lead : null,
+            'content' => MessageHtml::sanitize($this->reportContent),
             'files' => $this->reportPhoto ? [$this->reportPhoto->store('content-proposals', 'public')] : null,
         ]);
 
-        $this->reset('reportTrip', 'reportTitle', 'reportContent', 'reportPhoto');
-        $this->toast(__('Dziękujemy! Relacja pojawi się po zatwierdzeniu.'));
+        $this->reset('reportTrip', 'reportTitle', 'reportLead', 'reportContent', 'reportPhoto');
+        $this->section = 'przeglad';
+        $this->toast(__('Dziękujemy! Relacja pojawi się w aktualnościach po zatwierdzeniu.'));
     }
 
     /**

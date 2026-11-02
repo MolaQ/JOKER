@@ -11,6 +11,7 @@ use App\Models\GalleryPhoto;
 use App\Models\Game;
 use App\Models\MiniTrip;
 use App\Models\TournamentMatch;
+use App\Support\MessageHtml;
 use App\Support\Slug;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
@@ -152,9 +153,12 @@ class ContentProposalManager extends Component
      */
     private function createArticle(ContentProposal $proposal, ?string $image, bool $copy = true): Article
     {
-        $paragraphs = collect(preg_split('/\R{2,}/u', trim((string) $proposal->content)))
-            ->map(fn (string $paragraph) => '<p>'.nl2br(e(trim($paragraph)), false).'</p>')
-            ->implode('');
+        // Relacja z edytora (HTML, np. z minisiatkówki) zostaje jak jest; zwykły tekst dzielimy na akapity.
+        $paragraphs = MessageHtml::isHtml((string) $proposal->content)
+            ? MessageHtml::sanitize($proposal->content)
+            : collect(preg_split('/\R{2,}/u', trim((string) $proposal->content)))
+                ->map(fn (string $paragraph) => '<p>'.nl2br(e(trim($paragraph)), false).'</p>')
+                ->implode('');
 
         if ($image && $copy) {
             $target = 'articles/'.Str::random(8).'-'.basename($image);
@@ -165,7 +169,7 @@ class ContentProposalManager extends Component
         $article = Article::create([
             'title' => $title,
             'slug' => Slug::unique(Article::class, $title),
-            'excerpt' => Str::limit(trim((string) $proposal->content), 200),
+            'excerpt' => filled($proposal->excerpt) ? MessageHtml::sanitize($proposal->excerpt) : Str::limit(trim(html_entity_decode(strip_tags(str_replace('</p>', '</p> ', (string) $proposal->content)))), 200),
             'content' => $paragraphs,
             'featured_image' => $image,
             'author_id' => $proposal->user_id,
@@ -190,7 +194,7 @@ class ContentProposalManager extends Component
      */
     private function articleTitle(ContentProposal $proposal): string
     {
-        $firstLine = Str::of((string) $proposal->content)->trim()->explode("\n")->first();
+        $firstLine = Str::of(MessageHtml::plain((string) $proposal->content))->trim()->explode("\n")->first();
 
         return trim((string) $proposal->title) ?: Str::limit(trim((string) $firstLine), 120);
     }

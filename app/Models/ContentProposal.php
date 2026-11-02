@@ -38,6 +38,7 @@ class ContentProposal extends Model
         'match_type',
         'match_id',
         'title',
+        'excerpt',
         'content',
         'url',
         'files',

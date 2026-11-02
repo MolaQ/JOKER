@@ -136,3 +136,30 @@ test('the squad can be set before the tournament and the overview filters trips'
     expect($future->teams()->sole()->players->pluck('id')->all())->toBe([$kid->id]);
     $component->assertSee('1 dziecko');
 });
+
+test('a mini report has a lead, formatted text and tags children by their public name', function () {
+    app(SiteSettings::class)->set(['mini_child_names' => 'initial']);
+    MiniPlayer::create(['mini_group_id' => $this->group->id, 'first_name' => 'Ania', 'last_name' => 'Kowalska', 'is_active' => true]);
+    $trip = MiniTrip::create(['title' => 'Turniej w Lesznie', 'city' => 'Leszno', 'starts_on' => now()->subDay()]);
+    $trainer = User::factory()->create(['role' => UserRole::MiniTrainer]);
+    $this->actingAs($trainer);
+
+    $this->getJson(route('mini.mentions'))->assertOk()->assertJsonFragment(['name' => 'Ania Kowalska', 'team' => $this->group->name]);
+
+    Livewire::test(MiniSubmissions::class)
+        ->set('reportTrip', (string) $trip->id)->set('reportTitle', 'Srebro w Lesznie')
+        ->set('reportLead', '<p>Trójki wróciły z medalem.</p>')
+        ->set('reportContent', '<p>Świetnie grała <strong>@Ania Kowalska</strong>, brawo dla całej drużyny i rodziców!</p><script>alert(1)</script>')
+        ->call('sendReport')->assertHasNoErrors();
+
+    $this->actingAs(User::factory()->admin()->create());
+    Livewire::test(ContentProposalManager::class)->call('approve', ContentProposal::sole()->id);
+
+    $article = Article::sole();
+    expect($article->excerpt)->toContain('Trójki wróciły z medalem.')
+        ->and($article->content)->toContain('<strong>')->not->toContain('script');
+
+    auth()->logout();
+    $this->get(route('articles.show', $article))->assertOk()->assertSee('Ania K.')->assertDontSee('Ania Kowalska')
+        ->assertSee(route('mini.show', $this->group, false));
+});

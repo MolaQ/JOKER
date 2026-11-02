@@ -30,8 +30,10 @@ use App\Http\Controllers\TournamentController;
 use App\Http\Controllers\TournamentMatchController;
 use App\Http\Controllers\TournamentTvController;
 use App\Http\Controllers\TrainerController;
+use App\Livewire\MiniSubmissions;
 use App\Models\Tournament;
 use App\Support\LegacyUrls;
+use App\Support\Mentions;
 use App\Support\Slug;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -54,6 +56,7 @@ Route::get('/galleries', [GalleryController::class, 'index'])->name('galleries.i
 Route::get('/galleries/{gallery}', [GalleryController::class, 'show'])->where('gallery', Slug::ROUTE_PATTERN)->name('galleries.show');
 Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');
 Route::get('/minisiatkowka', [MiniVolleyballController::class, 'index'])->name('mini.index');
+Route::get('/minisiatkowka/oznaczenia.json', fn () => MiniSubmissions::canSubmit() ? response()->json(Mentions::miniSuggestions()) : abort(403))->middleware('auth')->name('mini.mentions');
 Route::get('/minisiatkowka/{miniGroup}', [MiniVolleyballController::class, 'show'])->name('mini.show');
 Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');
 

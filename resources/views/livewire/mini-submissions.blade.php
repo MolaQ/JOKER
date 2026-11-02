@@ -217,7 +217,8 @@
     @endif
 
     @if($section === 'relacja')
-        <form wire:submit="sendReport" class="card mt-6 space-y-4 p-5 sm:p-6">
+        {{-- Relacja jak artykuł w aktualnościach: tytuł, lead, treść z @oznaczeniami i zdjęcie w kadrze aktualności --}}
+        <form wire:submit="sendReport" class="card mt-6 space-y-5 p-5 sm:p-6">
             <div>
                 <label class="{{ $labelClass }}" for="mini-report-trip">{{ __('Turniej') }}</label>
                 <select id="mini-report-trip" wire:model="reportTrip" class="{{ $field }}">
@@ -228,21 +229,27 @@
                 </select>
                 @error('reportTrip') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
-            <div>
-                <label class="{{ $labelClass }}" for="mini-report-title">{{ __('Tytuł') }}</label>
-                <input id="mini-report-title" type="text" wire:model="reportTitle" class="{{ $field }}" placeholder="{{ __('np. Złoto czwórek w Wałczu!') }}">
+
+            <div class="rounded-2xl bg-zinc-50 p-4 ring-1 ring-zinc-200">
+                <label class="text-xs font-semibold tracking-wider text-zinc-500 uppercase" for="mini-report-title">{{ __('Tytuł') }}</label>
+                <input id="mini-report-title" type="text" wire:model="reportTitle" maxlength="160" class="mt-1 block w-full border-0 border-b-2 border-zinc-300 bg-transparent px-0 py-2 font-display text-2xl font-bold text-zinc-900 uppercase placeholder:text-zinc-300 placeholder:normal-case focus:border-sky-club focus:ring-0 sm:text-3xl" placeholder="{{ __('np. Złoto czwórek w Wałczu!') }}">
                 @error('reportTitle') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-            </div>
-            <div>
-                <label class="{{ $labelClass }}" for="mini-report-content">{{ __('Relacja') }}</label>
-                <textarea id="mini-report-content" wire:model="reportContent" rows="7" class="{{ $field }}" placeholder="{{ __('Jak poszło, kto się wyróżnił, podziękowania dla rodziców…') }}"></textarea>
+
+                <p class="mt-5 text-xs font-semibold tracking-wider text-zinc-500 uppercase">{{ __('Lead') }} <span class="font-normal normal-case">· {{ __('2–3 zdania na kafelek w aktualnościach i wstęp artykułu') }}</span></p>
+                <div class="mt-1"><x-rich-text-editor model="reportLead" compact :live="false" placeholder="{{ __('Najważniejsze w skrócie: kto grał, gdzie i z jakim wynikiem.') }}" height="min-h-[80px]" /></div>
+                @error('reportLead') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+
+                <p class="mt-5 text-xs font-semibold tracking-wider text-zinc-500 uppercase">{{ __('Rozwinięcie') }} <span class="font-normal normal-case">· {{ __('wpisz @ i początek imienia, żeby oznaczyć dziecko, rodzica albo trenera') }}</span></p>
+                <div class="mt-1"><x-rich-text-editor model="reportContent" :mentions="route('mini.mentions')" :live="false" placeholder="{{ __('Jak poszło, kto się wyróżnił, podziękowania dla rodziców…') }}" height="min-h-[220px]" /></div>
                 @error('reportContent') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
+
             <div>
-                <label class="{{ $labelClass }}" for="mini-report-photos">{{ __('Zdjęcie na górę relacji (jedno, nieobowiązkowe)') }}</label>
-                <input id="mini-report-photos" type="file" wire:model="reportPhoto" accept="image/*" class="mt-1 block w-full text-sm">
+                <p class="{{ $labelClass }}">{{ __('Zdjęcie główne (nieobowiązkowe)') }}</p>
+                <x-photo-cropper model="reportPhoto" class="mt-2" aspect="16/10" :width="2000" :pending="$reportPhoto && ! $errors->has('reportPhoto') ? $reportPhoto->temporaryUrl() : null" :label="$reportPhoto ? __('Zmień zdjęcie') : __('Wybierz zdjęcie')" :hint="__('Kadr 16:10 jak w aktualnościach. Przesuń i powiększ zdjęcie, a potem kliknij „Użyj tego kadru”.')" />
                 @error('reportPhoto') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
+            <p class="text-xs text-zinc-500">{{ __('Po zatwierdzeniu relacja trafi do aktualności, a przy turnieju na stronie grupy pojawi się link do niej. Dzieci oznaczone przez @ widać tak jak na stronie grupy, bez profilu.') }}</p>
             <button type="submit" class="btn-primary w-full sm:w-auto">{{ __('Wyślij do zatwierdzenia') }}</button>
         </form>
     @endif

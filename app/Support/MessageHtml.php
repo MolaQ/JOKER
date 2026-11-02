@@ -13,7 +13,7 @@ use DOMNode;
 class MessageHtml
 {
     /** @var list<string> znaczniki, które zostają (bez atrybutów, poza href w linkach) */
-    private const ALLOWED = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'mark', 'ul', 'ol', 'li', 'blockquote', 'a'];
+    private const ALLOWED = ['p', 'br', 'h2', 'h3', 'hr', 'strong', 'b', 'em', 'i', 'u', 's', 'mark', 'ul', 'ol', 'li', 'blockquote', 'a'];
 
     /** @var list<string> znaczniki usuwane razem z zawartością */
     private const DROP = ['script', 'style', 'iframe', 'object', 'embed', 'template', 'svg', 'math', 'head', 'title'];

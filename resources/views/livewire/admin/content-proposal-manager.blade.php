@@ -23,7 +23,8 @@
                         <p class="text-gray-600">Mecz: <span class="font-medium text-gray-900">{{ $proposal->match->mediaLabel() }}</span></p>
                     @endif
                     @if($proposal->title)<p class="mt-1 text-base font-semibold text-gray-900">{{ $proposal->title }}</p>@endif
-                    @if($proposal->content)<div class="mt-1 max-h-48 overflow-y-auto whitespace-pre-line text-gray-700">{{ $proposal->content }}</div>@endif
+                    @if($proposal->excerpt)<div class="mt-1 font-medium text-gray-800 [&_p]:mb-1">{!! \App\Support\MessageHtml::render($proposal->excerpt) !!}</div>@endif
+                    @if($proposal->content)<div class="mt-1 max-h-48 overflow-y-auto text-gray-700 [&_p]:mb-2 {{ \App\Support\MessageHtml::isHtml($proposal->content) ? '' : 'whitespace-pre-line' }}">{!! \App\Support\MessageHtml::render($proposal->content) !!}</div>@endif
                     @if($proposal->url)<a href="{{ $proposal->url }}" target="_blank" rel="noopener" class="mt-1 block break-all text-sky-700 underline">{{ $proposal->url }}</a>@endif
                     @if($proposal->files)
                         <div class="mt-2 flex flex-wrap gap-2">

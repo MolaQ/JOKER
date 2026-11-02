@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\AccountStatus;
 use App\Models\Article;
+use App\Models\MiniPlayer;
 use App\Models\Player;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,6 +20,9 @@ class Mentions
     /** @var array<string, string>|null imię i nazwisko (małymi literami) => adres profilu */
     private static ?array $profiles = null;
 
+    /** @var array<string, array{url: string, label: string}>|null dzieci z minisiatkówki: imię i nazwisko => strona grupy i podpis według ustawień */
+    private static ?array $mini = null;
+
     /**
      * Osoby do podpowiedzi w edytorze (po wpisaniu @): zawodnicy i aktywne konta.
      *
@@ -33,6 +37,22 @@ class Mentions
             ->toBase()->map(fn (User $user) => ['name' => $user->name, 'team' => $user->rolesLabel() ?: null]);
 
         return $players->concat($people)->unique('name')->sortBy('name', SORT_LOCALE_STRING)->values()->all();
+    }
+
+    /**
+     * Podpowiedzi w relacjach z minisiatkówki: dzieci z grup (bez profili) oraz rodzice, trenerzy i inne aktywne konta.
+     *
+     * @return list<array{name: string, team: string|null}>
+     */
+    public static function miniSuggestions(): array
+    {
+        $children = MiniPlayer::where('is_active', true)->with('group:id,name')->get(['id', 'first_name', 'last_name', 'mini_group_id'])
+            ->toBase()->map(fn (MiniPlayer $child) => ['name' => $child->name(), 'team' => $child->group?->name]);
+
+        $people = User::withAccountStatus(AccountStatus::Active)->with('roleAssignments')->get(['id', 'name'])
+            ->toBase()->map(fn (User $user) => ['name' => $user->name, 'team' => $user->rolesLabel() ?: null]);
+
+        return $children->concat($people)->unique('name')->sortBy('name', SORT_LOCALE_STRING)->values()->all();
     }
 
     /**
@@ -77,7 +97,13 @@ class Mentions
 
                 // Najpierw najdłuższe dopasowanie (np. imię i dwa człony nazwiska), potem krótsze.
                 for ($count = count($words); $count >= 2; $count--) {
-                    $url = self::profiles()[mb_strtolower(implode(' ', array_slice($words, 0, $count)))] ?? null;
+                    $key = mb_strtolower(implode(' ', array_slice($words, 0, $count)));
+                    $url = self::profiles()[$key] ?? null;
+
+                    // Dziecko z minisiatkówki nie ma profilu: link do strony grupy, podpis jak na stronie (np. „Ania K.”).
+                    if (! $url && ($child = self::miniChildren()[$key] ?? null)) {
+                        return '<a href="'.e($child['url']).'" class="mention">'.e($child['label']).'</a>'.implode('', array_slice($pieces, $count * 2 - 1));
+                    }
 
                     if ($url) {
                         $shown = implode('', array_slice($pieces, 0, $count * 2 - 1));
@@ -110,9 +136,21 @@ class Mentions
         return self::$profiles = $people->merge($players)->all();
     }
 
+    /**
+     * @return array<string, array{url: string, label: string}>
+     */
+    private static function miniChildren(): array
+    {
+        return self::$mini ??= MiniPlayer::with('group')->get()->toBase()
+            ->filter(fn (MiniPlayer $child) => $child->group !== null)
+            ->mapWithKeys(fn (MiniPlayer $child) => [mb_strtolower($child->name()) => ['url' => route('mini.show', $child->group, false), 'label' => $child->displayName()]])
+            ->all();
+    }
+
     public static function flush(): void
     {
         self::$profiles = null;
+        self::$mini = null;
     }
 
     /**

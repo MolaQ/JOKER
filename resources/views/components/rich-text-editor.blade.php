@@ -6,7 +6,7 @@
     'height' => 'min-h-[180px]',
     // Autozapis: treść trafia do Livewire dopiero po wyjściu z edytora, a nie przy każdym znaku.
     'saveOnBlur' => false,
-    // Podpowiedzi „@Imię Nazwisko” (wzmianki zawodników w artykułach).
+    // Podpowiedzi „@Imię Nazwisko” (wzmianki zawodników w artykułach); true = lista z panelu, tekst = własny adres listy.
     'mentions' => false,
     // Krótki pasek (wiadomości): tylko pogrubienie, kursywa, listy, cytat i link.
     'compact' => false,
@@ -58,7 +58,7 @@
 
 <div
     @if($model) wire:ignore @endif
-    x-data="richEditor({ content: {!! $content !!}, placeholder: @js(__($placeholder)), mentions: @js($mentions ? route('admin.mentions') : null) })"
+    x-data="richEditor({ content: {!! $content !!}, placeholder: @js(__($placeholder)), mentions: @js($mentions ? (is_string($mentions) ? $mentions : route('admin.mentions')) : null) })"
     @if($model && $saveOnBlur) x-on:focusout="if (! $el.contains($event.relatedTarget)) $nextTick(() => $wire.$commit())" @endif
     class="rich-editor relative rounded-md border border-gray-300 bg-white shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
 >
@@ -90,8 +90,8 @@
 
     @if($mentions)
         <div x-show="mention.open" x-cloak x-transition.opacity.duration.100ms :style="`top: ${mention.top}px; left: ${mention.left}px`"
-            class="absolute z-30 w-72 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 text-sm shadow-xl" role="listbox" aria-label="{{ __('Oznacz zawodnika') }}">
-            <p class="px-3 py-1 text-[11px] font-semibold tracking-wider text-gray-400 uppercase">{{ __('Oznacz zawodnika') }}</p>
+            class="absolute z-30 w-72 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 text-sm shadow-xl" role="listbox" aria-label="{{ __('Oznacz osobę') }}">
+            <p class="px-3 py-1 text-[11px] font-semibold tracking-wider text-gray-400 uppercase">{{ __('Oznacz osobę') }}</p>
             <template x-for="(person, index) in mention.items" :key="person.name">
                 <button type="button" role="option" :aria-selected="index === mention.index" @mousedown.prevent="chooseMention(person)" @mouseenter="mention.index = index"
                     class="flex w-full items-center justify-between gap-3 px-3 py-1.5 text-left" :class="index === mention.index ? 'bg-sky-50 text-sky-800' : 'text-gray-800'">
