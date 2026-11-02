@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex">
     <title>Harmonogram · {{ $tournament->fullName() }}{{ $chosen ? ' · '.$sheets->first()['category']->name : '' }}</title>
-    @vite(['resources/css/app.css'])
+    @vite(['resources/css/app.css', 'resources/js/qr.js'])
     <style>
         @page { size: A4; margin: 12mm 12mm 14mm; }
         @media print {
@@ -127,9 +127,23 @@
                 </section>
             @endif
 
-            <footer class="mt-6 flex items-center justify-between border-t border-zinc-200 pt-2 text-[11px] text-zinc-500">
-                <span>{{ $clubName }} · {{ $tournament->fullName() }}</span>
-                @if($tournament->has_page)<span>Aktualny harmonogram i wyniki na żywo: {{ route('tournaments.show', [$tournament, $category->slug()]) }}</span>@endif
+            {{-- Stopka: kod QR do strony kategorii z wynikami na żywo --}}
+            @php $pageUrl = $tournament->has_page ? route('tournaments.show', [$tournament, $category->slug()]) : null; @endphp
+            <footer class="keep mt-6 flex items-center gap-4 border-t-2 pt-3" style="border-color: {{ $category->color() }}">
+                @if($pageUrl)
+                    <div data-qr="{{ $pageUrl }}" class="size-[24mm] shrink-0 [&>svg]:h-full [&>svg]:w-full"></div>
+                    <div class="min-w-0 flex-1">
+                        <p class="font-display text-lg leading-tight font-bold text-zinc-900 uppercase">Wyniki na żywo i aktualny harmonogram</p>
+                        <p class="mt-0.5 text-sm text-zinc-600">Zeskanuj kod aparatem telefonu albo wpisz adres:</p>
+                        <p class="text-xs font-semibold break-all text-zinc-800">{{ preg_replace('#^https?://(www\.)?#', '', $pageUrl) }}</p>
+                    </div>
+                @else
+                    <div class="flex-1"></div>
+                @endif
+                <div class="flex shrink-0 items-center gap-2 text-right text-[11px] leading-tight text-zinc-500">
+                    <span>{{ $clubName }}<br>{{ $tournament->fullName() }}</span>
+                    <img src="{{ $logo }}" alt="" class="size-9 object-contain">
+                </div>
             </footer>
         </article>
     @endforeach
