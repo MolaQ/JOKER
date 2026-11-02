@@ -26,7 +26,14 @@ class MiniSubmissions extends Component
 
     public ?int $groupId = null;
 
-    public string $section = 'turniej';
+    public string $section = 'przeglad';
+
+    /** Przegląd: szukanie po nazwie i miejscowości, filtr kategorii i rodzaju (zaplanowane / zakończone). */
+    public string $search = '';
+
+    public string $filterGroup = '';
+
+    public string $filterWhen = '';
 
     /** @var array{title: string, starts_on: string, ends_on: string, city: string, venue: string} */
     public array $trip = ['title' => '', 'starts_on' => '', 'ends_on' => '', 'city' => '', 'venue' => ''];
@@ -99,7 +106,25 @@ class MiniSubmissions extends Component
     public function retireChild(int $id): void
     {
         MiniPlayer::where('is_active', true)->findOrFail($id)->update(['is_active' => false]);
-        $this->toast(__('Dziecko zdjęte z listy grupy.'));
+        $this->toast(__('Dziecko usunięte z listy grupy. W wynikach dawnych turniejów zostaje.'));
+    }
+
+    /**
+     * Z przeglądu: otwiera skład i wyniki albo relację wybranego turnieju.
+     */
+    public function openTrip(int $id, string $section): void
+    {
+        abort_unless($this->tripQuery()->whereKey($id)->exists(), 404);
+
+        if ($section === 'relacja') {
+            $this->reportTrip = (string) $id;
+        } else {
+            $section = 'wyniki';
+            $this->resultsTrip = (string) $id;
+            $this->updatedResultsTrip();
+        }
+
+        $this->section = $section;
     }
 
     public static function canSubmit(): bool
@@ -136,6 +161,7 @@ class MiniSubmissions extends Component
         }
 
         $this->reset('trip');
+        $this->section = 'przeglad';
         $this->toast(self::canPublish() ? __('Turniej dodany do kalendarza.') : __('Dziękujemy! Turniej pojawi się w kalendarzu po zatwierdzeniu.'));
     }
 
@@ -191,6 +217,7 @@ class MiniSubmissions extends Component
         }
 
         $this->reset('resultsTrip', 'rows');
+        $this->section = 'przeglad';
     }
 
     public function sendReport(): void
@@ -219,15 +246,35 @@ class MiniSubmissions extends Component
     }
 
     /**
-     * Turnieje do wyników i relacji: opublikowane albo zgłoszone przez tę osobę, od pół roku wstecz do dziś.
+     * Turnieje do składu, wyników i relacji: opublikowane albo zgłoszone przez tę osobę, zaplanowane i z ostatniego roku.
+     * Skład można ustalić przed turniejem (pokaże się w terminarzu), miejsce wpisuje się po turnieju.
      */
     private function tripQuery()
     {
         return MiniTrip::query()
             ->where(fn ($query) => $query->where('status', MiniTrip::STATUS_PUBLISHED)->orWhere('submitted_by', Auth::id()))
-            ->whereDate('starts_on', '<=', today())
-            ->whereDate('starts_on', '>=', today()->subMonths(6))
+            ->whereDate('starts_on', '>=', today()->subYear())
             ->orderByDesc('starts_on');
+    }
+
+    /**
+     * Turnieje w przeglądzie po filtrach: zaplanowane od najbliższego, zakończone od najnowszego.
+     *
+     * @return array{upcoming: Collection<int, MiniTrip>, past: Collection<int, MiniTrip>}
+     */
+    private function overview(): array
+    {
+        $search = trim($this->search);
+        $trips = $this->tripQuery()
+            ->with(['teams' => fn ($query) => $query->with(['group', 'players'])->orderBy('name')])
+            ->when($this->filterGroup !== '', fn ($query) => $query->whereHas('teams', fn ($teams) => $teams->where('mini_group_id', (int) $this->filterGroup)))
+            ->when($search !== '', fn ($query) => $query->where(fn ($where) => $where->where('title', 'like', "%{$search}%")->orWhere('city', 'like', "%{$search}%")->orWhere('venue', 'like', "%{$search}%")))
+            ->get();
+
+        return [
+            'upcoming' => $this->filterWhen === 'past' ? collect() : $trips->reject->isPast()->sortBy('starts_on')->values(),
+            'past' => $this->filterWhen === 'upcoming' ? collect() : $trips->filter->isPast()->values(),
+        ];
     }
 
     public function render(): View
@@ -240,6 +287,8 @@ class MiniSubmissions extends Component
         return view('livewire.mini-submissions', [
             'groups' => $groups,
             'trips' => $trips,
+            'selectedTrip' => $this->resultsTrip !== '' ? $trips->firstWhere('id', (int) $this->resultsTrip) : null,
+            'overview' => $this->section === 'przeglad' ? $this->overview() : null,
             'publishes' => self::canPublish(),
         ]);
     }

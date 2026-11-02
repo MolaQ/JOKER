@@ -30,6 +30,9 @@ test('a mini trainer submits a tournament that waits for approval and then shows
 
     $trip = MiniTrip::sole();
     expect($trip->status)->toBe(MiniTrip::STATUS_PENDING)->and($trip->submitted_by)->toBe($trainer->id);
+    // Zgłaszający widzi swój turniej w przeglądzie z oznaczeniem, publicznie go nie ma.
+    $this->get(route('mini.show', $this->group))->assertSee('Turniej Mikołajkowy')->assertSee('czeka na zatwierdzenie');
+    auth()->logout();
     $this->get(route('mini.show', $this->group))->assertDontSee('Turniej Mikołajkowy');
 
     $this->actingAs(User::factory()->trainer()->create());
@@ -110,4 +113,26 @@ test('group icons use the colour set in the panel', function () {
     app(SiteSettings::class)->set([AgeColors::key('mini4') => '#123abc']);
     $this->get(route('mini.show', $this->group))->assertOk()->assertSee('color: #123abc', false);
     expect(MiniGroup::firstWhere('slug', 'trojki')->iconColor())->toBe(AgeColors::forMini(3));
+});
+
+test('the squad can be set before the tournament and the overview filters trips', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $kid = MiniPlayer::create(['mini_group_id' => $this->group->id, 'first_name' => 'Nataniel', 'last_name' => 'Lickindorf', 'is_active' => true]);
+    $future = MiniTrip::create(['title' => 'Kinder Sport Wałcz', 'starts_on' => today()->addWeek(), 'city' => 'Wałcz', 'status' => MiniTrip::STATUS_PUBLISHED]);
+    $future->teams()->create(['mini_group_id' => $this->group->id, 'name' => 'Joker 1']);
+    MiniTrip::create(['title' => 'Turniej w Trzciance', 'starts_on' => today()->subWeek(), 'city' => 'Trzcianka', 'status' => MiniTrip::STATUS_PUBLISHED]);
+
+    $component = Livewire::test(MiniSubmissions::class, ['groupId' => $this->group->id])
+        ->assertSee('Kinder Sport Wałcz')->assertSee('Turniej w Trzciance')->assertSee('brak składu')
+        ->set('search', 'wałcz')->assertSee('Kinder Sport Wałcz')->assertDontSee('Turniej w Trzciance')
+        ->set('search', '')->set('filterWhen', 'past')->assertDontSee('Kinder Sport Wałcz')
+        ->set('filterWhen', '')
+        ->call('openTrip', $future->id, 'wyniki')
+        ->assertSet('section', 'wyniki')
+        ->assertSee('Turniej jeszcze się nie odbył')
+        ->set('rows.0.players', [$kid->id])
+        ->call('saveResults')->assertHasNoErrors();
+
+    expect($future->teams()->sole()->players->pluck('id')->all())->toBe([$kid->id]);
+    $component->assertSee('1 dziecko');
 });
