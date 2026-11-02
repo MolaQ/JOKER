@@ -1,7 +1,7 @@
 @echo off
 rem Paczka strony Jokera na hosting bez SSH (cyber_Folks). Robi w wybranym folderze trzy pliki:
 rem   joker-kod.zip      - strona z bibliotekami (composer --no-dev) i zbudowanym wygladem, bez .env
-rem   joker-zdjecia.zip  - wgrane zdjecia i pliki (storage\app\public)
+rem   joker-zdjecia.zip  - wgrane zdjecia i pliki (storage\app\public), tylko gdy odpowiesz T na pytanie
 rem   joker.sql          - zrzut bazy do importu w phpMyAdmin na serwerze
 rem Uruchom dwuklikiem z folderu narzedzia strony (w pracy, gdzie jest aktualna baza).
 rem Potrzebne: composer, npm (Node.js) i tar (jest w Windows 10 i 11).
@@ -84,7 +84,7 @@ if errorlevel 1 (
 )
 popd
 
-echo [4/5] Pakuje do %CEL% ...
+echo [4/5] Pakuje strone do %CEL%\joker-kod.zip (kilka tysiecy plikow, zwykle 1-3 minuty) ...
 del /q "%CEL%\joker-kod.zip" "%CEL%\joker-zdjecia.zip" 2>nul
 rem Zip bez folderu joker w srodku: rozpakuj go w folderze joker na serwerze.
 rem Zip z uprawnieniami 755/644, zeby po rozpakowaniu w DirectAdminie strona od razu dzialala (bez 403).
@@ -95,8 +95,15 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+echo Strona spakowana.
+rem Zdjecia z tego komputera sa potrzebne tylko przy pierwszym wgraniu albo przenosinach: na serwerze zdjecia dodaje sie w panelu.
+rem Pakowanie wszystkich zdjec trwa dlugo, wiec bez odpowiedzi w 10 sekund pomijamy je.
 if exist "%ZRODLO%\storage\app\public" (
-    tar -a -c -f "%CEL%\joker-zdjecia.zip" -C "%ZRODLO%\storage\app" public
+    choice /C TN /T 10 /D N /M "Spakowac tez zdjecia z tego komputera - joker-zdjecia.zip, zwykle niepotrzebne"
+    if not errorlevel 2 (
+        echo Pakuje zdjecia - to moze potrwac kilka minut ...
+        tar -a -c -f "%CEL%\joker-zdjecia.zip" -C "%ZRODLO%\storage\app" public
+    )
 )
 rmdir /s /q "%ROBOCZY%"
 

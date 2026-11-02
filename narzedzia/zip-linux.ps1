@@ -14,6 +14,9 @@ param(
 $ErrorActionPreference = 'Stop'
 
 function Escape-Mtree([string]$text) {
+    # Szybka droga: zwykle nazwy (bez spacji i znakow specjalnych) zostaja bez zmian. Przy tysiacach plikow w vendor
+    # zamiana znak po znaku trwala kilka minut i wygladalo, jakby paczka stanela na kroku 4/5.
+    if ($text -cnotmatch '[^\x21-\x7e]|[\\#=]') { return $text }
     $builder = New-Object System.Text.StringBuilder
     foreach ($char in $text.ToCharArray()) {
         $code = [int]$char
