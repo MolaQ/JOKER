@@ -1017,3 +1017,17 @@ it('offers a room with two separate courts named Boisko I and II, without a whol
         ->and($courts[1]['icon']['separate'])->toBeTrue()
         ->and(TournamentHalls::extra($tournament)[0]['rooms'][0]['whole'])->toBeFalse();
 });
+
+test('the cached match schedule shows a new score and a renamed team at once', function () {
+    [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
+    $match = $joker->category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->group->id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id, 'starts_at' => now()->addHour()]);
+    $page = fn () => $this->get(route('tournaments.show', [$this->tournament, 'tab' => 'matches']))->assertOk();
+
+    $page()->assertDontSee('25:17');
+
+    $match->update(['sets_score' => [[25, 20], [25, 17]], 'home_sets' => 2, 'away_sets' => 0]);
+    $page()->assertSee('25:17');
+
+    $kalisz->update(['display_name' => 'Kalisz Nowa Nazwa']);
+    $page()->assertSee('Kalisz Nowa Nazwa');
+});

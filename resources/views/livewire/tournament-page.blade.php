@@ -180,7 +180,7 @@
 
         {{-- MECZE: terminarz dniami i godzinami, z filtrem drużyny --}}
         @if($currentTab === 'matches' && $current)
-            <x-tournament-schedule :matches="$current->matches" :bracket="$bracket" />
+            {!! $schedule() !!}
             {{-- Legenda: hale, adresy i ikony boisk, żeby było wiadomo, gdzie gra się mecz --}}
             <x-tournament-halls :tournament="$tournament" :matches="$current->matches" class="mt-4" />
             <x-tournament-scoring-note :groups="$current->groups" :tournament="$tournament" class="mt-10" />

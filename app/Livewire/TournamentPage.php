@@ -8,6 +8,8 @@ use App\Models\TournamentMatch;
 use App\Support\TournamentBracket;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -83,7 +85,32 @@ class TournamentPage extends Component
             'knockout' => $knockout->sortBy(fn (TournamentMatch $match) => [$match->starts_at?->timestamp ?? PHP_INT_MAX, $match->number ?? PHP_INT_MAX, $match->id])->values(),
             'standings' => $standings,
             'summary' => $summary,
+            'schedule' => $currentTab === 'matches' && $current ? fn () => $this->schedule($categories, $current, $bracket) : null,
         ]);
+    }
+
+    /**
+     * Terminarz kategorii (najcięższa część strony w dniu turnieju) z krótkiej pamięci podręcznej: kibice odświeżający
+     * wyniki dostają gotowy HTML, a każda zmiana meczu, drużyny czy hali daje nowy klucz, więc wynik widać od razu.
+     * Kilkadziesiąt sekund dotyczy tylko rzeczy liczonych od zegara (np. „możliwe opóźnienie”, liczba zdjęć).
+     *
+     * @param  Collection<int, TournamentCategory>  $categories
+     */
+    public function schedule(Collection $categories, TournamentCategory $current, TournamentBracket $bracket): string
+    {
+        $state = [
+            $current->getAttributes(),
+            $this->tournament->getAttributes(),
+            $categories->flatMap->matches->map->getAttributes()->all(),
+            $current->participants->map(fn ($participant) => [$participant->getAttributes(), $participant->competitor?->getAttributes()])->all(),
+            $current->groups->map->getAttributes()->all(),
+        ];
+        $key = 'tournament-schedule:'.$current->id.':'.app()->getLocale().':'.now()->toDateString().':'.md5(serialize($state));
+
+        return Cache::remember($key, 30, fn () => Blade::render('<x-tournament-schedule :matches="$matches" :bracket="$bracket" />', [
+            'matches' => $current->matches,
+            'bracket' => $bracket,
+        ]));
     }
 
     /**
