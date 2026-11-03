@@ -346,7 +346,7 @@
             const left = Math.max(0, total - (Date.now() - started) / 1000);
             document.getElementById('tv-seconds').textContent = Math.ceil(left);
             ring().style.strokeDashoffset = 276.5 * (1 - left / total);
-            document.getElementById('tv-clock').textContent = new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('tv-clock').textContent = new Date().toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', timeZone: @js(config('app.timezone')) });
             // Raz; gdy serwer nie odpowie (np. chwilowy brak sieci), kolejna próba po 15 sekundach.
             if (left <= 0 && (! leaving || Date.now() - leaving > 15000)) {
                 leaving = Date.now();

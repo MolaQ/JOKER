@@ -140,8 +140,15 @@ class TournamentScorer extends Component
         }
 
         $this->resetErrorBag("rows.{$match->id}.start");
+        $starts = Carbon::parse(($planned ?? Carbon::parse($this->day ?: today()))->toDateString().' '.$time);
 
-        return Carbon::parse(($planned ?? Carbon::parse($this->day ?: today()))->toDateString().' '.$time);
+        // Godzina z planu zostawiona bez zmian, a mecz rusza w dniu turnieju wyraźnie później: liczy się „teraz”,
+        // żeby kibice widzieli opóźnienie, a kolejne mecze na boisku „możliwe opóźnienie”.
+        if ($planned && $starts->equalTo($planned->copy()->startOfMinute()) && $planned->isToday() && now()->greaterThan($planned->copy()->addMinutes(5)) && now()->lessThan($planned->copy()->addHours(4))) {
+            return now()->startOfMinute();
+        }
+
+        return $starts;
     }
 
     private function match(int $id): TournamentMatch

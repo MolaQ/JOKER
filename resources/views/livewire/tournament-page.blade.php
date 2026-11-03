@@ -10,7 +10,7 @@
             @if($categories->count() > 1 || $followable || $teamFilter)
                 <div class="flex items-center gap-2 sm:flex-wrap">
                     @if($categories->count() > 1)
-                        <div data-scroll-fade class="scrollbar-none -ml-4 flex min-w-0 flex-1 gap-2 overflow-x-auto pl-4 sm:ml-0 sm:flex-none sm:flex-wrap sm:overflow-visible sm:pl-0" aria-label="{{ __('Kategoria wiekowa') }}">
+                        <div data-scroll-fade x-data x-init="const active = $el.querySelector('[aria-current]'); if (active && active.offsetLeft + active.offsetWidth > $el.clientWidth) $el.scrollLeft = active.offsetLeft - ($el.clientWidth - active.offsetWidth) / 2" class="scrollbar-none -ml-4 flex min-w-0 flex-1 gap-2 overflow-x-auto pl-4 sm:ml-0 sm:flex-none sm:flex-wrap sm:overflow-visible sm:pl-0" aria-label="{{ __('Kategoria wiekowa') }}">
                             @foreach($categories as $categoryOption)
                                 <a href="{{ route('tournaments.show', ['tournament' => $tournament, 'category' => $loop->first ? null : $categoryOption->slug(), 'tab' => $tabs->has($currentTab) && $currentTab !== $tabs->keys()->first() ? $currentTab : null]) }}" data-track="{{ __('Kategoria') }}: {{ $categoryOption->name }}" @if($current?->id === $categoryOption->id) aria-current="page" @endif @class(['chip shrink-0 whitespace-nowrap transition', 'bg-club-navy text-white' => $current?->id === $categoryOption->id, 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => $current?->id !== $categoryOption->id])>{{ $categoryOption->name }}</a>
                             @endforeach

@@ -115,3 +115,20 @@ test('a match started by mistake can be put back to not started', function () {
         ->and($first->sets_score)->toBeNull()
         ->and($first->home_sets)->toBeNull();
 });
+
+test('a match started late with the planned time left unchanged starts now', function () {
+    $this->tournament->scorers()->attach($this->scorer);
+    $this->actingAs($this->scorer);
+
+    Carbon::setTestNow('2026-11-15 10:03');
+    Livewire::test(TournamentScorer::class, ['tournament' => $this->tournament])->call('start', $this->first->id);
+    expect($this->first->fresh()->starts_at->format('H:i'))->toBe('10:00');
+
+    Carbon::setTestNow('2026-11-15 11:42');
+    Livewire::test(TournamentScorer::class, ['tournament' => $this->tournament])->call('start', $this->second->id);
+    expect($this->second->fresh()->starts_at->format('H:i'))->toBe('11:42')
+        ->and($this->second->fresh()->planned_starts_at->format('H:i'))->toBe('11:00');
+
+    Once::flush();
+    expect($this->third->fresh()->possibleDelay())->toBe(42);
+});

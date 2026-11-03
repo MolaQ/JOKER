@@ -53,12 +53,12 @@
                     @if($live || $finished)
                         <div>
                             <label class="block text-xs font-medium text-zinc-600" for="sets-{{ $match->id }}">{{ __('Sety (gospodarze:goście)') }}</label>
-                            <input id="sets-{{ $match->id }}" type="text" inputmode="numeric" wire:model="rows.{{ $match->id }}.sets" placeholder="25:20, 23:25, 15:12" class="mt-1 block w-full rounded-lg border border-zinc-300 text-base tabular-nums">
+                            <input id="sets-{{ $match->id }}" type="text" inputmode="numeric" wire:model="rows.{{ $match->id }}.sets" placeholder="{{ __('np. 25:20, 23:25, 15:12') }}" class="mt-1 block w-full rounded-lg border border-zinc-300 text-base tabular-nums placeholder:text-zinc-300">
                             @error("rows.{$match->id}.sets")<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-zinc-600" for="mvp-{{ $match->id }}">{{ __('Wyróżnienie (opcjonalnie)') }}</label>
-                            <input id="mvp-{{ $match->id }}" type="text" maxlength="120" wire:model="rows.{{ $match->id }}.mvp" placeholder="{{ __('np. MVP: Jan Kowalski') }}" class="mt-1 block w-full rounded-lg border border-zinc-300 text-base">
+                            <input id="mvp-{{ $match->id }}" type="text" maxlength="120" wire:model="rows.{{ $match->id }}.mvp" placeholder="{{ __('np. MVP: Jan Kowalski') }}" class="mt-1 block w-full rounded-lg border border-zinc-300 text-base placeholder:text-zinc-300">
                         </div>
                     @endif
                 </div>
