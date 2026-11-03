@@ -89,6 +89,9 @@ Route::post('/matches/{game}/comments', [GameController::class, 'storeComment'])
 
 // Wyszukiwarka
 Route::get('/search', [SearchController::class, 'index'])->name('search');
+
+// Ekran wpisywania wyników co kilka minut odświeża sesję, żeby wpisujący nie został wylogowany między meczami.
+Route::get('/keepalive', fn () => response()->noContent())->middleware('auth')->name('keepalive');
 Route::get('/search/index.json', [SearchController::class, 'data'])->name('search.data');
 
 // Dokumenty do pobrania

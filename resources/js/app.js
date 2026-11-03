@@ -86,6 +86,21 @@ window.addEventListener('resize', fadeStrips, { passive: true });
 document.addEventListener('scroll', (event) => event.target instanceof Element && event.target.matches('[data-topbar-scroll], [data-scroll-fade]') && fadeStrip(event.target), { capture: true, passive: true });
 document.addEventListener('livewire:init', () => window.Livewire.hook('morphed', () => requestAnimationFrame(fadeStrips)));
 
+// Słaby internet na hali i wygasła sesja: zamiast cichej porażki albo angielskiego okienka jasny komunikat po polsku.
+document.addEventListener('livewire:init', () => {
+    const texts = document.querySelector('[data-connection-texts]')?.dataset ?? {};
+    window.Livewire.interceptRequest(({ onFailure, onError }) => {
+        onFailure(() => window.toast?.(texts.offline || 'Brak połączenia z internetem. Zmiana NIE została zapisana, spróbuj ponownie.', 'error'));
+        onError(({ response, preventDefault }) => {
+            if (response.status === 419) {
+                preventDefault();
+                window.toast?.(texts.expired || 'Strona była długo otwarta. Odświeżam ją, wpisz zmianę jeszcze raz.', 'error');
+                window.setTimeout(() => window.location.reload(), 2500);
+            }
+        });
+    });
+});
+
 // Slider na stronie głównej.
 const slider = document.querySelector('[data-hero-slider]');
 

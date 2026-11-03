@@ -124,3 +124,12 @@ test('the organizer creates the practice from the scorers section once and delet
         ->and($this->tournament->fresh())->not->toBeNull()
         ->and(TournamentMatch::count())->toBe(2);
 });
+
+test('the scoring screen keeps the session alive and warns when the phone is offline', function () {
+    $this->getJson(route('keepalive'))->assertUnauthorized();
+    $this->actingAs($this->scorer)->getJson(route('keepalive'))->assertNoContent();
+
+    $this->actingAs(User::factory()->admin()->create())->get(route('tournaments.score', $this->tournament))->assertOk()
+        ->assertSee('keepalive', false)
+        ->assertSee('Brak internetu. Wpisane wyniki nie zapiszą się');
+});

@@ -3,7 +3,13 @@
     $on = 'bg-club-navy text-white';
     $off = 'bg-white text-zinc-700 ring-1 ring-zinc-200';
 @endphp
-<div class="container-site space-y-4 py-6">
+<div class="container-site space-y-4 py-6"
+    x-data="{ online: navigator.onLine, ping() { fetch(@js(route('keepalive')), { headers: { Accept: 'application/json' }, redirect: 'manual' }).then((response) => { if (response.status === 401 || response.type === 'opaqueredirect') window.location.reload() }).catch(() => {}) } }"
+    x-init="setInterval(() => ping(), 5 * 60 * 1000)"
+    x-on:online.window="online = true; ping()" x-on:offline.window="online = false"
+    x-on:visibilitychange.document="document.visibilityState === 'visible' && ping()">
+    {{-- Sesja odświeżana co 5 minut i po odblokowaniu telefonu; bez internetu czerwony pasek. --}}
+    <p x-show="! online" x-cloak class="sticky top-16 z-20 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white shadow-lg" role="alert">📵 {{ __('Brak internetu. Wpisane wyniki nie zapiszą się, dopóki połączenie nie wróci.') }}</p>
     @if(count($days) > 1)
         <nav class="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4" aria-label="{{ __('Dzień turnieju') }}">
             @foreach($days as $value)

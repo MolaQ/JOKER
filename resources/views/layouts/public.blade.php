@@ -469,6 +469,7 @@
         </div>
     @endif
 
+    <div hidden data-connection-texts data-offline="{{ __('Brak połączenia z internetem. Zmiana NIE została zapisana, spróbuj ponownie.') }}" data-expired="{{ __('Strona była długo otwarta. Odświeżam ją, wpisz zmianę jeszcze raz.') }}"></div>
     <x-toasts />
     <x-confirm-modal />
 
