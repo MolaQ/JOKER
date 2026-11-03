@@ -45,7 +45,7 @@
     </div>
     <div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         @foreach($miniGroups as $miniGroup)
-            <x-mini-group-tile :group="$miniGroup" class="min-h-44! p-4! sm:min-h-52!" />
+            <x-mini-group-tile :group="$miniGroup" compact class="min-h-44! p-4! sm:min-h-52!" />
         @endforeach
     </div>
 </section>
