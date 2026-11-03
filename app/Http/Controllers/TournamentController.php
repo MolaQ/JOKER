@@ -39,7 +39,7 @@ class TournamentController extends Controller
      */
     public function show(Request $request, Tournament $tournament, ?string $category = null): View|RedirectResponse
     {
-        abort_unless($tournament->has_page, 404);
+        abort_unless($tournament->visibleTo($request->user()), 404);
 
         $categories = $tournament->categories()->get(['id', 'tournament_id', 'name']);
         $chosen = $request->filled('category')

@@ -15,7 +15,7 @@ class TournamentMatchController extends Controller
     {
         $match->load(['category.tournament', 'group', 'home.competitor', 'away.competitor', 'publishedGalleries.photos.tags.taggable']);
 
-        abort_unless($tournament->has_page && $match->category?->tournament_id === $tournament->id, 404);
+        abort_unless($tournament->visibleTo(request()->user()) && $match->category?->tournament_id === $tournament->id, 404);
 
         return view('tournaments.match', ['tournament' => $tournament, 'match' => $match]);
     }

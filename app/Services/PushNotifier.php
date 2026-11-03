@@ -115,7 +115,8 @@ class PushNotifier
      */
     public function tournamentMatchFinished(TournamentMatch $match): void
     {
-        if (! $this->site['push_tournaments'] || ! $match->isFinished() || $match->starts_at?->lt(now()->subHours(self::FRESH_HOURS))) {
+        // Turniej ćwiczebny dla wpisujących nie powiadamia kibiców.
+        if (! $this->site['push_tournaments'] || ! $match->isFinished() || $match->category->tournament->isPractice() || $match->starts_at?->lt(now()->subHours(self::FRESH_HOURS))) {
             return;
         }
 
@@ -144,6 +145,11 @@ class PushNotifier
             $audience = ['topic' => 'upcoming', 'teams' => array_filter([$match->team_id])];
         } else {
             $category = $match->category;
+
+            if ($category->tournament->isPractice()) {
+                return 0;
+            }
+
             $vars = $this->tournamentVars($match) + ['nazwa' => $category->tournament->name.' · '.$category->name, 'godzina' => $match->starts_at->format('H:i')];
             $url = route('tournaments.show', ['tournament' => $category->tournament, 'category' => $category->slug()]);
             $audience = $this->tournamentAudience($match, 'upcoming');

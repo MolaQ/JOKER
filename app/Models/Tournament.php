@@ -49,6 +49,7 @@ class Tournament extends Model
         'has_page',
         'halls',
         'main_off',
+        'practice_of_id',
     ];
 
     /** Seria edycji Memoriału im. Włodzimierza Winklera (zakładka w menu). */
@@ -116,7 +117,35 @@ class Tournament extends Model
             return false;
         }
 
-        return $user->can('tournaments.manage') || ($this->scoringOpen() && $this->scorers()->whereKey($user->id)->exists());
+        // Turniej ćwiczebny: także wpisujący dodani do prawdziwego turnieju już po utworzeniu ćwiczenia.
+        return $user->can('tournaments.manage') || ($this->scoringOpen() && ($this->scorers()->whereKey($user->id)->exists()
+            || ($this->isPractice() && $this->practiceOf?->scorers()->whereKey($user->id)->exists())));
+    }
+
+    /**
+     * Turniej ćwiczebny dla wpisujących: kopia tego turnieju (zob. TournamentPractice).
+     */
+    public function practiceOf(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'practice_of_id');
+    }
+
+    public function practices(): HasMany
+    {
+        return $this->hasMany(self::class, 'practice_of_id');
+    }
+
+    public function isPractice(): bool
+    {
+        return $this->practice_of_id !== null;
+    }
+
+    /**
+     * Strona turnieju i ekran TV: dla wszystkich, gdy turniej ma stronę; turniej ćwiczebny tylko dla organizatorów i jego wpisujących.
+     */
+    public function visibleTo(?User $user): bool
+    {
+        return $this->has_page || ($this->isPractice() && $this->canBeScoredBy($user));
     }
 
     /**

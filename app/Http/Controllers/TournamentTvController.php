@@ -21,7 +21,7 @@ class TournamentTvController extends Controller
 {
     public function show(Request $request, Tournament $tournament): View
     {
-        abort_unless($tournament->has_page, 404);
+        abort_unless($tournament->visibleTo($request->user()), 404);
 
         $settings = app(SiteSettings::class);
         $categories = $tournament->categories()

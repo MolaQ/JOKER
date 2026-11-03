@@ -16,6 +16,7 @@ use App\Support\AgeColors;
 use App\Support\SiteSettings;
 use App\Support\TournamentBracket;
 use App\Support\TournamentHalls;
+use App\Support\TournamentPractice;
 use App\Support\TournamentReport;
 use App\Support\TournamentResults;
 use App\Support\TournamentSchedule;
@@ -692,6 +693,42 @@ class TournamentEditor extends Component
         }
 
         $this->redirect(route('admin.articles.index', ['edytuj' => $article->id]));
+    }
+
+    /**
+     * Turniej ćwiczebny dla wpisujących: kopia tego turnieju na dziś, niewidoczna dla kibiców.
+     */
+    public function createPractice(): void
+    {
+        abort_unless(auth()->user()?->can('tournaments.manage') && ! $this->tournament->isPractice(), 403);
+
+        $practice = $this->tournament->practices()->latest('id')->first() ?? TournamentPractice::create($this->tournament);
+
+        session()->flash('success', 'Turniej ćwiczebny jest gotowy. Wyślij wpisującym link do ekranu „Wpisz wyniki”.');
+        $this->redirect(route('admin.tournaments.edit', ['tournament' => $practice, 'section' => 'wpisujacy']));
+    }
+
+    /**
+     * Ćwiczenie od nowa: bez wyników, godziny z harmonogramu.
+     */
+    public function resetPractice(): void
+    {
+        abort_unless($this->tournament->isPractice(), 403);
+
+        TournamentPractice::reset($this->tournament);
+        $this->loadCategoryState();
+        $this->toast('Wyczyszczono wyniki ćwiczenia. Można zaczynać od nowa.');
+    }
+
+    public function deletePractice(): void
+    {
+        abort_unless($this->tournament->isPractice(), 403);
+
+        $source = $this->tournament->practiceOf;
+        $this->tournament->delete();
+
+        session()->flash('success', 'Usunięto turniej ćwiczebny.');
+        $this->redirect($source ? route('admin.tournaments.edit', ['tournament' => $source, 'section' => 'wpisujacy']) : route('admin.tournaments.index'));
     }
 
     public function resetTableOrder(int $groupId): void

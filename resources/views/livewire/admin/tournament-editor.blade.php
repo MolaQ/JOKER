@@ -9,6 +9,20 @@
 @endphp
 
 <div class="space-y-6">
+    @if($tournament->isPractice())
+        {{-- Turniej ćwiczebny dla wpisujących (zob. App\Support\TournamentPractice) --}}
+        <div class="rounded-xl bg-amber-50 p-4 text-sm text-amber-950 ring-1 ring-amber-200">
+            <p class="font-semibold">🧪 Turniej ćwiczebny{{ $tournament->practiceOf ? ': kopia „'.$tournament->practiceOf->fullName().'”' : '' }}</p>
+            <p class="mt-1">Kibice go nie widzą i nie dostają z niego powiadomień. Wpisujący z prawdziwego turnieju mogą tu ćwiczyć do {{ $tournament->lastDay()->addDay()->format('d.m') }}. Wyślij im link:
+                <a href="{{ route('tournaments.score', $tournament) }}" target="_blank" class="font-semibold break-all underline">{{ route('tournaments.score', $tournament) }}</a></p>
+            <div class="mt-3 flex flex-wrap gap-2">
+                <a href="{{ route('tournaments.show', $tournament) }}" target="_blank" class="{{ $secondary }}">Strona jak u kibica ↗</a>
+                <a href="{{ route('tournaments.tv', $tournament) }}" target="_blank" class="{{ $secondary }}">Ekran TV ↗</a>
+                <button type="button" wire:click="resetPractice" wire:confirm="Wyczyścić wszystkie wyniki ćwiczenia i wrócić do godzin z harmonogramu?" class="{{ $secondary }}">Wyczyść wyniki ćwiczenia</button>
+                <button type="button" wire:click="deletePractice" wire:confirm="Usunąć turniej ćwiczebny? Prawdziwy turniej zostaje bez zmian." class="inline-flex items-center justify-center rounded-md px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50">Usuń ćwiczenie</button>
+            </div>
+        </div>
+    @endif
 
     {{-- Sekcje: na telefonie jeden przewijany w bok pasek przyklejony pod nagłówkiem panelu --}}
     <div class="sticky top-[calc(4rem+env(safe-area-inset-top))] z-20 -mx-4 border-b border-gray-200 bg-zinc-50/95 px-4 py-2 backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pt-0 sm:pb-3 sm:backdrop-blur-none">
@@ -468,6 +482,23 @@
     {{-- Mecze i wyniki --}}
     @if($section === 'partnerzy')
         <livewire:admin.tournament-partners :tournament-id="$tournament->id" :key="'partners-'.$tournament->id" />
+    @endif
+
+    @if($section === 'wpisujacy' && ! $tournament->isPractice())
+        @php
+            $practice = $tournament->practices()->latest('id')->first();
+        @endphp
+        <div class="rounded-xl bg-white p-4 text-sm text-gray-700 shadow-sm ring-1 ring-gray-200">
+            <p class="font-semibold text-gray-900">🧪 Ćwiczenie przed turniejem</p>
+            <p class="mt-1">Kopia tego turnieju na dziś: te same kategorie, drużyny, mecze i wpisujący, bez wyników. Wpisujący przećwiczą wpisywanie na telefonie, a prawdziwy turniej zostaje bez zmian. Kibice ćwiczenia nie widzą i nie dostają z niego powiadomień.</p>
+            <div class="mt-3">
+                @if($practice)
+                    <a href="{{ route('admin.tournaments.edit', ['tournament' => $practice, 'section' => 'wpisujacy']) }}" class="{{ $secondary }}">Otwórz turniej ćwiczebny</a>
+                @else
+                    <button type="button" wire:click="createPractice" class="{{ $secondary }}">Utwórz turniej ćwiczebny</button>
+                @endif
+            </div>
+        </div>
     @endif
 
     @if($section === 'wpisujacy')

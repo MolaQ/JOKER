@@ -10,5 +10,6 @@
         <h1 class="heading-md mt-2">{{ __('Wpisz wyniki') }}</h1>
     </div>
 </section>
+<x-practice-banner :tournament="$tournament" />
 <livewire:tournament-scorer :tournament="$tournament" />
 @endsection

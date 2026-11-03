@@ -32,6 +32,7 @@ class MatchPicker
                 ->all(),
             __('Turnieje') => TournamentMatch::with(['category.tournament', 'home.competitor', 'away.competitor'])
                 ->whereBetween('starts_at', [$from, $to])
+                ->whereHas('category.tournament', fn ($query) => $query->whereNull('practice_of_id'))
                 ->orderByDesc('starts_at')
                 ->get()
                 ->mapWithKeys(fn (TournamentMatch $match) => ['tournament_match:'.$match->id => $match->mediaLabel()])

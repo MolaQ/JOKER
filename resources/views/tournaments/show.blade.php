@@ -3,6 +3,10 @@
 @section('title', trim($tournament->fullName().($category && $tournament->categories()->count() > 1 ? ' - '.$category->name : '')))
 @section('description', trim($tournament->fullName().' - '.$tournament->dateRangeLabel().'.'.$tournament->start_date->format('Y').' '.($tournament->city ?? '').'. '.__('Drużyny, grupy, wyniki, drabinka i informator dla gości.')))
 
+@if($tournament->isPractice())
+    @section('robots', 'noindex, nofollow')
+@endif
+
 @section('content')
 @php
     // W dniach turnieju kibic przychodzi po wyniki: na telefonie nagłówek jest niski, a zakładki z meczami widać od razu.
@@ -31,6 +35,7 @@
         </div>
     </div>
 </section>
+<x-practice-banner :tournament="$tournament" />
 
 @livewire('tournament-page', ['tournament' => $tournament, 'categoryId' => $category?->id])
 

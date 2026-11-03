@@ -33,7 +33,7 @@ class SendUpcomingReminders extends Command
             ->reject(fn (Game $game) => $game->game_date->format('H:i') === '00:00');
 
         $matches = TournamentMatch::with(['category.tournament', 'home', 'away', 'group'])
-            ->whereBetween('starts_at', $window)->where('is_live', false)->whereNull('home_sets')->get();
+            ->whereBetween('starts_at', $window)->whereHas('category.tournament', fn ($query) => $query->whereNull('practice_of_id'))->where('is_live', false)->whereNull('home_sets')->get();
 
         foreach ([...$games, ...$matches] as $match) {
             if (Cache::add('push-sent:upcoming-'.class_basename($match).'-'.$match->id, true, now()->addDays(2))) {
