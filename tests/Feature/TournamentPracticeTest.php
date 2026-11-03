@@ -139,10 +139,10 @@ test('the tournament page refreshes results by itself only on match days', funct
     $this->tournament->update(['start_date' => today(), 'end_date' => today()]);
 
     Livewire::test(TournamentPage::class, ['tournament' => $this->tournament->fresh(), 'categoryId' => null])
-        ->call('selectTab', 'matches')->assertSeeHtml('wire:poll.30s.visible')
-        ->call('selectTab', 'teams')->assertDontSeeHtml('wire:poll.30s.visible');
+        ->call('selectTab', 'matches')->assertSeeHtml('wire:poll.120s.visible')
+        ->call('selectTab', 'teams')->assertDontSeeHtml('wire:poll.120s.visible');
 
     $this->tournament->update(['start_date' => today()->addWeek(), 'end_date' => today()->addWeek()]);
     Livewire::test(TournamentPage::class, ['tournament' => $this->tournament->fresh(), 'categoryId' => null])
-        ->call('selectTab', 'matches')->assertDontSeeHtml('wire:poll.30s.visible');
+        ->call('selectTab', 'matches')->assertDontSeeHtml('wire:poll.120s.visible');
 });

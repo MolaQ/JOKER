@@ -79,7 +79,7 @@ class TournamentPage extends Component
             'current' => $current,
             'tabs' => $tabs,
             'currentTab' => $currentTab,
-            // W dniach turnieju wyniki u kibica odświeżają się same co 30 s (tylko zakładki z wynikami, tylko widoczna karta).
+            // W dniach turnieju wyniki u kibica odświeżają się same co 2 minuty (tylko zakładki z wynikami, tylko widoczna karta).
             'autoRefresh' => in_array($currentTab, ['groups', 'matches', 'bracket', 'ranking'], true)
                 && today()->between($this->tournament->start_date->copy()->startOfDay(), $this->tournament->lastDay()->endOfDay()),
             'bracket' => $bracket,
