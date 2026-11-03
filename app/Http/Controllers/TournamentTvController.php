@@ -141,7 +141,8 @@ class TournamentTvController extends Controller
         }
 
         $standings = $bracket->standings();
-        if ($settings['tv_show_standings'] && $standings->contains(fn (array $row) => $row['participant'] !== null)) {
+        // Klasyfikacja na ekranie dopiero, gdy znany jest zwycięzca; wcześniej plansza byłaby listą „Zwycięzca meczu #20”.
+        if ($settings['tv_show_standings'] && $standings->contains(fn (array $row) => $row['participant'] !== null && $row['position'] === 1)) {
             $slides->push(['type' => 'standings', 'category' => $category, 'title' => __('Klasyfikacja końcowa'), 'standings' => $standings]);
         }
 

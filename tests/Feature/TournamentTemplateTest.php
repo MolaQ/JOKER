@@ -90,6 +90,18 @@ test('the tv screen rotates through category slides and links to the next one', 
     $this->get(route('tournaments.tv', $this->tournament))->assertOk()->assertSee('Najbliższe mecze')->assertSee('plansza 1/1');
 });
 
+test('the tv shows the final standings only once the winner is known', function () {
+    $category = $this->tournament->categories()->create(['name' => 'Kadetki']);
+    $group = $category->groups()->create(['name' => 'Grupa A']);
+    $a = $category->participants()->create(['competitor_type' => 'rival_team', 'competitor_id' => templateRival('MKS Kalisz'), 'tournament_group_id' => $group->id]);
+    $b = $category->participants()->create(['competitor_type' => 'rival_team', 'competitor_id' => templateRival('Sparta Złotów'), 'tournament_group_id' => $group->id, 'final_position' => 7]);
+
+    $this->get(route('tournaments.tv', $this->tournament))->assertOk()->assertSee('plansza 1/1')->assertDontSee('Klasyfikacja końcowa');
+
+    $a->update(['final_position' => 1]);
+    $this->get(route('tournaments.tv', [$this->tournament, 's' => 1]))->assertOk()->assertSee('plansza 2/2')->assertSee('Klasyfikacja końcowa');
+});
+
 test('a template can keep the teams and seats them in the same groups and matches', function () {
     $this->actingAs(User::factory()->admin()->create());
     $source = $this->tournament->categories()->create(['name' => 'Kadetki']);

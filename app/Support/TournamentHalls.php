@@ -360,6 +360,15 @@ class TournamentHalls
     }
 
     /**
+     * Boisko na ekranie TV w hali klubowej: przy jej sektorach samo „Sektor I” (widz stoi w tej hali),
+     * przy innych obiektach pełna krótka nazwa z obiektem, np. „SP 6 · Sektor II”.
+     */
+    public static function tvLabel(?string $court, ?int $categoryId = null): string
+    {
+        return TrainingSession::venueForCourt($court) ? (string) TrainingSession::courtLabel($court) : self::label($court, $categoryId);
+    }
+
+    /**
      * Krótka nazwa boiska innego obiektu do nagłówków i przy meczach: obiekt, sala (gdy obiekt ma kilka sal)
      * i sektor (gdy sala jest podzielona), np. „SP 6”, „SP 6 · Sektor II”, „MOSiR · Hala 1 · Całe boisko”.
      * Pełna nazwa obiektu i adres są w legendzie.
