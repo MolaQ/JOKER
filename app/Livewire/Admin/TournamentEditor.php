@@ -57,6 +57,15 @@ class TournamentEditor extends Component
     /** „O turnieju”: tekst na stronę turnieju (pierwsza zakładka). */
     public string $about = '';
 
+    /** Angielskie wersje tekstów strony turnieju (puste = polskie). */
+    public string $description_en = '';
+
+    public string $about_en = '';
+
+    public string $rules_en = '';
+
+    public string $guest_info_en = '';
+
     public $image = null;
 
     public $logo = null;
@@ -158,6 +167,10 @@ class TournamentEditor extends Component
         $this->rules = (string) $tournament->rules;
         $this->guest_info = (string) $tournament->guest_info;
         $this->about = (string) $tournament->about;
+        $this->description_en = (string) $tournament->description_en;
+        $this->about_en = (string) $tournament->about_en;
+        $this->rules_en = (string) $tournament->rules_en;
+        $this->guest_info_en = (string) $tournament->guest_info_en;
         $this->scoring = self::scoringState(TournamentTable::scoring(tournament: $tournament));
         $this->categoryId ??= $tournament->categories()->value('id');
         $this->resetMatchForm();
@@ -443,7 +456,7 @@ class TournamentEditor extends Component
      */
     public function updated(string $property): void
     {
-        if (in_array($property, ['has_page', 'series', 'rules', 'guest_info', 'about', 'image'], true)) {
+        if (in_array($property, ['has_page', 'series', 'rules', 'guest_info', 'about', 'image', 'description_en', 'about_en', 'rules_en', 'guest_info_en'], true)) {
             $this->saveInfo();
         }
     }
@@ -461,6 +474,10 @@ class TournamentEditor extends Component
             'rules' => 'nullable|string',
             'guest_info' => 'nullable|string',
             'about' => 'nullable|string',
+            'description_en' => 'nullable|string|max:3000',
+            'about_en' => 'nullable|string',
+            'rules_en' => 'nullable|string',
+            'guest_info_en' => 'nullable|string',
             'image' => 'nullable|image|max:6144',
             'logo' => 'nullable|image|max:4096',
         ]);
@@ -471,6 +488,10 @@ class TournamentEditor extends Component
             'rules' => $this->rules ?: null,
             'guest_info' => $this->guest_info ?: null,
             'about' => filled(strip_tags($this->about)) ? $this->about : null,
+            'description_en' => trim($this->description_en) ?: null,
+            'about_en' => filled(strip_tags($this->about_en)) ? $this->about_en : null,
+            'rules_en' => filled(strip_tags($this->rules_en)) ? $this->rules_en : null,
+            'guest_info_en' => filled(strip_tags($this->guest_info_en)) ? $this->guest_info_en : null,
         ] + ($this->image ? ['image_path' => $this->image->store('tournaments', 'public')] : [])
           + ($this->logo ? ['logo_path' => $this->logo->store('tournaments/logo', 'public')] : []));
 

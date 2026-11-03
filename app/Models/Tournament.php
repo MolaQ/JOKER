@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasEnglishVersion;
 use App\Models\Concerns\HasReadableRouteKey;
 use App\Models\Concerns\Likeable;
 use Database\Factories\TournamentFactory;
@@ -21,7 +22,7 @@ use Illuminate\Support\Str;
 class Tournament extends Model
 {
     /** @use HasFactory<TournamentFactory> */
-    use HasFactory, HasReadableRouteKey, Likeable;
+    use HasEnglishVersion, HasFactory, HasReadableRouteKey, Likeable;
 
     protected $fillable = [
         'season_id',
@@ -41,6 +42,10 @@ class Tournament extends Model
         'scoring',
         'rules',
         'guest_info',
+        'description_en',
+        'about_en',
+        'rules_en',
+        'guest_info_en',
         'has_page',
         'halls',
         'main_off',

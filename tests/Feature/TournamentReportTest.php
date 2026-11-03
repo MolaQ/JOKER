@@ -70,3 +70,22 @@ test('the tournament page lists its reports and match photos, and the report lin
 
     $this->get(route('articles.show', $article))->assertOk()->assertSee('Strona turnieju')->assertSee(route('tournaments.show', $this->tournament), false);
 });
+
+test('guests switching to English see the English tournament texts, or the Polish ones when none were written', function () {
+    $this->tournament->update(['description' => 'Turniej młodzieżowy', 'guest_info' => '<p>Parking przy hali</p>', 'guest_info_en' => '<p>Parking next to the hall</p>']);
+
+    $this->get(route('tournaments.show', [$this->tournament, 'tab' => 'info']))->assertSee('Parking przy hali')->assertSee('Turniej młodzieżowy');
+
+    app()->setLocale('en');
+    $this->withSession(['locale' => 'en'])->get(route('tournaments.show', [$this->tournament, 'tab' => 'info']))
+        ->assertSee('Parking next to the hall')->assertDontSee('Parking przy hali')->assertSee('Turniej młodzieżowy');
+});
+
+test('the organizer writes the English texts in the tournament panel', function () {
+    $this->actingAs(User::factory()->admin()->create());
+
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'strona')
+        ->set('description_en', 'National youth tournament')->set('rules_en', '<p>Best of three sets</p>')->assertHasNoErrors();
+
+    expect($this->tournament->fresh()->description_en)->toBe('National youth tournament')->and($this->tournament->fresh()->rules_en)->toBe('<p>Best of three sets</p>');
+});

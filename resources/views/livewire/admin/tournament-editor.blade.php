@@ -139,6 +139,30 @@
                 <x-rich-text-editor model="guest_info" save-on-blur placeholder="Hale i adresy, dojazd i parking, noclegi, wyżywienie, kontakt do organizatora, plan dnia..." height="min-h-[220px]" />
             </div>
 
+            {{-- Dla gości z zagranicy: strona po angielsku pokazuje te teksty; puste pole = tekst polski --}}
+            <details class="rounded-lg border border-gray-200 bg-white p-4" @if($description_en || $about_en || $rules_en || $guest_info_en) open @endif>
+                <summary class="cursor-pointer font-semibold text-gray-900">🇬🇧 Wersja angielska <span class="text-sm font-normal text-gray-500">(opcjonalnie, dla gości z zagranicy)</span></summary>
+                <p class="mt-2 text-xs text-gray-500">Gość, który przełączy stronę na angielski, zobaczy te teksty. Puste pole = tekst polski. Przyciski, tabele i nazwy zakładek tłumaczą się same.</p>
+                <div class="mt-4 space-y-5">
+                    <div>
+                        <label class="{{ $label }}" for="tournament-description-en">Krótki opis pod tytułem</label>
+                        <input id="tournament-description-en" type="text" wire:model.blur.live="description_en" maxlength="3000" class="{{ $input }}" placeholder="e.g. National youth volleyball tournament in three age groups.">
+                    </div>
+                    <div>
+                        <label class="{{ $label }}">About the tournament</label>
+                        <x-rich-text-editor model="about_en" save-on-blur placeholder="History, patron, organisers..." height="min-h-[140px]" />
+                    </div>
+                    <div>
+                        <label class="{{ $label }}">Rules</label>
+                        <x-rich-text-editor model="rules_en" save-on-blur placeholder="Format, scoring, warm-up time, balls..." height="min-h-[140px]" />
+                    </div>
+                    <div>
+                        <label class="{{ $label }}">Guide for visiting teams and fans</label>
+                        <x-rich-text-editor model="guest_info_en" save-on-blur placeholder="Halls and addresses, getting there and parking, accommodation, meals, organiser contact, day plan..." height="min-h-[160px]" />
+                    </div>
+                </div>
+            </details>
+
         </div>
     @endif
 

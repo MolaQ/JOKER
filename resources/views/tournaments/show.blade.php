@@ -21,7 +21,7 @@
         @endif
         <h1 @class(['mt-2 max-w-4xl', 'heading-xl' => ! $playing, 'font-display text-3xl leading-none font-bold uppercase sm:text-5xl lg:text-6xl' => $playing])>{{ $tournament->name }}</h1>
         @if($tournament->description)
-            <p @class(['mt-5 max-w-2xl text-lg text-white/80', 'hidden sm:block' => $playing])>{{ $tournament->description }}</p>
+            <p @class(['mt-5 max-w-2xl text-lg text-white/80', 'hidden sm:block' => $playing])>{{ $tournament->localized('description') }}</p>
         @endif
         <div @class(['flex flex-wrap items-center gap-3', 'mt-6' => ! $playing, 'mt-4 sm:mt-6' => $playing])>
             @if($tournament->canBeScoredBy(auth()->user()))
