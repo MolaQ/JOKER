@@ -57,6 +57,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     Route::view('/roles', 'admin.roles.index')->middleware('can:roles.manage')->name('roles.index');
 
     Route::view('/system', 'admin.settings.index')->middleware('can:system')->name('settings.index');
+    Route::view('/system/kreator', 'admin.settings.setup')->middleware('can:system')->name('settings.setup');
     Route::redirect('/settings', '/panel/system', 301);
 
     Route::middleware('can:site.manage')->group(function () {

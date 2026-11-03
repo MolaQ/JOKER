@@ -14,5 +14,6 @@
     "results": "pozycji",
     "Pagination Navigation": "Strony wyników",
     "Go to page :page": "Przejdź do strony :page",
-    "Trwa :count mecz|Trwają :count mecze|Trwa :count meczów": "Trwa :count mecz|Trwają :count mecze|Trwa :count meczów"
+    "Trwa :count mecz|Trwają :count mecze|Trwa :count meczów": "Trwa :count mecz|Trwają :count mecze|Trwa :count meczów",
+    "Gotowe. Klub jest ustawiony, dodano :count drużynę.|Gotowe. Klub jest ustawiony, dodano :count drużyny.|Gotowe. Klub jest ustawiony, dodano :count drużyn.": "Gotowe. Klub jest ustawiony, dodano :count drużynę.|Gotowe. Klub jest ustawiony, dodano :count drużyny.|Gotowe. Klub jest ustawiony, dodano :count drużyn."
 }
