@@ -7,7 +7,10 @@
 
     <div class="max-w-xl">
         <span class="block text-sm font-medium text-gray-700 mb-1">Dodaj osobę</span>
-        <x-search-select model="userId" empty="— wybierz konto —" placeholder="Szukaj po imieniu albo e-mailu…" :options="$options" />
+        <div class="flex gap-2">
+            <x-search-select model="userId" class="min-w-0 flex-1" empty="— wybierz konto —" placeholder="Szukaj po imieniu albo e-mailu…" :options="$options" />
+            <button type="button" wire:click="add" class="inline-flex shrink-0 items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">Dodaj</button>
+        </div>
     </div>
 
     <ul class="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white">
