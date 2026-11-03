@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Admin\TournamentEditor;
 use App\Livewire\Admin\TournamentScorers;
 use App\Livewire\TournamentScorer;
 use App\Models\AuditLog;
@@ -9,6 +10,7 @@ use App\Models\User;
 use App\UserRole;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Once;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -131,4 +133,26 @@ test('a match started late with the planned time left unchanged starts now', fun
 
     Once::flush();
     expect($this->third->fresh()->possibleDelay())->toBe(42);
+});
+
+test('sets can be typed without a colon on a phone number keypad', function () {
+    expect(TournamentEditor::parseSets('25 20 23 25 15 12'))->toBe([[25, 20], [23, 25], [15, 12]])
+        ->and(TournamentEditor::parseSets('25,20,23,25'))->toBe([[25, 20], [23, 25]])
+        ->and(TournamentEditor::parseSets('25-20 25.18'))->toBe([[25, 20], [25, 18]])
+        ->and(TournamentEditor::parseSets('25:20, 23:25'))->toBe([[25, 20], [23, 25]])
+        ->and(fn () => TournamentEditor::parseSets('25 20 23'))->toThrow(ValidationException::class);
+});
+
+test('a scorer can show only one category when the same clubs play in several', function () {
+    $this->tournament->scorers()->attach($this->scorer);
+    $this->actingAs($this->scorer);
+    $juniors = $this->tournament->categories()->create(['name' => 'Juniorki', 'display_order' => 1]);
+    $home = $juniors->participants()->create(['competitor_type' => 'rival_team', 'competitor_id' => RivalTeam::create(['full_name' => 'Polonia'])->id]);
+    $away = $juniors->participants()->create(['competitor_type' => 'rival_team', 'competitor_id' => RivalTeam::create(['full_name' => 'Legia'])->id]);
+    $juniors->matches()->create(['stage' => 'group', 'home_participant_id' => $home->id, 'away_participant_id' => $away->id, 'starts_at' => '2026-11-15 10:00', 'court' => 'Boisko 2']);
+
+    Livewire::test(TournamentScorer::class, ['tournament' => $this->tournament])
+        ->assertSee('Wszystkie kategorie')->assertSee('Polonia')->assertSee('Sparta')
+        ->set('category', (string) $juniors->id)
+        ->assertSee('Polonia')->assertDontSee('Sparta');
 });

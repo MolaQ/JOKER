@@ -26,6 +26,15 @@
         </nav>
     @endif
 
+    @if($categories->count() > 1)
+        <nav class="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4" aria-label="{{ __('Kategoria') }}">
+            <button type="button" wire:click="$set('category', '')" class="{{ $chip }} {{ $category === '' ? $on : $off }}">{{ __('Wszystkie kategorie') }}</button>
+            @foreach($categories as $option)
+                <button type="button" wire:click="$set('category', '{{ $option->id }}')" class="{{ $chip }} {{ $category === (string) $option->id ? $on : $off }} inline-flex items-center gap-1.5 whitespace-nowrap"><span class="size-2.5 rounded-full" style="background: {{ $option->color() }}"></span>{{ $option->name }}</button>
+            @endforeach
+        </nav>
+    @endif
+
     <p class="text-sm text-zinc-500">{{ __('Godziny w harmonogramie się nie zmieniają. Gdy mecz zacznie się później, kolejne mecze na tym boisku dostaną informację „możliwe opóźnienie”.') }}</p>
 
     <ul class="space-y-3">
@@ -37,7 +46,8 @@
             @endphp
             <li wire:key="score-{{ $match->id }}" @class(['rounded-2xl bg-white p-4 shadow-sm ring-1', 'ring-red-300' => $live, 'ring-zinc-200' => ! $live])>
                 <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500">
-                    <span><span class="font-semibold text-zinc-800">{{ __('Mecz nr :n', ['n' => $match->number]) }}</span> · {{ $match->category?->name }}@if($match->group && mb_strtolower($match->group->name) !== mb_strtolower((string) $match->category?->name)) · {{ $match->group->name }}@endif @if($match->title() && $match->title() !== $match->group?->name) · {{ $match->title() }}@endif</span>
+                    {{-- Kategoria w kolorze na początku: te same kluby grają w kilku kategoriach --}}
+                    <span class="flex flex-wrap items-center gap-x-1.5 gap-y-1"><span class="rounded-md px-2 py-0.5 text-xs font-bold text-white" style="background: {{ $match->category?->color() }}">{{ $match->category?->name }}</span> <span class="font-semibold text-zinc-800">{{ __('Mecz nr :n', ['n' => $match->number]) }}</span>@if($match->group && mb_strtolower($match->group->name) !== mb_strtolower((string) $match->category?->name)) · {{ $match->group->name }}@endif @if($match->title() && $match->title() !== $match->group?->name) · {{ $match->title() }}@endif</span>
                     <span class="flex items-center gap-2">
                         @if($match->court)<span>{{ $match->court }}</span>@endif
                         <span>{{ __('wg planu') }} <span class="font-semibold text-zinc-800 tabular-nums">{{ $planned?->format('H:i') }}</span></span>
@@ -57,9 +67,9 @@
                         @error("rows.{$match->id}.start")<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                     </div>
                     @if($live || $finished)
-                        <div>
-                            <label class="block text-xs font-medium text-zinc-600" for="sets-{{ $match->id }}">{{ __('Sety (gospodarze:goście)') }}</label>
-                            <input id="sets-{{ $match->id }}" type="text" inputmode="numeric" wire:model="rows.{{ $match->id }}.sets" placeholder="{{ __('np. 25:20, 23:25, 15:12') }}" class="mt-1 block w-full rounded-lg border border-zinc-300 text-base tabular-nums placeholder:text-zinc-300">
+                        <div class="sm:col-span-2">
+                            <p class="text-xs font-medium text-zinc-600">{{ __('Sety') }}</p>
+                            <x-sets-input wire:key="sets-{{ $match->id }}" :model="'rows.'.$match->id.'.sets'" :home="$match->homeName()" :away="$match->awayName()" class="mt-1 max-w-sm" />
                             @error("rows.{$match->id}.sets")<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                         </div>
                         <div>

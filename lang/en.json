@@ -560,5 +560,9 @@
     "Powiadomienia": "Notifications",
     "Brak połączenia z internetem. Zmiana NIE została zapisana, spróbuj ponownie.": "No internet connection. The change was NOT saved, please try again.",
     "Strona była długo otwarta. Odświeżam ją, wpisz zmianę jeszcze raz.": "This page was open for a long time. Refreshing it, please enter the change again.",
-    "Brak internetu. Wpisane wyniki nie zapiszą się, dopóki połączenie nie wróci.": "No internet. Results will not be saved until the connection is back."
+    "Brak internetu. Wpisane wyniki nie zapiszą się, dopóki połączenie nie wróci.": "No internet. Results will not be saved until the connection is back.",
+    "Wszystkie kategorie": "All categories",
+    "Set": "Set",
+    "Dodaj set": "Add set",
+    "Wpisz sety jak „25:20, 23:25, 15:12”. Zamiast dwukropka może być myślnik albo kropka, np. 25-20 23-25 (bez remisów w secie).": "Enter sets like “25:20, 23:25, 15:12”. A dash or dot works instead of a colon, e.g. 25-20 23-25 (no tied sets)."
 }

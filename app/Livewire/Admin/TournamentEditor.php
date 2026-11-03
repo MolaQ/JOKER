@@ -1573,10 +1573,16 @@ class TournamentEditor extends Component
         }
 
         $sets = [];
+        $chunks = preg_split('/[,;\s]+/', trim($input), -1, PREG_SPLIT_NO_EMPTY);
 
-        foreach (preg_split('/[,;\s]+/', trim($input)) as $chunk) {
-            if (! preg_match('/^(\d{1,2})[:\-](\d{1,2})$/', $chunk, $points) || (int) $points[1] === (int) $points[2]) {
-                throw ValidationException::withMessages([$errorKey => 'Wpisz sety jak „25:20, 23:25, 15:12” (bez remisów w secie).']);
+        // Klawiatura liczbowa w telefonie nie ma dwukropka: „25 20 23 25” albo „25,20,23,25” to pary punktów.
+        if (count($chunks) % 2 === 0 && collect($chunks)->every(fn (string $chunk) => preg_match('/^\d{1,2}$/', $chunk))) {
+            $chunks = collect($chunks)->chunk(2)->map(fn ($pair) => $pair->implode(':'))->all();
+        }
+
+        foreach ($chunks as $chunk) {
+            if (! preg_match('/^(\d{1,2})[:\-.\/](\d{1,2})$/', $chunk, $points) || (int) $points[1] === (int) $points[2]) {
+                throw ValidationException::withMessages([$errorKey => __('Wpisz sety jak „25:20, 23:25, 15:12”. Zamiast dwukropka może być myślnik albo kropka, np. 25-20 23-25 (bez remisów w secie).')]);
             }
 
             $sets[] = [(int) $points[1], (int) $points[2]];

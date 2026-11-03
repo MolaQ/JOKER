@@ -34,6 +34,10 @@ class TournamentScorer extends Component
     #[Url]
     public string $court = '';
 
+    /** Kategoria (id) — gdy w kilku kategoriach grają te same kluby, wpisujący widzi tylko swoją. */
+    #[Url]
+    public string $category = '';
+
     /** @var array<int, array{start: string, sets: string}> */
     public array $rows = [];
 
@@ -189,7 +193,11 @@ class TournamentScorer extends Component
             ->sortBy(fn (string $court) => [($venue = TrainingSession::venueForCourt($court)) ? 0 : 1, $venue ? $order[$venue] : 0, mb_strtolower($court)])
             ->values();
         $categoryIds = $matches->filter(fn (TournamentMatch $match) => filled($match->court))->mapWithKeys(fn (TournamentMatch $match) => [$match->court => $match->tournament_category_id])->all();
-        $shown = $matches->when($this->court !== '', fn (Collection $all) => $all->where('court', $this->court))->values();
+        $categories = $matches->pluck('category')->filter()->unique('id')->sortBy('display_order')->values();
+        $shown = $matches
+            ->when($this->court !== '', fn (Collection $all) => $all->where('court', $this->court))
+            ->when($this->category !== '', fn (Collection $all) => $all->where('tournament_category_id', (int) $this->category))
+            ->values();
 
         foreach ($shown as $match) {
             $this->rows[$match->id] ??= [
@@ -202,6 +210,7 @@ class TournamentScorer extends Component
         return view('livewire.tournament-scorer', [
             'matches' => $shown,
             'courts' => $courts,
+            'categories' => $categories,
             'categoryIds' => $categoryIds,
             'days' => $this->days(),
         ]);
