@@ -68,26 +68,33 @@
                 <table class="mt-4 w-full border-collapse text-sm">
                     <thead>
                         <tr class="text-left text-xs tracking-wide text-white uppercase" style="background: {{ $category->color() }}">
-                            <th class="w-20 px-2 py-1.5 font-semibold sm:w-24 print:w-24">Dzień</th>
-                            <th class="w-16 px-2 py-1.5 font-semibold">Godzina</th>
-                            <th class="hidden w-48 px-2 py-1.5 font-semibold sm:table-cell print:table-cell">Boisko</th>
+                            <th class="hidden w-24 px-2 py-1.5 font-semibold sm:table-cell print:table-cell">Dzień</th>
+                            <th class="w-14 px-2 py-1.5 font-semibold sm:w-16"><span class="sm:hidden print:hidden">Godz.</span><span class="hidden sm:inline print:inline">Godzina</span></th>
+                            <th class="px-2 py-1.5 font-semibold sm:w-48 print:w-48">Boisko</th>
                             <th class="px-2 py-1.5 font-semibold">Spotkanie</th>
                         </tr>
                     </thead>
                     @foreach($sheet['days'] as $day => $rows)
                         <tbody class="border-b-2 border-zinc-300">
+                            {{-- Na telefonie dzień jest nagłówkiem nad meczami zamiast osobnej kolumny --}}
+                            <tr class="bg-zinc-100 sm:hidden print:hidden">
+                                <td colspan="3" class="px-2 py-1.5 text-xs font-bold tracking-wide text-zinc-700 uppercase">
+                                    {{ $day ? \Illuminate\Support\Carbon::parse($day)->translatedFormat('l, d.m') : 'Bez terminu' }}
+                                </td>
+                            </tr>
                             @foreach($rows as $row)
                                 <tr class="border-t border-zinc-200 align-top odd:bg-white even:bg-zinc-50">
-                                    <td class="px-2 py-1.5 font-semibold">
+                                    <td class="hidden px-2 py-1.5 font-semibold sm:table-cell print:table-cell">
                                         @if($loop->first)
                                             {{ $day ? \Illuminate\Support\Carbon::parse($day)->translatedFormat('l') : 'Bez terminu' }}
                                             @if($day)<span class="block text-xs font-normal text-zinc-500">{{ \Illuminate\Support\Carbon::parse($day)->format('d.m') }}</span>@endif
                                         @endif
                                     </td>
                                     <td class="px-2 py-1.5 font-semibold tabular-nums">{{ $row['time'] ?? '—' }}</td>
-                                    <td class="hidden px-2 py-1.5 sm:table-cell print:table-cell">
+                                    <td class="px-2 py-1.5">
                                         @if($row['court'])
-                                            <span class="inline-flex items-center gap-1.5">@if($row['icon'])<x-court-icon :icon="$row['icon']" class="!h-3 !w-5" />@endif{{ $row['court'] }}</span>
+                                            {{-- Na telefonie sama nazwa boiska (np. „Sektor II”), pełna z halą od tabletu i na wydruku --}}
+                                            <span class="inline-flex items-center gap-1.5 whitespace-nowrap sm:whitespace-normal">@if($row['icon'])<x-court-icon :icon="$row['icon']" class="!h-3 !w-5 shrink-0" />@endif<span class="sm:hidden print:hidden">{{ \Illuminate\Support\Str::afterLast($row['court'], ' · ') }}</span><span class="hidden sm:inline print:inline">{{ $row['court'] }}</span></span>
                                         @else
                                             <span class="text-zinc-400">do ustalenia</span>
                                         @endif
@@ -95,10 +102,6 @@
                                     <td class="px-2 py-1.5">
                                         @if($row['title'])<span class="mr-1 text-xs font-semibold text-zinc-500 uppercase">{{ $row['title'] }}:</span>@elseif($row['group'] && $sheet['groups']->isNotEmpty())<span class="mr-1 text-xs font-semibold text-zinc-500">{{ $row['group'] }}:</span>@endif
                                         {{ $row['home'] }} – {{ $row['away'] }}
-                                        {{-- Na wąskim ekranie boisko schodzi pod spotkanie zamiast łamać się w osobnej kolumnie --}}
-                                        <span class="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500 sm:hidden print:hidden">
-                                            @if($row['court'])@if($row['icon'])<x-court-icon :icon="$row['icon']" class="!h-3 !w-5" />@endif{{ $row['court'] }}@else do ustalenia @endif
-                                        </span>
                                     </td>
                                 </tr>
                             @endforeach
