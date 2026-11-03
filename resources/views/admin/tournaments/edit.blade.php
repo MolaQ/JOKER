@@ -10,7 +10,8 @@
         <p class="mt-2 text-sm text-gray-700">{{ $tournament->dateRangeLabel() }} · strona turnieju z kategoriami wiekowymi, grupami, drabinką i informatorem.</p>
     </div>
 
-    <div class="rounded-lg bg-white p-4 shadow ring-1 ring-zinc-200 sm:p-6">
+    {{-- Na telefonie panel od krawędzi do krawędzi: karty meczów i grup dostają całą szerokość ekranu --}}
+    <div class="-mx-4 bg-white px-3 py-4 shadow ring-1 ring-zinc-200 sm:mx-0 sm:rounded-lg sm:p-6">
         @livewire('admin.tournament-editor', ['tournament' => $tournament])
     </div>
 </div>

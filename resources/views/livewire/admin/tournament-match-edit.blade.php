@@ -1,5 +1,5 @@
 {{-- Edycja meczu turnieju w panelu: numer, faza i pozycja w drabince, etykieta, miejsce, skąd drużyny --}}
-<div class="grid gap-3 rounded-md bg-blue-50 p-3 sm:grid-cols-2 lg:col-span-5 lg:grid-cols-4">
+<div class="grid gap-3 rounded-md bg-blue-50 p-3 sm:grid-cols-2 lg:col-span-full lg:grid-cols-4">
     <div>
         <label class="{{ $label }}">Numer meczu</label>
         <input type="number" min="1" wire:model.blur.live="editMatch.number" class="{{ $input }}">
