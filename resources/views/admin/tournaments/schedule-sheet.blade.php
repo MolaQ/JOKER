@@ -68,9 +68,9 @@
                 <table class="mt-4 w-full border-collapse text-sm">
                     <thead>
                         <tr class="text-left text-xs tracking-wide text-white uppercase" style="background: {{ $category->color() }}">
-                            <th class="w-24 px-2 py-1.5 font-semibold">Dzień</th>
+                            <th class="w-20 px-2 py-1.5 font-semibold sm:w-24 print:w-24">Dzień</th>
                             <th class="w-16 px-2 py-1.5 font-semibold">Godzina</th>
-                            <th class="w-48 px-2 py-1.5 font-semibold">Boisko</th>
+                            <th class="hidden w-48 px-2 py-1.5 font-semibold sm:table-cell print:table-cell">Boisko</th>
                             <th class="px-2 py-1.5 font-semibold">Spotkanie</th>
                         </tr>
                     </thead>
@@ -85,7 +85,7 @@
                                         @endif
                                     </td>
                                     <td class="px-2 py-1.5 font-semibold tabular-nums">{{ $row['time'] ?? '—' }}</td>
-                                    <td class="px-2 py-1.5">
+                                    <td class="hidden px-2 py-1.5 sm:table-cell print:table-cell">
                                         @if($row['court'])
                                             <span class="inline-flex items-center gap-1.5">@if($row['icon'])<x-court-icon :icon="$row['icon']" class="!h-3 !w-5" />@endif{{ $row['court'] }}</span>
                                         @else
@@ -95,6 +95,10 @@
                                     <td class="px-2 py-1.5">
                                         @if($row['title'])<span class="mr-1 text-xs font-semibold text-zinc-500 uppercase">{{ $row['title'] }}:</span>@elseif($row['group'] && $sheet['groups']->isNotEmpty())<span class="mr-1 text-xs font-semibold text-zinc-500">{{ $row['group'] }}:</span>@endif
                                         {{ $row['home'] }} – {{ $row['away'] }}
+                                        {{-- Na wąskim ekranie boisko schodzi pod spotkanie zamiast łamać się w osobnej kolumnie --}}
+                                        <span class="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500 sm:hidden print:hidden">
+                                            @if($row['court'])@if($row['icon'])<x-court-icon :icon="$row['icon']" class="!h-3 !w-5" />@endif{{ $row['court'] }}@else do ustalenia @endif
+                                        </span>
                                     </td>
                                 </tr>
                             @endforeach
