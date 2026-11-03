@@ -908,6 +908,13 @@ table[data-sortable] > thead th:not([data-nosort]) {
     &:hover::after {
         opacity: 0.8;
     }
+
+    /* Na wąskim telefonie szara strzałka zabiera miejsce nazwie drużyny; widać tylko strzałkę sortowanej kolumny. */
+    @media (width < 40rem) {
+        &:not([aria-sort])::after {
+            content: none;
+        }
+    }
 }
 
 /*

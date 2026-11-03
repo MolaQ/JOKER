@@ -118,20 +118,20 @@
                             <table data-sortable class="w-full text-sm">
                                 <thead class="bg-zinc-50 text-xs font-semibold text-zinc-500 uppercase">
                                     <tr>
-                                        <th class="px-3 sm:px-4 py-2 text-left">#</th>
+                                        <th class="px-2 sm:px-4 py-2 text-left">#</th>
                                         <th class="px-1.5 sm:px-2 py-2 text-left">{{ __('Drużyna') }}</th>
                                         <th class="px-1.5 sm:px-2 py-2 text-center" title="{{ __('Mecze') }}">M</th>
                                         <th class="hidden px-1.5 sm:px-2 py-2 text-center sm:table-cell" title="{{ __('Wygrane') }}">W</th>
                                         <th class="hidden px-1.5 sm:px-2 py-2 text-center sm:table-cell" title="{{ __('Porażki') }}">P</th>
                                         <th class="px-1.5 sm:px-2 py-2 text-center">{{ __('Sety') }}</th>
                                         <th class="hidden px-1.5 sm:px-2 py-2 text-center sm:table-cell">{{ __('Małe pkt') }}</th>
-                                        <th class="px-3 sm:px-4 py-2 text-center">{{ __('Pkt') }}</th>
+                                        <th class="px-2 sm:px-4 py-2 text-center">{{ __('Pkt') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-zinc-100">
                                     @foreach($bracket->groupTable($group) as $row)
                                         <tr @class(['bg-sky-club/10 font-semibold' => $row['participant']->isOwnTeam()])>
-                                            <td class="px-3 sm:px-4 py-2.5 font-bold">{{ $row['position'] }}</td>
+                                            <td class="px-2 sm:px-4 py-2.5 font-bold">{{ $row['position'] }}</td>
                                             <td class="w-full max-w-0 px-1.5 sm:px-2 py-2.5">
                                                 <span class="flex items-center gap-2">
                                                     <x-avatar logo :photo="$row['participant']->logoPath()" :name="$row['participant']->name()" class="h-6 w-6 shrink-0 rounded-full text-[9px]" />
@@ -143,12 +143,12 @@
                                             <td class="hidden px-1.5 sm:px-2 py-2.5 text-center text-red-600 tabular-nums sm:table-cell">{{ $row['lost'] }}</td>
                                             <td class="px-1.5 sm:px-2 py-2.5 text-center tabular-nums">{{ $row['sets_won'] }}:{{ $row['sets_lost'] }}</td>
                                             <td class="hidden px-1.5 sm:px-2 py-2.5 text-center text-zinc-500 tabular-nums sm:table-cell">{{ $row['small_won'] }}:{{ $row['small_lost'] }}</td>
-                                            <td class="px-3 sm:px-4 py-2.5 text-center font-display text-lg font-bold tabular-nums">{{ $row['points'] }}</td>
+                                            <td class="px-2 sm:px-4 py-2.5 text-center font-display text-lg font-bold tabular-nums">{{ $row['points'] }}</td>
                                         </tr>
                                     @endforeach
                                     @foreach($bracket->members($group)->whereNull('participant')->reject(fn ($member) => str_starts_with($member['key'], 'participant:')) as $member)
                                         <tr class="text-zinc-400 italic">
-                                            <td class="px-3 sm:px-4 py-2.5 font-bold not-italic">–</td>
+                                            <td class="px-2 sm:px-4 py-2.5 font-bold not-italic">–</td>
                                             <td class="px-1.5 sm:px-2 py-2.5" colspan="7">{{ $member['text'] }}</td>
                                         </tr>
                                     @endforeach

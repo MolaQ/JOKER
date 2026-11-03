@@ -191,7 +191,8 @@
                                             'ring-zinc-200 hover:ring-sky-club/50' => ! $ownMatch,
                                         ])
                                     >
-                                        <header class="flex items-center gap-2 border-b border-zinc-100 px-3 py-2">
+                                        {{-- Gdy nazwa fazy i boisko nie mieszczą się w jednej linii, boisko schodzi niżej zamiast ucinać nazwę --}}
+                                        <header class="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-zinc-100 px-3 py-2">
                                             <span class="rounded-md bg-(--tm-number-bg) px-1.5 text-sm font-bold text-(--tm-number-text) tabular-nums">#{{ $match->number }}</span>
                                             @if($tournament)
                                                 <a href="{{ route('tournaments.matches.show', [$tournament, $match]) }}"
@@ -218,7 +219,8 @@
                                                 @if($match->court)
                                                     <span @class(['inline-flex items-center gap-1 text-xs text-zinc-500', 'md:hidden' => $column && $courtColumns->count() === 2, 'lg:hidden' => $column && $courtColumns->count() === 3])>
                                                         @if($courtIcon = \App\Support\TournamentHalls::icon($match->court, $match->tournament_category_id))<x-court-icon :icon="$courtIcon" />@else<svg class="size-3.5 text-zinc-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="m9.69 18.933.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 1 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.273 1.765 11.842 11.842 0 0 0 .976.544l.062.029.018.008.006.003ZM10 11.25a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5Z" clip-rule="evenodd"/></svg>@endif
-                                                        {{ \App\Support\TournamentHalls::label($match->court, $match->tournament_category_id) }}
+                                                        {{-- Na telefonie bez nazwy hali klubowej („Sektor I”), żeby nazwa fazy zmieściła się obok --}}
+                                                        @if(\App\Models\TrainingSession::venueForCourt($match->court))<span class="hidden sm:inline">{{ \App\Support\TournamentHalls::mainName().\App\Support\TournamentHalls::SEPARATOR }}</span>{{ \App\Models\TrainingSession::courtLabel($match->court) }}@else{{ \App\Support\TournamentHalls::label($match->court, $match->tournament_category_id) }}@endif
                                                     </span>
                                                 @endif
                                             </span>
