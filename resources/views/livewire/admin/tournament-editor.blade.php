@@ -452,8 +452,10 @@
         <div class="space-y-6">
             {{-- Dodawanie meczu i harmonogram obok siebie (na telefonie jeden pod drugim) --}}
             <div class="grid items-start gap-6 xl:grid-cols-2">
-                <form wire:submit="addMatch" class="space-y-3 rounded-lg border border-dashed border-gray-300 p-4">
-                    <h3 class="font-semibold text-gray-900">Dodaj mecz</h3>
+                <form wire:submit="addMatch" x-data="{ open: {{ $category->matches->isEmpty() ? 'true' : 'false' }} || matchMedia('(min-width: 1280px)').matches }" class="space-y-3 rounded-lg border border-dashed border-gray-300 p-4">
+                    {{-- W trakcie turnieju (są już mecze) formularz na telefonie jest zwinięty, żeby lista meczów z wynikami była od razu pod ręką --}}
+                    <button type="button" x-on:click="open = ! open" class="flex w-full items-center justify-between gap-2 text-left xl:pointer-events-none" :aria-expanded="open"><h3 class="font-semibold text-gray-900">Dodaj mecz</h3><span class="text-sm text-gray-500 xl:hidden" x-text="open ? 'zwiń ▴' : 'rozwiń ▾'"></span></button>
+                    <div x-show="open" class="space-y-3">
                     <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-3">
                         <div>
                             <label class="{{ $label }}">Etap</label>
@@ -535,13 +537,15 @@
                             <button type="submit" class="{{ $primary }}">Dodaj mecz</button>
                         </div>
                     </div>
+                    </div>
                 </form>
                 {{-- Harmonogram: pierwszy mecz i odstęp; zmiana godziny meczu przesuwa kolejne na tym samym sektorze --}}
                 @if($category->matches->isNotEmpty())
-                    <div class="rounded-lg border border-gray-200 bg-white p-4">
+                    <div x-data="{ open: matchMedia('(min-width: 1280px)').matches }" class="rounded-lg border border-gray-200 bg-white p-4">
                         <div class="flex flex-wrap items-center gap-2">
-                            <h3 class="font-semibold text-gray-900">Harmonogram</h3>
+                            <button type="button" x-on:click="open = ! open" class="flex w-full items-center justify-between gap-2 text-left xl:pointer-events-none" :aria-expanded="open"><h3 class="font-semibold text-gray-900">Harmonogram</h3><span class="text-sm text-gray-500 xl:hidden" x-text="open ? 'zwiń ▴' : 'rozwiń ▾'"></span></button>
                         </div>
+                        <div x-show="open">
                         {{-- Dni turnieju: każdy dzień zaczyna się od podanego meczu, na każdym sektorze od godziny rozpoczęcia --}}
                         <div class="mt-3 space-y-2">
                             @foreach($scheduleDays as $index => $day)
@@ -587,6 +591,7 @@
                         </div>
                         @error('matchInterval') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                         <p class="mt-2 text-xs text-gray-500">Zmiana godziny meczu przesuwa o tyle samo kolejne mecze tego dnia na tym samym sektorze, także z innych kategorii. Mecze trwające i z wynikiem się nie ruszają. Zmiana w dniu meczu pokazuje kibicom opóźnienie.</p>
+                        </div>
                     </div>
                 @endif
             </div>
@@ -643,9 +648,9 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <input type="text" wire:model.blur.live="results.{{ $tournamentMatch->id }}.sets" class="{{ $input }}" placeholder="25:20, 23:25, 15:12">
+                                        <input type="text" wire:model.blur.live="results.{{ $tournamentMatch->id }}.sets" class="{{ $input }} placeholder:text-gray-300" placeholder="np. 25:20, 23:25, 15:12">
                                         @error("results.{$tournamentMatch->id}.sets") <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                                        <input type="text" wire:model.blur.live="results.{{ $tournamentMatch->id }}.mvp" maxlength="120" class="{{ $input }} mt-1" placeholder="Wyróżnienie (opcjonalnie), np. MVP: Jan Kowalski" aria-label="Wyróżnienie meczu">
+                                        <input type="text" wire:model.blur.live="results.{{ $tournamentMatch->id }}.mvp" maxlength="120" class="{{ $input }} mt-1 placeholder:text-gray-300" placeholder="Wyróżnienie (opcjonalnie), np. MVP: Jan Kowalski" aria-label="Wyróżnienie meczu">
                                     </div>
                                     <div>
                                         <x-datetime-input :model="'results.'.$tournamentMatch->id.'.starts_at'" live class="{{ $input }}" />
