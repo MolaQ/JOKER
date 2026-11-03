@@ -37,6 +37,14 @@
                     <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/>
             @endswitch
         </g>
+    @elseif($parts === 2 && $part !== null)
+        {{-- Dwa osobne boiska (np. w szkole): całe pole w kolorze obiektu z numerem boiska I albo II --}}
+        @php
+            [$r, $g, $b] = sscanf($court, '#%02x%02x%02x');
+            $ink = $r * 0.299 + $g * 0.587 + $b * 0.114 < 160 ? '#ffffff' : '#18181b';
+        @endphp
+        <rect x="1" y="1" width="46" height="28" rx="4" fill="{{ $court }}" stroke="{{ $court }}" stroke-width="1.5"/>
+        <text x="24" y="21.5" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="17" font-weight="800" fill="{{ $ink }}">{{ $part === 0 ? 'I' : 'II' }}</text>
     @elseif($venue === 'main')
         <rect x="1" y="1" width="46" height="28" rx="4" fill="{{ $court }}" stroke="{{ $court }}" stroke-width="1.5"/>
     @else
