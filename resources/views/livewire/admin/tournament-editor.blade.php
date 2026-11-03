@@ -47,6 +47,13 @@
             @empty
                 <span class="text-sm text-gray-500">Najpierw dodaj kategorię wiekową w zakładce „Kategorie”.</span>
             @endforelse
+            @if($section === 'mecze' && $category)
+                {{-- Rozpiska dla gości wybranej kategorii: kartka A4 z logo, meczami i adresami hal (druk albo PDF) --}}
+                <a href="{{ route('admin.tournaments.schedule-sheet', [$tournament, 'category' => $category->id]) }}" target="_blank" class="ml-auto inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-md bg-white px-3 py-1 sm:min-h-0 text-sm font-semibold text-gray-700 ring-1 ring-gray-300 hover:bg-gray-50">
+                    <svg class="size-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5 2.75C5 1.784 5.784 1 6.75 1h6.5c.966 0 1.75.784 1.75 1.75v3.552c.377.046.752.097 1.126.153A2.212 2.212 0 0 1 18 8.653v4.097A2.25 2.25 0 0 1 15.75 15h-.241l.305 1.984A1.75 1.75 0 0 1 14.084 19H5.915a1.75 1.75 0 0 1-1.73-2.016L4.492 15H4.25A2.25 2.25 0 0 1 2 12.75V8.653c0-1.082.775-2.034 1.874-2.198.374-.056.75-.107 1.127-.153L5 6.25v-3.5Zm8.5 3.397a41.533 41.533 0 0 0-7 0V2.75a.25.25 0 0 1 .25-.25h6.5a.25.25 0 0 1 .25.25v3.397ZM6.608 12.5a.25.25 0 0 0-.247.212l-.693 4.5a.25.25 0 0 0 .247.288h8.17a.25.25 0 0 0 .246-.288l-.692-4.5a.25.25 0 0 0-.247-.212H6.608Z" clip-rule="evenodd"/></svg>
+                    Rozpiska dla gości
+                </a>
+            @endif
         </div>
     @endif
 
@@ -443,90 +450,228 @@
 
     @if($section === 'mecze' && $category)
         <div class="space-y-6">
-            <form wire:submit="addMatch" class="space-y-3 rounded-lg border border-dashed border-gray-300 p-4">
-                <h3 class="font-semibold text-gray-900">Dodaj mecz</h3>
-                <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                    <div>
-                        <label class="{{ $label }}">Etap</label>
-                        <select wire:model.live="match.stage" class="{{ $input }}">
-                            @foreach(\App\Models\TournamentMatch::STAGES as $value => $name)
-                                <option value="{{ $value }}">{{ $name }}</option>
+            {{-- Dodawanie meczu i harmonogram obok siebie (na telefonie jeden pod drugim) --}}
+            <div class="grid items-start gap-6 xl:grid-cols-2">
+                <form wire:submit="addMatch" class="space-y-3 rounded-lg border border-dashed border-gray-300 p-4">
+                    <h3 class="font-semibold text-gray-900">Dodaj mecz</h3>
+                    <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-3">
+                        <div>
+                            <label class="{{ $label }}">Etap</label>
+                            <select wire:model.live="match.stage" class="{{ $input }}">
+                                @foreach(\App\Models\TournamentMatch::STAGES as $value => $name)
+                                    <option value="{{ $value }}">{{ $name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @if($match['stage'] === 'group')
+                            <div>
+                                <label class="{{ $label }}">Grupa</label>
+                                <select wire:model="match.group" class="{{ $input }}">
+                                    <option value="">—</option>
+                                    @foreach($category->groups as $group)
+                                        <option value="{{ $group->id }}">{{ $group->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('match.group') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                        @elseif($match['stage'] === 'playoff')
+                            <div>
+                                <label class="{{ $label }}">Faza = kolumna (1 = pierwsza)</label>
+                                <input type="number" min="1" wire:model="match.bracket_round" class="{{ $input }}">
+                                @error('match.bracket_round') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="{{ $label }}">Nazwa fazy</label>
+                                <input type="text" wire:model="match.phase_name" class="{{ $input }}" placeholder="np. Półfinały, Finały">
+                            </div>
+                            <div>
+                                <label class="{{ $label }}">Decyduje o miejscu</label>
+                                <select wire:model="match.decides_place" class="{{ $input }}">
+                                    <option value="">— nie (np. półfinał) —</option>
+                                    <option value="1">1. miejsce (finał)</option>
+                                    @foreach([3, 5, 7, 9, 11, 13, 15] as $place)
+                                        <option value="{{ $place }}">o {{ $place }}. miejsce</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="{{ $label }}">Pozycja w kolumnie</label>
+                                <input type="number" min="1" wire:model="match.bracket_slot" class="{{ $input }}" placeholder="kolejność od góry">
+                            </div>
+                            <div>
+                                <label class="{{ $label }}">Drabinka</label>
+                                <select wire:model="match.placement" class="{{ $input }}">
+                                    <option value="">główna (o 1. miejsce)</option>
+                                    @foreach([3, 5, 7, 9, 11, 13] as $from)
+                                        <option value="{{ $from }}">o miejsca od {{ $from }}. (np. {{ $from }}–{{ $from + 3 }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @else
+                            <div>
+                                <label class="{{ $label }}">Mecz o miejsce</label>
+                                <input type="number" min="1" wire:model="match.placement" class="{{ $input }}" placeholder="np. 7 → o 7.–8.">
+                                @error('match.placement') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                        @endif
+                        <div>
+                            <label class="{{ $label }}">Etykieta</label>
+                            <input type="text" wire:model="match.label" class="{{ $input }}" placeholder="opcjonalnie, np. Półfinał 1, Mecz o 3. miejsce">
+                        </div>
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-4 xl:grid-cols-2">
+                        @include('livewire.admin.tournament-match-sides', ['prefix' => 'match', 'data' => $match, 'sourceOptions' => \App\Support\TournamentBracket::sourceOptions($category)])
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-4 xl:grid-cols-2">
+                        <div>
+                            <label class="{{ $label }}">Termin</label>
+                            <x-datetime-input model="match.starts_at" class="{{ $input }}" />
+                        </div>
+                        <div>
+                            <label class="{{ $label }}">Boisko / hala</label>
+                            <x-court-picker :halls="$extraHalls" :main="$mainVenues" model="match.court" :value="$match['court'] ?? null" />
+                        </div>
+                        <div class="sm:col-span-2 flex items-end">
+                            <button type="submit" class="{{ $primary }}">Dodaj mecz</button>
+                        </div>
+                    </div>
+                </form>
+                {{-- Harmonogram: pierwszy mecz i odstęp; zmiana godziny meczu przesuwa kolejne na tym samym sektorze --}}
+                @if($category->matches->isNotEmpty())
+                    <div class="rounded-lg border border-gray-200 bg-white p-4">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h3 class="font-semibold text-gray-900">Harmonogram</h3>
+                        </div>
+                        {{-- Dni turnieju: każdy dzień zaczyna się od podanego meczu, na każdym sektorze od godziny rozpoczęcia --}}
+                        <div class="mt-3 space-y-2">
+                            @foreach($scheduleDays as $index => $day)
+                                <div class="flex flex-wrap items-center gap-2 text-sm" wire:key="schedule-day-{{ $index }}">
+                                    <span class="w-16 font-semibold text-gray-900">Dzień {{ $index + 1 }}</span>
+                                    <input type="date" wire:model.blur.live="scheduleDays.{{ $index }}.date" class="{{ str_replace('w-full', 'w-40', $input) }}" aria-label="Data dnia {{ $index + 1 }}">
+                                    <span class="text-gray-500">od</span>
+                                    <x-time-input :model="'scheduleDays.'.$index.'.time'" live class="{{ str_replace('w-full', 'w-32', $input) }}" aria-label="Godzina pierwszego meczu dnia {{ $index + 1 }}" />
+                                    <span class="text-gray-500">mecze od</span>
+                                    <span class="inline-flex items-center gap-1">#<input type="number" min="1" wire:model.blur.live="scheduleDays.{{ $index }}.from" @disabled($index === 0) placeholder="nr" class="{{ str_replace('w-full', 'w-20', $input) }} disabled:bg-gray-50" aria-label="Pierwszy mecz dnia {{ $index + 1 }}"></span>
+                                    @if($index > 0)
+                                        <button type="button" wire:click="removeScheduleDay({{ $index }})" class="text-xs text-red-600 hover:text-red-800">Usuń dzień</button>
+                                    @endif
+                                    @error("scheduleDays.{$index}.date") <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                                    @error("scheduleDays.{$index}.time") <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                                    @error("scheduleDays.{$index}.from") <span class="text-xs text-red-600">{{ $message }}</span> @enderror
+                                </div>
                             @endforeach
-                        </select>
+                            <button type="button" wire:click="addScheduleDay" class="text-sm font-semibold text-sky-700 hover:text-sky-900">+ Dodaj dzień</button>
+                        </div>
+                        <div class="mt-3 flex flex-wrap items-end gap-3 border-t border-gray-100 pt-3">
+                            @if($extraHalls !== [])
+                                <label class="block w-56 text-sm">
+                                    <span class="text-gray-700">Obiekt kategorii</span>
+                                    <select wire:model.live="categoryHall" class="{{ $input }} mt-1">
+                                        <option value="">{{ \App\Support\TournamentHalls::mainName() }}</option>
+                                        @foreach($extraHalls as $hall)
+                                            <option value="{{ $hall['name'] }}">{{ $hall['name'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </label>
+                            @endif
+                            <label class="block w-40 text-sm">
+                                <span class="text-gray-700">Odstęp na sektorze</span>
+                                <input type="text" wire:model.blur.live="matchInterval" placeholder="1:30" class="{{ $input }} mt-1">
+                            </label>
+                            <button type="button" wire:click="arrangeSchedule" wire:confirm="Ustawić godziny wszystkim meczom tej kategorii? Każdego dnia na każdym sektorze pierwszy mecz zacznie się o godzinie rozpoczęcia dnia, a kolejne (według numeru) co odstęp. Mecze trwające i z wynikiem zostaną bez zmian." class="{{ $primary }}">Ułóż godziny według numerów</button>
+                            <button type="button" wire:click="resetSchedule" wire:confirm="Usunąć daty i godziny wszystkich meczów tej kategorii? Sektory zostaną, mecze trwające i z wynikiem bez zmian. Można to cofnąć." class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-100">Resetuj harmonogram</button>
+                            <label class="inline-flex items-center gap-2 pb-2 text-sm text-gray-700">
+                                <input type="checkbox" wire:model.live="shiftFollowing" class="rounded border-gray-300">
+                                Przesuwaj kolejne mecze na sektorze, gdy zmienię godzinę
+                            </label>
+                        </div>
+                        @error('matchInterval') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                        <p class="mt-2 text-xs text-gray-500">Zmiana godziny meczu przesuwa o tyle samo kolejne mecze tego dnia na tym samym sektorze, także z innych kategorii. Mecze trwające i z wynikiem się nie ruszają. Zmiana w dniu meczu pokazuje kibicom opóźnienie.</p>
                     </div>
-                    @if($match['stage'] === 'group')
-                        <div>
-                            <label class="{{ $label }}">Grupa</label>
-                            <select wire:model="match.group" class="{{ $input }}">
-                                <option value="">—</option>
-                                @foreach($category->groups as $group)
-                                    <option value="{{ $group->id }}">{{ $group->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('match.group') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                    @elseif($match['stage'] === 'playoff')
-                        <div>
-                            <label class="{{ $label }}">Faza = kolumna (1 = pierwsza)</label>
-                            <input type="number" min="1" wire:model="match.bracket_round" class="{{ $input }}">
-                            @error('match.bracket_round') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                        <div>
-                            <label class="{{ $label }}">Nazwa fazy</label>
-                            <input type="text" wire:model="match.phase_name" class="{{ $input }}" placeholder="np. Półfinały, Finały">
-                        </div>
-                        <div>
-                            <label class="{{ $label }}">Decyduje o miejscu</label>
-                            <select wire:model="match.decides_place" class="{{ $input }}">
-                                <option value="">— nie (np. półfinał) —</option>
-                                <option value="1">1. miejsce (finał)</option>
-                                @foreach([3, 5, 7, 9, 11, 13, 15] as $place)
-                                    <option value="{{ $place }}">o {{ $place }}. miejsce</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="{{ $label }}">Pozycja w kolumnie</label>
-                            <input type="number" min="1" wire:model="match.bracket_slot" class="{{ $input }}" placeholder="kolejność od góry">
-                        </div>
-                        <div>
-                            <label class="{{ $label }}">Drabinka</label>
-                            <select wire:model="match.placement" class="{{ $input }}">
-                                <option value="">główna (o 1. miejsce)</option>
-                                @foreach([3, 5, 7, 9, 11, 13] as $from)
-                                    <option value="{{ $from }}">o miejsca od {{ $from }}. (np. {{ $from }}–{{ $from + 3 }})</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    @else
-                        <div>
-                            <label class="{{ $label }}">Mecz o miejsce</label>
-                            <input type="number" min="1" wire:model="match.placement" class="{{ $input }}" placeholder="np. 7 → o 7.–8.">
-                            @error('match.placement') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                    @endif
-                    <div>
-                        <label class="{{ $label }}">Etykieta</label>
-                        <input type="text" wire:model="match.label" class="{{ $input }}" placeholder="opcjonalnie, np. Półfinał 1, Mecz o 3. miejsce">
-                    </div>
+                @endif
+            </div>
+
+            @if($scheduleUndo)
+                <div class="flex flex-wrap items-center gap-3 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-900 ring-1 ring-emerald-200" role="status">
+                    <span>✓ {{ $scheduleUndo['message'] }}</span>
+                    <button type="button" wire:click="undoSchedule" class="ml-auto font-semibold underline hover:text-emerald-700">Cofnij</button>
+                    <button type="button" wire:click="dismissScheduleUndo" class="text-emerald-700 hover:text-emerald-900" aria-label="Zamknij">×</button>
                 </div>
-                <div class="grid gap-3 sm:grid-cols-4">
-                    @include('livewire.admin.tournament-match-sides', ['prefix' => 'match', 'data' => $match, 'sourceOptions' => \App\Support\TournamentBracket::sourceOptions($category)])
+            @endif
+
+            @if($category->matches->count() > 1)
+                <div class="flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
+                    <button type="button" wire:click="renumberMatchesBySchedule" wire:confirm="Nadać meczom numery 1, 2, 3… według terminu (a przy tej samej godzinie według boiska)?" class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-800 hover:bg-gray-100">Numeruj według harmonogramu</button>
+                    <span class="text-xs text-gray-500">Numery nadajesz raz, przed turniejem. Późniejsza zmiana godziny albo boiska nie zmienia numeru meczu.</span>
                 </div>
-                <div class="grid gap-3 sm:grid-cols-4">
+            @endif
+
+            {{-- Dwie listy: faza grupowa oraz drabinka razem z meczami o miejsca (numeracja wspólna, kolejność dowolna) --}}
+            @foreach(['group' => 'Faza grupowa', 'knockout' => 'Drabinka i mecze o miejsca'] as $list => $stageName)
+                @php
+                    $stageMatches = $category->matches->filter(fn ($m) => ($m->stage === \App\Models\TournamentMatch::STAGE_GROUP) === ($list === 'group'))->sortBy(fn ($m) => [$m->number ?? PHP_INT_MAX, $m->id]);
+                @endphp
+                @if($stageMatches->isNotEmpty())
                     <div>
-                        <label class="{{ $label }}">Termin</label>
-                        <x-datetime-input model="match.starts_at" class="{{ $input }}" />
+                        <h3 class="mb-2 font-semibold text-gray-900">{{ $stageName }} <span class="text-xs font-normal text-gray-500">· kolejność i numery zmieniasz, przeciągając mecz za uchwyt ⠿ albo strzałkami</span></h3>
+                        <div class="space-y-2" wire:sort="moveMatch">
+                            @foreach($stageMatches as $tournamentMatch)
+                                <div class="grid gap-2 rounded-lg border border-gray-200 bg-white p-3 lg:grid-cols-[minmax(0,1.6fr)_minmax(8rem,1fr)_16rem_12rem_auto] lg:items-center" wire:key="match-{{ $tournamentMatch->id }}" wire:sort:item="{{ $tournamentMatch->id }}">
+                                    <div class="flex items-center gap-2 text-sm">
+                                        <div class="flex shrink-0 flex-col items-center text-gray-400">
+                                            <button type="button" wire:click="moveMatchBy({{ $tournamentMatch->id }}, -1)" @disabled($loop->first) class="flex size-8 items-center justify-center rounded leading-none hover:bg-gray-100 hover:text-gray-900 disabled:opacity-30 lg:size-auto lg:hover:bg-transparent" aria-label="Przesuń wyżej">▲</button>
+                                            <span wire:sort:handle class="cursor-grab text-lg leading-none hover:text-gray-900 active:cursor-grabbing" title="Przeciągnij, żeby zmienić kolejność">⠿</span>
+                                            <button type="button" wire:click="moveMatchBy({{ $tournamentMatch->id }}, 1)" @disabled($loop->last) class="flex size-8 items-center justify-center rounded leading-none hover:bg-gray-100 hover:text-gray-900 disabled:opacity-30 lg:size-auto lg:hover:bg-transparent" aria-label="Przesuń niżej">▼</button>
+                                        </div>
+                                        <div class="min-w-0">
+                                        <span class="text-xs font-semibold uppercase text-gray-500"><span class="mr-1 rounded bg-gray-900 px-1.5 py-0.5 text-white">#{{ $tournamentMatch->number }}</span>{{ $tournamentMatch->group?->name ?? $tournamentMatch->title() }}</span>
+                                        <div class="flex flex-wrap items-center gap-1">
+                                            @foreach(['home', 'away'] as $side)
+                                                @if($tournamentMatch->{$side})
+                                                    <span class="font-semibold text-gray-900">{{ $tournamentMatch->{$side.'Name'}() }}</span>
+                                                @else
+                                                    <select wire:change="setMatchTeams({{ $tournamentMatch->id }}, '{{ $side }}', $event.target.value)" class="rounded-md border-gray-300 py-1 text-xs">
+                                                        <option value="">{{ $tournamentMatch->{$side.'_placeholder'} ?: 'wybierz drużynę' }}</option>
+                                                        @foreach($category->participants as $participant)
+                                                            <option value="{{ $participant->id }}">{{ $participant->name() }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                @endif
+                                                @if($side === 'home') <button type="button" wire:click="swapMatchSides({{ $tournamentMatch->id }})" class="flex size-8 items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-gray-900 lg:size-auto lg:px-1" title="Zamień gospodarza z gościem" aria-label="Zamień gospodarza z gościem">⇄</button> @endif
+                                            @endforeach
+                                        </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <input type="text" wire:model.blur.live="results.{{ $tournamentMatch->id }}.sets" class="{{ $input }}" placeholder="25:20, 23:25, 15:12">
+                                        @error("results.{$tournamentMatch->id}.sets") <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                                        <input type="text" wire:model.blur.live="results.{{ $tournamentMatch->id }}.mvp" maxlength="120" class="{{ $input }} mt-1" placeholder="Wyróżnienie (opcjonalnie), np. MVP: Jan Kowalski" aria-label="Wyróżnienie meczu">
+                                    </div>
+                                    <div>
+                                        <x-datetime-input :model="'results.'.$tournamentMatch->id.'.starts_at'" live class="{{ $input }}" />
+                                        @if($delay = $tournamentMatch->delayMinutes())
+                                            <p class="mt-1 text-xs"><span class="rounded-full bg-amber-100 px-1.5 font-semibold text-amber-800">{{ $delay > 0 ? '+' : '−' }}{{ abs($delay) }} min</span> <span class="text-gray-500">plan {{ $tournamentMatch->planned_starts_at->format('H:i') }}</span></p>
+                                        @endif
+                                    </div>
+                                    <x-court-picker :halls="$extraHalls" :main="$mainVenues" model="results.{{ $tournamentMatch->id }}.court" :value="$results[$tournamentMatch->id]['court'] ?? null" :free="false" />
+                                    <div class="flex flex-wrap items-center gap-2 lg:gap-3">
+                                        <label @class(['inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full px-3 py-0.5 text-xs lg:min-h-0 lg:px-2 font-semibold ring-1', 'bg-red-50 text-red-700 ring-red-200' => $results[$tournamentMatch->id]['live'] ?? false, 'text-gray-500 ring-gray-200' => ! ($results[$tournamentMatch->id]['live'] ?? false)]) title="Włącz, gdy mecz się zaczął; wyłącz po wpisaniu wyniku końcowego">
+                                            <input type="checkbox" wire:model.live="results.{{ $tournamentMatch->id }}.live" class="size-3.5 rounded border-gray-300 text-red-600">
+                                            Trwa
+                                        </label>
+                                        @if($tournamentMatch->hasStreams())<span class="text-xs text-red-600" title="Mecz ma transmisję">▶</span>@endif
+                                        <button type="button" wire:click="startMatchEdit({{ $tournamentMatch->id }})" class="admin-action">Edytuj</button>
+                                        <button type="button" wire:click="deleteMatch({{ $tournamentMatch->id }})" wire:confirm="Usunąć ten mecz?" class="admin-action admin-action-danger">Usuń</button>
+                                    </div>
+                                    @if($editingMatchId === $tournamentMatch->id)
+                                        @include('livewire.admin.tournament-match-edit', ['tournamentMatch' => $tournamentMatch])
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
-                    <div>
-                        <label class="{{ $label }}">Boisko / hala</label>
-                        <x-court-picker :halls="$extraHalls" :main="$mainVenues" model="match.court" :value="$match['court'] ?? null" />
-                    </div>
-                    <div class="sm:col-span-2 flex items-end">
-                        <button type="submit" class="{{ $primary }}">Dodaj mecz</button>
-                    </div>
-                </div>
-            </form>
+                @endif
+            @endforeach
 
             {{-- Obiekty turnieju: hala klubowa jest zawsze; inne obiekty mają kolor, adres i dowolne sale (sektory, całe boisko) --}}
             <details class="rounded-lg border border-gray-200 bg-white p-4" @if($halls !== []) open @endif>
@@ -632,153 +777,12 @@
                 @error('halls') <p class="mt-2 text-xs text-red-600">{{ $message }}</p> @enderror
             </details>
 
-            {{-- Harmonogram: pierwszy mecz i odstęp; zmiana godziny meczu przesuwa kolejne na tym samym sektorze --}}
-            @if($category->matches->isNotEmpty())
-                <div class="rounded-lg border border-gray-200 bg-white p-4">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <h3 class="font-semibold text-gray-900">Harmonogram</h3>
-                        {{-- Rozpiska dla gości: kartka A4 z logo, meczami i adresami hal (druk albo PDF) --}}
-                        <a href="{{ route('admin.tournaments.schedule-sheet', [$tournament, 'category' => $category->id]) }}" target="_blank" class="ml-auto inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 ring-1 ring-gray-300 hover:bg-gray-50">
-                            <svg class="size-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5 2.75C5 1.784 5.784 1 6.75 1h6.5c.966 0 1.75.784 1.75 1.75v3.552c.377.046.752.097 1.126.153A2.212 2.212 0 0 1 18 8.653v4.097A2.25 2.25 0 0 1 15.75 15h-.241l.305 1.984A1.75 1.75 0 0 1 14.084 19H5.915a1.75 1.75 0 0 1-1.73-2.016L4.492 15H4.25A2.25 2.25 0 0 1 2 12.75V8.653c0-1.082.775-2.034 1.874-2.198.374-.056.75-.107 1.127-.153L5 6.25v-3.5Zm8.5 3.397a41.533 41.533 0 0 0-7 0V2.75a.25.25 0 0 1 .25-.25h6.5a.25.25 0 0 1 .25.25v3.397ZM6.608 12.5a.25.25 0 0 0-.247.212l-.693 4.5a.25.25 0 0 0 .247.288h8.17a.25.25 0 0 0 .246-.288l-.692-4.5a.25.25 0 0 0-.247-.212H6.608Z" clip-rule="evenodd"/></svg>
-                            Rozpiska dla gości
-                        </a>
-                    </div>
-                    {{-- Dni turnieju: każdy dzień zaczyna się od podanego meczu, na każdym sektorze od godziny rozpoczęcia --}}
-                    <div class="mt-3 space-y-2">
-                        @foreach($scheduleDays as $index => $day)
-                            <div class="flex flex-wrap items-center gap-2 text-sm" wire:key="schedule-day-{{ $index }}">
-                                <span class="w-16 font-semibold text-gray-900">Dzień {{ $index + 1 }}</span>
-                                <input type="date" wire:model.blur.live="scheduleDays.{{ $index }}.date" class="{{ str_replace('w-full', 'w-40', $input) }}" aria-label="Data dnia {{ $index + 1 }}">
-                                <span class="text-gray-500">od</span>
-                                <x-time-input :model="'scheduleDays.'.$index.'.time'" live class="{{ str_replace('w-full', 'w-32', $input) }}" aria-label="Godzina pierwszego meczu dnia {{ $index + 1 }}" />
-                                <span class="text-gray-500">mecze od</span>
-                                <span class="inline-flex items-center gap-1">#<input type="number" min="1" wire:model.blur.live="scheduleDays.{{ $index }}.from" @disabled($index === 0) placeholder="nr" class="{{ str_replace('w-full', 'w-20', $input) }} disabled:bg-gray-50" aria-label="Pierwszy mecz dnia {{ $index + 1 }}"></span>
-                                @if($index > 0)
-                                    <button type="button" wire:click="removeScheduleDay({{ $index }})" class="text-xs text-red-600 hover:text-red-800">Usuń dzień</button>
-                                @endif
-                                @error("scheduleDays.{$index}.date") <span class="text-xs text-red-600">{{ $message }}</span> @enderror
-                                @error("scheduleDays.{$index}.time") <span class="text-xs text-red-600">{{ $message }}</span> @enderror
-                                @error("scheduleDays.{$index}.from") <span class="text-xs text-red-600">{{ $message }}</span> @enderror
-                            </div>
-                        @endforeach
-                        <button type="button" wire:click="addScheduleDay" class="text-sm font-semibold text-sky-700 hover:text-sky-900">+ Dodaj dzień</button>
-                    </div>
-                    <div class="mt-3 flex flex-wrap items-end gap-3 border-t border-gray-100 pt-3">
-                        @if($extraHalls !== [])
-                            <label class="block w-56 text-sm">
-                                <span class="text-gray-700">Obiekt kategorii</span>
-                                <select wire:model.live="categoryHall" class="{{ $input }} mt-1">
-                                    <option value="">{{ \App\Support\TournamentHalls::mainName() }}</option>
-                                    @foreach($extraHalls as $hall)
-                                        <option value="{{ $hall['name'] }}">{{ $hall['name'] }}</option>
-                                    @endforeach
-                                </select>
-                            </label>
-                        @endif
-                        <label class="block w-40 text-sm">
-                            <span class="text-gray-700">Odstęp na sektorze</span>
-                            <input type="text" wire:model.blur.live="matchInterval" placeholder="1:30" class="{{ $input }} mt-1">
-                        </label>
-                        <button type="button" wire:click="arrangeSchedule" wire:confirm="Ustawić godziny wszystkim meczom tej kategorii? Każdego dnia na każdym sektorze pierwszy mecz zacznie się o godzinie rozpoczęcia dnia, a kolejne (według numeru) co odstęp. Mecze trwające i z wynikiem zostaną bez zmian." class="{{ $primary }}">Ułóż godziny według numerów</button>
-                        <button type="button" wire:click="resetSchedule" wire:confirm="Usunąć daty i godziny wszystkich meczów tej kategorii? Sektory zostaną, mecze trwające i z wynikiem bez zmian. Można to cofnąć." class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-100">Resetuj harmonogram</button>
-                        <label class="inline-flex items-center gap-2 pb-2 text-sm text-gray-700">
-                            <input type="checkbox" wire:model.live="shiftFollowing" class="rounded border-gray-300">
-                            Przesuwaj kolejne mecze na sektorze, gdy zmienię godzinę
-                        </label>
-                    </div>
-                    @error('matchInterval') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                    <p class="mt-2 text-xs text-gray-500">Zmiana godziny meczu przesuwa o tyle samo kolejne mecze tego dnia na tym samym sektorze, także z innych kategorii. Mecze trwające i z wynikiem się nie ruszają. Zmiana w dniu meczu pokazuje kibicom opóźnienie.</p>
-                </div>
-            @endif
-
             @if($category->matches->isNotEmpty())
                 <details class="group rounded-lg border border-gray-200 bg-white p-4">
-                    <summary class="cursor-pointer font-semibold text-gray-900">Obłożenie sektorów <span class="text-xs font-normal text-gray-500">· wszystkie kategorie, cały turniej</span></summary>
+                    <summary class="cursor-pointer font-semibold text-gray-900">Obłożenie sektorów i hal <span class="text-xs font-normal text-gray-500">· wszystkie kategorie, cały turniej</span></summary>
                     <x-sector-occupancy :tournament="$tournament" class="mt-4" />
                 </details>
             @endif
-
-            @if($scheduleUndo)
-                <div class="flex flex-wrap items-center gap-3 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-900 ring-1 ring-emerald-200" role="status">
-                    <span>✓ {{ $scheduleUndo['message'] }}</span>
-                    <button type="button" wire:click="undoSchedule" class="ml-auto font-semibold underline hover:text-emerald-700">Cofnij</button>
-                    <button type="button" wire:click="dismissScheduleUndo" class="text-emerald-700 hover:text-emerald-900" aria-label="Zamknij">×</button>
-                </div>
-            @endif
-
-            @if($category->matches->count() > 1)
-                <div class="flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
-                    <button type="button" wire:click="renumberMatchesBySchedule" wire:confirm="Nadać meczom numery 1, 2, 3… według terminu (a przy tej samej godzinie według boiska)?" class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-800 hover:bg-gray-100">Numeruj według harmonogramu</button>
-                    <span class="text-xs text-gray-500">Numery nadajesz raz, przed turniejem. Późniejsza zmiana godziny albo boiska nie zmienia numeru meczu.</span>
-                </div>
-            @endif
-
-            {{-- Dwie listy: faza grupowa oraz drabinka razem z meczami o miejsca (numeracja wspólna, kolejność dowolna) --}}
-            @foreach(['group' => 'Faza grupowa', 'knockout' => 'Drabinka i mecze o miejsca'] as $list => $stageName)
-                @php
-                    $stageMatches = $category->matches->filter(fn ($m) => ($m->stage === \App\Models\TournamentMatch::STAGE_GROUP) === ($list === 'group'))->sortBy(fn ($m) => [$m->number ?? PHP_INT_MAX, $m->id]);
-                @endphp
-                @if($stageMatches->isNotEmpty())
-                    <div>
-                        <h3 class="mb-2 font-semibold text-gray-900">{{ $stageName }} <span class="text-xs font-normal text-gray-500">· kolejność i numery zmieniasz, przeciągając mecz za uchwyt ⠿ albo strzałkami</span></h3>
-                        <div class="space-y-2" wire:sort="moveMatch">
-                            @foreach($stageMatches as $tournamentMatch)
-                                <div class="grid gap-2 rounded-lg border border-gray-200 bg-white p-3 lg:grid-cols-[minmax(0,1.6fr)_minmax(8rem,1fr)_16rem_12rem_auto] lg:items-center" wire:key="match-{{ $tournamentMatch->id }}" wire:sort:item="{{ $tournamentMatch->id }}">
-                                    <div class="flex items-center gap-2 text-sm">
-                                        <div class="flex shrink-0 flex-col items-center text-gray-400">
-                                            <button type="button" wire:click="moveMatchBy({{ $tournamentMatch->id }}, -1)" @disabled($loop->first) class="flex size-8 items-center justify-center rounded leading-none hover:bg-gray-100 hover:text-gray-900 disabled:opacity-30 lg:size-auto lg:hover:bg-transparent" aria-label="Przesuń wyżej">▲</button>
-                                            <span wire:sort:handle class="cursor-grab text-lg leading-none hover:text-gray-900 active:cursor-grabbing" title="Przeciągnij, żeby zmienić kolejność">⠿</span>
-                                            <button type="button" wire:click="moveMatchBy({{ $tournamentMatch->id }}, 1)" @disabled($loop->last) class="flex size-8 items-center justify-center rounded leading-none hover:bg-gray-100 hover:text-gray-900 disabled:opacity-30 lg:size-auto lg:hover:bg-transparent" aria-label="Przesuń niżej">▼</button>
-                                        </div>
-                                        <div class="min-w-0">
-                                        <span class="text-xs font-semibold uppercase text-gray-500"><span class="mr-1 rounded bg-gray-900 px-1.5 py-0.5 text-white">#{{ $tournamentMatch->number }}</span>{{ $tournamentMatch->group?->name ?? $tournamentMatch->title() }}</span>
-                                        <div class="flex flex-wrap items-center gap-1">
-                                            @foreach(['home', 'away'] as $side)
-                                                @if($tournamentMatch->{$side})
-                                                    <span class="font-semibold text-gray-900">{{ $tournamentMatch->{$side.'Name'}() }}</span>
-                                                @else
-                                                    <select wire:change="setMatchTeams({{ $tournamentMatch->id }}, '{{ $side }}', $event.target.value)" class="rounded-md border-gray-300 py-1 text-xs">
-                                                        <option value="">{{ $tournamentMatch->{$side.'_placeholder'} ?: 'wybierz drużynę' }}</option>
-                                                        @foreach($category->participants as $participant)
-                                                            <option value="{{ $participant->id }}">{{ $participant->name() }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                @endif
-                                                @if($side === 'home') <button type="button" wire:click="swapMatchSides({{ $tournamentMatch->id }})" class="flex size-8 items-center justify-center rounded text-gray-400 hover:bg-gray-100 hover:text-gray-900 lg:size-auto lg:px-1" title="Zamień gospodarza z gościem" aria-label="Zamień gospodarza z gościem">⇄</button> @endif
-                                            @endforeach
-                                        </div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <input type="text" wire:model.blur.live="results.{{ $tournamentMatch->id }}.sets" class="{{ $input }}" placeholder="25:20, 23:25, 15:12">
-                                        @error("results.{$tournamentMatch->id}.sets") <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                                        <input type="text" wire:model.blur.live="results.{{ $tournamentMatch->id }}.mvp" maxlength="120" class="{{ $input }} mt-1" placeholder="Wyróżnienie (opcjonalnie), np. MVP: Jan Kowalski" aria-label="Wyróżnienie meczu">
-                                    </div>
-                                    <div>
-                                        <x-datetime-input :model="'results.'.$tournamentMatch->id.'.starts_at'" live class="{{ $input }}" />
-                                        @if($delay = $tournamentMatch->delayMinutes())
-                                            <p class="mt-1 text-xs"><span class="rounded-full bg-amber-100 px-1.5 font-semibold text-amber-800">{{ $delay > 0 ? '+' : '−' }}{{ abs($delay) }} min</span> <span class="text-gray-500">plan {{ $tournamentMatch->planned_starts_at->format('H:i') }}</span></p>
-                                        @endif
-                                    </div>
-                                    <x-court-picker :halls="$extraHalls" :main="$mainVenues" model="results.{{ $tournamentMatch->id }}.court" :value="$results[$tournamentMatch->id]['court'] ?? null" :free="false" />
-                                    <div class="flex flex-wrap items-center gap-2 lg:gap-3">
-                                        <label @class(['inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-full px-3 py-0.5 text-xs lg:min-h-0 lg:px-2 font-semibold ring-1', 'bg-red-50 text-red-700 ring-red-200' => $results[$tournamentMatch->id]['live'] ?? false, 'text-gray-500 ring-gray-200' => ! ($results[$tournamentMatch->id]['live'] ?? false)]) title="Włącz, gdy mecz się zaczął; wyłącz po wpisaniu wyniku końcowego">
-                                            <input type="checkbox" wire:model.live="results.{{ $tournamentMatch->id }}.live" class="size-3.5 rounded border-gray-300 text-red-600">
-                                            Trwa
-                                        </label>
-                                        @if($tournamentMatch->hasStreams())<span class="text-xs text-red-600" title="Mecz ma transmisję">▶</span>@endif
-                                        <button type="button" wire:click="startMatchEdit({{ $tournamentMatch->id }})" class="admin-action">Edytuj</button>
-                                        <button type="button" wire:click="deleteMatch({{ $tournamentMatch->id }})" wire:confirm="Usunąć ten mecz?" class="admin-action admin-action-danger">Usuń</button>
-                                    </div>
-                                    @if($editingMatchId === $tournamentMatch->id)
-                                        @include('livewire.admin.tournament-match-edit', ['tournamentMatch' => $tournamentMatch])
-                                    @endif
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-            @endforeach
         </div>
 
         {{-- Ukryte na dole, żeby w trakcie turnieju nie wyczyścić wyników przypadkiem --}}
