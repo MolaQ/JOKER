@@ -173,7 +173,7 @@
         </div>
 
         <div id="menu-mobilne" data-menu class="hidden h-[calc(100dvh-4rem)] overflow-y-auto border-t border-white/10 bg-ink lg:hidden">
-            <nav class="container-site flex flex-col gap-1 py-6" aria-label="{{ __('Menu mobilne') }}">
+            <nav class="container-site flex flex-col gap-1 pt-6 pb-[calc(7rem+env(safe-area-inset-bottom))]" aria-label="{{ __('Menu mobilne') }}">
                 @foreach($navItems as $link)
                     <a href="{{ $site->href($link['url']) }}" class="border-b border-white/5 py-4 font-display text-3xl font-semibold uppercase {{ $site->isCurrent($link['url']) ? 'text-sky-club' : 'text-white' }}">{{ __($link['label']) }}</a>
                 @endforeach
@@ -187,33 +187,37 @@
                         @endforeach
                     </div>
                 @endif
-                <div class="mt-6 flex items-center gap-3 text-sm text-zinc-300">
-                    <span>{{ __('Język strony') }}:</span>
-                    <x-language-switch />
+                {{-- Ustawienia w jednej karcie: etykiety po lewej, przełączniki równo po prawej. --}}
+                <div class="mt-6 divide-y divide-white/10 rounded-2xl bg-white/[0.04] text-sm text-zinc-300 ring-1 ring-white/10">
+                    <div class="flex items-center justify-between gap-3 px-4 py-3">
+                        <span>{{ __('Język strony') }}</span>
+                        <x-language-switch segmented />
+                    </div>
+                    <div class="flex items-center justify-between gap-3 px-4 py-3">
+                        <span>{{ __('Motyw') }}</span>
+                        <x-theme-switch dark />
+                    </div>
+                    @if($site['push_enabled'])
+                        <button type="button" data-push-toggle hidden aria-pressed="false" data-label-on="{{ __('Powiadomienia włączone (kliknij, aby zmienić)') }}" data-label-off="{{ __('Włącz powiadomienia o wynikach i aktualnościach') }}" class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left">
+                            <span>{{ __('Powiadomienia') }}</span>
+                            <span data-push-off class="rounded-full bg-sky-club px-3 py-1.5 text-xs font-semibold text-white">🔔 {{ __('Włącz') }}</span>
+                            <span data-push-on class="hidden rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white">🔔 {{ __('Ustawienia') }}</span>
+                        </button>
+                    @endif
                 </div>
-                <div class="mt-4 flex items-center gap-3 text-sm text-zinc-300">
-                    <span>{{ __('Motyw') }}:</span>
-                    <x-theme-switch dark />
-                </div>
-                @if($site['push_enabled'])
-                    <button type="button" data-push-toggle hidden aria-pressed="false" data-label-on="{{ __('Powiadomienia włączone (kliknij, aby zmienić)') }}" data-label-off="{{ __('Włącz powiadomienia o wynikach i aktualnościach') }}" class="mt-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2.5 text-sm font-semibold text-white">
-                        <span data-push-off>🔔 {{ __('Włącz powiadomienia') }}</span>
-                        <span data-push-on class="hidden">🔔 {{ __('Ustawienia powiadomień') }}</span>
-                    </button>
-                @endif
-                <div class="mt-6 flex flex-wrap gap-3">
+                <div class="mt-6 grid grid-cols-2 gap-3">
                     @auth
                         @if(auth()->user()->canManageContent())
-                            <a href="{{ route('admin.dashboard') }}" class="btn-primary">{{ __('Panel administracyjny') }}</a>
+                            <a href="{{ route('admin.dashboard') }}" class="btn-primary col-span-2">{{ __('Panel administracyjny') }}</a>
                         @endif
-                        @if($site['messages_enabled'])<a href="{{ route('messages.index') }}" class="btn-ghost">{{ __('Wiadomości') }}@if(auth()->user()->unreadMessagesCount()) <span class="ml-1 rounded-full bg-red-600 px-1.5 text-xs font-bold text-white">{{ auth()->user()->unreadMessagesCount() }}</span>@endif</a>@endif
-                        <a href="{{ route('profile.edit') }}" class="btn-ghost">{{ __('Mój profil') }}</a>
+                        @if($site['messages_enabled'])<a href="{{ route('messages.index') }}" class="btn-ghost col-span-2">{{ __('Wiadomości') }}@if(auth()->user()->unreadMessagesCount()) <span class="ml-1 rounded-full bg-red-600 px-1.5 text-xs font-bold text-white">{{ auth()->user()->unreadMessagesCount() }}</span>@endif</a>@endif
+                        <a href="{{ route('profile.edit') }}" class="btn-ghost px-3">{{ __('Mój profil') }}</a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="btn-ghost">{{ __('Wyloguj') }}</button>
+                            <button type="submit" class="btn-ghost w-full px-3">{{ __('Wyloguj') }}</button>
                         </form>
                     @else
-                        <a href="{{ route('login') }}" class="btn-ghost">{{ __('Zaloguj się') }}</a>
+                        <a href="{{ route('login') }}" class="btn-ghost col-span-2">{{ __('Zaloguj się') }}</a>
                     @endauth
                 </div>
             </nav>
