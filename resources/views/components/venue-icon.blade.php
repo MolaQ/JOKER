@@ -1,4 +1,4 @@
-@props(['venue' => null, 'small' => false, 'parts' => null, 'index' => null, 'whole' => false, 'color' => null, 'off' => []])
+@props(['venue' => null, 'small' => false, 'parts' => null, 'index' => null, 'whole' => false, 'color' => null, 'off' => [], 'separate' => false])
 @php
     // Symbol miejsca treningu: sala podzielona w poprzek na trzy boiska (3 lewe, 2 środkowe, 1 prawe), główne boisko to cała sala, siłownia osobno.
     // Kolory i ikonę siłowni ustawia się w panelu: System → Ustawienia systemu → Kolory.
@@ -37,7 +37,7 @@
                     <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/>
             @endswitch
         </g>
-    @elseif($parts === 2 && $part !== null)
+    @elseif($separate && $parts === 2 && $part !== null)
         {{-- Dwa osobne boiska (np. w szkole): całe pole w kolorze obiektu z numerem boiska I albo II --}}
         @php
             [$r, $g, $b] = sscanf($court, '#%02x%02x%02x');

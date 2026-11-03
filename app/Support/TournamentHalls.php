@@ -62,9 +62,9 @@ class TournamentHalls
         return __('Całe boisko');
     }
 
-    public static function sectorLabel(int $number): string
+    public static function sectorLabel(int $number, bool $courts = false): string
     {
-        return __('Sektor').' '.(self::ROMAN[$number] ?? $number);
+        return ($courts ? __('Boisko') : __('Sektor')).' '.(self::ROMAN[$number] ?? $number);
     }
 
     /**
@@ -118,11 +118,15 @@ class TournamentHalls
         $off = array_values(array_unique(array_filter(array_map('intval', (array) ($room['off'] ?? [])), fn (int $index) => $index >= 0 && $index < $sectors)));
         sort($off);
 
+        // Dwa osobne boiska (np. dwie sale gimnastyczne w szkole): „Boisko I” i „Boisko II”, bez całego boiska.
+        $separate = $sectors === 2 && (bool) ($room['separate'] ?? false);
+
         return [
             'name' => trim((string) ($room['name'] ?? '')),
             'sectors' => $sectors,
-            'whole' => (bool) ($room['whole'] ?? false),
+            'whole' => ! $separate && (bool) ($room['whole'] ?? false),
             'off' => $sectors === 1 || count($off) >= $sectors ? [] : $off,
+            'separate' => $separate,
         ];
     }
 
@@ -145,7 +149,8 @@ class TournamentHalls
             if (in_array($number - 1, $room['off'], true)) {
                 continue;
             }
-            $courts[] = ['value' => $prefix.self::SEPARATOR.self::sectorLabel($number), 'label' => self::sectorLabel($number), 'whole' => false, 'index' => $number - 1];
+            $label = self::sectorLabel($number, $room['separate'] ?? false);
+            $courts[] = ['value' => $prefix.self::SEPARATOR.$label, 'label' => $label, 'whole' => false, 'index' => $number - 1];
         }
 
         if ($room['whole'] && $room['off'] === []) {
@@ -269,7 +274,7 @@ class TournamentHalls
      */
     public static function iconFor(array $facility, array $room, array $court): array
     {
-        return ['parts' => $room['sectors'], 'index' => $court['index'], 'whole' => $court['whole'], 'color' => $facility['color'], 'off' => $room['off'] ?? []];
+        return ['parts' => $room['sectors'], 'index' => $court['index'], 'whole' => $court['whole'], 'color' => $facility['color'], 'off' => $room['off'] ?? [], 'separate' => $room['separate'] ?? false];
     }
 
     private static function tournamentOfCategory(int $categoryId): ?Tournament

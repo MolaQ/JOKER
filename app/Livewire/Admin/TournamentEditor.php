@@ -171,7 +171,7 @@ class TournamentEditor extends Component
             'full_name' => $facility['full_name'],
             'address' => $facility['address'],
             'color' => $facility['color'],
-            'rooms' => array_map(fn (array $room) => ['name' => $room['name'], 'sectors' => $room['sectors'], 'whole' => $room['whole'], 'off' => $room['off']], $facility['rooms']),
+            'rooms' => array_map(fn (array $room) => ['name' => $room['name'], 'sectors' => $room['sectors'], 'whole' => $room['whole'], 'off' => $room['off'], 'separate' => $room['separate'] ?? false], $facility['rooms']),
         ], TournamentHalls::extra($this->tournament));
     }
 
@@ -238,7 +238,7 @@ class TournamentEditor extends Component
                 'full_name' => $hall['full_name'] ?? '',
                 'address' => $hall['address'],
                 'color' => $hall['color'],
-                'rooms' => array_map(fn (array $room) => ['name' => $room['name'], 'sectors' => $room['sectors'], 'whole' => $room['whole'], 'off' => $room['off']], $hall['rooms']),
+                'rooms' => array_map(fn (array $room) => ['name' => $room['name'], 'sectors' => $room['sectors'], 'whole' => $room['whole'], 'off' => $room['off'], 'separate' => $room['separate'] ?? false], $hall['rooms']),
             ];
             $this->saveHalls();
             $this->toast('Dodano obiekt '.$hall['name'].' z poprzedniego turnieju.');
@@ -341,6 +341,25 @@ class TournamentEditor extends Component
     /**
      * Obiekty zapisują się po każdej zmianie.
      */
+    /**
+     * Podział sali: jedno boisko, dwa osobne boiska albo 2–4 sektory.
+     */
+    public function setDivision(int $index, int $room, int $sectors, bool $courts = false): void
+    {
+        if (! isset($this->halls[$index]['rooms'][$room])) {
+            return;
+        }
+
+        $this->halls[$index]['rooms'][$room]['sectors'] = max(1, min(4, $sectors));
+        $this->halls[$index]['rooms'][$room]['separate'] = $courts && $sectors === 2;
+
+        if ($courts) {
+            $this->halls[$index]['rooms'][$room]['whole'] = false;
+        }
+
+        $this->updatedHalls();
+    }
+
     public function updatedHalls(): void
     {
         $this->saveHalls();

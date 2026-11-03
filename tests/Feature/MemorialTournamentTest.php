@@ -1007,3 +1007,13 @@ test('after the last match the tournament page opens on a summary with every cat
         ->assertSeeInOrder(['Podsumowanie', 'Kadetki', 'UKS Dwójka Kalisz', 'Klasyfikacja końcowa'])
         ->assertSee('data-share-card', false);
 });
+
+it('offers a room with two separate courts named Boisko I and II, without a whole court', function () {
+    $tournament = new Tournament(['halls' => [['name' => 'SP 6', 'rooms' => [['name' => '', 'sectors' => 2, 'separate' => true, 'whole' => true]]]]]);
+    $facility = collect(TournamentHalls::legend($tournament))->last();
+    $courts = $facility['rooms'][0]['courts'];
+
+    expect(collect($courts)->pluck('value')->all())->toBe(['SP 6 · Boisko I', 'SP 6 · Boisko II'])
+        ->and($courts[1]['icon']['separate'])->toBeTrue()
+        ->and(TournamentHalls::extra($tournament)[0]['rooms'][0]['whole'])->toBeFalse();
+});
