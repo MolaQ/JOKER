@@ -959,3 +959,14 @@ test('a cropped tournament logo is saved right away', function () {
 
     expect($this->tournament->fresh()->logo_path)->toStartWith('tournaments/logo/');
 });
+
+it('puts the full school name first in the hall legend, then the address and courts', function () {
+    $legend = fn (array $hall) => collect(TournamentHalls::legend(new Tournament(['halls' => [$hall]])))->last();
+
+    expect(TournamentHalls::legendTitle($legend(['name' => 'SP 6', 'address' => 'ul. Żeromskiego 41', 'rooms' => [['name' => 'Szkoła Podst. nr 6 im. Lotników Polskich', 'sectors' => 1]]])))
+        ->toBe('Szkoła Podst. nr 6 im. Lotników Polskich')
+        ->and(TournamentHalls::legendTitle($legend(['name' => 'SP 1', 'full_name' => 'Szkoła Podstawowa nr 1', 'rooms' => [['name' => 'Sala', 'sectors' => 2]]])))
+        ->toBe('Szkoła Podstawowa nr 1')
+        ->and(TournamentHalls::legendTitle($legend(['name' => 'MOSiR', 'rooms' => [['name' => 'Hala 1', 'sectors' => 2], ['name' => 'Hala 2', 'sectors' => 1]]])))
+        ->toBe('MOSiR');
+});

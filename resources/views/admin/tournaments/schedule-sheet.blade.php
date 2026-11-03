@@ -120,12 +120,12 @@
                     <div class="mt-2 grid grid-cols-2 gap-2 text-sm">
                         @foreach($sheet['facilities'] as $facility)
                             <div class="rounded-md border-l-4 bg-zinc-50 px-3 py-2" style="border-color: {{ $facility['color'] ?? '#0ea5e9' }}">
-                                <p class="font-semibold">{{ $facility['name'] }}</p>
-                                @if($facility['full_name'] ?? '')<p class="text-zinc-800">{{ $facility['full_name'] }}</p>@endif
+                                @php $title = \App\Support\TournamentHalls::legendTitle($facility); @endphp
+                                <p class="font-semibold">{{ $title }}@if($title !== $facility['name'])<span class="font-normal text-zinc-500"> ({{ $facility['name'] }})</span>@endif</p>
                                 @if($facility['address'])<p class="text-zinc-700">{{ $facility['address'] }}</p>@endif
                                 <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-600">
                                     @foreach($facility['used'] as $court)
-                                        <span class="inline-flex items-center gap-1"><x-court-icon :icon="$court['icon']" class="!h-3 !w-5" />@if($court['room'] !== '' && $court['label'] !== $court['room']){{ $court['room'] }} · @endif{{ $court['label'] }}</span>
+                                        <span class="inline-flex items-center gap-1"><x-court-icon :icon="$court['icon']" class="!h-3 !w-5" />@if($court['room'] !== '' && $court['room'] !== $title && $court['label'] !== $court['room']){{ $court['room'] }} · @endif@if($court['label'] !== $title){{ $court['label'] }}@endif</span>
                                     @endforeach
                                 </p>
                             </div>

@@ -320,6 +320,27 @@ class TournamentHalls
     }
 
     /**
+     * Nazwa obiektu na pierwsze miejsce w legendzie: pełna nazwa, a bez niej nazwa jedynej sali
+     * (często to pełna nazwa szkoły, np. „Szkoła Podstawowa nr 6”), a dopiero potem krótka nazwa.
+     *
+     * @param  array{name: string, full_name?: string, rooms: list<array{name: string, courts: list<array<string, mixed>>}>}  $facility
+     */
+    public static function legendTitle(array $facility): string
+    {
+        if (($facility['full_name'] ?? '') !== '') {
+            return $facility['full_name'];
+        }
+
+        $rooms = $facility['rooms'];
+
+        if (count($rooms) === 1 && $rooms[0]['name'] !== '') {
+            return $rooms[0]['name'];
+        }
+
+        return $facility['name'];
+    }
+
+    /**
      * Pełna nazwa boiska dla kibiców: przy hali klubowej z jej nazwą („Hala LOMS · Sektor III”), inne obiekty mają ją już w zapisie.
      */
     public static function label(?string $court, ?int $categoryId = null): string
