@@ -160,14 +160,14 @@
             <div class="flex flex-1 flex-col gap-3 overflow-y-auto bg-zinc-50/60 p-4" style="max-height: 60vh" x-data x-init="$el.scrollTop = $el.scrollHeight" x-effect="$el.scrollTop = $el.scrollHeight">
                 @forelse($thread as $message)
                     @php $mine = $message->user_id === auth()->id(); @endphp
-                    <div wire:key="message-{{ $message->id }}" @class(['group flex max-w-[85%] flex-col', 'self-end items-end' => $mine, 'self-start items-start' => ! $mine])>
+                    <div wire:key="message-{{ $message->id }}" @class(['group flex max-w-[85%] min-w-0 flex-col', 'self-end items-end' => $mine, 'self-start items-start' => ! $mine])>
                         @if(! $mine && $conversation->isGroup())
                             <span class="mb-0.5 px-1 text-xs font-semibold text-zinc-600">{{ $message->author?->name ?? __('Konto usunięte') }}</span>
                         @endif
                         @if($message->isHidden())
                             <p class="rounded-2xl bg-zinc-100 px-4 py-2 text-sm text-zinc-400 italic">{{ __('Wiadomość ukryta przez moderatora.') }}</p>
                         @else
-                            <div @class(['message-body rounded-2xl px-4 py-2 text-sm break-words', 'message-mine bg-sky-club text-white' => $mine, 'bg-white text-zinc-800 ring-1 ring-zinc-200' => ! $mine])>{!! $message->html() !!}</div>
+                            <div @class(['message-body max-w-full min-w-0 rounded-2xl px-4 py-2 text-sm [overflow-wrap:anywhere]', 'message-mine bg-sky-club text-white' => $mine, 'bg-white text-zinc-800 ring-1 ring-zinc-200' => ! $mine])>{!! $message->html() !!}</div>
                         @endif
                         <span class="mt-0.5 flex items-center gap-2 px-1 text-[11px] text-zinc-400">
                             {{ $message->created_at->isToday() ? $message->created_at->format('H:i') : $message->created_at->format('d.m.Y H:i') }}
@@ -189,13 +189,17 @@
             </div>
 
             @if($canWrite)
-                <form wire:submit="send" class="flex items-end gap-2 border-t border-zinc-100 p-3">
+                <form wire:submit="send" class="flex items-end gap-2 border-t border-zinc-100 p-2 sm:p-3">
                     
                     {{-- Enter wysyła, Shift+Enter nowa linia; na liście Enter dodaje punkt. --}}
                     <div id="reply-body" class="min-w-0 flex-1" x-on:keydown.enter.capture="if (! $event.shiftKey && ! $event.target.closest('li') && ! $event.isComposing) { $event.preventDefault(); $event.stopPropagation(); $el.closest('form').requestSubmit() }">
                         <x-rich-text-editor model="body" compact :live="false" placeholder="Napisz wiadomość…" height="min-h-[2.75rem] max-h-48 overflow-y-auto" />
                     </div>
-                    <button type="submit" class="btn-primary" wire:loading.attr="disabled">{{ __('Wyślij') }}</button>
+                    {{-- Na telefonie okrągła ikona, żeby pole pisania miało całą szerokość. --}}
+                    <button type="submit" class="btn-primary size-11 shrink-0 p-0 sm:size-auto sm:px-5 sm:py-2.5" wire:loading.attr="disabled" aria-label="{{ __('Wyślij') }}">
+                        <svg class="size-5 sm:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4 21 12 3.4 3.6l-.1 6.5L15 12 3.3 13.9z"/></svg>
+                        <span class="hidden sm:inline">{{ __('Wyślij') }}</span>
+                    </button>
                 </form>
                 @error('body')<p class="px-4 pb-3 text-sm text-red-600">{{ $message }}</p>@enderror
             @else
