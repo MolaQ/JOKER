@@ -47,7 +47,7 @@
         </div>
     </div>
     @if($tournament->has_page)
-        <div class="-mt-3 flex gap-2 sm:hidden">
+        <div class="-mt-3 flex flex-wrap gap-2 sm:hidden">
             <a href="{{ route('tournaments.show', $tournament) }}" target="_blank" class="admin-action">Zobacz stronę ↗</a>
             <a href="{{ route('tournaments.tv', $tournament) }}" target="_blank" class="admin-action">Ekran TV ↗</a>
             @can('articles.manage')
@@ -354,7 +354,7 @@
             <div class="grid gap-4 lg:grid-cols-2">
                 @forelse($category->groups as $group)
                     @php $members = $groupBracket->members($group); $slotOptions = \App\Support\TournamentBracket::slotOptions($category, $group); @endphp
-                    <div class="space-y-3 rounded-lg border border-gray-200 p-4" wire:key="group-{{ $group->id }}">
+                    <div class="min-w-0 space-y-3 rounded-lg border border-gray-200 p-4" wire:key="group-{{ $group->id }}">
                         <div class="flex items-center gap-3">
                             @if($renaming === 'group:'.$group->id)
                                 <input type="text" wire:model.blur.live="groupNames.{{ $group->id }}" x-init="$el.focus()" x-on:keydown.enter="$el.blur()" x-on:blur="$wire.set('renaming', '')" class="{{ $input }} max-w-xs">
@@ -404,7 +404,7 @@
                         @if($members->isNotEmpty())
                             <div>
                                 <p class="text-xs font-semibold text-gray-500 uppercase">Reguły grupy: miejsce w tabeli → klasyfikacja końcowa</p>
-                                <div class="mt-1 grid grid-cols-2 gap-x-4 gap-y-2 xl:grid-cols-3">
+                                <div class="mt-1 grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-x-4 gap-y-2">
                                     @foreach(range(1, $members->count()) as $position)
                                         <label class="flex items-center gap-2 text-sm whitespace-nowrap text-gray-700">
                                             <span class="shrink-0">{{ $position }}. miejsce →</span>

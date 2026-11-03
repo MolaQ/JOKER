@@ -27,10 +27,10 @@
                         class="h-12 w-full rounded-full border-0 bg-zinc-100 pr-4 pl-12 text-base text-zinc-900 ring-1 ring-transparent transition outline-none placeholder:text-zinc-400 focus:bg-white focus:ring-sky-club">
                 </label>
 
-                <div class="grid grid-cols-3 rounded-full bg-zinc-100 p-1 text-[13px] font-semibold sm:text-sm" role="tablist" aria-label="{{ __('Które mecze pokazać') }}">
+                <div class="flex rounded-full bg-zinc-100 p-1 text-[13px] font-semibold sm:grid sm:grid-cols-3 sm:text-sm" role="tablist" aria-label="{{ __('Które mecze pokazać') }}">
                     @foreach(\App\Livewire\GamesBrowser::PERIODS as $key => $label)
                         <button type="button" role="tab" aria-selected="{{ $period === $key ? 'true' : 'false' }}" wire:click="setPeriod('{{ $key }}')" @class([
-                            'flex items-center justify-center gap-1 rounded-full px-2 py-2 transition sm:gap-1.5 sm:px-4',
+                            'flex flex-auto items-center justify-center gap-1 rounded-full px-2.5 py-2 whitespace-nowrap transition sm:gap-1.5 sm:px-4',
                             'bg-ink text-white shadow' => $period === $key,
                             'text-zinc-600 hover:text-zinc-900' => $period !== $key,
                         ])>

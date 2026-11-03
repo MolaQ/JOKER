@@ -63,7 +63,7 @@
     class="rich-editor relative rounded-md border border-gray-300 bg-white shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
 >
     {{-- Krótki pasek (wiadomości): jeden rząd przewijany w bok, żeby na telefonie nie zajmował połowy ekranu. --}}
-    <div @class(['flex items-center gap-1 border-b border-gray-200 bg-gray-50 px-1.5 py-1 rounded-t-md', 'flex-wrap' => ! $compact, 'flex-nowrap overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' => $compact])>
+    <div @class(['flex items-center gap-1 border-b border-gray-200 bg-gray-50 px-1.5 py-1 rounded-t-md', 'flex-nowrap overflow-x-auto [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden' => ! $compact, 'flex-nowrap overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden' => $compact])>
         @foreach($groups as $group)
             <div class="flex shrink-0 items-center gap-0.5 @if(! $loop->first) border-l border-gray-200 pl-1 @endif">
                 @foreach($group as [$label, $action, $active, $iconHtml])
@@ -78,7 +78,7 @@
         <div @class(['shrink-0', 'border-l border-gray-200 pl-1' => ! $compact, 'order-first border-r border-gray-200 pr-1' => $compact])>
             <button type="button" title="{{ __('Emotikony') }}" aria-label="{{ __('Emotikony') }}" @mousedown.prevent @click.prevent="toggleEmoji()" :aria-expanded="emojiOpen"
                 class="inline-flex h-8 items-center gap-1 rounded px-2 text-sm text-gray-700 hover:bg-gray-200" :class="emojiOpen && 'bg-sky-100 text-sky-700'">
-                <span class="text-base leading-none">😊</span> <span @class(['hidden sm:inline' => $compact])>{{ __('Emotikony') }}</span>
+                <span class="text-base leading-none">😊</span> <span class="hidden sm:inline">{{ __('Emotikony') }}</span>
             </button>
         </div>
     </div>
