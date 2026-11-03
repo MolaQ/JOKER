@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Admin\TournamentEditor;
+use App\Livewire\TournamentPage;
 use App\Livewire\TournamentScorer;
 use App\Models\RivalTeam;
 use App\Models\Tournament;
@@ -132,4 +133,16 @@ test('the scoring screen keeps the session alive and warns when the phone is off
     $this->actingAs(User::factory()->admin()->create())->get(route('tournaments.score', $this->tournament))->assertOk()
         ->assertSee('keepalive', false)
         ->assertSee('Brak internetu. Wpisane wyniki nie zapiszą się');
+});
+
+test('the tournament page refreshes results by itself only on match days', function () {
+    $this->tournament->update(['start_date' => today(), 'end_date' => today()]);
+
+    Livewire::test(TournamentPage::class, ['tournament' => $this->tournament->fresh(), 'categoryId' => null])
+        ->call('selectTab', 'matches')->assertSeeHtml('wire:poll.30s.visible')
+        ->call('selectTab', 'teams')->assertDontSeeHtml('wire:poll.30s.visible');
+
+    $this->tournament->update(['start_date' => today()->addWeek(), 'end_date' => today()->addWeek()]);
+    Livewire::test(TournamentPage::class, ['tournament' => $this->tournament->fresh(), 'categoryId' => null])
+        ->call('selectTab', 'matches')->assertDontSeeHtml('wire:poll.30s.visible');
 });
