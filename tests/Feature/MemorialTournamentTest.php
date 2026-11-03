@@ -16,6 +16,7 @@ use App\Support\TournamentHalls;
 use App\Support\TournamentSchedule;
 use App\Support\TournamentTable;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
@@ -1030,4 +1031,27 @@ test('the cached match schedule shows a new score and a renamed team at once', f
 
     $kalisz->update(['display_name' => 'Kalisz Nowa Nazwa']);
     $page()->assertSee('Kalisz Nowa Nazwa');
+});
+
+test('occupancy shows every hall in its own table: club hall first, then halls by number of matches, on any day', function () {
+    [$joker, $kalisz, $poznan] = memorialGroup($this->tournament, $this->team);
+    $category = $joker->category;
+    $this->tournament->update(['halls' => [
+        ['name' => 'SP 1', 'address' => '', 'color' => '#a855f7', 'rooms' => [['name' => 'Szkoła nr 1', 'sectors' => 1, 'whole' => true, 'off' => []]]],
+        ['name' => 'SP 6', 'address' => '', 'color' => '#f97316', 'rooms' => [['name' => 'Szkoła nr 6', 'sectors' => 1, 'whole' => true, 'off' => []]]],
+        ['name' => 'MOSiR', 'address' => '', 'color' => '#10b981', 'rooms' => [['name' => '', 'sectors' => 1, 'whole' => true, 'off' => []]]],
+    ]]);
+    $base = ['stage' => 'group', 'tournament_group_id' => $joker->group->id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id];
+    $category->matches()->create($base + ['starts_at' => '2026-11-14 09:00', 'court' => 'Sektor I']);
+    $category->matches()->create($base + ['starts_at' => '2026-11-15 10:00', 'court' => 'SP 1 · Szkoła nr 1']);
+    $category->matches()->create($base + ['starts_at' => '2026-11-14 12:00', 'court' => 'SP 6 · Szkoła nr 6']);
+    $category->matches()->create($base + ['starts_at' => '2026-11-15 12:00', 'court' => 'SP 6 · Szkoła nr 6']);
+
+    $html = Blade::render('<x-sector-occupancy :tournament="$tournament" />', ['tournament' => $this->tournament->fresh()]);
+
+    expect($html)->toContain('Bez meczów: MOSiR.')
+        ->and(strpos($html, 'Hala LOMS'))->toBeLessThan(strpos($html, 'SP 6 <span'))
+        ->and(strpos($html, 'SP 6 <span'))->toBeLessThan(strpos($html, 'SP 1 <span'));
+    expect(preg_match('/SP 1 <span[^>]*>· 1 mecz</', $html))->toBe(1)
+        ->and(preg_match('/SP 6 <span[^>]*>· 2 mecze</', $html))->toBe(1);
 });

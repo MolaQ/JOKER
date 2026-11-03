@@ -1,15 +1,33 @@
 @props(['tournament'])
-{{-- Obłożenie sektorów: oś czasu dnia, kolumny sektorów jak w hali, mecze wszystkich kategorii w kolorach kategorii --}}
+{{-- Obłożenie: każda hala osobno (najpierw hala klubowa, dalej obiekty od najczęściej używanych), w hali dni turnieju,
+     a w dniu oś czasu z kolumnami boisk i meczami wszystkich kategorii w kolorach kategorii. --}}
 @php
     $days = \App\Support\TournamentSchedule::occupancy($tournament);
     // Kolor kategorii ustawiasz w zakładce „Kategorie”; kafel ma jasne tło i ramkę w tym kolorze.
     $colors = $tournament->categories->mapWithKeys(fn ($category) => [$category->id => $category->color()]);
     $today = now()->toDateString();
-    $firstDay = $days->has($today) ? $today : $days->keys()->first();
     $scale = 1.1; // piksele na minutę
+    $mainName = \App\Support\TournamentHalls::mainName();
+
+    // Z „dzień → hale” na „hala → dni”; dzień w hali ma własny zakres godzin (rzadko używana sala nie ciągnie osi całego dnia).
+    $halls = collect();
+    foreach ($days as $date => $day) {
+        foreach ($day['halls'] as $hallName => $sectors) {
+            $blocks = $sectors->flatten(1);
+            if ($blocks->isEmpty()) {
+                continue;
+            }
+            $hall = $halls->get($hallName, collect());
+            $hall->put($date, ['sectors' => $sectors, 'start' => $blocks->min('starts')->copy()->startOfHour(), 'end' => $blocks->max('ends'), 'count' => $blocks->count()]);
+            $halls->put($hallName, $hall);
+        }
+    }
+    $halls = $halls->sortBy(fn ($hallDays, $hallName) => [$hallName === $mainName ? 0 : 1, -$hallDays->sum('count'), $hallName]);
+    $unused = collect(\App\Support\TournamentHalls::extra($tournament))->pluck('name')
+        ->reject(fn ($name) => $halls->keys()->contains(fn ($key) => $key === $name || str_starts_with($key, $name.\App\Support\TournamentHalls::SEPARATOR)))->values();
 @endphp
-<div {{ $attributes->merge(['class' => 'space-y-4']) }} x-data="{ day: @js($firstDay) }">
-    @if($days->isEmpty())
+<div {{ $attributes->merge(['class' => 'space-y-6']) }}>
+    @if($halls->isEmpty())
         <p class="text-sm text-gray-500">Żaden mecz nie ma jeszcze godziny i sektora.</p>
     @else
         <div class="flex flex-wrap gap-2 text-xs">
@@ -18,31 +36,33 @@
             @endforeach
             <span class="rounded-full bg-white px-2 py-0.5 font-semibold text-red-700 ring-2 ring-red-500">nakłada się</span>
         </div>
-        @if($days->count() > 1)
-            {{-- Przełącznik dni turnieju --}}
-            <div class="inline-flex rounded-lg bg-gray-100 p-1" role="tablist">
-                @foreach($days as $date => $day)
-                    <button type="button" role="tab" x-on:click="day = @js($date)" :aria-selected="day === @js($date)"
-                        :class="day === @js($date) ? 'bg-club-navy text-white shadow' : 'text-gray-600 hover:text-gray-900'"
-                        class="rounded-md px-3 py-1.5 text-sm font-semibold">{{ \Illuminate\Support\Str::ucfirst($day['start']->translatedFormat('D d.m')) }}@if($date === $today) · dziś @endif</button>
-                @endforeach
-            </div>
-        @endif
     @endif
-    @foreach($days as $date => $day)
-        @php
-            $minutes = (int) $day['start']->diffInMinutes($day['end']) + 15;
-            $height = (int) round($minutes * $scale);
-        @endphp
-        <section x-show="day === @js($date)" @if($date !== $firstDay) x-cloak @endif>
-            <h4 class="mb-2 text-sm font-semibold text-gray-900">{{ \Illuminate\Support\Str::ucfirst($day['start']->translatedFormat('l, j F')) }}</h4>
-            @foreach($day['halls'] as $hallName => $sectors)
-            @if($day['halls']->count() > 1)
-                {{-- Turniej w kilku halach: każda hala osobno, z własnymi boiskami --}}
-                <h5 class="mt-4 mb-1 text-xs font-semibold tracking-wide text-sky-800 uppercase">{{ $hallName }}</h5>
-            @endif
+    @foreach($halls as $hallName => $hallDays)
+        @php $firstDay = $hallDays->has($today) ? $today : $hallDays->keys()->first(); @endphp
+        <section x-data="{ day: @js($firstDay) }" wire:key="occupancy-{{ md5($hallName) }}" class="rounded-lg border border-gray-200 p-3">
+            <div class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+                <h4 class="text-sm font-semibold text-gray-900">{{ $hallName }} <span class="font-normal text-gray-500">· {{ trans_choice(':count mecz|:count mecze|:count meczów', $hallDays->sum('count')) }}</span></h4>
+                @if($hallDays->count() > 1)
+                    <div class="inline-flex rounded-lg bg-gray-100 p-1" role="tablist">
+                        @foreach($hallDays as $date => $day)
+                            <button type="button" role="tab" x-on:click="day = @js($date)" :aria-selected="day === @js($date)"
+                                :class="day === @js($date) ? 'bg-club-navy text-white shadow' : 'text-gray-600 hover:text-gray-900'"
+                                class="rounded-md px-2.5 py-1 text-xs font-semibold">{{ \Illuminate\Support\Str::ucfirst($day['start']->translatedFormat('D d.m')) }} · {{ $day['count'] }}@if($date === $today) · dziś @endif</button>
+                        @endforeach
+                    </div>
+                @else
+                    <span class="text-xs text-gray-500">{{ \Illuminate\Support\Str::ucfirst($hallDays->first()['start']->translatedFormat('l, j F')) }}</span>
+                @endif
+            </div>
+            @foreach($hallDays as $date => $day)
+                @php
+                    $sectors = $day['sectors'];
+                    $minutes = (int) $day['start']->diffInMinutes($day['end']) + 15;
+                    $height = (int) round($minutes * $scale);
+                @endphp
+                <div x-show="day === @js($date)" @if($date !== $firstDay) x-cloak @endif>
             <div class="overflow-x-auto">
-                <div class="grid min-w-[36rem] gap-2" style="grid-template-columns: 3rem repeat({{ $sectors->count() }}, minmax(10rem, 1fr))">
+                <div @class(["grid gap-2", "min-w-[36rem]" => $sectors->count() > 2, "max-w-xl" => $sectors->count() === 1]) style="grid-template-columns: 3rem repeat({{ $sectors->count() }}, minmax(10rem, 1fr))">
                     <div></div>
                     @foreach($sectors as $name => $blocks)
                         <p class="flex items-center justify-center gap-1.5 text-xs font-semibold tracking-wide text-gray-500 uppercase">
@@ -74,7 +94,11 @@
                     @endforeach
                 </div>
             </div>
+                </div>
             @endforeach
         </section>
     @endforeach
+    @if($unused->isNotEmpty())
+        <p class="text-xs text-gray-500">Bez meczów: {{ $unused->implode(', ') }}.</p>
+    @endif
 </div>
