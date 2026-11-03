@@ -552,5 +552,7 @@
     "Dostaniesz powiadomienie przed meczami i po wynikach drużyny :name.": "You will get a notification before matches and after results of :name.",
     "Powiadomienia są zablokowane dla tej strony albo to okno prywatne. Zezwól na nie w ustawieniach przeglądarki i spróbuj ponownie.": "Notifications are blocked for this site or this is a private window. Allow them in your browser settings and try again.",
     "Ta przeglądarka nie może teraz włączyć powiadomień (np. w trybie prywatnym). Spróbuj w zwykłym oknie.": "This browser cannot turn on notifications right now (for example in private mode). Try a regular window.",
-    "Turniej ćwiczebny. Widzą go tylko organizatorzy i wpisujący, a wyniki nie trafiają do kibiców.": "Practice tournament. Only organizers and scorers can see it, and results are not sent to fans."
+    "Turniej ćwiczebny. Widzą go tylko organizatorzy i wpisujący, a wyniki nie trafiają do kibiców.": "Practice tournament. Only organizers and scorers can see it, and results are not sent to fans.",
+    "Powiadomienia są włączone na tym urządzeniu.": "Notifications are on for this device.",
+    "Nie udało się włączyć powiadomień.": "Could not turn on notifications."
 }

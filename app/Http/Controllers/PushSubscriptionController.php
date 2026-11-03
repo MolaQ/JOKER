@@ -6,6 +6,8 @@ use App\Models\PushSubscription;
 use App\Services\PushNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Zapisanie i usunięcie zgody przeglądarki na powiadomienia push.
@@ -16,7 +18,14 @@ class PushSubscriptionController extends Controller
     {
         abort_unless($push->enabled(), 404);
 
-        return response()->json(['publicKey' => $push->publicKey()]);
+        try {
+            return response()->json(['publicKey' => $push->publicKey()]);
+        } catch (Throwable $exception) {
+            // Np. serwer bez obsługi kluczy EC w OpenSSL: kibic dostaje komunikat, a powód jest w logu.
+            Log::error('Powiadomienia push: nie udało się utworzyć kluczy VAPID: '.$exception->getMessage());
+
+            return response()->json(['message' => 'push-keys'], 503);
+        }
     }
 
     public function store(Request $request, PushNotifier $push): JsonResponse

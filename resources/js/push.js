@@ -77,19 +77,32 @@ export function initPush() {
             return false;
         }
 
-        const { publicKey } = await (await fetch(config.dataset.keyUrl, { headers: { Accept: 'application/json' } })).json();
-        const subscription = await (await registration).pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(publicKey),
-        });
+        // Każdy krok z własnym opisem błędu, żeby kibic (i my) wiedział, co nie zadziałało.
+        const keyResponse = await fetch(config.dataset.keyUrl, { headers: { Accept: 'application/json' } });
+        if (!keyResponse.ok) {
+            throw new Error(`klucz: HTTP ${keyResponse.status}`);
+        }
+        const { publicKey } = await keyResponse.json();
+        let subscription;
+        try {
+            subscription = await (await registration).pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(publicKey),
+            });
+        } catch (error) {
+            throw new Error(`przeglądarka: ${error.message || error.name}`);
+        }
         const json = subscription.toJSON();
         const encoding = (window.PushManager.supportedContentEncodings || ['aes128gcm'])[0];
 
-        await fetch(config.dataset.subscribeUrl, {
+        const saved = await fetch(config.dataset.subscribeUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
             body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys, contentEncoding: encoding }),
         });
+        if (!saved.ok) {
+            throw new Error(`zapis: HTTP ${saved.status}`);
+        }
 
         return true;
     };
@@ -161,14 +174,19 @@ export function initPush() {
         try {
             if (!(await currentSubscription()) && !(await subscribe())) {
                 setState(false);
+                if (Notification.permission === 'denied') {
+                    window.toast?.(panel.dataset.blockedLabel, 'error');
+                }
 
                 return;
             }
             setState(true);
             await preferences(panelChoices());
             panel.classList.add('hidden');
+            window.toast?.(panel.dataset.savedLabel);
         } catch (error) {
             setState(false);
+            window.toast?.(`${panel.dataset.errorLabel} (${error.message || error})`, 'error');
         } finally {
             button.disabled = false;
         }

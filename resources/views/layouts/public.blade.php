@@ -415,7 +415,7 @@
     @if($site['push_enabled'])
         <div hidden data-push-config data-sw="{{ asset('sw.js') }}" data-scope="{{ rtrim(url('/'), '/') }}/" data-key-url="{{ route('push.key') }}" data-subscribe-url="{{ route('push.subscribe') }}" data-preferences-url="{{ route('push.preferences') }}"></div>
         @php($pushTeams = \App\Models\Team::orderBy('display_order')->orderBy('name')->get(['id', 'name']))
-        <div data-push-panel data-all-topics="{{ implode(',', array_keys(\App\Models\PushSubscription::TOPICS)) }}" class="fixed inset-x-3 bottom-3 z-50 hidden max-h-[85dvh] overflow-y-auto rounded-2xl bg-white p-5 text-zinc-800 shadow-2xl ring-1 ring-zinc-200 sm:inset-x-auto sm:right-5 sm:bottom-5 sm:w-96" role="dialog" aria-label="{{ __('Powiadomienia') }}">
+        <div data-push-panel data-all-topics="{{ implode(',', array_keys(\App\Models\PushSubscription::TOPICS)) }}" data-saved-label="{{ __('Powiadomienia są włączone na tym urządzeniu.') }}" data-blocked-label="{{ __('Powiadomienia są zablokowane dla tej strony albo to okno prywatne. Zezwól na nie w ustawieniach przeglądarki i spróbuj ponownie.') }}" data-error-label="{{ __('Nie udało się włączyć powiadomień.') }}" class="fixed inset-x-3 bottom-3 z-50 hidden max-h-[85dvh] overflow-y-auto rounded-2xl bg-white p-5 text-zinc-800 shadow-2xl ring-1 ring-zinc-200 sm:inset-x-auto sm:right-5 sm:bottom-5 sm:w-96" role="dialog" aria-label="{{ __('Powiadomienia') }}">
             <div class="flex items-start justify-between gap-3">
                 <div>
                     <p class="font-display text-xl font-semibold uppercase">{{ __('Powiadomienia') }}</p>
