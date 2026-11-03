@@ -17,7 +17,7 @@ class GameCalendarController extends Controller
         $game->load(['team', 'opponentTeam', 'competition']);
 
         $start = $game->game_date->copy()->utc();
-        $title = app(SiteSettings::class)['club_short_name'].' '.$game->team?->name.' vs '.$game->opponentShortName();
+        $title = $game->matchup();
         $escape = fn (?string $text) => str_replace([',', ';', "\n"], ['\,', '\;', '\n'], (string) $text);
 
         $ics = implode("\r\n", [

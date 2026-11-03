@@ -81,7 +81,7 @@
                             <div class="min-w-0">
                                 <p class="text-xs font-semibold tracking-widest text-sky-club uppercase">{{ __('Najbliższy mecz') }} · {{ $nextGame->kickoffLabel() }}@if($nextGame->ourLabel()['badge']) <x-team-chip :name="$nextGame->ourLabel()['badge']" class="ml-1" />@endif</p>
                                 <p class="mt-2 font-display text-xl font-semibold uppercase lg:text-2xl">
-                                    {{ $nextGame->ourLabel()['name'] }} <span class="text-zinc-500">{{ __('vs') }}</span> {{ $nextGame->opponentShortName() }}
+                                    @if($nextGame->is_home){{ $nextGame->ourLabel()['name'] }} <span class="text-zinc-500">{{ __('vs') }}</span> {{ $nextGame->opponentShortName() }}@else{{ $nextGame->opponentShortName() }} <span class="text-zinc-500">{{ __('vs') }}</span> {{ $nextGame->ourLabel()['name'] }}@endif
                                 </p>
                                 <a href="{{ route('games.calendar', $nextGame) }}" class="mt-1 inline-flex min-h-9 items-center gap-1.5 text-xs font-semibold text-sky-club-light">+ {{ __('Dodaj do kalendarza') }}</a>
                             </div>

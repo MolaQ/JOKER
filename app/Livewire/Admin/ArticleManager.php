@@ -191,9 +191,9 @@ class ArticleManager extends Component
      */
     public static function gameOptionLabel(Game $game): string
     {
-        $score = $game->isFinished() && ($result = $game->ourSetsResult()) ? ' '.$result[0].':'.$result[1] : '';
+        $score = $game->isFinished() && $game->ourSetsResult() ? ' '.$game->home_score.':'.$game->away_score : '';
 
-        return trim(($game->game_date?->format('d.m.Y') ?? '').' '.($game->team?->name ?? '').' – '.$game->opponentShortName().$score);
+        return trim(($game->game_date?->format('d.m.Y') ?? '').' '.$game->matchup(withClub: false).$score);
     }
 
     /**

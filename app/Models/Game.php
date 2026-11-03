@@ -264,6 +264,19 @@ class Game extends Model
         return $this->is_home ? [$ours, $opponent] : [$opponent, $ours];
     }
 
+    /**
+     * Krótki opis meczu z gospodarzem na pierwszym miejscu, np. „Joker Kadeci – MKS Kalisz” albo „MKS Kalisz – Joker Kadeci”.
+     * Bez nazwy klubu (np. w pasku LIVE) zostaje sama drużyna: „Kadeci – MKS Kalisz”.
+     */
+    public function matchup(bool $withClub = true, string $separator = ' – '): string
+    {
+        $ours = trim(($withClub ? app(SiteSettings::class)['club_short_name'].' ' : '').($this->team?->name ?? ''));
+        $opponent = $this->opponentShortName();
+        [$home, $away] = $this->is_home ? [$ours, $opponent] : [$opponent, $ours];
+
+        return $home.$separator.$away;
+    }
+
     public function mediaLabel(): string
     {
         [$home, $away] = $this->sidesNames();

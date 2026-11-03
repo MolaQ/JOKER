@@ -53,7 +53,7 @@ class LiveNow
         }
 
         return [
-            'title' => trim(($game->team?->name ? $game->team->name.' – ' : '').$game->opponentShortName()),
+            'title' => $game->matchup(withClub: false),
             'detail' => __('Mecz trwa'),
             'url' => route('games.show', $game),
         ];

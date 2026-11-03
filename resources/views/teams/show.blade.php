@@ -46,7 +46,7 @@
             <aside class="w-full rounded-2xl bg-ink/70 p-5 ring-1 ring-white/10 backdrop-blur sm:p-6 lg:w-auto lg:max-w-[32rem] lg:min-w-[22rem] lg:self-center" aria-label="{{ __('Najbliższy mecz') }}">
                 <p class="text-xs font-semibold tracking-widest text-sky-club uppercase">{{ __('Najbliższy mecz') }} · {{ $nextGame->kickoffLabel() }}</p>
                 <a href="{{ route('games.show', $nextGame) }}" class="mt-2 block font-display text-2xl leading-tight font-semibold uppercase transition hover:text-sky-club-light sm:text-3xl">
-                    {{ $nextGame->ourLabel()['name'] }} <span class="text-zinc-500">{{ __('vs') }}</span> {{ $nextGame->opponentShortName() }}
+                    @if($nextGame->is_home){{ $nextGame->ourLabel()['name'] }} <span class="text-zinc-500">{{ __('vs') }}</span> {{ $nextGame->opponentShortName() }}@else{{ $nextGame->opponentShortName() }} <span class="text-zinc-500">{{ __('vs') }}</span> {{ $nextGame->ourLabel()['name'] }}@endif
                 </a>
                 {{-- Odliczanie jak na stronie głównej (ten sam przełącznik w ustawieniach) --}}
                 @if($site['home_show_countdown'] && $nextGame->game_date?->isFuture())

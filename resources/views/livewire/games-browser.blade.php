@@ -222,7 +222,12 @@
                                                             'hover:ring-2 hover:ring-sky-club' => true,
                                                         ])>
                                                             <span class="flex items-start justify-between gap-1">
-                                                                <x-team-label :label="$game->ourLabel()" class="min-w-0 font-semibold break-words" />
+                                                                {{-- Zawsze gospodarz na pierwszym miejscu: u siebie my, na wyjeździe rywal --}}
+                                                                @if($game->is_home)
+                                                                    <x-team-label :label="$game->ourLabel()" class="min-w-0 font-semibold break-words" />
+                                                                @else
+                                                                    <span class="min-w-0 font-semibold break-words">{{ $game->opponentShortName() }}</span>
+                                                                @endif
                                                                 <span class="flex shrink-0 items-center gap-0.5 font-bold tabular-nums">
                                                                     @if($outcome === 'derby')
                                                                         <x-derby-heart class="h-3.5 w-3.5 {{ $game->is_home ? 'text-sky-club-light' : 'text-sky-club' }}" />
@@ -232,14 +237,14 @@
                                                                         <svg class="h-3.5 w-3.5 {{ $game->is_home ? 'text-red-300' : 'text-red-600' }}" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-label="{{ __('Porażka') }}"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
                                                                     @endif
                                                                     @if($game->isFinished())
-                                                                        {{ $result ? $result[0].':'.$result[1] : '' }}
+                                                                        {{ $result ? $game->home_score.':'.$game->away_score : '' }}
                                                                     @else
                                                                         {{ $hasTime ? $game->game_date->format('H:i') : '' }}
                                                                     @endif
                                                                 </span>
                                                             </span>
-                                                            <span @class(['flex items-center gap-1 truncate', 'text-sky-club-light' => $game->is_home, 'text-zinc-600' => ! $game->is_home])>
-                                                                <span class="truncate">@if($game->isFriendly())<span class="mr-0.5 rounded bg-amber-300 px-1 text-[9px] font-bold text-amber-950 uppercase">{{ __('sparing') }}</span>@elseif($game->tournament_id)<span class="mr-0.5">🏆</span>@endif{{ $game->is_home ? __('vs') : __('u') }} {{ $game->opponentShortName() }}</span>
+                                                            <span @class(['flex items-center gap-1', 'truncate' => $game->is_home, 'text-sky-club-light' => $game->is_home, 'text-zinc-600' => ! $game->is_home])>
+                                                                <span @class(['truncate' => $game->is_home, 'min-w-0 break-words' => ! $game->is_home])>@if($game->isFriendly())<span class="mr-0.5 rounded bg-amber-300 px-1 text-[9px] font-bold text-amber-950 uppercase">{{ __('sparing') }}</span>@elseif($game->tournament_id)<span class="mr-0.5">🏆</span>@endif{{ __('vs') }} @if($game->is_home){{ $game->opponentShortName() }}@else<x-team-label :label="$game->ourLabel()" />@endif</span>
                                                                 @if($article)
                                                                     <svg class="ml-auto h-3 w-3 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-label="{{ __('Artykuł') }}"><path stroke-linecap="round" stroke-linejoin="round" d="M7 4h10a1 1 0 0 1 1 1v15l-3-2-3 2-3-2-3 2V5a1 1 0 0 1 1-1Zm2 5h6m-6 4h4"/></svg>
                                                                 @endif

@@ -174,11 +174,16 @@
                             @endif
                             <span class="w-12 shrink-0 text-zinc-500 tabular-nums">{{ $game->game_date?->format('d.m') }}</span>
                             <span class="min-w-0 flex-1 truncate">
-                                <x-team-label :label="$game->ourLabel()" :badge="false" class="font-semibold text-zinc-900" />
-                                <span class="text-zinc-500">{{ $game->is_home ? __('vs') : __('u') }} {{ $game->opponentShortName() }}</span>
+                                @if($game->is_home)
+                                    <x-team-label :label="$game->ourLabel()" :badge="false" class="font-semibold text-zinc-900" />
+                                    <span class="text-zinc-500">{{ __('vs') }} {{ $game->opponentShortName() }}</span>
+                                @else
+                                    <span class="font-semibold text-zinc-900">{{ $game->opponentShortName() }}</span>
+                                    <span class="text-zinc-500">{{ __('vs') }}</span> <x-team-label :label="$game->ourLabel()" :badge="false" class="font-semibold text-zinc-900" />
+                                @endif
                             </span>
                             @if($result)
-                                <span class="font-display text-lg font-bold tabular-nums">{{ $result[0] }}:{{ $result[1] }}</span>
+                                <span class="font-display text-lg font-bold tabular-nums">{{ $game->home_score }}:{{ $game->away_score }}</span>
                             @endif
                             @if($article)
                                 <a href="{{ route('articles.show', $article) }}" class="text-xs font-semibold text-sky-club-dark hover:underline">{{ __('Relacja') }}</a>
