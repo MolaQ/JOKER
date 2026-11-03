@@ -31,7 +31,7 @@
             @endphp
             <li wire:key="score-{{ $match->id }}" @class(['rounded-2xl bg-white p-4 shadow-sm ring-1', 'ring-red-300' => $live, 'ring-zinc-200' => ! $live])>
                 <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500">
-                    <span><span class="font-semibold text-zinc-800">{{ __('Mecz nr :n', ['n' => $match->number]) }}</span> · {{ $match->category?->name }}@if($match->group) · {{ $match->group->name }}@endif @if($match->title()) · {{ $match->title() }}@endif</span>
+                    <span><span class="font-semibold text-zinc-800">{{ __('Mecz nr :n', ['n' => $match->number]) }}</span> · {{ $match->category?->name }}@if($match->group) · {{ $match->group->name }}@endif @if($match->title() && $match->title() !== $match->group?->name) · {{ $match->title() }}@endif</span>
                     <span class="flex items-center gap-2">
                         @if($match->court)<span>{{ $match->court }}</span>@endif
                         <span>{{ __('wg planu') }} <span class="font-semibold text-zinc-800 tabular-nums">{{ $planned?->format('H:i') }}</span></span>

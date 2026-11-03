@@ -29,8 +29,8 @@
             :style="`background-color: ${toast.bg}; color: ${toast.text}`"
             class="pointer-events-auto relative w-full overflow-hidden rounded-2xl border-l-4 border-current shadow-xl shadow-black/10 ring-1 ring-black/5 backdrop-blur"
         >
-            <div class="flex items-start gap-3 p-4 pr-3">
-                <span class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-current/10" aria-hidden="true">
+            <div class="flex items-start gap-2.5 p-3 pr-2.5 sm:gap-3 sm:p-4 sm:pr-3">
+                <span class="flex h-7 w-7 shrink-0 sm:mt-0.5 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-current/10" aria-hidden="true">
                     <svg x-show="toast.type === 'success'" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
                     <svg x-show="toast.type === 'error'" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 8v5m0 3.5h.01M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
                 </span>

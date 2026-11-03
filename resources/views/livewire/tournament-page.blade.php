@@ -8,21 +8,21 @@
                 $sortedParticipants = $current?->participants->sortBy([fn ($a, $b) => (int) $b->isOwnTeam() <=> (int) $a->isOwnTeam(), fn ($a, $b) => strcoll($a->name(), $b->name())])->values() ?? collect();
             @endphp
             @if($categories->count() > 1 || $followable || $teamFilter)
-                <div class="flex flex-wrap items-center gap-2">
+                <div class="flex items-center gap-2 sm:flex-wrap">
                     @if($categories->count() > 1)
-                        <div class="flex flex-wrap gap-2" aria-label="{{ __('Kategoria wiekowa') }}">
+                        <div data-scroll-fade class="scrollbar-none -ml-4 flex min-w-0 flex-1 gap-2 overflow-x-auto pl-4 sm:ml-0 sm:flex-none sm:flex-wrap sm:overflow-visible sm:pl-0" aria-label="{{ __('Kategoria wiekowa') }}">
                             @foreach($categories as $categoryOption)
-                                <a href="{{ route('tournaments.show', ['tournament' => $tournament, 'category' => $loop->first ? null : $categoryOption->slug(), 'tab' => $tabs->has($currentTab) && $currentTab !== $tabs->keys()->first() ? $currentTab : null]) }}" data-track="{{ __('Kategoria') }}: {{ $categoryOption->name }}" @if($current?->id === $categoryOption->id) aria-current="page" @endif @class(['chip transition', 'bg-club-navy text-white' => $current?->id === $categoryOption->id, 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => $current?->id !== $categoryOption->id])>{{ $categoryOption->name }}</a>
+                                <a href="{{ route('tournaments.show', ['tournament' => $tournament, 'category' => $loop->first ? null : $categoryOption->slug(), 'tab' => $tabs->has($currentTab) && $currentTab !== $tabs->keys()->first() ? $currentTab : null]) }}" data-track="{{ __('Kategoria') }}: {{ $categoryOption->name }}" @if($current?->id === $categoryOption->id) aria-current="page" @endif @class(['chip shrink-0 whitespace-nowrap transition', 'bg-club-navy text-white' => $current?->id === $categoryOption->id, 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => $current?->id !== $categoryOption->id])>{{ $categoryOption->name }}</a>
                             @endforeach
                         </div>
                     @endif
-                    <div class="ml-auto flex items-center gap-2">
+                    <div class="ml-auto flex shrink-0 items-center gap-2">
                         {{-- Filtr drużyny terminarza: stan trzyma komponent terminarza (zdarzenia okna) --}}
                         @if($teamFilter)
                             <label wire:key="team-filter-{{ $current->id }}" class="relative" x-data="{ team: '' }" x-on:tournament-team.window="team = $event.detail ?? ''">
                                 <span class="sr-only">{{ __('Pokaż mecze drużyny') }}</span>
                                 <select x-on:change="$dispatch('tournament-team-pick', $event.target.value || null)" x-effect="$el.value = team"
-                                    class="h-8 max-w-44 appearance-none truncate rounded-full border-0 bg-zinc-100 pr-8 pl-3 text-xs font-semibold text-zinc-700 ring-1 ring-transparent transition hover:ring-sky-club focus:ring-2 focus:ring-sky-club sm:max-w-56"
+                                    class="h-8 max-w-32 appearance-none truncate rounded-full border-0 bg-zinc-100 pr-8 pl-3 text-xs font-semibold text-zinc-700 ring-1 ring-transparent transition hover:ring-sky-club focus:ring-2 focus:ring-sky-club sm:max-w-56"
                                     :class="team !== '' && 'bg-sky-club/10 text-sky-club-dark ring-sky-club/40!'">
                                     <option value="">{{ __('Wszystkie drużyny') }}</option>
                                     @foreach($sortedParticipants as $participant)

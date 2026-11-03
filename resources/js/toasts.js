@@ -150,9 +150,17 @@ export function registerToasts() {
                 this.toasts.push(toast);
 
                 const active = this.toasts.filter((item) => ! item.leaving);
+                // Na telefonie toasty zasłaniałyby treść (np. kilka autozapisów pod rząd): zostaje tylko najnowszy.
+                const limit = window.matchMedia('(max-width: 639px)').matches ? 1 : MAX_TOASTS;
 
-                if (active.length > MAX_TOASTS) {
-                    active.slice(0, active.length - MAX_TOASTS).forEach((item) => this.dismiss(item));
+                active
+                    .filter((item) => item.id !== toast.id && item.type === toast.type && item.message === toast.message)
+                    .forEach((item) => this.dismiss(item));
+
+                const remaining = this.toasts.filter((item) => ! item.leaving);
+
+                if (remaining.length > limit) {
+                    remaining.slice(0, remaining.length - limit).forEach((item) => this.dismiss(item));
                 }
 
                 this.$nextTick(() => {
