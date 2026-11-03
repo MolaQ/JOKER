@@ -16,7 +16,7 @@
             @if($main->isNotEmpty())
                 <ul @class(['grid gap-4', 'sm:grid-cols-2' => $main->count() > 1])>
                     @foreach($main as $sponsor)
-                        <li>
+                        <li data-theme-keep>
                             <{{ $sponsor->href() ? 'a' : 'div' }} @if($sponsor->href()) href="{{ $sponsor->href() }}" @if($sponsor->isExternal()) target="_blank" rel="noopener" @endif @endif title="{{ $sponsor->name }}"
                                 @if($sponsor->tile_color) style="background: {{ $sponsor->tile_color }}" @endif
                                 @class(['group mx-auto flex h-40 max-w-xl flex-col items-center justify-center gap-3 rounded-3xl p-5 ring-2 ring-[var(--color-countdown,#ffd600)] transition sm:h-48', 'bg-white' => ! $sponsor->tile_color, 'hover:-translate-y-1 hover:shadow-xl' => $sponsor->href()])>
@@ -34,7 +34,7 @@
             @if($others->isNotEmpty())
                 <ul @class(['grid grid-cols-2 gap-3', 'sm:grid-cols-3' => $others->count() % 3 === 0 || $others->count() > 4, 'sm:grid-cols-4' => $others->count() === 4, 'lg:grid-cols-5' => $others->count() > 6])>
                     @foreach($others as $sponsor)
-                        <li>
+                        <li data-theme-keep>
                             <{{ $sponsor->href() ? 'a' : 'div' }} @if($sponsor->href()) href="{{ $sponsor->href() }}" @if($sponsor->isExternal()) target="_blank" rel="noopener" @endif @endif title="{{ $sponsor->name }}"
                                 @if($sponsor->tile_color) style="background: {{ $sponsor->tile_color }}" @endif
                                 @class(['flex h-24 flex-col items-center justify-center gap-1 rounded-2xl p-3 ring-1 transition sm:h-28', 'bg-white ring-zinc-200' => ! $sponsor->tile_color, 'ring-black/10' => $sponsor->tile_color, 'hover:-translate-y-1 hover:shadow-lg' => $sponsor->href()])>

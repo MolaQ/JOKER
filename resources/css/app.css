@@ -83,6 +83,14 @@
     .admin-panel :is(input, select, textarea):focus {
         @apply border-sky-500 ring-2 ring-sky-500/30 outline-none;
     }
+
+    /*
+     * Strona publiczna: pola z ramką (np. wpisywanie wyników, wiadomości) bez własnego odstępu dostają
+     * wygodny środek; :where() nie wygrywa z klasami px-/py- wpisanymi przy polu.
+     */
+    :where(input:not([type='checkbox'], [type='radio'], [type='file'], [type='color'], [type='range']), select, textarea):where([class*='border-zinc-300']) {
+        padding: 0.5rem 0.75rem;
+    }
 }
 
 @layer components {

@@ -48,7 +48,8 @@
                         ]) @if($moving) style="--sponsor-count: {{ $count }}" @endif>
                             @foreach($logos as $i => $sponsor)
                                 @php $copy = $i >= $count; @endphp
-                                <li @class(['sponsor-copy' => $copy]) @if($copy) aria-hidden="true" @endif>
+                                {{-- Logotypy zawsze na jasnych kafelkach, także w trybie ciemnym: ciemne napisy w logach pozostają czytelne --}}
+                                <li data-theme-keep @class(['sponsor-copy' => $copy]) @if($copy) aria-hidden="true" @endif>
                                     <{{ $sponsor->href() ? 'a' : 'div' }} @if($sponsor->href()) href="{{ $sponsor->href() }}" @if($sponsor->isExternal()) target="_blank" rel="noopener" @endif @if($copy) tabindex="-1" @endif @endif
                                         title="{{ $sponsor->name }}"
                                         @if($sponsor->tile_color) style="background: {{ $sponsor->tile_color }}" @endif
