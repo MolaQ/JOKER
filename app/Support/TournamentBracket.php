@@ -180,6 +180,17 @@ class TournamentBracket
             }
         }
 
+        // Sama faza grupowa w jednej grupie (bez drabinki i bez reguł miejsc): klasyfikacja to tabela grupy,
+        // do ostatniego wyniku na szaro jako „1. miejsce – Grupa A”.
+        if ($places === [] && $this->groups->count() === 1 && $this->matches->every(fn (TournamentMatch $match) => $match->stage === TournamentMatch::STAGE_GROUP)) {
+            $group = $this->groups->first();
+            $finished = $this->groupProgress($group)['finished'];
+
+            foreach ($this->groupTable($group) as $row) {
+                $places[(int) $row['position']] = $finished ? $row['participant'] : __(':place. miejsce – :group', ['place' => $row['position'], 'group' => $group->name]);
+            }
+        }
+
         foreach ($known as $position => $row) {
             $places[$position] = $row['participant'];
         }

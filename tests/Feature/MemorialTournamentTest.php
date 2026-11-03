@@ -970,3 +970,21 @@ it('puts the full school name first in the hall legend, then the address and cou
         ->and(TournamentHalls::legendTitle($legend(['name' => 'MOSiR', 'rooms' => [['name' => 'Hala 1', 'sectors' => 2], ['name' => 'Hala 2', 'sectors' => 1]]])))
         ->toBe('MOSiR');
 });
+
+test('a groups-only category ranks by the group table, greyed out until the last result', function () {
+    [$joker, $kalisz, $poznan] = memorialGroup($this->tournament, $this->team);
+    $group = $joker->group;
+    $base = ['tournament_category_id' => $group->tournament_category_id, 'stage' => TournamentMatch::STAGE_GROUP];
+    $group->matches()->create($base + ['home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id, 'home_sets' => 2, 'away_sets' => 0, 'sets_score' => [[25, 20], [25, 18]]]);
+    $group->matches()->create($base + ['home_participant_id' => $poznan->id, 'away_participant_id' => $joker->id, 'home_sets' => 0, 'away_sets' => 2, 'sets_score' => [[20, 25], [18, 25]]]);
+    $last = $group->matches()->create($base + ['home_participant_id' => $kalisz->id, 'away_participant_id' => $poznan->id]);
+
+    $standings = fn () => TournamentBracket::for($group->category->fresh())->standings();
+
+    expect($standings()->pluck('participant')->filter())->toBeEmpty()
+        ->and($standings()->pluck('text')->all())->toBe(['1. miejsce – Grupa A', '2. miejsce – Grupa A', '3. miejsce – Grupa A']);
+
+    $last->update(['home_sets' => 2, 'away_sets' => 1, 'sets_score' => [[25, 20], [20, 25], [15, 12]]]);
+
+    expect($standings()->map(fn ($row) => $row['participant']?->id)->all())->toBe([$joker->id, $kalisz->id, $poznan->id]);
+});
