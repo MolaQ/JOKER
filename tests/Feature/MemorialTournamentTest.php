@@ -988,3 +988,22 @@ test('a groups-only category ranks by the group table, greyed out until the last
 
     expect($standings()->map(fn ($row) => $row['participant']?->id)->all())->toBe([$joker->id, $kalisz->id, $poznan->id]);
 });
+
+test('after the last match the tournament page opens on a summary with every category podium', function () {
+    [$joker, $kalisz, $poznan] = memorialGroup($this->tournament, $this->team);
+    $group = $joker->group;
+    $base = ['tournament_category_id' => $group->tournament_category_id, 'stage' => TournamentMatch::STAGE_GROUP];
+    $group->matches()->create($base + ['home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id, 'home_sets' => 2, 'away_sets' => 0, 'sets_score' => [[25, 20], [25, 18]]]);
+    $group->matches()->create($base + ['home_participant_id' => $poznan->id, 'away_participant_id' => $joker->id, 'home_sets' => 0, 'away_sets' => 2, 'sets_score' => [[20, 25], [18, 25]]]);
+    $last = $group->matches()->create($base + ['home_participant_id' => $kalisz->id, 'away_participant_id' => $poznan->id]);
+
+    $this->get(route('tournaments.show', $this->tournament))->assertOk()->assertDontSee('Turniej zakończony');
+
+    $last->update(['home_sets' => 2, 'away_sets' => 1, 'sets_score' => [[25, 20], [20, 25], [15, 12]]]);
+
+    $this->get(route('tournaments.show', $this->tournament))
+        ->assertOk()
+        ->assertSee('Turniej zakończony')
+        ->assertSeeInOrder(['Podsumowanie', 'Kadetki', 'UKS Dwójka Kalisz', 'Klasyfikacja końcowa'])
+        ->assertSee('data-share-card', false);
+});

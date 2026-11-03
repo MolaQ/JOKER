@@ -280,8 +280,38 @@
 
         {{-- KLASYFIKACJA KOŃCOWA --}}
         @if($currentTab === 'ranking' && $current)
+            {{-- Po ostatnim meczu turnieju: zwycięzcy wszystkich kategorii i miejsca naszych drużyn w jednym miejscu --}}
+            @if($summary)
+                <div class="mb-12 overflow-hidden rounded-3xl bg-ink text-white ring-1 ring-white/10" data-theme-keep>
+                    <div class="px-5 pt-6 pb-4 sm:px-8 sm:pt-8">
+                        <p class="text-xs font-semibold tracking-widest text-sky-club uppercase">{{ __('Turniej zakończony') }} · {{ $tournament->dateRangeLabel() }}</p>
+                        <h2 class="mt-2 font-display text-3xl leading-none font-bold uppercase sm:text-4xl">{{ __('Podsumowanie') }}</h2>
+                    </div>
+                    <div @class(['grid gap-px bg-white/10 sm:grid-cols-2', 'lg:grid-cols-3' => $summary->count() === 3, 'lg:grid-cols-4' => $summary->count() >= 4])>
+                        @foreach($summary as $entry)
+                            <a href="{{ route('tournaments.show', ['tournament' => $tournament, 'category' => $loop->first ? null : $entry['category']->slug(), 'tab' => 'ranking']) }}" wire:key="summary-{{ $entry['category']->id }}" class="block bg-ink px-5 py-5 transition hover:bg-white/5 sm:px-6">
+                                <p class="text-sm font-bold tracking-wide text-sky-club-light uppercase">{{ $entry['category']->name }}</p>
+                                <ol class="mt-3 space-y-1.5 text-sm">
+                                    @foreach($entry['podium'] as $row)
+                                        <li class="flex items-center gap-2">
+                                            <span @class(['flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold', 'bg-amber-400 text-amber-950' => $row['position'] === 1, 'bg-zinc-300 text-zinc-900' => $row['position'] === 2, 'bg-orange-400 text-orange-950' => $row['position'] === 3])>{{ $row['position'] }}</span>
+                                            <span @class(['min-w-0 truncate', 'font-semibold' => $row['position'] === 1, 'text-sky-club-light' => $row['participant']->isOwnTeam()])>{{ $row['text'] }}</span>
+                                        </li>
+                                    @endforeach
+                                </ol>
+                                @foreach($entry['ours']->where('position', '>', 3) as $row)
+                                    <p class="mt-2 text-xs text-zinc-400"><span class="font-semibold text-sky-club-light">{{ $row['position'] }}. {{ __('miejsce') }}</span> · {{ $row['text'] }}</p>
+                                @endforeach
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
             @if($standings->isNotEmpty())
-                <h2 class="heading-md">{{ __('Klasyfikacja końcowa') }} <span class="text-zinc-400">· {{ $current->name }}</span></h2>
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h2 class="heading-md">{{ __('Klasyfikacja końcowa') }} <span class="text-zinc-400">· {{ $current->name }}</span></h2>
+                    <x-share-card :card="\App\Support\ShareCards::standings($current, $standings)" />
+                </div>
                 <x-tournament-podium :standings="$standings" class="mt-8" />
             @endif
             @if($current->awards->isNotEmpty())

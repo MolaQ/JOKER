@@ -61,10 +61,15 @@ class TournamentPage extends Component
             'info' => [__('Informator'), filled($this->tournament->guest_info)],
         ])->filter(fn (array $entry) => $entry[1])->map(fn (array $entry) => $entry[0]);
 
-        // „O turnieju” otwiera się domyślnie przed turniejem; od pierwszego dnia pierwsza jest zakładka z grą.
-        $defaultTab = $this->tournament->start_date?->isFuture() === false && $tabs->count() > 1
-            ? $tabs->keys()->reject(fn ($key) => $key === 'about')->first()
-            : $tabs->keys()->first();
+        $summary = self::summary($categories);
+
+        // „O turnieju” otwiera się domyślnie przed turniejem; od pierwszego dnia pierwsza jest zakładka z grą,
+        // a po ostatnim meczu turnieju klasyfikacja z podsumowaniem.
+        $defaultTab = match (true) {
+            $summary !== null && $tabs->has('ranking') => 'ranking',
+            $this->tournament->start_date?->isFuture() === false && $tabs->count() > 1 => $tabs->keys()->reject(fn ($key) => $key === 'about')->first(),
+            default => $tabs->keys()->first(),
+        };
         $currentTab = $tabs->has($this->tab) ? $this->tab : ($defaultTab ?? 'teams');
 
         return view('livewire.tournament-page', [
@@ -77,7 +82,34 @@ class TournamentPage extends Component
             'standalone' => $standalone,
             'knockout' => $knockout->sortBy(fn (TournamentMatch $match) => [$match->starts_at?->timestamp ?? PHP_INT_MAX, $match->number ?? PHP_INT_MAX, $match->id])->values(),
             'standings' => $standings,
+            'summary' => $summary,
         ]);
+    }
+
+    /**
+     * Podsumowanie po ostatnim meczu całego turnieju: w każdej kategorii podium i miejsca naszych drużyn.
+     * Przed końcem (albo bez meczów) null.
+     *
+     * @param  Collection<int, TournamentCategory>  $categories
+     * @return Collection<int, array{category: TournamentCategory, podium: Collection<int, array<string, mixed>>, ours: Collection<int, array<string, mixed>>}>|null
+     */
+    public static function summary(Collection $categories): ?Collection
+    {
+        $played = $categories->filter(fn (TournamentCategory $category) => $category->matches->isNotEmpty());
+
+        if ($played->isEmpty() || $played->contains(fn (TournamentCategory $category) => $category->matches->contains(fn (TournamentMatch $match) => ! $match->isFinished()))) {
+            return null;
+        }
+
+        return $played->map(function (TournamentCategory $category) {
+            $standings = TournamentBracket::for($category)->standings()->filter(fn (array $row) => $row['participant'] !== null);
+
+            return [
+                'category' => $category,
+                'podium' => $standings->where('position', '<=', 3)->values(),
+                'ours' => $standings->filter(fn (array $row) => $row['participant']->isOwnTeam())->values(),
+            ];
+        })->values();
     }
 
     /**

@@ -9,6 +9,8 @@ use App\Models\MiniTripTeam;
 use App\Models\TournamentAward;
 use App\Models\TournamentCategory;
 use App\Models\TournamentMatch;
+use App\Models\TournamentParticipant;
+use Illuminate\Support\Collection;
 
 /**
  * Dane do grafik „do udostępnienia” (wynik meczu, mecz turniejowy, wyniki minisiatkówki, relacja).
@@ -134,6 +136,38 @@ class ShareCards
             ])->values()->all(),
             'url' => route('tournaments.show', $tournament),
             'file' => 'wyroznienia-'.$category->id,
+        ];
+    }
+
+    /**
+     * Klasyfikacja końcowa kategorii (pierwsza ósemka z medalami), gdy wszystkie miejsca są już rozstrzygnięte.
+     *
+     * @param  Collection<int, array{position: int, participant: ?TournamentParticipant, text: string}>  $standings
+     * @return array<string, mixed>|null
+     */
+    public static function standings(TournamentCategory $category, Collection $standings): ?array
+    {
+        if (! self::enabled('share_tournaments') || $standings->isEmpty() || $standings->contains(fn (array $row) => $row['participant'] === null)) {
+            return null;
+        }
+
+        $tournament = $category->tournament;
+
+        return [
+            'kind' => 'mini',
+            'eyebrow' => __('Klasyfikacja końcowa').' · '.$category->name,
+            'title' => $tournament->fullName(),
+            'date' => collect([$tournament->dateRangeLabel().'.'.$tournament->start_date?->format('Y'), $tournament->city])->filter()->implode(' · '),
+            'rows' => $standings->take(8)->map(fn (array $row) => [
+                'place' => $row['position'],
+                'group' => '',
+                'name' => $row['text'],
+                'icons' => 0,
+                'color' => '',
+                'players' => '',
+            ])->values()->all(),
+            'url' => route('tournaments.show', [$tournament, $category->slug()]),
+            'file' => 'klasyfikacja-'.$category->id,
         ];
     }
 
