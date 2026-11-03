@@ -147,8 +147,8 @@ class TournamentEditor extends Component
     /** Odstęp między meczami na sektorze, np. „1:30”. */
     public string $matchInterval = '1:30';
 
-    /** Zmiana godziny meczu przesuwa kolejne mecze na tym samym sektorze. */
-    public bool $shiftFollowing = true;
+    /** Zmiana godziny meczu przesuwa kolejne mecze na tym samym sektorze (domyślnie wyłączone: organizator włącza świadomie). */
+    public bool $shiftFollowing = false;
 
     /** @var array{message?: string, matches?: array<int, array{starts_at: ?string, planned_starts_at: ?string}>} Ostatnie przesunięcie do cofnięcia. */
     public array $scheduleUndo = [];

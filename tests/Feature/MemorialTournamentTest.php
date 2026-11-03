@@ -587,7 +587,7 @@ test('match times are arranged per sector every interval and a delay shifts the 
     $finished = $category->matches()->create($base + ['number' => 5, 'court' => 'Sektor III', 'home_sets' => 2, 'away_sets' => 0]);
     $foreign = $other->matches()->create(['stage' => 'placement', 'placement' => 1, 'court' => 'Sektor III', 'starts_at' => '2026-11-14 15:00']);
 
-    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
+    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')->set('shiftFollowing', true)
         ->assertSet('scheduleDays', [['date' => '2026-11-14', 'time' => '09:00', 'from' => '1'], ['date' => '2026-11-15', 'time' => '09:00', 'from' => '']])
         ->assertSet('matchInterval', '1:30')
         ->set('matchInterval', '1:15')
@@ -629,7 +629,7 @@ test('changing a match time before the tournament day changes the plan without a
     $next = $joker->category->matches()->create(['stage' => 'group', 'tournament_group_id' => $joker->tournament_group_id, 'court' => 'Sektor I', 'starts_at' => '2026-11-14 10:30']);
 
     $this->travelTo('2026-11-01 12:00');
-    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')->set('shiftFollowing', true)
         ->set("results.{$match->id}.starts_at", '2026-11-14T09:30');
 
     expect($match->fresh()->delayMinutes())->toBeNull()
@@ -693,7 +693,7 @@ test('groups get default sectors, other matches go to the first free sector and 
     $juniors = $this->tournament->categories()->create(['name' => 'Juniorki', 'display_order' => 1]);
     $busy = $juniors->matches()->create(['stage' => 'placement', 'placement' => 1, 'court' => 'Sektor I', 'starts_at' => '2026-11-14 09:00']);
 
-    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')
+    $editor = Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')->set('shiftFollowing', true)
         ->set("groupCourts.{$groupA->id}", 'Sektor III')
         ->set("groupCourts.{$groupB->id}", 'Sektor I')
         ->call('arrangeSchedule');
@@ -1054,4 +1054,18 @@ test('occupancy shows every hall in its own table: club hall first, then halls b
         ->and(strpos($html, 'SP 6 <span'))->toBeLessThan(strpos($html, 'SP 1 <span'));
     expect(preg_match('/SP 1 <span[^>]*>· 1 mecz</', $html))->toBe(1)
         ->and(preg_match('/SP 6 <span[^>]*>· 2 mecze</', $html))->toBe(1);
+});
+
+test('changing a match time does not move later matches unless the organizer turns it on', function () {
+    [$joker, $kalisz] = memorialGroup($this->tournament, $this->team);
+    $this->actingAs(User::factory()->admin()->create());
+    $base = ['stage' => 'group', 'tournament_group_id' => $joker->group->id, 'home_participant_id' => $joker->id, 'away_participant_id' => $kalisz->id, 'court' => 'Sektor I'];
+    $first = $joker->category->matches()->create($base + ['number' => 1, 'starts_at' => '2026-11-14 09:00']);
+    $second = $joker->category->matches()->create($base + ['number' => 2, 'starts_at' => '2026-11-14 10:30']);
+
+    Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')->set('categoryId', $joker->category->id)
+        ->assertSet('shiftFollowing', false)
+        ->set("results.{$first->id}.starts_at", '2026-11-14T09:30');
+
+    expect($first->fresh()->starts_at->format('H:i'))->toBe('09:30')->and($second->fresh()->starts_at->format('H:i'))->toBe('10:30');
 });
