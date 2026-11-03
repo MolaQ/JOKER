@@ -153,3 +153,23 @@ test('an editor sends a notification by hand to a chosen group of fans', functio
         ->call('send')
         ->assertHasNoErrors();
 });
+
+test('the follow box on a tournament page explains blocked notifications and private windows', function () {
+    $tournament = Tournament::create(['name' => 'Memoriał', 'start_date' => now()->toDateString(), 'end_date' => now()->toDateString(), 'city' => 'Piła', 'is_organizer' => true, 'has_page' => true]);
+    $category = $tournament->categories()->create(['name' => 'Kadetki']);
+    $category->participants()->create(['competitor_type' => 'rival_team', 'competitor_id' => RivalTeam::create(['full_name' => 'MKS Kalisz'])->id]);
+
+    $this->get(route('tournaments.show', $tournament))->assertOk()
+        ->assertSee('data-push-follow', false)
+        ->assertSee('data-blocked-label', false)
+        ->assertSee('data-followed-label', false);
+});
+
+test('a guest fan who only follows a tournament team gets nothing about the club teams', function () {
+    $guest = pushSubscription(['topics' => ['tournaments', 'upcoming'], 'teams' => [], 'participants' => [7]]);
+
+    expect($guest->wants(['topic' => 'tournaments', 'teams' => [3], 'participants' => [1, 2]]))->toBeFalse()
+        ->and($guest->wants(['topic' => 'upcoming', 'teams' => [], 'participants' => [7, 2]]))->toBeTrue()
+        ->and($guest->wants(['topic' => 'results', 'teams' => [3]]))->toBeFalse()
+        ->and($guest->wants(['topic' => 'articles']))->toBeFalse();
+});

@@ -48,6 +48,10 @@ export function initPush() {
                 button.hidden = false;
                 button.addEventListener('click', () => iosHint?.classList.remove('hidden'));
             });
+            document.querySelectorAll('[data-push-follow]').forEach((box) => {
+                box.hidden = false;
+                box.querySelector('[data-push-follow-add]')?.addEventListener('click', () => iosHint?.classList.remove('hidden'));
+            });
         }
 
         return;
@@ -201,17 +205,42 @@ export function initPush() {
 
         preferences().then((current) => render(current?.participants ?? [])).catch(() => {});
 
-        box.querySelector('[data-push-follow-add]').addEventListener('click', async () => {
+        const addButton = box.querySelector('[data-push-follow-add]');
+        addButton.addEventListener('click', async () => {
             const id = Number(select.value);
             if (!id) {
+                select.focus();
+
                 return;
             }
-            if (!(await currentSubscription()) && !(await subscribe())) {
-                return;
+            addButton.disabled = true;
+            try {
+                const fresh = !(await currentSubscription());
+                if (fresh && !(await subscribe())) {
+                    if (Notification.permission === 'denied') {
+                        window.toast?.(box.dataset.blockedLabel, 'error');
+                    }
+
+                    return;
+                }
+                setState(true);
+                const current = await preferences();
+                const changes = { participants: [...new Set([...(current?.participants ?? []), id])] };
+                if (fresh) {
+                    // Nowy kibic z tego przycisku (np. rodzic z drużyny gości) chce tylko meczów tej drużyny, nie wszystkich wiadomości klubu.
+                    changes.topics = ['tournaments', 'upcoming'];
+                    changes.teams = [];
+                } else if (current?.topics) {
+                    // Kto wcześniej odznaczył wyniki turniejów albo przypomnienia, a teraz obserwuje drużynę, chce je dostać.
+                    changes.topics = [...new Set([...current.topics, 'tournaments', 'upcoming'])];
+                }
+                render((await preferences(changes))?.participants ?? []);
+                window.toast?.(box.dataset.followedLabel.replace(':name', names[id]));
+            } catch (error) {
+                window.toast?.(Notification.permission === 'denied' ? box.dataset.blockedLabel : box.dataset.errorLabel, 'error');
+            } finally {
+                addButton.disabled = false;
             }
-            setState(true);
-            const current = (await preferences())?.participants ?? [];
-            render((await preferences({ participants: [...new Set([...current, id])] }))?.participants ?? []);
         });
     });
 
