@@ -186,6 +186,10 @@ class ContentProposalManager extends Component
             $article->update(['mini_trip_id' => $proposal->match->id]);
         }
 
+        if ($proposal->match instanceof TournamentMatch && ($tournament = $proposal->match->tournament())) {
+            $article->update(['tournament_id' => $tournament->id]);
+        }
+
         return $article;
     }
 

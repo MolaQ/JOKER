@@ -31,6 +31,7 @@ class Article extends Model
 
     protected $fillable = [
         'mini_trip_id',
+        'tournament_id',
         'title',
         'title_en',
         'slug',
@@ -93,6 +94,14 @@ class Article extends Model
     public function miniTrip(): BelongsTo
     {
         return $this->belongsTo(MiniTrip::class);
+    }
+
+    /**
+     * Turniej (np. Memoriał), z którego jest relacja.
+     */
+    public function tournament(): BelongsTo
+    {
+        return $this->belongsTo(Tournament::class);
     }
 
     public function comments(): HasMany

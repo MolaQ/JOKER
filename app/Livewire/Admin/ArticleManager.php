@@ -7,6 +7,7 @@ use App\Livewire\Concerns\ShowsToasts;
 use App\Livewire\Concerns\SortsTable;
 use App\Models\Article;
 use App\Models\Game;
+use App\Models\Tournament;
 use App\Models\User;
 use App\Support\SearchIndex;
 use App\Support\Slug;
@@ -70,6 +71,9 @@ class ArticleManager extends Component
 
     public string $gameSearch = '';
 
+    /** Turniej, z którego jest relacja (link na stronie artykułu i lista relacji na stronie turnieju). */
+    public string $tournamentId = '';
+
     public string $search = '';
 
     public string $statusFilter = '';
@@ -92,6 +96,7 @@ class ArticleManager extends Component
             'focusY' => 'integer|between:0,100',
             'gameIds' => 'array',
             'gameIds.*' => 'integer|exists:games,id',
+            'tournamentId' => 'nullable|integer|exists:tournaments,id',
             'authorId' => 'nullable|integer|exists:users,id',
             'authorName' => 'nullable|string|max:120',
         ];
@@ -105,6 +110,18 @@ class ArticleManager extends Component
     public function updatingStatusFilter(): void
     {
         $this->resetPage();
+    }
+
+    /**
+     * Link z panelu turnieju („Relacja z wynikami”) otwiera szkic od razu do edycji.
+     */
+    public function mount(): void
+    {
+        $id = (int) request()->query('edytuj');
+
+        if ($id && Article::whereKey($id)->exists()) {
+            $this->openEditModal($id);
+        }
     }
 
     public function openCreateModal(): void
@@ -135,6 +152,7 @@ class ArticleManager extends Component
         [$this->focusX, $this->focusY] = array_map('intval', explode(' ', str_replace('%', '', $article->imageFocus())));
         $this->gameIds = $article->games()->pluck('games.id')->all();
         $this->gameSearch = '';
+        $this->tournamentId = (string) $article->tournament_id;
 
         $this->showModal = true;
     }
@@ -149,7 +167,8 @@ class ArticleManager extends Component
             unset($validated['featured_image']);
         }
 
-        unset($validated['gameIds'], $validated['gameIds.*'], $validated['focusX'], $validated['focusY'], $validated['authorId'], $validated['authorName']);
+        unset($validated['gameIds'], $validated['gameIds.*'], $validated['focusX'], $validated['focusY'], $validated['authorId'], $validated['authorName'], $validated['tournamentId']);
+        $validated['tournament_id'] = $this->tournamentId !== '' ? (int) $this->tournamentId : null;
         $validated['author_id'] = (int) ($this->authorId ?: Auth::id());
         $validated['author_name'] = trim($this->authorName) ?: null;
         $validated['featured_image_focus'] = $this->focusX.'% '.$this->focusY.'%';
@@ -251,6 +270,7 @@ class ArticleManager extends Component
         $this->focusY = 50;
         $this->gameIds = [];
         $this->gameSearch = '';
+        $this->tournamentId = '';
         $this->resetErrorBag();
     }
 
@@ -285,6 +305,7 @@ class ArticleManager extends Component
             'articles' => $articles,
             'linkedGames' => $this->showModal ? Game::with(['team', 'opponentTeam'])->whereIn('id', $this->gameIds)->orderBy('game_date')->get() : collect(),
             'gameSuggestions' => $this->showModal ? $this->gameSuggestions() : collect(),
+            'tournamentOptions' => $this->showModal ? Tournament::query()->orderByDesc('start_date')->limit(30)->get(['id', 'name', 'edition', 'start_date']) : collect(),
             'authorOptions' => $this->showModal
                 ? User::withAccountStatus(AccountStatus::Active)->with('roleAssignments')->orderBy('name')->get(['id', 'name'])
                     ->map(fn (User $user) => ['value' => (string) $user->id, 'label' => $user->name.($user->rolesLabel() ? ' ('.$user->rolesLabel().')' : '')])->all()

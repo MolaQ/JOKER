@@ -114,6 +114,14 @@ class Tournament extends Model
         return $user->can('tournaments.manage') || ($this->scoringOpen() && $this->scorers()->whereKey($user->id)->exists());
     }
 
+    /**
+     * Relacje z turnieju w aktualnościach.
+     */
+    public function articles(): HasMany
+    {
+        return $this->hasMany(Article::class);
+    }
+
     public function categories(): HasMany
     {
         return $this->hasMany(TournamentCategory::class)->orderBy('display_order')->orderBy('id');

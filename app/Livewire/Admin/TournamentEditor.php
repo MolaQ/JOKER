@@ -16,6 +16,7 @@ use App\Support\AgeColors;
 use App\Support\SiteSettings;
 use App\Support\TournamentBracket;
 use App\Support\TournamentHalls;
+use App\Support\TournamentReport;
 use App\Support\TournamentResults;
 use App\Support\TournamentSchedule;
 use App\Support\TournamentTable;
@@ -652,6 +653,24 @@ class TournamentEditor extends Component
         $group->update(['manual_order' => $order]);
         $this->syncBracket();
         $this->toast('Ustawiono ręczną kolejność w '.$group->name.'.');
+    }
+
+    /**
+     * Szkic relacji z wynikami do aktualności (po ostatnim meczu turnieju); otwiera się od razu do edycji.
+     */
+    public function prepareReport(): void
+    {
+        abort_unless(auth()->user()?->can('articles.manage'), 403);
+
+        $article = TournamentReport::draft($this->tournament);
+
+        if ($article === null) {
+            $this->toast('Relację z wynikami przygotujesz po ostatnim meczu turnieju.', 'warning');
+
+            return;
+        }
+
+        $this->redirect(route('admin.articles.index', ['edytuj' => $article->id]));
     }
 
     public function resetTableOrder(int $groupId): void

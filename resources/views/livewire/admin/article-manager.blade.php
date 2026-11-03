@@ -218,6 +218,18 @@
                             </div>
 
                             <div>
+                                <label for="article-tournament" class="block text-sm font-medium text-gray-700">Relacja z turnieju</label>
+                                <p class="text-xs text-gray-500">Artykuł pokaże link do strony turnieju, a strona turnieju ten artykuł w relacjach.</p>
+                                <select id="article-tournament" wire:model="tournamentId" class="mt-2 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                    <option value="">— nie dotyczy turnieju —</option>
+                                    @foreach($tournamentOptions as $tournamentOption)
+                                        <option value="{{ $tournamentOption->id }}">{{ $tournamentOption->fullName() }} ({{ $tournamentOption->start_date?->format('Y') }})</option>
+                                    @endforeach
+                                </select>
+                                @error('tournamentId') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
                                 <label class="block text-sm font-medium text-gray-700">Dotyczy meczów</label>
                                 <p class="text-xs text-gray-500">Kliknięcie meczu w kalendarzu otworzy ten artykuł (gdy jest kilka - najnowszy).</p>
                                 @if($linkedGames->isNotEmpty())

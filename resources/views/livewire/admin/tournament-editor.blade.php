@@ -25,6 +25,9 @@
                 <div class="hidden shrink-0 gap-3 sm:flex">
                     <a href="{{ route('tournaments.tv', $tournament) }}" target="_blank" class="text-sm font-semibold text-sky-700 hover:underline" title="Otwórz na komputerze podłączonym do telewizora i naciśnij F11 (pełny ekran)">Ekran TV ↗</a>
                     <a href="{{ route('tournaments.show', $tournament) }}" target="_blank" class="text-sm font-semibold text-sky-700 hover:underline">Zobacz stronę ↗</a>
+                    @can('articles.manage')
+                        <button type="button" wire:click="prepareReport" class="text-sm font-semibold text-sky-700 hover:underline" title="Szkic artykułu z podium, miejscami naszych drużyn i wyróżnieniami (po ostatnim meczu)">Relacja z wynikami</button>
+                    @endcan
                 </div>
             @endif
         </div>
@@ -33,6 +36,9 @@
         <div class="-mt-3 flex gap-2 sm:hidden">
             <a href="{{ route('tournaments.show', $tournament) }}" target="_blank" class="admin-action">Zobacz stronę ↗</a>
             <a href="{{ route('tournaments.tv', $tournament) }}" target="_blank" class="admin-action">Ekran TV ↗</a>
+            @can('articles.manage')
+                <button type="button" wire:click="prepareReport" class="admin-action">Relacja</button>
+            @endcan
         </div>
     @endif
 

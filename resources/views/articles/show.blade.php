@@ -54,6 +54,19 @@
     </div>
 </article>
 
+@if($article->tournament?->has_page)
+    <p class="container-site max-w-3xl pb-10">
+        <a href="{{ route('tournaments.show', $article->tournament) }}" class="card card-hover flex items-center justify-between gap-4 p-5">
+            <span>
+                <span class="block text-sm text-zinc-500">🏆 {{ __('Strona turnieju') }}</span>
+                <span class="mt-1 block font-display text-xl leading-tight font-bold uppercase">{{ $article->tournament->fullName() }}</span>
+                <span class="mt-1 block text-sm text-zinc-600">{{ __('Wszystkie mecze, tabele, drabinki i zdjęcia') }}</span>
+            </span>
+            <span class="text-2xl text-sky-club-dark" aria-hidden="true">→</span>
+        </a>
+    </p>
+@endif
+
 {{-- Media meczów, których dotyczy artykuł: transmisje i galerie --}}
 @foreach($article->games as $game)
     @php
