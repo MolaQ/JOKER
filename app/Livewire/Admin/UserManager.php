@@ -62,6 +62,11 @@ class UserManager extends Component
     /** Jak pokazać urodziny w kalendarzu meczów: ukryte, sam torcik albo z wiekiem. */
     public string $birthday_display = 'age';
 
+    /** Profil trenera i sztabu na stronie (/staff/…): Instagram i opis „O mnie”. */
+    public string $instagram = '';
+
+    public string $additional_info = '';
+
     public string $search = '';
 
     public string $roleFilter = '';
@@ -88,6 +93,8 @@ class UserManager extends Component
             'coordinatedTeamIds.*' => 'integer|exists:teams,id',
             'birth_date' => 'nullable|date|before:today',
             'birthday_display' => 'required|in:hidden,cake,age',
+            'instagram' => 'nullable|string|max:255',
+            'additional_info' => 'nullable|string|max:2000',
         ];
     }
 
@@ -132,6 +139,8 @@ class UserManager extends Component
         $this->is_active = $user->is_active;
         $this->birth_date = $user->birth_date?->format('Y-m-d');
         $this->birthday_display = $user->birthday_display?->value ?? 'age';
+        $this->instagram = (string) $user->instagram;
+        $this->additional_info = (string) $user->additional_info;
 
         $this->showModal = true;
     }
@@ -171,6 +180,9 @@ class UserManager extends Component
 
             return;
         }
+
+        $validated['instagram'] = filled($validated['instagram'] ?? null) ? trim($validated['instagram']) : null;
+        $validated['additional_info'] = filled(trim(strip_tags((string) ($validated['additional_info'] ?? '')))) ? $validated['additional_info'] : null;
 
         if (empty($validated['password'])) {
             unset($validated['password']);
@@ -305,6 +317,8 @@ class UserManager extends Component
         $this->is_active = true;
         $this->birth_date = null;
         $this->birthday_display = 'age';
+        $this->instagram = '';
+        $this->additional_info = '';
         $this->resetErrorBag();
     }
 

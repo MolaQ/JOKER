@@ -163,3 +163,22 @@ test('lista drużyn w panelu pokazuje odbiór, a lista zawodników sortuje po os
 
     Livewire::test(TeamList::class)->call('sortBy', 'wyswietlenia')->assertDontSee('Odbiór')->assertSee('340');
 });
+
+test('an admin edits a trainer description and instagram directly', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $trainer = User::factory()->create(['role' => UserRole::Trainer, 'name' => 'Anna Trenerka']);
+
+    Livewire::test(UserManager::class)
+        ->call('openEditModal', $trainer->id)
+        ->set('instagram', ' anna.trener ')
+        ->set('additional_info', '<p>Trener II klasy, 10 lat w klubie.</p>')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $trainer->refresh();
+    expect($trainer->instagram)->toBe('anna.trener')
+        ->and($trainer->additional_info)->toBe('<p>Trener II klasy, 10 lat w klubie.</p>')
+        ->and($trainer->hasRole(UserRole::Trainer))->toBeTrue();
+
+    $this->get(route('trainers.show', $trainer))->assertOk()->assertSee('Trener II klasy, 10 lat w klubie.');
+});

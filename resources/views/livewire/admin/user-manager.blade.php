@@ -228,6 +228,24 @@
                                     <p class="mt-1 text-xs text-gray-500">Dotyczy trenerów i sztabu.</p>
                                 </div>
                             </div>
+
+                            {{-- Profil trenera i sztabu na stronie: to samo, co osoba może zaproponować w „Mój profil” --}}
+                            <fieldset class="space-y-3 rounded-lg border border-gray-200 p-4">
+                                <legend class="px-1 text-sm font-medium text-gray-700">Profil na stronie (trenerzy i sztab)</legend>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700" for="user-instagram">Instagram</label>
+                                    <input id="user-instagram" type="text" wire:model="instagram" maxlength="255" placeholder="np. jan.kowalski" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                    @error('instagram') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">O mnie</label>
+                                    <x-rich-text-editor model="additional_info" :live="false" placeholder="Doświadczenie, uprawnienia, osiągnięcia…" height="min-h-[140px]" />
+                                    @error('additional_info') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    @if($editingId && ($profileUser = \App\Models\User::find($editingId))?->isStaffMember())
+                                        <a href="{{ route('trainers.show', $profileUser) }}" target="_blank" class="mt-1 inline-block text-xs font-semibold text-sky-700 hover:underline">Zobacz profil na stronie ↗</a>
+                                    @endif
+                                </div>
+                            </fieldset>
                         </div>
 
                         <div class="sticky bottom-0 z-10 px-6 py-4 bg-gray-50 flex justify-end space-x-3 rounded-b-lg border-t border-gray-200">
