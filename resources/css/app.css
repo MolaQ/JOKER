@@ -91,6 +91,12 @@
     :where(input:not([type='checkbox'], [type='radio'], [type='file'], [type='color'], [type='range']), select, textarea):where([class*='border-zinc-300']) {
         padding: 0.5rem 0.75rem;
     }
+
+    /* Pole z samym kolorem ramki (border-zinc-300 bez „border”) też ma ramkę; inaczej na białym tle znika. */
+    :where(input:not([type='checkbox'], [type='radio'], [type='file'], [type='color'], [type='range']), select, textarea):where([class*='border-zinc-300'], [class*='border-gray-300']) {
+        border-width: 1px;
+        border-style: solid;
+    }
 }
 
 @layer components {

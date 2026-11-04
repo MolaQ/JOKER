@@ -83,6 +83,9 @@ class PlayerManager extends Component
     /** @var array<int, int> Dodatkowe drużyny w bieżącym sezonie (gra w kilku drużynach) */
     public array $extra_team_ids = [];
 
+    /** @var array<int|string, int|string|null> Numer na koszulce w dodatkowej drużynie, np. [5 => 10]. Puste = bez numeru. */
+    public array $extra_team_numbers = [];
+
     public bool $is_active = true;
 
     public bool $image_consent = true;
@@ -149,6 +152,8 @@ class PlayerManager extends Component
             'team_id' => [Auth::user()->managedTeamIds() === null ? 'nullable' : 'required', Rule::in(Team::managedBy(Auth::user())->pluck('id'))],
             'extra_team_ids' => 'array',
             'extra_team_ids.*' => 'exists:teams,id',
+            'extra_team_numbers' => 'array',
+            'extra_team_numbers.*' => 'nullable|integer|min:0|max:99',
             'is_active' => 'boolean',
             'image_consent' => 'boolean',
             'photo' => 'nullable|image|max:4096|dimensions:ratio=4/5',
@@ -242,9 +247,11 @@ class PlayerManager extends Component
         $this->photo = null;
 
         $currentSeasonId = Season::current()->value('id');
-        $this->extra_team_ids = $currentSeasonId
-            ? $player->teamsForSeason($currentSeasonId)->pluck('teams.id')->reject(fn ($id) => $id === $player->team_id)->values()->all()
-            : [];
+        $extraTeams = $currentSeasonId
+            ? $player->teamsForSeason($currentSeasonId)->get()->reject(fn ($team) => $team->id === $player->team_id)->values()
+            : collect();
+        $this->extra_team_ids = $extraTeams->pluck('id')->all();
+        $this->extra_team_numbers = $extraTeams->mapWithKeys(fn ($team) => [$team->id => $team->pivot->jersey_number])->all();
 
         $this->showModal = true;
     }
@@ -253,11 +260,12 @@ class PlayerManager extends Component
     {
         $validated = $this->validate();
         $extraTeamIds = $validated['extra_team_ids'] ?? [];
+        $extraNumbers = $validated['extra_team_numbers'] ?? [];
         $guardianIds = $validated['guardian_ids'] ?? [];
         $captain = $validated['is_captain'];
         $accountEmail = trim($validated['account_email'] ?? '');
         $newGuardians = array_filter($validated['new_guardians'] ?? [], fn (array $row) => trim($row['email'] ?? '') !== '');
-        unset($validated['extra_team_ids'], $validated['guardian_ids'], $validated['achievements'], $validated['photo'], $validated['is_captain'], $validated['account_email'], $validated['new_guardians']);
+        unset($validated['extra_team_numbers'], $validated['extra_team_ids'], $validated['guardian_ids'], $validated['achievements'], $validated['photo'], $validated['is_captain'], $validated['account_email'], $validated['new_guardians']);
         $validated['position'] = $validated['position'] ?: null;
         $validated['interests'] = trim($validated['interests'] ?? '') ?: null;
         $validated['social_links'] = array_filter(array_map(fn ($url) => trim((string) $url), $validated['social_links'] ?? [])) ?: null;
@@ -315,9 +323,10 @@ class PlayerManager extends Component
                     continue;
                 }
 
+                $number = $extraNumbers[$extraTeamId] ?? null;
                 $player->teams()->attach($extraTeamId, [
                     'season_id' => $currentSeasonId,
-                    'jersey_number' => null,
+                    'jersey_number' => $number === null || $number === '' ? null : (int) $number,
                     'is_captain' => false,
                 ]);
             }
@@ -375,6 +384,7 @@ class PlayerManager extends Component
         $this->bio = '';
         $this->team_id = null;
         $this->extra_team_ids = [];
+        $this->extra_team_numbers = [];
         $this->is_active = true;
         $this->image_consent = true;
         $this->photo = null;

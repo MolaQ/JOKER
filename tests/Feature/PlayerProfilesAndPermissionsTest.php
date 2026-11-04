@@ -111,6 +111,22 @@ test('admin sets captain, interests, social links and the player account in the 
         ->assertSee('szachy');
 });
 
+test('a player gets his own number in an extra team and the career shows it', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $juniors = Team::create(['name' => 'Juniorzy II', 'slug' => 'juniorzy-ii', 'category' => 'junior']);
+    $player = Player::factory()->create(['team_id' => $this->team->id, 'jersey_number' => 10, 'last_name' => 'Molak']);
+
+    Livewire::test(PlayerManager::class)
+        ->call('openEditModal', $player->id)
+        ->set('extra_team_ids', [(string) $juniors->id])
+        ->set('extra_team_numbers.'.$juniors->id, 7)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($player->teamsForSeason()->where('teams.id', $juniors->id)->first()->pivot->jersey_number)->toBe(7);
+    Livewire::test(PlayerManager::class)->call('openEditModal', $player->id)->assertSet('extra_team_numbers.'.$juniors->id, 7);
+});
+
 test('a parent proposes the child email and approval creates the account', function () {
     Notification::fake();
     $player = Player::factory()->create(['team_id' => $this->team->id]);

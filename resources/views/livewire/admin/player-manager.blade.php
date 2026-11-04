@@ -308,14 +308,17 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Dodatkowe drużyny w bieżącym sezonie</label>
-                                <p class="text-xs text-gray-500 mb-2">Zaznacz, jeśli zawodnik dogrywa również w innej drużynie (np. młodszy zawodnik grywający ze starszym rocznikiem).</p>
-                                <div class="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border border-gray-200 rounded-md p-2">
+                                <p class="text-xs text-gray-500 mb-2">Zaznacz, jeśli zawodnik dogrywa również w innej drużynie (np. młodszy zawodnik grywający ze starszym rocznikiem). Obok wpisz numer, z którym tam gra.</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-2">
                                     @foreach($teams as $team)
                                         @if($team->id !== $team_id)
-                                            <label class="flex items-center text-sm text-gray-700">
-                                                <input type="checkbox" wire:model="extra_team_ids" value="{{ $team->id }}" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500 mr-2">
-                                                {{ $team->name }}
-                                            </label>
+                                            <div class="flex items-center gap-2 text-sm text-gray-700" x-data="{ on: $wire.extra_team_ids.map(String).includes('{{ $team->id }}') }">
+                                                <label class="flex min-w-0 flex-1 items-center">
+                                                    <input type="checkbox" wire:model="extra_team_ids" value="{{ $team->id }}" x-on:change="on = $el.checked" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500 mr-2">
+                                                    <span class="truncate">{{ $team->name }}</span>
+                                                </label>
+                                                <input type="number" min="0" max="99" x-show="on" x-cloak wire:model="extra_team_numbers.{{ $team->id }}" placeholder="nr" aria-label="Numer w drużynie {{ $team->name }}" class="w-16 rounded-md border border-gray-300 px-2 py-1 text-sm">
+                                            </div>
                                         @endif
                                     @endforeach
                                 </div>

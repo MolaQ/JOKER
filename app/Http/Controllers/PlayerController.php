@@ -64,10 +64,11 @@ class PlayerController extends Controller
         // Zawodnik gra w jednych rozgrywkach tylko w jednej drużynie. Gdy dwie jego drużyny są w tych samych
         // rozgrywkach (np. kadeci i juniorzy II w III lidze), rozgrywki pokazujemy tylko przy drużynie głównej.
         $shown = [];
+        $currentSeasonId = Season::current()->value('id');
 
         return $entries
             ->sortByDesc(fn (Team $team) => ($team->id === $player->team_id ? 1 : 0).'-'.(1000000 - $team->id))
-            ->map(function (Team $team) use ($competitions, $seasons, &$shown) {
+            ->map(function (Team $team) use ($competitions, $seasons, &$shown, $player, $currentSeasonId) {
                 $own = $competitions
                     ->filter(fn (Competition $competition) => $competition->season_id === $team->pivot->season_id && $competition->teams->contains('id', $team->id))
                     ->reject(fn (Competition $competition) => isset($shown[$competition->id]));
@@ -79,7 +80,8 @@ class PlayerController extends Controller
                 return [
                     'season' => $seasons->get($team->pivot->season_id),
                     'team' => $team,
-                    'jersey' => $team->pivot->jersey_number,
+                    // Bez osobnego numeru w drużynie bieżącego sezonu: ten sam numer co w składzie drużyny (jak na stronie drużyny).
+                    'jersey' => $team->pivot->jersey_number ?? ($team->pivot->season_id === $currentSeasonId ? $player->jersey_number : null),
                     'captain' => (bool) $team->pivot->is_captain,
                     'competitions' => $own->pluck('name')->values(),
                 ];

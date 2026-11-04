@@ -17,6 +17,7 @@
         'Wiek' => $age ? \App\Livewire\GamesBrowser::yearsLabel($age) : null,
         'Wzrost' => $player->height ? $player->height.' cm' : null,
         'Waga' => $player->weight ? $player->weight.' kg' : null,
+        'Zasięg' => $player->reach ? $player->reach.' cm' : null,
         'Zasięg w ataku' => $player->spike_reach ? $player->spike_reach.' cm' : null,
         'Zasięg w bloku' => $player->block_reach ? $player->block_reach.' cm' : null,
     ]);
@@ -45,7 +46,7 @@
             @endif
 
             @if($stats)
-                <dl class="mt-8 grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/10 {{ [1 => 'sm:grid-cols-1', 2 => 'sm:grid-cols-2', 3 => 'sm:grid-cols-3', 4 => 'sm:grid-cols-4', 5 => 'sm:grid-cols-5'][count($stats)] }}">
+                <dl class="mt-8 grid max-w-3xl grid-cols-2 gap-px overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/10 {{ [1 => 'sm:grid-cols-1', 2 => 'sm:grid-cols-2', 3 => 'sm:grid-cols-3', 4 => 'sm:grid-cols-4', 5 => 'sm:grid-cols-5', 6 => 'sm:grid-cols-3'][count($stats)] }}">
                     @foreach($stats as $label => $value)
                         <div class="bg-ink/80 px-4 py-3">
                             <dt class="text-[11px] font-semibold tracking-widest text-zinc-400 uppercase">{{ __($label) }}</dt>
