@@ -343,6 +343,7 @@ return [
                     ['label' => 'Tabela', 'url' => '/standings'],
                     ['label' => 'Memoriał', 'url' => '/memorial'],
                     ['label' => 'Drużyny', 'url' => '/teams'],
+                    ['label' => 'Sztab', 'url' => '/staff'],
                     ['label' => 'Młodzież', 'url' => '/page/nabor'],
                     ['label' => 'Klub', 'url' => '/page/o-klubie'],
                 ]],

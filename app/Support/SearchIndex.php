@@ -162,15 +162,10 @@ class SearchIndex
                 route('players.show', $player, false), $player->bio);
         }
 
-        $staff = User::with(['headCoachTeams', 'assistantTeams'])
-            ->where(fn ($query) => $query->whereHas('headCoachTeams')->orWhereHas('assistantTeams'))
-            ->orderBy('name')
-            ->get();
-
-        foreach ($staff as $member) {
-            $roles = $member->headCoachTeams->toBase()->map(fn ($team) => __('Trener główny').': '.$team->name)
-                ->merge($member->assistantTeams->map(fn ($team) => __($team->pivot->role ?: 'Asystent trenera').': '.$team->name));
-            $add(__('Sztab'), $member->name, $roles->first(), route('trainers.show', $member, false), $roles->implode(' ').' '.$member->additional_info);
+        foreach (StaffDirectory::entries() as $entry) {
+            $member = $entry['user'];
+            $roles = $entry['teams']->map(fn (array $team) => $team['role'].': '.$team['name']);
+            $add(__('Sztab'), $member->name, $roles->first() ?? $entry['function'], route('trainers.show', $member, false), $entry['function'].' '.$roles->implode(' ').' '.$member->additional_info);
         }
 
         // Administracja klubu spoza sztabu ma publiczny profil.
@@ -220,6 +215,7 @@ class SearchIndex
             [__('Terminarz meczów'), __('Wszystkie mecze sezonu'), route('schedule.index', [], false), 'terminarz kalendarz mecze kiedy gramy godziny schedule fixtures matches calendar'],
             [__('Tabele ligowe'), __('Pozycje w rozgrywkach'), route('standings', [], false), 'tabela liga punkty miejsce ranking standings table league points'],
             [__('Drużyny'), __('Wszystkie drużyny klubu'), route('teams.index', [], false), 'druzyny zespoly roczniki kadra seniorzy juniorzy mlodzicy kadeci teams squad seniors juniors'],
+            [__('Sztab'), __('Trenerzy i sztab klubu'), route('trainers.index', [], false), 'sztab trenerzy trener fizjoterapeuta fizjo statystyk kierownik minisiatkowka staff coaches physio'],
             [__('Kontakt i zapisy'), __('Napisz do klubu, zapisz dziecko'), route('contact.index', [], false), 'kontakt telefon email adres zapisy nabor trening probny dolacz hala contact phone address join training'],
             [__('Dokumenty do pobrania'), __('Regulaminy, zgody, formularze'), route('documents.index', [], false), 'dokumenty regulamin zgoda rodo formularz deklaracja statut pobierz documents regulations forms download'],
             [__('Aktualności'), __('Wszystkie wpisy'), route('articles.index', [], false), 'aktualnosci news wiadomosci blog'],

@@ -76,6 +76,7 @@ Route::get('/tournaments/{tournament}/{category?}', [TournamentController::class
 Route::get('/players/{player}', [PlayerController::class, 'show'])->where('player', Slug::ROUTE_PATTERN)->name('players.show');
 
 // Trainers
+Route::get('/staff', [TrainerController::class, 'index'])->name('trainers.index');
 Route::get('/staff/{trainer}', [TrainerController::class, 'show'])->where('trainer', Slug::ROUTE_PATTERN)->name('trainers.show');
 Route::get('/family/{user}', [PersonController::class, 'show'])->where('user', Slug::ROUTE_PATTERN)->name('people.show');
 

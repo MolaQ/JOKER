@@ -12,7 +12,6 @@ use App\Models\Season;
 use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\TrainingSession;
-use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -79,6 +78,7 @@ class Sitemap
             ['loc' => route('schedule.index'), 'lastmod' => Game::max('updated_at'), 'priority' => '0.8'],
             ['loc' => route('standings'), 'lastmod' => null, 'priority' => '0.6'],
             ['loc' => route('teams.index'), 'lastmod' => Team::max('updated_at'), 'priority' => '0.8'],
+            ['loc' => route('trainers.index'), 'lastmod' => null, 'priority' => '0.7'],
             ['loc' => route('galleries.index'), 'lastmod' => Gallery::max('updated_at'), 'priority' => '0.6'],
             ['loc' => route('alumni.index'), 'lastmod' => Alumnus::max('updated_at'), 'priority' => '0.7'],
             ['loc' => route('trainings.index'), 'lastmod' => TrainingSession::max('updated_at'), 'priority' => '0.7'],
@@ -99,8 +99,8 @@ class Sitemap
             $urls[] = ['loc' => route('players.show', $player), 'lastmod' => $player->updated_at, 'priority' => '0.5'];
         }
 
-        foreach (User::all()->filter->isStaffMember() as $trainer) {
-            $urls[] = ['loc' => route('trainers.show', $trainer), 'lastmod' => $trainer->updated_at, 'priority' => '0.4'];
+        foreach (StaffDirectory::entries() as $entry) {
+            $urls[] = ['loc' => route('trainers.show', $entry['user']), 'lastmod' => $entry['user']->updated_at, 'priority' => '0.5'];
         }
 
         foreach (Article::published()->latest('published_at')->get() as $article) {

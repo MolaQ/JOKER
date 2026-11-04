@@ -54,6 +54,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     Route::view('/documents', 'admin.documents.index')->middleware('can:documents.manage')->name('documents.index');
     Route::view('/sponsors', 'admin.sponsors.index')->middleware('can:sponsors.manage')->name('sponsors.index');
     Route::view('/users', 'admin.users.index')->middleware('can:users.manage')->name('users.index');
+    Route::view('/sztab', 'admin.staff.index')->middleware('can:teams.manage')->name('staff.index');
     Route::view('/osoby', 'admin.people.index')->middleware('can:people.view')->name('people.index');
     Route::view('/roles', 'admin.roles.index')->middleware('can:roles.manage')->name('roles.index');
 

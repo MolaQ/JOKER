@@ -19,6 +19,16 @@
             @if($site['mini_show_trips'] && $upcoming->first())
                 <div><dt class="text-xs text-zinc-400 uppercase">{{ __('Najbliższy wyjazd') }}</dt><dd class="font-display text-2xl font-semibold uppercase">{{ $upcoming->first()->dateLabel() }}@if($upcoming->first()->city) · {{ $upcoming->first()->city }}@endif</dd></div>
             @endif
+            @if($trainers->isNotEmpty())
+                <div>
+                    <dt class="text-xs text-zinc-400 uppercase">{{ trans_choice('Trener|Trenerzy', $trainers->count()) }}</dt>
+                    <dd class="mt-1 space-y-0.5 text-sm font-semibold">
+                        @foreach($trainers as $trainer)
+                            <p><a href="{{ route('trainers.show', $trainer) }}" class="hover:underline">{{ $trainer->name }}</a></p>
+                        @endforeach
+                    </dd>
+                </div>
+            @endif
             @if($trainings->isNotEmpty())
                 <div>
                     <dt class="text-xs text-zinc-400 uppercase">{{ __('Treningi') }}</dt>

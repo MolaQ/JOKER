@@ -7,6 +7,7 @@ use App\Support\DeadLinks;
 use App\Support\Media;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -98,6 +99,14 @@ class MiniGroup extends Model
     public function players(): HasMany
     {
         return $this->hasMany(MiniPlayer::class)->orderBy('last_name')->orderBy('first_name');
+    }
+
+    /**
+     * Trenerzy prowadzący grupę (strona „Sztab”).
+     */
+    public function trainers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'mini_group_trainers')->withTimestamps();
     }
 
     public function tripTeams(): HasMany

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\AccountStatus;
 use App\Models\MiniGroup;
 use App\Models\MiniTrip;
 use App\Models\MiniTripTeam;
@@ -48,6 +49,7 @@ class MiniVolleyballController extends Controller
             'trainings' => TrainingSession::whereNull('team_id')->whereNotNull('mini_group_ids')->ordered()->get()
                 ->filter(fn (TrainingSession $session) => $session->miniGroups()->contains('id', $miniGroup->id))->values(),
             'groups' => MiniGroup::where('is_active', true)->ordered()->get(),
+            'trainers' => $miniGroup->trainers()->withAccountStatus(AccountStatus::Active)->where('staff_hidden', false)->orderByRaw('staff_order is null')->orderBy('staff_order')->orderBy('name')->get(),
             'showParentInfo' => MiniTrip::canSeeParentInfo(Auth::user()),
         ]);
     }

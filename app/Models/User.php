@@ -53,6 +53,9 @@ class User extends Authenticatable implements MustVerifyEmail
         'instagram',
         'additional_info',
         'social_links',
+        'staff_order',
+        'staff_function',
+        'staff_hidden',
         'birth_date',
         'birthday_display',
         'is_active',
@@ -91,6 +94,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'birth_date' => 'date',
             'social_links' => 'array',
+            'staff_hidden' => 'boolean',
             'birthday_display' => BirthdayDisplay::class,
             'is_active' => 'boolean',
             'requested_role' => UserRole::class,
@@ -282,9 +286,10 @@ class User extends Authenticatable implements MustVerifyEmail
     public function scopeWithPublicProfile(Builder $query): void
     {
         $query->withAccountStatus(AccountStatus::Active)->where(fn (Builder $query) => $query
-            ->withRole(UserRole::Admin, UserRole::Boss, UserRole::Trainer, UserRole::Staff)
+            ->withRole(UserRole::Admin, UserRole::Boss, UserRole::Trainer, UserRole::Staff, UserRole::MiniTrainer)
             ->orWhereHas('headCoachTeams')
-            ->orWhereHas('assistantTeams'));
+            ->orWhereHas('assistantTeams')
+            ->orWhereHas('miniGroups'));
     }
 
     /**
@@ -556,6 +561,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'avatar_path' => null,
             'instagram' => null,
             'social_links' => null,
+            'staff_function' => null,
+            'staff_hidden' => true,
             'additional_info' => null,
             'birth_date' => null,
             'registration_note' => null,
@@ -760,9 +767,34 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function isStaffMember(): bool
     {
-        return $this->hasRole(UserRole::Trainer, UserRole::Staff)
+        return $this->hasRole(UserRole::Trainer, UserRole::Staff, UserRole::MiniTrainer)
             || $this->headCoachTeams()->exists()
-            || $this->assistantTeams()->exists();
+            || $this->assistantTeams()->exists()
+            || $this->miniGroups()->exists();
+    }
+
+    /**
+     * Grupy minisiatkówki prowadzone przez trenera mini (strona „Sztab” i profil trenera).
+     */
+    public function miniGroups(): BelongsToMany
+    {
+        return $this->belongsToMany(MiniGroup::class, 'mini_group_trainers')->withTimestamps();
+    }
+
+    /**
+     * Osoby na stronie „Sztab”: aktywne konta trenerów, sztabu i trenerów mini, w kolejności z panelu.
+     */
+    public function scopeStaffDirectory(Builder $query): void
+    {
+        $query->withAccountStatus(AccountStatus::Active)
+            ->where(fn (Builder $query) => $query
+                ->withRole(UserRole::Trainer, UserRole::Staff, UserRole::MiniTrainer)
+                ->orWhereHas('headCoachTeams')
+                ->orWhereHas('assistantTeams')
+                ->orWhereHas('miniGroups'))
+            ->orderByRaw('staff_order is null')
+            ->orderBy('staff_order')
+            ->orderBy('name');
     }
 
     /**

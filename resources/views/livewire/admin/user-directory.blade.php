@@ -1,4 +1,4 @@
-<div class="space-y-4">
+<div class="space-y-4 p-4 sm:p-6">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm text-zinc-600">
             @if ($allTeams)

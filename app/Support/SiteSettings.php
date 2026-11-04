@@ -220,8 +220,10 @@ class SiteSettings implements ArrayAccess
             return request()->is('/');
         }
 
+        // Profile sztabu podświetlają „Drużyny”, dopóki w menu nie ma osobnej zakładki „Sztab”.
+        $hasStaffTab = collect($this->get('nav_items') ?: [])->contains(fn ($item) => trim((string) parse_url(self::currentPath((string) ($item['url'] ?? '')), PHP_URL_PATH), '/') === 'staff');
         $related = [
-            'teams' => ['players/*', 'staff/*'],
+            'teams' => $hasStaffTab ? ['players/*'] : ['players/*', 'staff/*'],
         ];
 
         return request()->is($path, $path.'/*', ...$related[$path] ?? []);

@@ -10,8 +10,8 @@
     <div class="container-site grid items-end gap-10 pt-16 pb-14 lg:grid-cols-[auto_1fr] lg:pt-24">
         <x-avatar :photo="$trainer->avatar_path" :name="$trainer->name" class="aspect-[4/5] w-40 rounded-3xl text-6xl ring-4 ring-sky-club/40 lg:w-56" />
         <div>
-            <a href="{{ route('teams.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ __('Drużyny') }}</a>
-            <p class="eyebrow mt-5">{{ $roles->pluck('role')->unique()->implode(' · ') ?: __('Sztab klubu') }}</p>
+            <a href="{{ route('trainers.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ __('Sztab') }}</a>
+            <p class="eyebrow mt-5">{{ filled($trainer->staff_function) ? $trainer->staff_function : ($roles->pluck('role')->unique()->implode(' · ') ?: $entry['function']) }}</p>
             <h1 class="heading-xl mt-3">{{ $trainer->name }} <x-message-button :to="$trainer" class="ml-2" /></h1>
             {{-- Wyświetlenia i serduszka profili osób widzą tylko zalogowani. --}}
             @auth
@@ -28,12 +28,12 @@
     <div class="card p-6 lg:self-start">
         <h2 class="heading-md">{{ __('Funkcje w klubie') }}</h2>
         <ul class="mt-5 space-y-3">
-            @forelse($roles as $entry)
+            @forelse($roles as $item)
                 <li>
-                    <a href="{{ route('teams.show', $entry['team']) }}" class="group flex items-center justify-between gap-4 rounded-2xl bg-zinc-50 p-4 transition hover:bg-sky-club/10">
+                    <a href="{{ $item['url'] }}" class="group flex items-center justify-between gap-4 rounded-2xl bg-zinc-50 p-4 transition hover:bg-sky-club/10">
                         <span>
-                            <span class="block text-xs font-semibold tracking-widest text-sky-club-dark uppercase">{{ $entry['role'] }}</span>
-                            <span class="block font-semibold">{{ $entry['team']->name }}</span>
+                            <span class="block text-xs font-semibold tracking-widest text-sky-club-dark uppercase">{{ $item['role'] }}</span>
+                            <span class="block font-semibold">{{ $item['name'] }}</span>
                         </span>
                         <span class="transition group-hover:translate-x-1" aria-hidden="true">→</span>
                     </a>

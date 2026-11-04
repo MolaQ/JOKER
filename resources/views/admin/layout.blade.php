@@ -43,6 +43,7 @@
             ],
             'Klub' => [
                 ['label' => 'Drużyny i sztab', 'route' => 'admin.teams.index', 'icon' => 'users', 'can' => 'teams.manage'],
+                ['label' => 'Sztab na stronie', 'route' => 'admin.staff.index', 'icon' => 'star', 'can' => 'teams.manage'],
                 ['label' => 'Zawodnicy', 'route' => 'admin.players.index', 'icon' => 'user', 'can' => 'teams.manage'],
                 ['label' => 'Osoby w drużynach', 'route' => 'admin.people.index', 'icon' => 'users', 'can' => fn () => ! auth()->user()->can('users.manage') && auth()->user()->can('people.view')],
                 ['label' => 'Wychowankowie', 'route' => 'admin.alumni.index', 'icon' => 'star', 'can' => 'articles.manage'],
