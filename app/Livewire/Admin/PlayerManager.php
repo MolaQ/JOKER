@@ -426,7 +426,8 @@ class PlayerManager extends Component
         $seasonId = Season::current()->value('id');
 
         $players = $this->applySort((clone $base)->with(['team', 'user:id,last_login_at', 'teams' => fn ($q) => $q->where('team_player_season.season_id', $seasonId)])->withCount('likes')
-            ->when($this->teamFilter === 'brak', fn ($q) => $q->whereNull('team_id'))
+            ->when($this->teamFilter === 'brak', fn ($q) => $q->whereNull('team_id')->whereNull('mini_group_id'))
+            ->when($this->teamFilter === 'mini', fn ($q) => $q->mini())
             ->when(ctype_digit($this->teamFilter), fn ($q) => $q->inTeam($this->teamFilter, $seasonId))
             ->when($this->positionFilter === 'brak', fn ($q) => $q->whereNull('position'))
             ->when(PlayerPosition::tryFrom($this->positionFilter), fn ($q, PlayerPosition $position) => $q->where(fn ($q2) => $q2->where('position', $position)->orWhereJsonContains('extra_positions', $position->value)))
@@ -441,7 +442,8 @@ class PlayerManager extends Component
             'players' => $players,
             // Liczniki przy przyciskach filtrów (z uwzględnieniem wyszukiwania).
             'teamCounts' => $teams->mapWithKeys(fn (Team $team) => [$team->id => (clone $base)->inTeam($team->id, $seasonId)->count()])
-                ->put('', (clone $base)->whereNull('team_id')->count()),
+                ->put('', (clone $base)->whereNull('team_id')->whereNull('mini_group_id')->count())
+                ->put('mini', (clone $base)->mini()->count()),
             'totalCount' => (clone $base)->count(),
             'positionCounts' => (clone $base)->selectRaw('position, count(*) as total')->groupBy('position')->pluck('total', 'position'),
             'duplicateNumbers' => Player::whereNotNull('team_id')->whereNotNull('jersey_number')->selectRaw('team_id, jersey_number')->groupBy('team_id', 'jersey_number')->havingRaw('count(*) > 1')->get()->map(fn ($row) => $row->team_id.'-'.$row->jersey_number)->all(),

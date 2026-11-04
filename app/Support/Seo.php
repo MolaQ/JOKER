@@ -143,9 +143,9 @@ class Seo
     {
         return array_filter([
             '@type' => 'Person',
-            'name' => $player->full_name,
+            'name' => $player->displayName(),
             'url' => route('players.show', $player),
-            'image' => $player->photo_path ? Media::url($player->photo_path) : null,
+            'image' => $player->photoUrl(),
             'jobTitle' => $player->positionsLabel(),
             'memberOf' => $player->team ? ['@type' => 'SportsTeam', 'name' => config('app.name').' - '.$player->team->name, 'url' => route('teams.show', $player->team)] : null,
         ]);

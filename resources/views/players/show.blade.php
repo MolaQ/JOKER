@@ -1,10 +1,10 @@
 @extends('layouts.public')
 
-@section('title', $player->full_name)
+@section('title', $player->displayName())
 @section('description', $player->seoDescription($site['club_name']))
 
-@if($player->photo_path)
-    @section('og_image', \App\Support\Media::url($player->photo_path))
+@if($player->photoUrl())
+    @section('og_image', $player->photoUrl())
 @endif
 @push('structured-data')
     {!! \App\Support\Seo::jsonLd(\App\Support\Seo::player($player)) !!}
@@ -27,13 +27,15 @@
     <span class="pointer-events-none absolute -right-8 bottom-0 -z-10 font-display text-[16rem] leading-none font-bold text-white/5 select-none sm:text-[24rem]" aria-hidden="true">{{ $player->jersey_number }}</span>
 
     <div class="container-site grid items-end gap-10 pt-16 pb-14 lg:grid-cols-[auto_1fr] lg:pt-24">
-        <x-avatar :photo="$player->photo_path" :name="$player->full_name" :label="$player->jersey_number" class="aspect-[4/5] w-48 rounded-3xl text-7xl ring-4 ring-sky-club/40 lg:w-64" />
+        <x-avatar :photo="$player->publicPhotoPath()" :name="$player->displayName()" :label="$player->jersey_number" class="aspect-[4/5] w-48 rounded-3xl text-7xl ring-4 ring-sky-club/40 lg:w-64" />
         <div>
             @if($player->team)
                 <a href="{{ route('teams.show', $player->team) }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ $player->team->name }}</a>
+            @elseif($player->isMini() && $player->miniGroup)
+                <a href="{{ route('mini.show', $player->miniGroup) }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ __('Minisiatkówka') }}: {{ $player->miniGroup->name }}</a>
             @endif
             <p class="eyebrow mt-5">@foreach($player->positions() as $playerPosition)<x-position-tip :position="$playerPosition" />@if(! $loop->last) · @endif @endforeach @if($player->jersey_number) · #{{ $player->jersey_number }} @endif</p>
-            <h1 class="heading-xl mt-3">{{ $player->first_name }}<br>{{ $player->last_name }} <x-message-button :player="$player" class="ml-2" /></h1>
+            <h1 class="heading-xl mt-3">@if($player->isMini()){{ $player->displayName() }}@else{{ $player->first_name }}<br>{{ $player->last_name }}@endif <x-message-button :player="$player" class="ml-2" /></h1>
             @if($player->isCaptain())
                 <p class="mt-4 inline-flex items-center gap-2 rounded-full bg-sky-club px-3 py-1 text-sm font-bold text-white"><span class="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs text-sky-club-dark">C</span> {{ __('Kapitan drużyny') }}</p>
             @endif
@@ -70,6 +72,8 @@
         <dl class="mt-5 divide-y divide-zinc-100 text-sm">
             @foreach([
                 'Data urodzenia' => $player->birth_date?->format('d.m.Y'),
+                'Rocznik' => $player->birth_date ? null : $player->birth_year,
+                'Grupa' => $player->isMini() ? $player->miniGroup?->name : null,
                 (count($player->positions()) > 1 ? 'Pozycje' : 'Pozycja') => $player->positionsLabel(),
                 'Numer' => $player->jersey_number !== null ? '#'.$player->jersey_number : null,
                 'Wzrost' => $player->height ? $player->height.' cm' : null,
@@ -93,16 +97,35 @@
             @endforeach
         </dl>
 
-        <h3 class="mt-6 text-xs font-semibold tracking-widest text-zinc-500 uppercase">{{ __('Drużyny w tym sezonie') }}</h3>
-        <div class="mt-3 flex flex-wrap gap-2">
-            @foreach($seasonTeams->filter() as $seasonTeam)
-                <a href="{{ route('teams.show', $seasonTeam) }}" class="chip hover:bg-sky-club hover:text-white">{{ $seasonTeam->name }}</a>
-            @endforeach
-        </div>
+        @if($seasonTeams->filter()->isNotEmpty())
+            <h3 class="mt-6 text-xs font-semibold tracking-widest text-zinc-500 uppercase">{{ __('Drużyny w tym sezonie') }}</h3>
+            <div class="mt-3 flex flex-wrap gap-2">
+                @foreach($seasonTeams->filter() as $seasonTeam)
+                    <a href="{{ route('teams.show', $seasonTeam) }}" class="chip hover:bg-sky-club hover:text-white">{{ $seasonTeam->name }}</a>
+                @endforeach
+            </div>
+        @endif
     </div>
 
     <div class="min-w-0 space-y-8 lg:col-span-2">
         @livewire('player-proposal-form', ['player' => $player], key('player-proposal-'.$player->id))
+
+        @if($miniTrips->isNotEmpty())
+            <div class="card p-6">
+                <h2 class="heading-md">{{ __('Turnieje minisiatkówki') }}</h2>
+                <ul class="mt-4 divide-y divide-zinc-100">
+                    @foreach($miniTrips as $tripTeam)
+                        <li class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3 text-sm">
+                            <span class="min-w-0">
+                                <span class="block font-semibold text-zinc-900">{{ $tripTeam->trip->title }}</span>
+                                <span class="text-zinc-500">{{ $tripTeam->trip->dateLabel() }}@if($tripTeam->trip->city) · {{ $tripTeam->trip->city }}@endif · {{ $tripTeam->name }}@if($tripTeam->group) ({{ $tripTeam->group->name }})@endif</span>
+                            </span>
+                            @if($result = $tripTeam->resultLabel())<span class="chip bg-sky-club/10 text-sky-club-dark">{{ $result }}</span>@endif
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
         @if($career->isNotEmpty())
             <div class="card overflow-hidden">
@@ -213,7 +236,7 @@
         @endif
 
         @if($mentions->isNotEmpty())
-            <x-mentions-list :articles="$mentions" :name="$player->full_name" />
+            <x-mentions-list :articles="$mentions" :name="$player->displayName()" />
         @endif
     </div>
 </section>

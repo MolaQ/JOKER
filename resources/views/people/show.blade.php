@@ -37,19 +37,7 @@
                     <a href="{{ route('players.show', $child) }}" class="group flex items-center justify-between gap-4 rounded-2xl bg-zinc-50 p-4 transition hover:bg-sky-club/10">
                         <span>
                             <span class="block text-xs font-semibold tracking-widest text-sky-club-dark uppercase">{{ __('Rodzic zawodnika') }}</span>
-                            <span class="block font-semibold">{{ $child->full_name }}@if($child->team) <span class="font-normal text-zinc-500">· {{ $child->team->name }}</span>@endif</span>
-                        </span>
-                        <span class="transition group-hover:translate-x-1" aria-hidden="true">→</span>
-                    </a>
-                </li>
-            @endforeach
-            {{-- Dzieci z minisiatkówki: bez imienia dziecka, tylko grupa (dzieci mini nie mają profili) --}}
-            @foreach($person->miniChildren->pluck('group')->filter()->unique('id') as $group)
-                <li>
-                    <a href="{{ route('mini.show', $group) }}" class="group flex items-center justify-between gap-4 rounded-2xl bg-zinc-50 p-4 transition hover:bg-sky-club/10">
-                        <span>
-                            <span class="block text-xs font-semibold tracking-widest text-sky-club-dark uppercase">{{ __('Rodzic w minisiatkówce') }}</span>
-                            <span class="block font-semibold">{{ $group->name }}</span>
+                            <span class="block font-semibold">{{ $child->displayName() }}@if($child->team) <span class="font-normal text-zinc-500">· {{ $child->team->name }}</span>@elseif($child->miniGroup) <span class="font-normal text-zinc-500">· {{ __('Minisiatkówka') }}: {{ $child->miniGroup->name }}</span>@endif</span>
                         </span>
                         <span class="transition group-hover:translate-x-1" aria-hidden="true">→</span>
                     </a>
@@ -66,7 +54,7 @@
                     </a>
                 </li>
             @endforeach
-            @if($person->children->isEmpty() && $person->miniChildren->isEmpty() && $person->coordinatedTeams->isEmpty())
+            @if($person->children->isEmpty() && $person->coordinatedTeams->isEmpty())
                 <li class="rounded-2xl bg-zinc-50 p-4">
                     <span class="block text-xs font-semibold tracking-widest text-sky-club-dark uppercase">{{ __('Rola') }}</span>
                     <span class="block font-semibold">{{ $person->rolesLabel() ?: __('Społeczność klubu') }}</span>

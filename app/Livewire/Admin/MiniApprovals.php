@@ -5,8 +5,8 @@ namespace App\Livewire\Admin;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\AuditLog;
 use App\Models\MiniGroup;
-use App\Models\MiniPlayer;
 use App\Models\MiniTrip;
+use App\Models\Player;
 use App\Models\User;
 use App\Permission;
 use App\Support\MiniResults;
@@ -76,7 +76,7 @@ class MiniApprovals extends Component
         return view('livewire.admin.mini-approvals', [
             'trips' => $trips,
             'groups' => MiniGroup::pluck('name', 'id'),
-            'players' => MiniPlayer::whereIn('id', $playerIds)->get()->mapWithKeys(fn (MiniPlayer $player) => [$player->id => trim($player->first_name.' '.$player->last_name)]),
+            'players' => Player::whereIn('id', $playerIds)->get()->mapWithKeys(fn (Player $player) => [$player->id => trim($player->first_name.' '.$player->last_name)]),
             'submitters' => User::whereIn('id', $trips->pluck('pending_results.submitted_by')->filter())->pluck('name', 'id'),
         ]);
     }

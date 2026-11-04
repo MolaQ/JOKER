@@ -27,7 +27,7 @@ class PersonController extends Controller
         }
 
         $user->registerView();
-        $user->load(['children.team', 'miniChildren.group', 'coordinatedTeams']);
+        $user->load(['children.team', 'children.miniGroup', 'coordinatedTeams']);
 
         return view('people.show', [
             'person' => $user,

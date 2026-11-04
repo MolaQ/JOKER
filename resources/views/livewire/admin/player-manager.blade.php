@@ -24,6 +24,9 @@
             @foreach($teams as $team)
                 <button type="button" wire:key="team-chip-{{ $team->id }}" wire:click="$set('teamFilter', '{{ $team->id }}')" class="{{ $chip }} {{ $teamFilter === (string) $team->id ? $on : $off }}">{{ $team->name }} {!! $count($teamCounts[$team->id] ?? 0) !!}</button>
             @endforeach
+            @if(($teamCounts['mini'] ?? 0) > 0)
+                <button type="button" wire:click="$set('teamFilter', 'mini')" class="{{ $chip }} {{ $teamFilter === 'mini' ? $on : $off }}">Minisiatkówka {!! $count($teamCounts['mini']) !!}</button>
+            @endif
             @if(($teamCounts[''] ?? 0) > 0)
                 <button type="button" wire:click="$set('teamFilter', 'brak')" class="{{ $chip }} {{ $teamFilter === 'brak' ? $on : $off }}">Bez drużyny {!! $count($teamCounts['']) !!}</button>
             @endif

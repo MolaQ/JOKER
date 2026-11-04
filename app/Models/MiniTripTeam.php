@@ -34,7 +34,7 @@ class MiniTripTeam extends Model
 
     public function players(): BelongsToMany
     {
-        return $this->belongsToMany(MiniPlayer::class)->orderBy('last_name')->orderBy('first_name');
+        return $this->belongsToMany(Player::class, 'mini_trip_team_player')->orderBy('last_name')->orderBy('first_name');
     }
 
     /**

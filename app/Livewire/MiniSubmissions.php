@@ -5,8 +5,8 @@ namespace App\Livewire;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\ContentProposal;
 use App\Models\MiniGroup;
-use App\Models\MiniPlayer;
 use App\Models\MiniTrip;
+use App\Models\Player;
 use App\Support\MessageHtml;
 use App\Support\MiniResults;
 use App\Support\SiteSettings;
@@ -84,13 +84,15 @@ class MiniSubmissions extends Component
             'child.group' => 'required|exists:mini_groups,id',
         ], ['child.group.required' => __('Wybierz grupę.')], ['child.first_name' => __('imię'), 'child.last_name' => __('nazwisko'), 'child.birth_year' => __('rocznik'), 'child.number' => __('numer')])['child'];
 
-        MiniPlayer::create([
+        // Dziecko dostaje zwykły profil zawodnika (bez drużyny, z grupą mini).
+        Player::create([
             'mini_group_id' => (int) $data['group'],
             'first_name' => trim($data['first_name']),
             'last_name' => trim($data['last_name']),
             'birth_year' => $data['birth_year'] ?: null,
-            'number' => ($data['number'] ?? '') === '' ? null : (int) $data['number'],
+            'jersey_number' => ($data['number'] ?? '') === '' ? null : (int) $data['number'],
             'is_active' => true,
+            'image_consent' => false,
         ]);
 
         $this->child = ['first_name' => '', 'last_name' => '', 'birth_year' => '', 'number' => '', 'group' => $data['group']];
@@ -100,7 +102,7 @@ class MiniSubmissions extends Component
     public function moveChild(int $id, string $groupId): void
     {
         abort_unless(MiniGroup::whereKey($groupId)->exists(), 422);
-        MiniPlayer::where('is_active', true)->findOrFail($id)->update(['mini_group_id' => (int) $groupId]);
+        Player::mini()->where('is_active', true)->findOrFail($id)->update(['mini_group_id' => (int) $groupId]);
         $this->toast(__('Dziecko przeniesione.'));
     }
 
@@ -109,7 +111,7 @@ class MiniSubmissions extends Component
      */
     public function retireChild(int $id): void
     {
-        MiniPlayer::where('is_active', true)->findOrFail($id)->update(['is_active' => false]);
+        Player::mini()->where('is_active', true)->findOrFail($id)->update(['is_active' => false]);
         $this->toast(__('Dziecko usunięte z listy grupy. W wynikach dawnych turniejów zostaje.'));
     }
 
@@ -207,7 +209,7 @@ class MiniSubmissions extends Component
             'rows.*.place' => 'nullable|integer|min:1|max:999',
             'rows.*.teams_count' => 'nullable|integer|min:1|max:999',
             'rows.*.players' => 'array',
-            'rows.*.players.*' => 'integer|exists:mini_players,id',
+            'rows.*.players.*' => 'integer|exists:players,id',
         ], ['resultsTrip.required' => __('Wybierz turniej.')], ['rows.*.name' => __('nazwa drużyny'), 'rows.*.place' => __('miejsce'), 'rows.*.teams_count' => __('liczba drużyn')]);
 
         $trip = $this->tripQuery()->findOrFail((int) $this->resultsTrip);

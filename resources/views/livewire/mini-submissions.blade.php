@@ -66,7 +66,7 @@
                                         @if($team->place)
                                             <span class="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">{{ $team->place <= 3 ? ['🥇', '🥈', '🥉'][$team->place - 1].' ' : '' }}{{ $team->resultLabel() }}</span>
                                         @elseif($team->players->isNotEmpty())
-                                            <span class="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700" title="{{ $team->players->map->name()->implode(', ') }}">{{ trans_choice(':count dziecko|:count dzieci|:count dzieci', $team->players->count(), ['count' => $team->players->count()]) }}</span>
+                                            <span class="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700" title="{{ $team->players->pluck('full_name')->implode(', ') }}">{{ trans_choice(':count dziecko|:count dzieci|:count dzieci', $team->players->count(), ['count' => $team->players->count()]) }}</span>
                                         @else
                                             <span class="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">{{ __('brak składu') }}</span>
                                         @endif
@@ -199,7 +199,7 @@
                             @foreach($children as $child)
                                 <label class="cursor-pointer">
                                     <input type="checkbox" value="{{ $child->id }}" wire:model="rows.{{ $index }}.players" class="peer sr-only">
-                                    <span class="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-sm text-zinc-700 ring-1 ring-zinc-300 peer-checked:bg-sky-club peer-checked:text-white peer-checked:ring-sky-club">{{ $child->name() }}</span>
+                                    <span class="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-sm text-zinc-700 ring-1 ring-zinc-300 peer-checked:bg-sky-club peer-checked:text-white peer-checked:ring-sky-club">{{ $child->full_name }}</span>
                                 </label>
                             @endforeach
                         </div>
@@ -297,7 +297,7 @@
                     <ul class="mt-2 divide-y divide-zinc-100">
                         @forelse($groupOption->players as $kid)
                             <li wire:key="kid-{{ $kid->id }}" class="flex flex-wrap items-center gap-2 py-2 text-sm">
-                                <span class="min-w-0 flex-1 font-medium">@if($kid->number !== null)<span class="mr-1 font-bold text-sky-club-dark">#{{ $kid->number }}</span>@endif{{ $kid->first_name }} {{ $kid->last_name }}@if($kid->birth_year) <span class="text-zinc-500">· {{ $kid->birth_year }}</span>@endif</span>
+                                <span class="min-w-0 flex-1 font-medium">@if($kid->jersey_number !== null)<span class="mr-1 font-bold text-sky-club-dark">#{{ $kid->jersey_number }}</span>@endif{{ $kid->first_name }} {{ $kid->last_name }}@if($kid->birth_year) <span class="text-zinc-500">· {{ $kid->birth_year }}</span>@endif</span>
                                 <select wire:change="moveChild({{ $kid->id }}, $event.target.value)" class="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-xs" aria-label="{{ __('Przenieś do grupy') }}">
                                     @foreach($groups as $target)<option value="{{ $target->id }}" @selected($target->id === $groupOption->id)>{{ $target->name }}</option>@endforeach
                                 </select>

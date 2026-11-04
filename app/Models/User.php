@@ -550,7 +550,6 @@ class User extends Authenticatable implements MustVerifyEmail
 
         Player::where('user_id', $this->id)->update(['user_id' => null]);
         $this->children()->detach();
-        $this->miniChildren()->detach();
         Team::where('trainer_id', $this->id)->update(['trainer_id' => null]);
         $this->assistantTeams()->detach();
         $this->roleAssignments()->delete();
@@ -607,8 +606,7 @@ class User extends Authenticatable implements MustVerifyEmail
             return;
         }
 
-        $hasActiveChild = $this->children()->where('players.is_active', true)->exists()
-            || $this->miniChildren()->where('mini_players.is_active', true)->exists();
+        $hasActiveChild = $this->children()->where('players.is_active', true)->exists();
 
         if ($hasActiveChild && ! $this->is_active) {
             $this->forceFill(['is_active' => true, 'activated_at' => now()])->save();
@@ -635,14 +633,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function children(): BelongsToMany
     {
         return $this->belongsToMany(Player::class, 'player_guardian')->withTimestamps();
-    }
-
-    /**
-     * Dzieci z minisiatkówki, których rodzicem jest użytkownik (bez profilu zawodnika, tylko lista mini).
-     */
-    public function miniChildren(): BelongsToMany
-    {
-        return $this->belongsToMany(MiniPlayer::class, 'mini_player_guardian')->withTimestamps();
     }
 
     public function conversations(): BelongsToMany

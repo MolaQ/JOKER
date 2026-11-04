@@ -98,7 +98,8 @@ class MiniGroup extends Model
 
     public function players(): HasMany
     {
-        return $this->hasMany(MiniPlayer::class)->orderBy('last_name')->orderBy('first_name');
+        // Dzieci mają zwykłe profile zawodników; po przejściu do drużyny (np. młodzików) znikają z grupy mini.
+        return $this->hasMany(Player::class)->whereNull('players.team_id')->orderBy('last_name')->orderBy('first_name');
     }
 
     /**

@@ -33,19 +33,13 @@
                             </div>
                         @endif
 
-                        @if($account->children->isNotEmpty() || $account->miniChildren->isNotEmpty())
+                        @if($account->children->isNotEmpty())
                             <div class="mt-3 flex flex-wrap items-center gap-2 text-sm">
                                 <span class="text-gray-600">Przypisane dzieci:</span>
                                 @foreach($account->children as $child)
                                     <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 py-0.5 pr-1 pl-2.5 text-emerald-800 ring-1 ring-emerald-200" wire:key="child-{{ $account->id }}-{{ $child->id }}">
-                                        {{ $child->full_name }}@if($child->team) <span class="text-emerald-600">({{ $child->team->name }})</span>@endif
+                                        {{ $child->full_name }}@if($childGroup = \App\Livewire\Admin\ParentAssignment::groupLabel($child)) <span class="text-emerald-600">({{ $childGroup }})</span>@endif
                                         <button type="button" wire:click="unassign({{ $account->id }}, {{ $child->id }})" wire:confirm="Odpiąć {{ $child->full_name }} od konta {{ $account->name }}?" class="rounded-full px-1 text-emerald-500 hover:bg-emerald-100 hover:text-red-600" title="Odepnij" aria-label="Odepnij {{ $child->full_name }}">✕</button>
-                                    </span>
-                                @endforeach
-                                @foreach($account->miniChildren as $child)
-                                    <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 py-0.5 pr-1 pl-2.5 text-amber-900 ring-1 ring-amber-200" wire:key="mini-child-{{ $account->id }}-{{ $child->id }}">
-                                        {{ $child->name() }} <span class="text-amber-700">(mini{{ $child->group ? ': '.$child->group->name : '' }})</span>
-                                        <button type="button" wire:click="unassignMini({{ $account->id }}, {{ $child->id }})" wire:confirm="Odpiąć {{ $child->name() }} od konta {{ $account->name }}?" class="rounded-full px-1 text-amber-500 hover:bg-amber-100 hover:text-red-600" title="Odepnij" aria-label="Odepnij {{ $child->name() }}">✕</button>
                                     </span>
                                 @endforeach
                             </div>
@@ -56,19 +50,16 @@
                                 <span class="text-sm text-gray-600">Zgadza się tylko nazwisko, sprawdź:</span>
                             @endif
                             @foreach($matches as ['player' => $player, 'sure' => $sure])
-                                @php
-                                    $mini = $player instanceof \App\Models\MiniPlayer;
-                                    $childLabel = $mini ? $player->name().' (mini'.($player->group ? ': '.$player->group->name : '').')' : $player->full_name.($player->team ? ' ('.$player->team->name.')' : '');
-                                @endphp
-                                <button type="button" wire:click="{{ $mini ? 'assignMini' : 'assign' }}({{ $account->id }}, {{ $player->id }})" wire:loading.attr="disabled" @class([
+                                @php $childLabel = $player->full_name.(($childGroup = \App\Livewire\Admin\ParentAssignment::groupLabel($player)) ? ' ('.$childGroup.')' : ''); @endphp
+                                <button type="button" wire:click="assign({{ $account->id }}, {{ $player->id }})" wire:loading.attr="disabled" @class([
                                     'rounded-md px-3 py-2 text-sm font-semibold shadow-xs',
                                     'bg-sky-600 text-white hover:bg-sky-700' => $sure,
                                     'bg-white text-sky-800 ring-1 ring-sky-300 hover:bg-sky-50' => ! $sure,
                                 ])>
-                                    {{ ($account->children->isEmpty() && $account->miniChildren->isEmpty() ? 'Przypisz do: ' : 'Dodaj dziecko: ').$childLabel }}
+                                    {{ ($account->children->isEmpty() ? 'Przypisz do: ' : 'Dodaj dziecko: ').$childLabel }}
                                 </button>
                             @endforeach
-                            @if($matches->isEmpty() && $account->children->isEmpty() && $account->miniChildren->isEmpty())
+                            @if($matches->isEmpty() && $account->children->isEmpty())
                                 <span class="text-sm text-gray-500">{{ $account->registration_note ? 'Nie rozpoznałem dziecka z opisu.' : 'Rodzic nie napisał, czyje to dziecko.' }} Wybierz z listy (są tu też dzieci z minisiatkówki):</span>
                             @endif
                         </div>

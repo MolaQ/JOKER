@@ -103,7 +103,7 @@ class AccountController extends Controller
      */
     public function export(Request $request): JsonResponse
     {
-        $user = $request->user()->load(['children', 'miniChildren.group', 'playerProfile', 'profileChangeRequests']);
+        $user = $request->user()->load(['children', 'playerProfile', 'profileChangeRequests']);
 
         $data = [
             'konto' => $user->only(['name', 'email', 'instagram', 'social_links', 'additional_info', 'birth_date', 'created_at', 'email_verified_at', 'activated_at', 'privacy_consent_at']),
@@ -111,7 +111,6 @@ class AccountController extends Controller
             'role' => $user->roles()->map(fn (UserRole $role) => $role->label())->values(),
             'profil_zawodnika' => $user->playerProfile?->only(['first_name', 'last_name', 'birth_date', 'position', 'jersey_number']),
             'dzieci' => $user->children->map->only(['first_name', 'last_name'])->values(),
-            'dzieci_minisiatkowka' => $user->miniChildren->map(fn ($child) => ['first_name' => $child->first_name, 'last_name' => $child->last_name, 'grupa' => $child->group?->name])->values(),
             'prosby_o_zmiane_danych' => $user->profileChangeRequests->map->only(['proposed_data', 'status', 'created_at'])->values(),
         ];
 

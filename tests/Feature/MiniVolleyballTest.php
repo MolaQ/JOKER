@@ -2,9 +2,9 @@
 
 use App\Livewire\Admin\MiniVolleyballManager;
 use App\Models\MiniGroup;
-use App\Models\MiniPlayer;
 use App\Models\MiniTrip;
 use App\Models\MiniTripTeam;
+use App\Models\Player;
 use App\Models\User;
 use App\Support\AgeColors;
 use App\Support\SiteSettings;
@@ -38,8 +38,8 @@ test('a trainer sets up groups, children and a trip with a result that shows on 
         ->set('player.first_name', 'Antek')->set('player.last_name', 'Kowalski')->set('player.birth_year', '2013')->set('player.group', (string) $fours->id)->set('player.image_consent', true)->call('savePlayer')->assertHasNoErrors()
         ->set('player.first_name', 'Kuba')->set('player.last_name', 'Młodszy')->set('player.birth_year', '2015')->set('player.group', (string) $threes->id)->call('savePlayer');
 
-    $antek = MiniPlayer::firstWhere('first_name', 'Antek');
-    $kuba = MiniPlayer::firstWhere('first_name', 'Kuba');
+    $antek = Player::firstWhere('first_name', 'Antek');
+    $kuba = Player::firstWhere('first_name', 'Kuba');
 
     $manager->set('section', 'wyjazdy')->call('newTrip')
         ->set('trip.title', 'Mistrzostwa Wielkopolski')->set('trip.starts_on', now()->subDay()->toDateString())->set('trip.city', 'Leszno')
@@ -64,11 +64,11 @@ test('a trainer sets up groups, children and a trip with a result that shows on 
 test('child photos need parental consent and trip details are only for parents and staff', function () {
     MiniGroup::query()->delete();
     $group = MiniGroup::create(['name' => 'Dwójki', 'players_on_court' => 2]);
-    MiniPlayer::create(['mini_group_id' => $group->id, 'first_name' => 'Ola', 'last_name' => 'Nowak', 'photo_path' => 'mini/ola.jpg', 'image_consent' => false]);
+    Player::create(['mini_group_id' => $group->id, 'first_name' => 'Ola', 'last_name' => 'Nowak', 'photo_path' => 'mini/ola.jpg', 'image_consent' => false]);
     $trip = MiniTrip::create(['title' => 'Turniej w Pile', 'starts_on' => now()->addWeek(), 'parent_info' => 'Zbiórka 7:00 pod halą']);
     $trip->teams()->create(['mini_group_id' => $group->id, 'name' => 'Joker 1']);
 
-    expect(MiniPlayer::sole()->photoUrl())->toBeNull();
+    expect(Player::sole()->photoUrl())->toBeNull();
 
     $this->get(route('mini.show', $group))->assertOk()->assertSee('Turniej w Pile')->assertDontSee('Zbiórka 7:00');
     $this->actingAs(User::factory()->create())->get(route('mini.show', $group))->assertDontSee('Zbiórka 7:00');
@@ -83,7 +83,7 @@ test('only roles with the mini volleyball permission open the panel', function (
 test('the whole mini volleyball module and each part of it can be switched off in the settings', function () {
     MiniGroup::query()->delete();
     $group = MiniGroup::create(['name' => 'Czwórki', 'players_on_court' => 4, 'rules' => 'Siatka 2,15 m']);
-    MiniPlayer::create(['mini_group_id' => $group->id, 'first_name' => 'Antek', 'last_name' => 'Kowalski', 'birth_year' => 2013]);
+    Player::create(['mini_group_id' => $group->id, 'first_name' => 'Antek', 'last_name' => 'Kowalski', 'birth_year' => 2013]);
     $settings = app(SiteSettings::class);
 
     $settings->set(['mini_child_names' => 'initial', 'mini_show_birth_year' => false, 'mini_show_rules' => false, 'mini_title' => 'Mini Joker']);
@@ -98,8 +98,8 @@ test('the whole mini volleyball module and each part of it can be switched off i
 
 test('each group has its own tab with an editor page and its children, and can be shown or hidden', function () {
     $group = MiniGroup::firstWhere('slug', 'czworki');
-    MiniPlayer::create(['mini_group_id' => $group->id, 'first_name' => 'Antek', 'last_name' => 'Kowalski']);
-    MiniPlayer::create(['mini_group_id' => MiniGroup::firstWhere('slug', 'trojki')->id, 'first_name' => 'Kuba', 'last_name' => 'Młodszy']);
+    Player::create(['mini_group_id' => $group->id, 'first_name' => 'Antek', 'last_name' => 'Kowalski']);
+    Player::create(['mini_group_id' => MiniGroup::firstWhere('slug', 'trojki')->id, 'first_name' => 'Kuba', 'last_name' => 'Młodszy']);
     $this->actingAs(User::factory()->trainer()->create());
 
     Livewire::test(MiniVolleyballManager::class)
@@ -120,8 +120,8 @@ test('each group has its own tab with an editor page and its children, and can b
 test('children show their number instead of initials and trips take the light colour of their groups', function () {
     $group = MiniGroup::create(['name' => 'Trójki testowe', 'players_on_court' => 3]);
     app(SiteSettings::class)->set([AgeColors::key('mini3') => '#ff0000']);
-    MiniPlayer::create(['mini_group_id' => $group->id, 'first_name' => 'Jan', 'last_name' => 'Kowalski', 'number' => 7, 'is_active' => true]);
-    MiniPlayer::create(['mini_group_id' => $group->id, 'first_name' => 'Ola', 'last_name' => 'Nowak', 'is_active' => true]);
+    Player::create(['mini_group_id' => $group->id, 'first_name' => 'Jan', 'last_name' => 'Kowalski', 'jersey_number' => 7, 'is_active' => true]);
+    Player::create(['mini_group_id' => $group->id, 'first_name' => 'Ola', 'last_name' => 'Nowak', 'is_active' => true]);
     $trip = MiniTrip::create(['title' => 'Turniej', 'starts_on' => now()->addWeek()->toDateString()]);
     $trip->teams()->create(['mini_group_id' => $group->id, 'name' => 'Joker 1']);
 

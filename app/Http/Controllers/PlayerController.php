@@ -19,7 +19,7 @@ class PlayerController extends Controller
      */
     public function show(Player $player): View
     {
-        $player->load(['team', 'likes', 'achievements']);
+        $player->load(['team', 'miniGroup', 'likes', 'achievements']);
         $player->registerView();
 
         $currentSeasonId = Season::current()->value('id');
@@ -41,6 +41,9 @@ class PlayerController extends Controller
             'player' => $player,
             'seasonTeams' => $seasonTeams,
             'career' => $this->career($player),
+            // Dziecko z minisiatkówki: turnieje, na które jechało (opublikowane wyjazdy, od najnowszego).
+            'miniTrips' => $player->miniTripTeams()->with(['trip', 'group'])->whereHas('trip', fn ($trip) => $trip->published())->get()
+                ->sortByDesc(fn ($team) => $team->trip->starts_on)->values(),
             'recentGames' => $recentGames,
             'photos' => $player->taggedPhotos(),
             'mentions' => Mentions::articlesAbout($player->full_name),

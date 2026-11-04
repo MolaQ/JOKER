@@ -4,7 +4,6 @@ namespace App\Support;
 
 use App\AccountStatus;
 use App\Models\Article;
-use App\Models\MiniPlayer;
 use App\Models\Player;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -46,8 +45,8 @@ class Mentions
      */
     public static function miniSuggestions(): array
     {
-        $children = MiniPlayer::where('is_active', true)->with('group:id,name')->get(['id', 'first_name', 'last_name', 'mini_group_id'])
-            ->toBase()->map(fn (MiniPlayer $child) => ['name' => $child->name(), 'team' => $child->group?->name]);
+        $children = Player::mini()->where('is_active', true)->with('miniGroup:id,name')->get(['id', 'first_name', 'last_name', 'team_id', 'mini_group_id'])
+            ->toBase()->map(fn (Player $child) => ['name' => $child->full_name, 'team' => $child->miniGroup?->name]);
 
         $people = User::withAccountStatus(AccountStatus::Active)->with('roleAssignments')->get(['id', 'name'])
             ->toBase()->map(fn (User $user) => ['name' => $user->name, 'team' => $user->rolesLabel() ?: null]);
@@ -100,7 +99,7 @@ class Mentions
                     $key = mb_strtolower(implode(' ', array_slice($words, 0, $count)));
                     $url = self::profiles()[$key] ?? null;
 
-                    // Dziecko z minisiatkówki nie ma profilu: link do strony grupy, podpis jak na stronie (np. „Ania K.”).
+                    // Dziecko z minisiatkówki: link do profilu, podpis jak na stronie grupy (np. „Ania K.”).
                     if (! $url && ($child = self::miniChildren()[$key] ?? null)) {
                         return '<a href="'.e($child['url']).'" class="mention">'.e($child['label']).'</a>'.implode('', array_slice($pieces, $count * 2 - 1));
                     }
@@ -130,7 +129,7 @@ class Mentions
         // Przy tej samej nazwie wygrywa profil zawodnika.
         $people = User::withAccountStatus(AccountStatus::Active)->get(['id', 'name'])->toBase()
             ->mapWithKeys(fn (User $user) => [mb_strtolower($user->name) => $user->profileUrl(false)]);
-        $players = Player::query()->get(['id', 'first_name', 'last_name'])->toBase()
+        $players = Player::query()->whereNot(fn ($query) => $query->whereNotNull('mini_group_id')->whereNull('team_id'))->get(['id', 'first_name', 'last_name', 'team_id', 'mini_group_id'])->toBase()
             ->mapWithKeys(fn (Player $player) => [mb_strtolower($player->full_name) => route('players.show', $player, false)]);
 
         return self::$profiles = $people->merge($players)->all();
@@ -141,9 +140,8 @@ class Mentions
      */
     private static function miniChildren(): array
     {
-        return self::$mini ??= MiniPlayer::with('group')->get()->toBase()
-            ->filter(fn (MiniPlayer $child) => $child->group !== null)
-            ->mapWithKeys(fn (MiniPlayer $child) => [mb_strtolower($child->name()) => ['url' => route('mini.show', $child->group, false), 'label' => $child->displayName()]])
+        return self::$mini ??= Player::mini()->get(['id', 'first_name', 'last_name', 'team_id', 'mini_group_id'])->toBase()
+            ->mapWithKeys(fn (Player $child) => [mb_strtolower($child->full_name) => ['url' => route('players.show', $child, false), 'label' => $child->displayName()]])
             ->all();
     }
 

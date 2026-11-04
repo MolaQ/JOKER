@@ -6,8 +6,8 @@ use App\Livewire\MiniSubmissions;
 use App\Models\Article;
 use App\Models\ContentProposal;
 use App\Models\MiniGroup;
-use App\Models\MiniPlayer;
 use App\Models\MiniTrip;
+use App\Models\Player;
 use App\Models\User;
 use App\Support\AgeColors;
 use App\Support\SiteSettings;
@@ -17,7 +17,7 @@ use Livewire\Livewire;
 beforeEach(function () {
     MiniGroup::query()->update(['is_active' => true]);
     $this->group = MiniGroup::firstWhere('slug', 'czworki');
-    $this->child = MiniPlayer::create(['mini_group_id' => $this->group->id, 'first_name' => 'Antek', 'last_name' => 'Kowalski']);
+    $this->child = Player::create(['mini_group_id' => $this->group->id, 'first_name' => 'Antek', 'last_name' => 'Kowalski']);
 });
 
 test('a mini trainer submits a tournament that waits for approval and then shows in the calendar', function () {
@@ -102,7 +102,7 @@ test('a mini coordinator adds, moves and retires children without profiles', fun
         ->set('child.first_name', 'Hania')->set('child.last_name', 'Kot')->set('child.birth_year', '2015')
         ->call('addChild')->assertHasNoErrors();
 
-    $hania = MiniPlayer::firstWhere('first_name', 'Hania');
+    $hania = Player::firstWhere('first_name', 'Hania');
     expect($hania->mini_group_id)->toBe($this->group->id)->and($hania->image_consent)->toBeFalse();
 
     $component->call('moveChild', $hania->id, (string) $threes->id)->call('retireChild', $this->child->id);
@@ -117,7 +117,7 @@ test('group icons use the colour set in the panel', function () {
 
 test('the squad can be set before the tournament and the overview filters trips', function () {
     $this->actingAs(User::factory()->admin()->create());
-    $kid = MiniPlayer::create(['mini_group_id' => $this->group->id, 'first_name' => 'Nataniel', 'last_name' => 'Lickindorf', 'is_active' => true]);
+    $kid = Player::create(['mini_group_id' => $this->group->id, 'first_name' => 'Nataniel', 'last_name' => 'Lickindorf', 'is_active' => true]);
     $future = MiniTrip::create(['title' => 'Kinder Sport Wałcz', 'starts_on' => today()->addWeek(), 'city' => 'Wałcz', 'status' => MiniTrip::STATUS_PUBLISHED]);
     $future->teams()->create(['mini_group_id' => $this->group->id, 'name' => 'Joker 1']);
     MiniTrip::create(['title' => 'Turniej w Trzciance', 'starts_on' => today()->subWeek(), 'city' => 'Trzcianka', 'status' => MiniTrip::STATUS_PUBLISHED]);
@@ -139,7 +139,7 @@ test('the squad can be set before the tournament and the overview filters trips'
 
 test('a mini report has a lead, formatted text and tags children by their public name', function () {
     app(SiteSettings::class)->set(['mini_child_names' => 'initial']);
-    MiniPlayer::create(['mini_group_id' => $this->group->id, 'first_name' => 'Ania', 'last_name' => 'Kowalska', 'is_active' => true]);
+    Player::create(['mini_group_id' => $this->group->id, 'first_name' => 'Ania', 'last_name' => 'Kowalska', 'is_active' => true]);
     $trip = MiniTrip::create(['title' => 'Turniej w Lesznie', 'city' => 'Leszno', 'starts_on' => now()->subDay()]);
     $trainer = User::factory()->create(['role' => UserRole::MiniTrainer]);
     $this->actingAs($trainer);
@@ -161,5 +161,5 @@ test('a mini report has a lead, formatted text and tags children by their public
 
     auth()->logout();
     $this->get(route('articles.show', $article))->assertOk()->assertSee('Ania K.')->assertDontSee('Ania Kowalska')
-        ->assertSee(route('mini.show', $this->group, false));
+        ->assertSee(route('players.show', Player::firstWhere('first_name', 'Ania'), false));
 });

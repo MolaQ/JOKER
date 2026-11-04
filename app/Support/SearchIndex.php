@@ -157,8 +157,8 @@ class SearchIndex
                 $team->description.' '.$team->trainer?->name.' '.$team->category);
         }
 
-        foreach (Player::with('team')->where('is_active', true)->orderBy('last_name')->get() as $player) {
-            $add(__('Zawodnik'), $player->full_name, collect([$player->positionsLabel(), $player->team?->name, $player->jersey_number ? '#'.$player->jersey_number : null])->filter()->implode(' · '),
+        foreach (Player::with(['team', 'miniGroup'])->where('is_active', true)->orderBy('last_name')->get() as $player) {
+            $add(__('Zawodnik'), $player->displayName(), collect([$player->positionsLabel(), $player->team?->name ?? ($player->isMini() ? __('Minisiatkówka').': '.$player->miniGroup?->name : null), $player->jersey_number ? '#'.$player->jersey_number : null])->filter()->implode(' · '),
                 route('players.show', $player, false), $player->bio);
         }
 

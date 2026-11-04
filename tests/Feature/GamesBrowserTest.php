@@ -3,8 +3,8 @@
 use App\Livewire\GamesBrowser;
 use App\Models\Game;
 use App\Models\MiniGroup;
-use App\Models\MiniPlayer;
 use App\Models\MiniTrip;
+use App\Models\Player;
 use App\Models\RivalTeam;
 use App\Models\Season;
 use App\Models\Team;
@@ -70,7 +70,7 @@ test('the calendar shows all matches by default', function () {
 
 test('minivolleyball tournaments show in the calendar with category names, places and lineups', function () {
     $group = MiniGroup::create(['name' => 'Czwórki dziewcząt', 'players_on_court' => 4]);
-    $child = MiniPlayer::create(['mini_group_id' => $group->id, 'first_name' => 'Zosia', 'last_name' => 'Nowak', 'is_active' => true]);
+    $child = Player::create(['mini_group_id' => $group->id, 'first_name' => 'Zosia', 'last_name' => 'Nowak', 'is_active' => true]);
     $home = MiniTrip::create(['title' => 'Faza powiatowa', 'starts_on' => now()->addWeek()->toDateString(), 'city' => 'Piła']);
     $home->teams()->create(['mini_group_id' => $group->id, 'name' => 'Joker 1', 'place' => 1, 'teams_count' => 10])->players()->attach($child);
     MiniTrip::create(['title' => 'Turniej w Wałczu', 'starts_on' => now()->addWeeks(2)->toDateString(), 'city' => 'Wałcz']);

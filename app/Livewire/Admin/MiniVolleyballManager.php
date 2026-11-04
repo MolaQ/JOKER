@@ -4,13 +4,14 @@ namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\MiniGroup;
-use App\Models\MiniPlayer;
 use App\Models\MiniTrip;
 use App\Models\MiniTripTeam;
+use App\Models\Player;
 use App\Models\Tournament;
 use App\Support\AgeColors;
 use App\Support\SiteSettings;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Url;
@@ -197,7 +198,7 @@ class MiniVolleyballManager extends Component
      */
     public function togglePlayer(int $teamId, int $playerId): void
     {
-        $this->tripTeam($teamId)->players()->toggle([MiniPlayer::findOrFail($playerId)->id]);
+        $this->tripTeam($teamId)->players()->toggle([self::children()->findOrFail($playerId)->id]);
     }
 
     /**
@@ -257,15 +258,26 @@ class MiniVolleyballManager extends Component
 
     // ── Dzieci ───────────────────────────────────────────────
 
+    /**
+     * Dzieci z minisiatkówki: profile zawodników bez drużyny, z grupą mini (albo przeniesione z dawnej listy mini bez grupy).
+     *
+     * @return Builder<Player>
+     */
+    public static function children(): Builder
+    {
+        return Player::query()->whereNull('players.team_id')
+            ->where(fn (Builder $query) => $query->whereNotNull('players.mini_group_id')->orWhereNotNull('players.mini_player_id'));
+    }
+
     public function editPlayer(int $id): void
     {
-        $player = MiniPlayer::findOrFail($id);
+        $player = self::children()->findOrFail($id);
         $this->editingPlayerId = $player->id;
         $this->player = [
             'first_name' => $player->first_name,
             'last_name' => $player->last_name,
             'birth_year' => (string) $player->birth_year,
-            'number' => (string) $player->number,
+            'number' => (string) $player->jersey_number,
             'group' => (string) $player->mini_group_id,
             'image_consent' => $player->image_consent,
             'is_active' => $player->is_active,
@@ -292,7 +304,7 @@ class MiniVolleyballManager extends Component
             'first_name' => trim($player['first_name']),
             'last_name' => trim($player['last_name']),
             'birth_year' => filled($player['birth_year'] ?? null) ? (int) $player['birth_year'] : null,
-            'number' => filled($player['number'] ?? null) ? (int) $player['number'] : null,
+            'jersey_number' => filled($player['number'] ?? null) ? (int) $player['number'] : null,
             'mini_group_id' => filled($player['group'] ?? null) ? (int) $player['group'] : null,
             'image_consent' => (bool) $player['image_consent'],
             'is_active' => (bool) $player['is_active'],
@@ -302,14 +314,19 @@ class MiniVolleyballManager extends Component
             $attributes['photo_path'] = $this->playerPhoto->store('mini', 'public');
         }
 
-        MiniPlayer::updateOrCreate(['id' => $this->editingPlayerId], $attributes);
+        // Dziecko z mini to zwykły profil zawodnika: bez drużyny, z grupą mini.
+        if ($this->editingPlayerId) {
+            self::children()->findOrFail($this->editingPlayerId)->update($attributes);
+        } else {
+            Player::create($attributes + ['team_id' => null]);
+        }
         $this->toast($this->editingPlayerId ? 'Zapisano dane dziecka.' : 'Dodano dziecko.');
         $this->resetPlayer($attributes['mini_group_id']);
     }
 
     public function deletePlayer(int $id): void
     {
-        MiniPlayer::findOrFail($id)->delete();
+        self::children()->findOrFail($id)->delete();
         $this->resetPlayer();
         $this->toast('Usunięto dziecko z listy.');
     }
@@ -405,8 +422,8 @@ class MiniVolleyballManager extends Component
             'groups' => $groups,
             'trips' => MiniTrip::with('teams')->orderByDesc('starts_on')->get(),
             'openTrip' => $this->tripId ? MiniTrip::with(['teams.players', 'teams.group'])->find($this->tripId) : null,
-            'allPlayers' => MiniPlayer::with('group')->where('is_active', true)->orderBy('last_name')->orderBy('first_name')->get(),
-            'players' => MiniPlayer::with(['group', 'guardians:id,name'])
+            'allPlayers' => self::children()->with('miniGroup')->where('is_active', true)->orderBy('last_name')->orderBy('first_name')->get(),
+            'players' => self::children()->with(['miniGroup', 'guardians:id,name'])
                 ->when($this->playerGroup !== '', fn ($query) => $this->playerGroup === 'none' ? $query->whereNull('mini_group_id') : $query->where('mini_group_id', (int) $this->playerGroup))
                 ->orderByDesc('is_active')->orderBy('last_name')->orderBy('first_name')->get(),
             'tournaments' => Tournament::where('is_organizer', true)->orderByDesc('start_date')->get(['id', 'name', 'edition', 'start_date']),

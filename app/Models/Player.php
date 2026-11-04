@@ -8,6 +8,7 @@ use App\Models\Concerns\HasReadableRouteKey;
 use App\Models\Concerns\Likeable;
 use App\Permission;
 use App\PlayerPosition;
+use App\Support\Media;
 use App\Support\SiteSettings;
 use Database\Factories\PlayerFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -57,6 +58,8 @@ class Player extends Model
         'social_links',
         'photo_path',
         'team_id',
+        'mini_group_id',
+        'birth_year',
         'user_id',
         'is_active',
         'image_consent',
@@ -75,6 +78,68 @@ class Player extends Model
             'extra_positions' => 'array',
             'social_links' => 'array',
         ];
+    }
+
+    /**
+     * Grupa minisiatkówki: dziecko z mini ma zwykły profil zawodnika, tylko zamiast drużyny grupę (czwórki, trójki...).
+     */
+    public function miniGroup(): BelongsTo
+    {
+        return $this->belongsTo(MiniGroup::class);
+    }
+
+    public function isMini(): bool
+    {
+        return $this->mini_group_id !== null && $this->team_id === null;
+    }
+
+    /**
+     * Wyjazdy minisiatkówki, na które dziecko było w składzie.
+     */
+    public function miniTripTeams(): BelongsToMany
+    {
+        return $this->belongsToMany(MiniTripTeam::class, 'mini_trip_team_player');
+    }
+
+    /**
+     * Dzieci z minisiatkówki (grupa mini, bez drużyny).
+     */
+    public function scopeMini($query)
+    {
+        return $query->whereNotNull('players.mini_group_id')->whereNull('players.team_id');
+    }
+
+    /**
+     * Imię i nazwisko na stronie. Dziecko z minisiatkówki według ustawień mini: pełne, z inicjałem albo samo imię.
+     */
+    public function displayName(): string
+    {
+        if (! $this->isMini()) {
+            return (string) $this->full_name;
+        }
+
+        return match (app(SiteSettings::class)['mini_child_names']) {
+            'initial' => trim($this->first_name.' '.mb_substr((string) $this->last_name, 0, 1).'.'),
+            'first' => (string) $this->first_name,
+            default => (string) $this->full_name,
+        };
+    }
+
+    /**
+     * Zdjęcie na stronie. U dzieci z minisiatkówki tylko za zgodą rodzica na wizerunek i gdy zdjęcia dzieci są włączone.
+     */
+    public function publicPhotoPath(): ?string
+    {
+        if ($this->isMini() && ! ($this->image_consent && app(SiteSettings::class)['mini_show_photos'])) {
+            return null;
+        }
+
+        return $this->photo_path;
+    }
+
+    public function photoUrl(): ?string
+    {
+        return ($path = $this->publicPhotoPath()) ? Media::url($path) : null;
     }
 
     public function team(): BelongsTo
@@ -130,7 +195,16 @@ class Player extends Model
             return false;
         }
 
-        return $user->hasPermission(Permission::Proposals) && $user->managesTeam($this->team_id);
+        if (! $user->hasPermission(Permission::Proposals)) {
+            return false;
+        }
+
+        // Dziecko z minisiatkówki: administracja albo trener tej grupy mini.
+        if ($this->isMini()) {
+            return $user->managedTeamIds() === null || $user->miniGroups()->whereKey($this->mini_group_id)->exists();
+        }
+
+        return $user->managesTeam($this->team_id);
     }
 
     /**
@@ -200,7 +274,11 @@ class Player extends Model
             $this->spike_reach ? __('zasięg w ataku :value cm', ['value' => $this->spike_reach]) : null,
         ])->filter()->implode(', ');
 
-        $text = $this->full_name.' - '.($intro !== '' ? $intro : __('zawodnik')).' · '.$club.'.'
+        if ($this->isMini()) {
+            $intro = collect([__('minisiatkówka'), $this->miniGroup?->name, $this->jersey_number !== null ? '#'.$this->jersey_number : null])->filter()->implode(', ');
+        }
+
+        $text = $this->displayName().' - '.($intro !== '' ? $intro : __('zawodnik')).' · '.$club.'.'
             .($stats !== '' ? ' '.Str::ucfirst($stats).'.' : '')
             .' '.trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags(str_replace('<', ' <', (string) $this->bio)))));
 
@@ -257,7 +335,7 @@ class Player extends Model
 
     protected function routeSlugSource(): string
     {
-        return (string) $this->full_name;
+        return $this->displayName();
     }
 
     /**
@@ -286,9 +364,13 @@ class Player extends Model
             return $query;
         }
 
+        // Trener minisiatkówki prowadzi też dzieci ze swoich grup mini.
+        $miniGroupIds = $user->miniGroups()->pluck('mini_groups.id');
+
         return $query->where(fn ($players) => $players
             ->whereIn('team_id', $teamIds)
-            ->orWhereHas('teams', fn ($teams) => $teams->whereIn('teams.id', $teamIds)));
+            ->orWhereHas('teams', fn ($teams) => $teams->whereIn('teams.id', $teamIds))
+            ->when($miniGroupIds->isNotEmpty(), fn ($mini) => $mini->orWhereIn('players.mini_group_id', $miniGroupIds)));
     }
 
     public function photoTags(): MorphMany

@@ -89,24 +89,24 @@
             $initials = fn ($child) => mb_strtoupper(mb_substr($child->first_name, 0, 1).mb_substr($child->last_name, 0, 1));
         @endphp
         @forelse($players as $child)
-            {{-- Kafelek jak w kadrze drużyn: zdjęcie tylko ze zgodą rodzica, inaczej inicjały w kolorze grupy --}}
-            <figure class="card group relative overflow-hidden" style="--mini-accent: {{ $accent }}">
+            {{-- Kafelek jak w kadrze drużyn, prowadzi do profilu dziecka: zdjęcie tylko ze zgodą rodzica, inaczej inicjały w kolorze grupy --}}
+            <a href="{{ route('players.show', $child) }}" class="card card-hover group relative block overflow-hidden" style="--mini-accent: {{ $accent }}">
                 <div class="relative aspect-[4/5] w-full overflow-hidden bg-gradient-to-br from-graphite to-ink">
                     @if($child->photoUrl())
                         <img src="{{ $child->photoUrl() }}" alt="{{ $child->displayName() }}" loading="lazy" class="absolute inset-0 h-full w-full object-cover" onerror="this.remove()">
                     @else
-                        <span class="absolute inset-0 flex items-center justify-center pb-10 font-display text-6xl font-bold text-(--mini-accent)" aria-hidden="true">{{ $child->number ?? $initials($child) }}</span>
+                        <span class="absolute inset-0 flex items-center justify-center pb-10 font-display text-6xl font-bold text-(--mini-accent)" aria-hidden="true">{{ $child->jersey_number ?? $initials($child) }}</span>
                     @endif
                     <span class="absolute inset-x-0 top-0 h-1 bg-(--mini-accent)" aria-hidden="true"></span>
                     @if($site['mini_show_birth_year'] && $child->birth_year)
                         <span class="absolute top-3 right-3 rounded-full bg-black/40 px-2 py-0.5 text-[11px] font-bold text-white tabular-nums backdrop-blur">{{ $child->birth_year }}</span>
                     @endif
-                    <figcaption class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink via-ink/80 to-transparent px-3 pt-8 pb-3">
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink via-ink/80 to-transparent px-3 pt-8 pb-3">
                         <span class="block font-display text-lg leading-tight font-semibold text-white uppercase">{{ $child->displayName() }}</span>
                         <x-mini-players :group="$group" size="xs" class="mt-1 opacity-90" aria-hidden="true" />
-                    </figcaption>
+                    </div>
                 </div>
-            </figure>
+            </a>
         @empty
             <p class="col-span-full text-sm text-zinc-500">{{ __('Lista dzieci pojawi się wkrótce.') }}</p>
         @endforelse
