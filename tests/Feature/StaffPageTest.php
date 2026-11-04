@@ -79,3 +79,19 @@ test('profil rodzica pokazuje sylwetkę i media społecznościowe', function () 
         ->assertSee('Mama libero, kibicuje od lat.')
         ->assertSee('https://www.instagram.com/marta');
 });
+
+test('Sztab i profile trenerów mają dane strukturalne dla Google', function () {
+    $this->coach->update(['additional_info' => '<p>Trener z pasją.</p>', 'social_links' => ['instagram' => 'https://www.instagram.com/marek']]);
+
+    $this->get(route('trainers.index'))->assertOk()
+        ->assertSee('"@type":"ItemList"', false)
+        ->assertSee('"jobTitle":"Fizjoterapeuta"', false);
+
+    $this->get(route('trainers.show', $this->coach))->assertOk()
+        ->assertSee('"@type":"Person"', false)
+        ->assertSee('"sameAs":["https://www.instagram.com/marek"]', false)
+        ->assertSee('"description":"Trener z pasją."', false)
+        ->assertSee('Seniorzy', false)
+        ->assertSee('"@type":"BreadcrumbList"', false)
+        ->assertSee('<meta property="og:type" content="profile">', false);
+});

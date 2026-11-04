@@ -3,6 +3,11 @@
 @section('title', __('Sztab'))
 @section('description', __('Trenerzy, trenerzy minisiatkówki i cały sztab :club: kto prowadzi którą drużynę.', ['club' => $site['club_name']]))
 
+@push('structured-data')
+    {!! \App\Support\Seo::jsonLd(\App\Support\Seo::staffList($entries)) !!}
+    {!! \App\Support\Seo::jsonLd(\App\Support\Seo::breadcrumbs([[__('Strona główna'), route('home')], [__('Sztab'), route('trainers.index')]])) !!}
+@endpush
+
 @section('content')
 <section class="container-site pt-14 pb-10 lg:pt-20">
     <p class="eyebrow">{{ __('Ludzie klubu') }}</p>

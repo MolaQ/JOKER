@@ -9,7 +9,9 @@ use App\Models\GalleryPhoto;
 use App\Models\Game;
 use App\Models\Player;
 use App\Models\Team;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
@@ -147,6 +149,49 @@ class Seo
             'jobTitle' => $player->positionsLabel(),
             'memberOf' => $player->team ? ['@type' => 'SportsTeam', 'name' => config('app.name').' - '.$player->team->name, 'url' => route('teams.show', $player->team)] : null,
         ]);
+    }
+
+    /**
+     * Trener albo osoba ze sztabu (wpis ze StaffDirectory): funkcja, drużyny, zdjęcie, opis i media społecznościowe.
+     *
+     * @param  array{user: User, function: string, teams: Collection<int, array{name: string, url: string, role: string}>}  $entry
+     * @return array<string, mixed>
+     */
+    public static function staffMember(array $entry): array
+    {
+        $user = $entry['user'];
+        $about = trim(html_entity_decode(strip_tags(str_replace('</p>', '</p> ', (string) $user->additional_info)), ENT_QUOTES));
+
+        return array_filter([
+            '@type' => 'Person',
+            'name' => $user->name,
+            'url' => route('trainers.show', $user),
+            'image' => $user->avatar_path ? Media::url($user->avatar_path) : null,
+            'jobTitle' => $entry['function'],
+            'description' => $about !== '' ? Str::limit(preg_replace('/\s+/', ' ', $about), 300) : null,
+            'worksFor' => ['@id' => url('/').'#klub'],
+            'memberOf' => $entry['teams']->map(fn (array $team) => ['@type' => 'SportsTeam', 'name' => config('app.name').' - '.$team['name'], 'url' => $team['url']])->values()->all() ?: null,
+            'sameAs' => collect($user->socialProfiles())->pluck('url')->values()->all() ?: null,
+        ]);
+    }
+
+    /**
+     * Zakładka „Sztab”: lista osób dla Google.
+     *
+     * @param  Collection<int, array<string, mixed>>  $entries
+     * @return array<string, mixed>
+     */
+    public static function staffList(Collection $entries): array
+    {
+        return [
+            '@type' => 'ItemList',
+            'name' => __('Sztab').' - '.config('app.name'),
+            'itemListElement' => $entries->values()->map(fn (array $entry, int $index) => [
+                '@type' => 'ListItem',
+                'position' => $index + 1,
+                'item' => self::staffMember($entry),
+            ])->all(),
+        ];
     }
 
     /**

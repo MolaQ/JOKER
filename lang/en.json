@@ -604,5 +604,6 @@
     "wprowadzenie": "introduction",
     "Dwa, trzy zdania pod tytułem i na liście aktualności. Puste = początek relacji.": "Two or three sentences under the title and in the news list. Empty = the start of the report.",
     "Krótko: o co chodzi, jaki wynik, co najważniejsze...": "Briefly: what happened, the score, the key moments...",
-    "Napisz relację, zapowiedź albo ciekawostkę...": "Write a report, a preview or a fun fact..."
+    "Napisz relację, zapowiedź albo ciekawostkę...": "Write a report, a preview or a fun fact...",
+    ":name - :function w klubie siatkarskim :club: :teams.": ":name - :function at the volleyball club :club: :teams."
 }

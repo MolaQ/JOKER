@@ -1,7 +1,17 @@
 @extends('layouts.public')
 
 @section('title', $trainer->name.' - '.__('sztab'))
-@section('description', __(':name - sztab szkoleniowy klubu siatkarskiego :club.', ['name' => $trainer->name, 'club' => $site['club_name']]))
+@section('description', $entry['teams']->isNotEmpty()
+    ? __(':name - :function w klubie siatkarskim :club: :teams.', ['name' => $trainer->name, 'function' => mb_strtolower($entry['function']), 'club' => $site['club_name'], 'teams' => $entry['teams']->pluck('name')->unique()->implode(', ')])
+    : __(':name - sztab szkoleniowy klubu siatkarskiego :club.', ['name' => $trainer->name, 'club' => $site['club_name']]))
+@if($trainer->avatar_path)
+    @section('og_image', \App\Support\Media::url($trainer->avatar_path))
+@endif
+@section('og_type', 'profile')
+@push('structured-data')
+    {!! \App\Support\Seo::jsonLd(\App\Support\Seo::staffMember($entry)) !!}
+    {!! \App\Support\Seo::jsonLd(\App\Support\Seo::breadcrumbs([[__('Strona główna'), route('home')], [__('Sztab'), route('trainers.index')], [$trainer->name, route('trainers.show', $trainer)]])) !!}
+@endpush
 
 @section('content')
 <section class="relative isolate -mt-16 overflow-hidden bg-ink pt-16 text-white lg:-mt-20 lg:pt-20">
