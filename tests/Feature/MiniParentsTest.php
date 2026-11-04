@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Admin\ParentAssignment;
+use App\Livewire\Admin\PlayerManager;
 use App\Livewire\PlayerProposalForm;
 use App\Models\MiniGroup;
 use App\Models\Player;
@@ -149,4 +150,13 @@ test('migracja przenosi dawne dzieci mini do profili zawodników razem ze skład
         ->and(json_decode(DB::table('mini_trips')->find($tripId)->pending_results, true)['teams'][0]['players'])->toBe([$antek->id]);
 
     $this->get(route('players.show', $antek))->assertOk()->assertSee('Turnieje minisiatkówki')->assertSee('Turniej');
+});
+
+test('na liście zawodników w panelu dziecko z mini ma swoją grupę, nie „bez drużyny”', function () {
+    Livewire::actingAs($this->admin)->test(PlayerManager::class)
+        ->set('teamFilter', 'mini')
+        ->assertSee('mini: Trójki')
+        ->assertDontSee('bez drużyny</span>', false)
+        ->call('openEditModal', $this->child->id)
+        ->assertSee('Minisiatkówka: Trójki');
 });

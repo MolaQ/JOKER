@@ -149,7 +149,8 @@ class PlayerManager extends Component
             'achievements.*.title' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
             // Bez drużyny zapisze tylko ktoś, kto widzi wszystkie drużyny (trener straciłby dostęp do zawodnika).
-            'team_id' => [Auth::user()->managedTeamIds() === null ? 'nullable' : 'required', Rule::in(Team::managedBy(Auth::user())->pluck('id'))],
+            // Dziecko z minisiatkówki może zostać bez drużyny (jest w grupie mini).
+            'team_id' => [Auth::user()->managedTeamIds() === null || $this->editingMini() ? 'nullable' : 'required', Rule::in(Team::managedBy(Auth::user())->pluck('id'))],
             'extra_team_ids' => 'array',
             'extra_team_ids.*' => 'exists:teams,id',
             'extra_team_numbers' => 'array',
@@ -411,6 +412,11 @@ class PlayerManager extends Component
         return ['wyswietlenia', 'polubienia', 'logowanie'];
     }
 
+    private function editingMini(): bool
+    {
+        return $this->editingId !== null && (bool) Player::whereKey($this->editingId)->whereNotNull('mini_group_id')->exists();
+    }
+
     public function render()
     {
         $search = trim($this->search);
@@ -425,7 +431,7 @@ class PlayerManager extends Component
         // Drużyna to drużyna macierzysta albo skład w bieżącym sezonie (np. junior grający też w seniorach).
         $seasonId = Season::current()->value('id');
 
-        $players = $this->applySort((clone $base)->with(['team', 'user:id,last_login_at', 'teams' => fn ($q) => $q->where('team_player_season.season_id', $seasonId)])->withCount('likes')
+        $players = $this->applySort((clone $base)->with(['team', 'miniGroup', 'user:id,last_login_at', 'teams' => fn ($q) => $q->where('team_player_season.season_id', $seasonId)])->withCount('likes')
             ->when($this->teamFilter === 'brak', fn ($q) => $q->whereNull('team_id')->whereNull('mini_group_id'))
             ->when($this->teamFilter === 'mini', fn ($q) => $q->mini())
             ->when(ctype_digit($this->teamFilter), fn ($q) => $q->inTeam($this->teamFilter, $seasonId))
@@ -449,6 +455,7 @@ class PlayerManager extends Component
             'duplicateNumbers' => Player::whereNotNull('team_id')->whereNotNull('jersey_number')->selectRaw('team_id, jersey_number')->groupBy('team_id', 'jersey_number')->havingRaw('count(*) > 1')->get()->map(fn ($row) => $row->team_id.'-'.$row->jersey_number)->all(),
             'teams' => $teams,
             'positions' => $positions,
+            'editingMiniGroup' => $this->showModal && $this->editingId ? Player::with('miniGroup')->find($this->editingId)?->miniGroup?->name : null,
             'playerAccounts' => $this->showModal ? User::withRole(UserRole::Player)->orderBy('name')->get(['id', 'name', 'email']) : collect(),
             'socialPlatforms' => app(SiteSettings::class)->playerSocialPlatforms(),
             'linkedAccount' => $this->showModal && $this->user_id ? User::find($this->user_id) : null,

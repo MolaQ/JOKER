@@ -73,7 +73,7 @@
                         {{ $player->position?->label() ?? '—' }}
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        @if($player->team){{ $player->team->name }}@foreach($player->teams->reject(fn ($extra) => $extra->id === $player->team_id) as $extra)<span class="text-gray-400"> + {{ $extra->name }}</span>@endforeach@else<span class="rounded bg-amber-50 px-1.5 py-0.5 text-xs font-semibold text-amber-700">bez drużyny</span>@endif
+                        @if($player->team){{ $player->team->name }}@foreach($player->teams->reject(fn ($extra) => $extra->id === $player->team_id) as $extra)<span class="text-gray-400"> + {{ $extra->name }}</span>@endforeach@elseif($player->isMini() && $player->miniGroup)<span class="rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-semibold text-emerald-700">mini: {{ $player->miniGroup->name }}</span>@else<span class="rounded bg-amber-50 px-1.5 py-0.5 text-xs font-semibold text-amber-700">bez drużyny</span>@endif
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm">
                         @if($player->is_active)
@@ -187,6 +187,9 @@
                                     @endforeach
                                 </select>
                                 @error('team_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                @if($editingMiniGroup)
+                                    <p class="mt-1 text-xs text-emerald-700">Minisiatkówka: {{ $editingMiniGroup }}. Bez drużyny dziecko zostaje w grupie mini; po wybraniu drużyny przechodzi do niej.</p>
+                                @endif
                                 <label class="mt-2 flex items-center gap-2 text-sm text-gray-700">
                                     <input type="checkbox" wire:model="is_captain" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500">
                                     Kapitan drużyny w bieżącym sezonie
