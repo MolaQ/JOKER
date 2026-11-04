@@ -232,6 +232,27 @@
                             {{-- Profil trenera i sztabu na stronie: to samo, co osoba może zaproponować w „Mój profil” --}}
                             <fieldset class="space-y-3 rounded-lg border border-gray-200 p-4">
                                 <legend class="px-1 text-sm font-medium text-gray-700">Profil na stronie (trenerzy i sztab)</legend>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Zdjęcie</label>
+                                    <div class="mt-1 flex items-start gap-4">
+                                        <div class="aspect-[4/5] w-24 shrink-0 overflow-hidden rounded-lg bg-gray-100 ring-1 ring-gray-200">
+                                            @if($photo)
+                                                <img src="{{ $photo->temporaryUrl() }}" alt="" class="h-full w-full object-cover">
+                                            @elseif($existingPhoto && ! $removePhoto)
+                                                <img src="{{ \App\Support\Media::url($existingPhoto) }}" alt="" class="h-full w-full object-cover">
+                                            @else
+                                                <span class="flex h-full items-center justify-center text-xs text-gray-400">brak</span>
+                                            @endif
+                                        </div>
+                                        <div class="min-w-0 flex-1 space-y-2">
+                                            <x-photo-cropper model="photo" :preview="false" aspect="4/5" :width="800" hint="Kadr 4:5 jak u zawodników." />
+                                            @if($existingPhoto && ! $photo)
+                                                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" wire:model.live="removePhoto" class="rounded border-gray-300"> Usuń zdjęcie</label>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    @error('photo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                </div>
                                 @php
                                     $socialPlatforms = app(\App\Support\SiteSettings::class)->playerSocialPlatforms();
                                 @endphp

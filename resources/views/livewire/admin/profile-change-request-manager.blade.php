@@ -22,7 +22,15 @@
             @foreach($requests as $request)
                 <tr>
                     <td class="px-4 py-3 text-sm text-gray-900">{{ $request->user->name }}<br><span class="text-xs text-gray-500">{{ $request->user->email }}</span></td>
-                    <td class="px-4 py-3 text-xs text-gray-700"><pre class="whitespace-pre-wrap">{{ json_encode($request->proposed_data, JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE) }}</pre></td>
+                    <td class="px-4 py-3 text-xs text-gray-700">
+                        @if(filled($request->proposed_data['avatar_path'] ?? null))
+                            <p class="mb-1 font-semibold">Nowe zdjęcie:</p>
+                            <img src="{{ \App\Support\Media::url($request->proposed_data['avatar_path']) }}" alt="" class="aspect-[4/5] w-24 rounded-lg object-cover ring-1 ring-gray-200">
+                        @endif
+                        @if(collect($request->proposed_data)->except('avatar_path')->isNotEmpty())
+                            <pre class="whitespace-pre-wrap">{{ json_encode(collect($request->proposed_data)->except('avatar_path'), JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE) }}</pre>
+                        @endif
+                    </td>
                     <td class="px-4 py-3 text-sm">{{ $request->status }}</td>
                     <td class="px-4 py-3 text-sm">
                         @if($request->status === 'pending')

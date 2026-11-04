@@ -8,7 +8,7 @@
     <div class="net-pattern absolute inset-0 -z-10" aria-hidden="true"></div>
 
     <div class="container-site grid items-end gap-10 pt-16 pb-14 lg:grid-cols-[auto_1fr] lg:pt-24">
-        <x-avatar :photo="$trainer->avatar_path" :name="$trainer->name" class="aspect-square w-40 rounded-3xl text-6xl ring-4 ring-sky-club/40 lg:w-56" />
+        <x-avatar :photo="$trainer->avatar_path" :name="$trainer->name" class="aspect-[4/5] w-40 rounded-3xl text-6xl ring-4 ring-sky-club/40 lg:w-56" />
         <div>
             <a href="{{ route('teams.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ __('Drużyny') }}</a>
             <p class="eyebrow mt-5">{{ $roles->pluck('role')->unique()->implode(' · ') ?: __('Sztab klubu') }}</p>

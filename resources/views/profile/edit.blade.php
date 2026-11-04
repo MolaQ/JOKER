@@ -193,6 +193,10 @@
         </form>
     </div>
 
+    @if($user->isStaffMember())
+        @livewire('profile-photo-proposal')
+    @endif
+
     <div class="rounded-xl bg-white p-6 shadow">
         <h2 class="mb-4 text-lg font-semibold text-zinc-900">{{ __('Dane konta') }}</h2>
         <form method="POST" action="{{ route('profile.request-change') }}" class="space-y-4">

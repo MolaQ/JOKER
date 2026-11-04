@@ -565,5 +565,10 @@
     "Set": "Set",
     "Dodaj set": "Add set",
     "Wpisz sety jak „25:20, 23:25, 15:12”. Zamiast dwukropka może być myślnik albo kropka, np. 25-20 23-25 (bez remisów w secie).": "Enter sets like “25:20, 23:25, 15:12”. A dash or dot works instead of a colon, e.g. 25-20 23-25 (no tied sets).",
-    "Sylwetka": "Profile"
+    "Sylwetka": "Profile",
+    "Dziękujemy! Zdjęcie pojawi się na profilu po zatwierdzeniu.": "Thank you! The photo will appear on your profile once approved.",
+    "Zdjęcie na profilu": "Profile photo",
+    "Zdjęcie pokaże się na Twoim profilu trenera po zatwierdzeniu przez klub.": "The photo will appear on your coach profile once the club approves it.",
+    "Zdjęcie czeka na zatwierdzenie.": "The photo is awaiting approval.",
+    "Wyślij zdjęcie do zatwierdzenia": "Send the photo for approval"
 }

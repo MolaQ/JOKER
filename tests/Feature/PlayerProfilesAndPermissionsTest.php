@@ -7,6 +7,7 @@ use App\Livewire\Admin\ProfileChangeRequestManager;
 use App\Livewire\Admin\TeamList;
 use App\Livewire\Admin\UserManager;
 use App\Livewire\PlayerProposalForm;
+use App\Livewire\ProfilePhotoProposal;
 use App\Models\Article;
 use App\Models\Player;
 use App\Models\ProfileChangeRequest;
@@ -20,6 +21,7 @@ use App\Support\DataImport;
 use App\UserRole;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -229,4 +231,32 @@ test('only the boss and the admin approve account profile changes', function () 
     $this->actingAs(User::factory()->create(['role' => UserRole::Boss]));
     Livewire::test(ProfileChangeRequestManager::class)->call('approve', $request->id);
     expect($trainer->fresh()->additional_info)->toBe('<p>Nowy opis</p>');
+});
+
+test('a trainer photo is set by the admin or proposed by the trainer in a 4:5 crop', function () {
+    Storage::fake('public');
+    $trainer = User::factory()->create(['role' => UserRole::Trainer, 'activated_at' => now()]);
+
+    $this->actingAs(User::factory()->admin()->create());
+    Livewire::test(UserManager::class)->call('openEditModal', $trainer->id)
+        ->set('photo', UploadedFile::fake()->image('kwadrat.jpg', 800, 800))->call('save')->assertHasErrors('photo')
+        ->set('photo', UploadedFile::fake()->image('trener.jpg', 800, 1000))->call('save')->assertHasNoErrors();
+    $first = $trainer->fresh()->avatar_path;
+    Storage::disk('public')->assertExists($first);
+
+    $this->actingAs($trainer);
+    Livewire::test(ProfilePhotoProposal::class)
+        ->set('photo', UploadedFile::fake()->image('nowe.jpg', 800, 1000))->call('submit')->assertHasNoErrors();
+    $request = ProfileChangeRequest::sole();
+    expect($trainer->fresh()->avatar_path)->toBe($first);
+
+    $this->actingAs(User::factory()->create(['role' => UserRole::Boss]));
+    Livewire::test(ProfileChangeRequestManager::class)->assertSee('Nowe zdjęcie')->call('approve', $request->id);
+
+    expect($trainer->fresh()->avatar_path)->toBe($request->proposed_data['avatar_path'])
+        ->and($trainer->fresh()->name)->toBe($trainer->name);
+    Storage::disk('public')->assertMissing($first);
+
+    $this->actingAs(User::factory()->create(['role' => UserRole::Fan]));
+    Livewire::test(ProfilePhotoProposal::class)->assertForbidden();
 });

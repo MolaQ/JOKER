@@ -17,13 +17,15 @@ use App\UserRole;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 class UserManager extends Component
 {
-    use EditsPermissionOverrides, ShowsToasts, SortsTable, WithPagination;
+    use EditsPermissionOverrides, ShowsToasts, SortsTable, WithFileUploads, WithPagination;
 
     public bool $showModal = false;
 
@@ -68,6 +70,13 @@ class UserManager extends Component
 
     public string $additional_info = '';
 
+    /** Zdjęcie trenera w kadrze 4:5 jak u zawodników. */
+    public $photo = null;
+
+    public ?string $existingPhoto = null;
+
+    public bool $removePhoto = false;
+
     public string $search = '';
 
     public string $roleFilter = '';
@@ -97,6 +106,8 @@ class UserManager extends Component
             'social_links' => 'array',
             'social_links.*' => ['nullable', 'string', 'max:500', 'regex:#^\s*https?://#i'],
             'additional_info' => 'nullable|string|max:2000',
+            'photo' => 'nullable|image|max:4096|dimensions:ratio=4/5',
+            'removePhoto' => 'boolean',
         ];
     }
 
@@ -151,6 +162,9 @@ class UserManager extends Component
         $this->birthday_display = $user->birthday_display?->value ?? 'age';
         $this->social_links = collect($user->socialProfiles())->mapWithKeys(fn (array $profile) => [$profile['key'] => $profile['url']])->all();
         $this->additional_info = (string) $user->additional_info;
+        $this->existingPhoto = $user->avatar_path;
+        $this->photo = null;
+        $this->removePhoto = false;
 
         $this->showModal = true;
     }
@@ -191,6 +205,10 @@ class UserManager extends Component
             return;
         }
 
+        $photo = $this->photo;
+        $removePhoto = (bool) ($validated['removePhoto'] ?? false);
+        unset($validated['photo'], $validated['removePhoto']);
+
         $validated['social_links'] = array_filter(array_map(fn ($url) => trim((string) $url), $validated['social_links'] ?? [])) ?: null;
         // Stare pole Instagram (propozycje zmian w „Mój profil”) idzie za listą serwisów.
         $validated['instagram'] = $validated['social_links']['instagram'] ?? null;
@@ -206,6 +224,12 @@ class UserManager extends Component
             $user = User::findOrFail($this->editingId);
             abort_unless($this->mayEdit($user), 403);
             AccessHistory::remember($user, 'Przed zapisem w oknie konta');
+            if ($photo || $removePhoto) {
+                if ($user->avatar_path) {
+                    Storage::disk('public')->delete($user->avatar_path);
+                }
+                $validated['avatar_path'] = $photo ? $photo->store('avatars', 'public') : null;
+            }
             $user->update($validated);
             $user->syncRoles($roles);
             $this->saveRoleExpiries($user, $roles, $expiries);
@@ -214,6 +238,9 @@ class UserManager extends Component
             $this->toast('Użytkownik został zaktualizowany.');
         } else {
             $validated['email_verified_at'] = now();
+            if ($photo) {
+                $validated['avatar_path'] = $photo->store('avatars', 'public');
+            }
             $user = User::create($validated);
             $user->syncRoles($roles);
             $this->saveRoleExpiries($user, $roles, $expiries);
@@ -331,6 +358,9 @@ class UserManager extends Component
         $this->birthday_display = 'age';
         $this->social_links = [];
         $this->additional_info = '';
+        $this->photo = null;
+        $this->existingPhoto = null;
+        $this->removePhoto = false;
         $this->resetErrorBag();
     }
 

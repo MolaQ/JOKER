@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\ProfileChangeRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -40,12 +41,14 @@ class ProfileChangeRequestManager extends Component
         }
 
         $data = collect($request->proposed_data)
-            ->only(['name', 'email', 'instagram', 'additional_info', 'social_links'])
+            ->only(['name', 'email', 'instagram', 'additional_info', 'social_links', 'avatar_path'])
             ->toArray();
 
         validator($data, [
-            'name' => 'required|string|max:255',
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($request->user_id)],
+            // Propozycja samego zdjęcia nie niesie imienia ani e-maila.
+            'name' => 'sometimes|required|string|max:255',
+            'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($request->user_id)],
+            'avatar_path' => 'sometimes|string|max:255',
             'instagram' => 'nullable|string|max:255',
             'additional_info' => 'nullable|string|max:2000',
             'social_links' => 'nullable|array',
@@ -53,8 +56,12 @@ class ProfileChangeRequestManager extends Component
         ])->validate();
 
         // Konto zatwierdzone przez klub: imię i nazwisko zmienia się tylko w Użytkownikach.
-        if ($request->user->nameIsLocked()) {
+        if ($request->user->nameIsLocked() && array_key_exists('name', $data)) {
             $data['name'] = $request->user->name;
+        }
+
+        if (filled($data['avatar_path'] ?? null) && $request->user->avatar_path && $request->user->avatar_path !== $data['avatar_path']) {
+            Storage::disk('public')->delete($request->user->avatar_path);
         }
 
         if (array_key_exists('social_links', $data)) {
@@ -90,6 +97,11 @@ class ProfileChangeRequestManager extends Component
 
         if ($request->status !== 'pending') {
             return;
+        }
+
+        // Odrzucone zdjęcie nie zostaje na serwerze.
+        if (filled($request->proposed_data['avatar_path'] ?? null)) {
+            Storage::disk('public')->delete($request->proposed_data['avatar_path']);
         }
 
         $request->update([
