@@ -24,6 +24,16 @@ class MiniPlayer extends Model
         'is_active',
     ];
 
+    protected static function booted(): void
+    {
+        // Rodzic dziecka z mini traci dostęp, gdy żadne jego dziecko nie jest już aktywne (jak przy zawodnikach).
+        static::saved(function (MiniPlayer $child) {
+            if ($child->wasChanged('is_active')) {
+                $child->guardians->each->syncParentActivity();
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return ['image_consent' => 'boolean', 'is_active' => 'boolean'];
@@ -32,6 +42,14 @@ class MiniPlayer extends Model
     public function group(): BelongsTo
     {
         return $this->belongsTo(MiniGroup::class, 'mini_group_id');
+    }
+
+    /**
+     * Rodzice (opiekunowie) przypisani w panelu: „Rodzice do przypisania”.
+     */
+    public function guardians(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'mini_player_guardian')->withTimestamps();
     }
 
     public function tripTeams(): BelongsToMany

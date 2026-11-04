@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use App\Models\ContentProposal;
+use App\Models\MiniPlayer;
 use App\Models\Player;
 use App\Models\PlayerChangeRequest;
 use App\Models\ProfileChangeRequest;
-use App\Models\Team;
 use App\Support\SiteSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,11 +42,11 @@ class ProfileController extends Controller
             'user' => $user,
             'latestRequest' => $latestRequest,
             'players' => $players,
+            'miniChildren' => $user->miniChildren()->with('group')->orderBy('last_name')->get(),
             'proposals' => $proposals,
             'contentProposals' => ContentProposal::where('user_id', $user->id)->latest('id')->limit(10)->get(),
             'canPropose' => ContentProposal::typesFor($user) !== [],
             'teams' => $user->allCoachedTeams(),
-            'allTeams' => $user->rejected_at ? Team::orderBy('display_order')->get(['id', 'name']) : collect(),
         ]);
     }
 
@@ -65,6 +65,22 @@ class ProfileController extends Controller
         return back()->with('success', $consent
             ? __('Zgoda zapisana. Oznaczenia na zdjęciach są widoczne.')
             : __('Zgoda wycofana. Oznaczenia na zdjęciach są ukryte.'));
+    }
+
+    /**
+     * Rodzic dziecka z minisiatkówki udziela lub wycofuje zgodę na pokazywanie zdjęcia dziecka na stronie.
+     */
+    public function updateMiniConsent(Request $request, MiniPlayer $miniPlayer): RedirectResponse
+    {
+        abort_unless($miniPlayer->guardians()->whereKey($request->user()->id)->exists(), 403);
+
+        $consent = $request->boolean('image_consent');
+        $miniPlayer->update(['image_consent' => $consent]);
+        AuditLog::record('consent.image', ($consent ? 'Udzielono' : 'Wycofano').' zgody na wizerunek (minisiatkówka): '.$miniPlayer->name(), $miniPlayer);
+
+        return back()->with('success', $consent
+            ? __('Zgoda zapisana. Zdjęcie dziecka może być widoczne na stronie grupy.')
+            : __('Zgoda wycofana. Zdjęcie dziecka jest ukryte.'));
     }
 
     public function updatePassword(Request $request): RedirectResponse

@@ -69,8 +69,11 @@ class AccountActivation extends Component
             ->whereNull('rejected_at')
             ->whereNull('disabled_at')
             ->whereNull('anonymized_at')
+            // Trener widzi zgłoszenia do swoich drużyn, a trener minisiatkówki także do swoich grup mini.
             ->when($teamIds !== null, fn ($query) => $query
-                ->whereIn('requested_team_id', $teamIds)
+                ->where(fn ($query) => $query
+                    ->whereIn('requested_team_id', $teamIds)
+                    ->orWhereIn('requested_mini_group_id', $user->miniGroups()->pluck('mini_groups.id')))
                 ->whereIn('requested_role', [UserRole::Parent->value, UserRole::Player->value]));
     }
 

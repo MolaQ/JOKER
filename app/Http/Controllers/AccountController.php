@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Auth\RegisterController;
 use App\Models\AuditLog;
+use App\Support\RequestedGroup;
 use App\Support\SiteSettings;
 use App\UserRole;
 use Illuminate\Http\JsonResponse;
@@ -54,17 +55,20 @@ class AccountController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'kind' => ['required', Rule::in(RegisterController::KINDS)],
-            'team_id' => ['nullable', 'required_unless:kind,fan', 'exists:teams,id'],
+            'team_id' => ['nullable', 'required_unless:kind,fan', RequestedGroup::rule()],
             'note' => 'nullable|required_if:kind,parent|string|max:1000',
         ], [
-            'team_id.required_unless' => __('Wybierz drużynę, z którą jesteś związany.'),
+            'team_id.required_unless' => __('Wybierz drużynę lub grupę, z którą jesteś związany.'),
             'note.required_if' => __('Napisz imię i nazwisko dziecka.'),
         ]);
+
+        [$team, $miniGroup] = RequestedGroup::resolve($validated['team_id'] ?? null);
 
         $user->resubmitActivation([
             'name' => $validated['name'],
             'requested_role' => UserRole::from($validated['kind']),
-            'requested_team_id' => $validated['kind'] === 'fan' ? null : $validated['team_id'],
+            'requested_team_id' => $validated['kind'] === 'fan' ? null : $team,
+            'requested_mini_group_id' => $validated['kind'] === 'fan' ? null : $miniGroup,
             'registration_note' => $validated['note'] ?? null,
         ]);
 
@@ -99,7 +103,7 @@ class AccountController extends Controller
      */
     public function export(Request $request): JsonResponse
     {
-        $user = $request->user()->load(['children', 'playerProfile', 'profileChangeRequests']);
+        $user = $request->user()->load(['children', 'miniChildren.group', 'playerProfile', 'profileChangeRequests']);
 
         $data = [
             'konto' => $user->only(['name', 'email', 'instagram', 'social_links', 'additional_info', 'birth_date', 'created_at', 'email_verified_at', 'activated_at', 'privacy_consent_at']),
@@ -107,6 +111,7 @@ class AccountController extends Controller
             'role' => $user->roles()->map(fn (UserRole $role) => $role->label())->values(),
             'profil_zawodnika' => $user->playerProfile?->only(['first_name', 'last_name', 'birth_date', 'position', 'jersey_number']),
             'dzieci' => $user->children->map->only(['first_name', 'last_name'])->values(),
+            'dzieci_minisiatkowka' => $user->miniChildren->map(fn ($child) => ['first_name' => $child->first_name, 'last_name' => $child->last_name, 'grupa' => $child->group?->name])->values(),
             'prosby_o_zmiane_danych' => $user->profileChangeRequests->map->only(['proposed_data', 'status', 'created_at'])->values(),
         ];
 

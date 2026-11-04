@@ -155,6 +155,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/my-profile/change-request', [ProfileController::class, 'requestChange'])->name('profile.request-change');
     Route::put('/my-profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::put('/my-profile/image-consent/{player}', [ProfileController::class, 'updateConsent'])->where('player', Slug::ROUTE_PATTERN)->name('profile.consent');
+    Route::put('/my-profile/mini-image-consent/{miniPlayer}', [ProfileController::class, 'updateMiniConsent'])->whereNumber('miniPlayer')->name('profile.mini-consent');
 
     // Zgoda RODO i stan konta: ponowna prośba po odrzuceniu, wyłączenie, usunięcie, pobranie danych.
     Route::get('/consents', [AccountController::class, 'consent'])->name('account.consent');

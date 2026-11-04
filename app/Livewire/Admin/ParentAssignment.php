@@ -4,11 +4,14 @@ namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\AuditLog;
+use App\Models\MiniPlayer;
 use App\Models\Player;
 use App\Models\User;
 use App\Notifications\AccountActivated;
 use App\Notifications\AccountRejected;
+use App\Support\RequestedGroup;
 use App\Support\SafeMail;
+use App\Support\SiteSettings;
 use App\UserRole;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -64,7 +67,10 @@ class ParentAssignment extends Component
         return User::withRole(UserRole::Parent)
             ->where('is_active', true)
             ->doesntHave('children')
-            ->when($teamIds !== null, fn (Builder $query) => $query->whereIn('requested_team_id', $teamIds));
+            ->doesntHave('miniChildren')
+            ->when($teamIds !== null, fn (Builder $query) => $query->where(fn (Builder $query) => $query
+                ->whereIn('requested_team_id', $teamIds)
+                ->orWhereIn('requested_mini_group_id', $user->miniGroups()->pluck('mini_groups.id'))));
     }
 
     public static function countFor(User $user): int
@@ -73,11 +79,30 @@ class ParentAssignment extends Component
     }
 
     /**
-     * Zawodnicy, o których najpewniej pisał rodzic: nazwisko i imię z notatki, nazwisko rodzica, wybrana drużyna.
+     * Dzieci z minisiatkówki, które zalogowana osoba może przypisać: wszystkie (administrator, szef klubu)
+     * albo tylko z grup, które prowadzi; bez modułu minisiatkówki żadne.
+     *
+     * @return Collection<int, MiniPlayer>
+     */
+    public static function miniChildrenFor(User $user): Collection
+    {
+        if (! app(SiteSettings::class)['module_mini']) {
+            return collect();
+        }
+
+        $teamIds = $user->managedTeamIds();
+
+        return MiniPlayer::with('group')->where('is_active', true)
+            ->when($teamIds !== null, fn (Builder $query) => $query->whereIn('mini_group_id', $user->miniGroups()->pluck('mini_groups.id')))
+            ->orderBy('last_name')->orderBy('first_name')->get();
+    }
+
+    /**
+     * Dzieci, o których najpewniej pisał rodzic: nazwisko i imię z notatki, nazwisko rodzica, wybrana drużyna lub grupa mini.
      * Gdy zgadza się też imię, zostają tylko takie trafienia („sure”); samo nazwisko to tylko podpowiedź do sprawdzenia.
      *
-     * @param  Collection<int, Player>  $players
-     * @return Collection<int, array{player: Player, sure: bool}>
+     * @param  Collection<int, Player|MiniPlayer>  $players
+     * @return Collection<int, array{player: Player|MiniPlayer, sure: bool}>
      */
     public static function suggestions(User $parent, Collection $players, int $limit = 3): Collection
     {
@@ -85,8 +110,10 @@ class ParentAssignment extends Component
         $surname = collect(self::words((string) $parent->name))->last();
 
         $matches = $players
-            ->reject(fn (Player $player) => $parent->relationLoaded('children') && $parent->children->contains($player))
-            ->map(function (Player $player) use ($note, $surname, $parent) {
+            ->reject(fn (Player|MiniPlayer $player) => $player instanceof MiniPlayer
+                ? $parent->relationLoaded('miniChildren') && $parent->miniChildren->contains($player)
+                : $parent->relationLoaded('children') && $parent->children->contains($player))
+            ->map(function (Player|MiniPlayer $player) use ($note, $surname, $parent) {
                 $last = self::words((string) $player->last_name);
                 $first = self::words((string) $player->first_name);
                 $lastMentioned = $last !== [] && collect($last)->every(fn (string $word) => self::mentions($note, $word));
@@ -97,7 +124,9 @@ class ParentAssignment extends Component
                 return [
                     'player' => $player,
                     'sure' => $firstMentioned && $score >= 4,
-                    'score' => $score + ($score > 0 && $player->team_id === $parent->requested_team_id ? 1 : 0),
+                    'score' => $score + ($score > 0 && ($player instanceof MiniPlayer
+                        ? $parent->requested_mini_group_id !== null && $player->mini_group_id === $parent->requested_mini_group_id
+                        : $player->team_id === $parent->requested_team_id) ? 1 : 0),
                 ];
             })
             ->filter(fn (array $match) => $match['score'] >= 3);
@@ -144,7 +173,14 @@ class ParentAssignment extends Component
      */
     public function assign(int $userId, ?int $playerId = null): void
     {
-        $playerId ??= (int) ($this->otherChild[$userId] ?? 0);
+        $other = (string) ($this->otherChild[$userId] ?? '');
+        if ($playerId === null && str_starts_with($other, RequestedGroup::MINI_PREFIX)) {
+            $this->assignMini($userId, (int) substr($other, strlen(RequestedGroup::MINI_PREFIX)));
+
+            return;
+        }
+
+        $playerId ??= (int) $other;
         $parent = $this->findParent($userId);
         $player = Player::managedBy(Auth::user())->with('team')->find($playerId);
 
@@ -169,6 +205,47 @@ class ParentAssignment extends Component
         $this->assignedIds = array_values(array_unique([...$this->assignedIds, $parent->id]));
         unset($this->otherChild[$userId]);
         $this->toast($parent->name.' jest teraz rodzicem: '.$label.'.');
+    }
+
+    /**
+     * To samo dla dziecka z minisiatkówki: aktywuje konto rodzica i przypisuje dziecko z listy mini.
+     */
+    public function assignMini(int $userId, int $miniPlayerId): void
+    {
+        $parent = $this->findParent($userId);
+        $child = self::miniChildrenFor(Auth::user())->firstWhere('id', $miniPlayerId);
+
+        if (! $child) {
+            $this->toast('Wybierz dziecko.', 'error');
+
+            return;
+        }
+
+        $parent->miniChildren()->syncWithoutDetaching([$child->id]);
+        $label = $child->name().' ('.__('Minisiatkówka').($child->group ? ': '.$child->group->name : '').')';
+
+        if (! $parent->is_active) {
+            $parent->activate(UserRole::Parent);
+            SafeMail::notify($parent, new AccountActivated);
+            AuditLog::record('account.linked', 'Konto '.$parent->name.' aktywowano i przypisano do: '.$label, $parent);
+        } else {
+            $parent->assignRole(UserRole::Parent);
+            AuditLog::record('account.linked', 'Rodzica '.$parent->name.' przypisano do: '.$label, $parent);
+        }
+
+        $this->assignedIds = array_values(array_unique([...$this->assignedIds, $parent->id]));
+        unset($this->otherChild[$userId]);
+        $this->toast($parent->name.' jest teraz rodzicem: '.$label.'.');
+    }
+
+    public function unassignMini(int $userId, int $miniPlayerId): void
+    {
+        $parent = $this->findParent($userId);
+        $child = $parent->miniChildren()->findOrFail($miniPlayerId);
+
+        $parent->miniChildren()->detach($child->id);
+        AuditLog::record('account.linked', 'Rodzicowi '.$parent->name.' odpięto dziecko z minisiatkówki: '.$child->name(), $parent);
+        $this->toast('Odpięto '.$child->name().'.');
     }
 
     public function unassign(int $userId, int $playerId): void
@@ -234,7 +311,8 @@ class ParentAssignment extends Component
     {
         $me = Auth::user();
         $players = Player::managedBy($me)->where('is_active', true)->with('team')->orderBy('last_name')->orderBy('first_name')->get();
-        $relations = ['requestedTeam', 'children.team'];
+        $miniChildren = self::miniChildrenFor($me);
+        $relations = ['requestedTeam', 'requestedMiniGroup', 'children.team', 'miniChildren.group'];
 
         $pending = self::pendingFor($me)->with($relations)->orderBy('created_at')->get();
         $childless = self::childlessFor($me)->with($relations)->orderBy('name')->get();
@@ -247,12 +325,16 @@ class ParentAssignment extends Component
                 'Aktywni rodzice bez przypisanego dziecka' => $childless,
                 'Przypisani przed chwilą' => $assigned,
             ])->filter->isNotEmpty(),
-            'suggestions' => $pending->concat($childless)->concat($assigned)->mapWithKeys(fn (User $user) => [$user->id => self::suggestions($user, $players)]),
+            'suggestions' => $pending->concat($childless)->concat($assigned)->mapWithKeys(fn (User $user) => [$user->id => self::suggestions($user, $players->toBase()->concat($miniChildren))]),
             'playerOptions' => $players->sortBy(fn (Player $player) => sprintf('%03d', $player->team?->display_order ?? 999).$player->team_id)->map(fn (Player $player) => [
                 'value' => (string) $player->id,
                 'label' => $player->full_name.($player->jersey_number ? ' #'.$player->jersey_number : ''),
                 'group' => $player->team?->name ?? 'Bez drużyny',
-            ])->values()->all(),
+            ])->values()->concat($miniChildren->map(fn (MiniPlayer $child) => [
+                'value' => RequestedGroup::MINI_PREFIX.$child->id,
+                'label' => $child->name().($child->birth_year ? ' ('.$child->birth_year.')' : ''),
+                'group' => __('Minisiatkówka').($child->group ? ': '.$child->group->name : ''),
+            ]))->all(),
         ]);
     }
 }

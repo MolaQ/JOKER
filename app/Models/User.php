@@ -61,6 +61,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_active',
         'requested_role',
         'requested_team_id',
+        'requested_mini_group_id',
         'registration_note',
         'activated_at',
         'activated_by',
@@ -412,6 +413,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(Team::class, 'requested_team_id');
     }
 
+    /**
+     * Grupa minisiatkówki wybrana przy rejestracji przez rodzica dziecka z mini.
+     */
+    public function requestedMiniGroup(): BelongsTo
+    {
+        return $this->belongsTo(MiniGroup::class, 'requested_mini_group_id');
+    }
+
     public function activatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'activated_by');
@@ -496,7 +505,7 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Użytkownik poprawił dane po odrzuceniu i wysyła prośbę jeszcze raz.
      *
-     * @param  array{name?: string, requested_role: UserRole, requested_team_id: ?int, registration_note: ?string}  $data
+     * @param  array{name?: string, requested_role: UserRole, requested_team_id: ?int, requested_mini_group_id?: ?int, registration_note: ?string}  $data
      */
     public function resubmitActivation(array $data): void
     {
@@ -541,6 +550,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
         Player::where('user_id', $this->id)->update(['user_id' => null]);
         $this->children()->detach();
+        $this->miniChildren()->detach();
         Team::where('trainer_id', $this->id)->update(['trainer_id' => null]);
         $this->assistantTeams()->detach();
         $this->roleAssignments()->delete();
@@ -567,6 +577,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'birth_date' => null,
             'registration_note' => null,
             'requested_team_id' => null,
+            'requested_mini_group_id' => null,
             'rejection_reason' => null,
             'is_active' => false,
             'anonymized_at' => now(),
@@ -596,7 +607,8 @@ class User extends Authenticatable implements MustVerifyEmail
             return;
         }
 
-        $hasActiveChild = $this->children()->where('players.is_active', true)->exists();
+        $hasActiveChild = $this->children()->where('players.is_active', true)->exists()
+            || $this->miniChildren()->where('mini_players.is_active', true)->exists();
 
         if ($hasActiveChild && ! $this->is_active) {
             $this->forceFill(['is_active' => true, 'activated_at' => now()])->save();
@@ -623,6 +635,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function children(): BelongsToMany
     {
         return $this->belongsToMany(Player::class, 'player_guardian')->withTimestamps();
+    }
+
+    /**
+     * Dzieci z minisiatkówki, których rodzicem jest użytkownik (bez profilu zawodnika, tylko lista mini).
+     */
+    public function miniChildren(): BelongsToMany
+    {
+        return $this->belongsToMany(MiniPlayer::class, 'mini_player_guardian')->withTimestamps();
     }
 
     public function conversations(): BelongsToMany

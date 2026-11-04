@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Team;
 use App\Models\User;
+use App\Support\RequestedGroup;
 use App\UserRole;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -25,9 +25,7 @@ class RegisterController extends Controller
 
     public function create(): View
     {
-        return view('auth.register', [
-            'teams' => Team::orderBy('display_order')->get(['id', 'name']),
-        ]);
+        return view('auth.register');
     }
 
     public function store(Request $request): RedirectResponse
@@ -42,7 +40,7 @@ class RegisterController extends Controller
             'email' => 'required|email|max:255|unique:users,email',
             'password' => ['required', 'confirmed', Password::min(8)],
             'kind' => ['required', Rule::in(self::KINDS)],
-            'team_id' => ['nullable', 'required_unless:kind,fan', 'exists:teams,id'],
+            'team_id' => ['nullable', 'required_unless:kind,fan', RequestedGroup::rule()],
             'note' => 'nullable|required_if:kind,parent|string|max:1000',
             'privacy' => 'accepted',
             'policy' => 'accepted',
@@ -51,9 +49,11 @@ class RegisterController extends Controller
             'privacy.accepted' => __('Bez tej zgody nie możemy prowadzić konta.'),
             'policy.accepted' => __('Potwierdź, że znasz zasady przetwarzania danych.'),
             'age.accepted_if' => __('Osoba poniżej 16 lat potrzebuje zgody rodzica lub opiekuna.'),
-            'team_id.required_unless' => __('Wybierz drużynę, z którą jesteś związany.'),
+            'team_id.required_unless' => __('Wybierz drużynę lub grupę, z którą jesteś związany.'),
             'note.required_if' => __('Napisz imię i nazwisko dziecka.'),
         ]);
+
+        [$team, $miniGroup] = RequestedGroup::resolve($validated['team_id'] ?? null);
 
         $user = User::create([
             'name' => $validated['name'],
@@ -61,7 +61,8 @@ class RegisterController extends Controller
             'password' => $validated['password'],
             'is_active' => false,
             'requested_role' => UserRole::from($validated['kind']),
-            'requested_team_id' => $validated['kind'] === 'fan' ? null : $validated['team_id'],
+            'requested_team_id' => $validated['kind'] === 'fan' ? null : $team,
+            'requested_mini_group_id' => $validated['kind'] === 'fan' ? null : $miniGroup,
             'registration_note' => $validated['note'] ?? null,
             'privacy_consent_at' => now(),
         ]);

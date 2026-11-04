@@ -26,7 +26,7 @@
                     <div class="grid gap-2 sm:grid-cols-2">
                         @foreach([
                             'fan' => [__('Kibicem'), __('Serduszka i komentarze. Działa po potwierdzeniu e-maila.')],
-                            'parent' => [__('Rodzicem zawodnika'), __('Proponujesz dane i zdjęcia dziecka. Konto aktywuje klub.')],
+                            'parent' => [__('Rodzicem'), __('Dziecko trenuje w drużynie albo w minisiatkówce. Konto aktywuje klub.')],
                             'player' => [__('Zawodnikiem'), __('Proponujesz zmiany w swoim profilu. Konto aktywuje klub.')],
                             'trainer' => [__('Trenerem lub w sztabie'), __('Konto aktywuje administrator lub szef klubu.')],
                         ] as $value => [$label, $hint])
@@ -46,13 +46,8 @@
                 </div>
 
                 <div x-show="kind !== 'fan'" x-cloak>
-                    <label for="team_id" class="block text-zinc-700 font-semibold mb-2">{{ __('Drużyna') }}</label>
-                    <select id="team_id" name="team_id" class="{{ $field }}">
-                        <option value="">{{ __('Wybierz drużynę') }}</option>
-                        @foreach($teams as $team)
-                            <option value="{{ $team->id }}" @selected(old('team_id') == $team->id)>{{ $team->name }}</option>
-                        @endforeach
-                    </select>
+                    <label for="team_id" class="block text-zinc-700 font-semibold mb-2"><span x-show="kind === 'parent'">{{ __('Drużyna lub grupa dziecka') }}</span><span x-show="kind !== 'parent'">{{ __('Drużyna lub grupa') }}</span></label>
+                    <x-requested-group-select :selected="old('team_id')" class="{{ $field }}" />
                     @error('team_id')<p class="text-red-600 text-sm mt-2">{{ $message }}</p>@enderror
                 </div>
 

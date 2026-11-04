@@ -49,19 +49,14 @@
                 <div>
                     <label for="resubmit-kind" class="block text-sm font-medium text-zinc-700">{{ __('Kim jesteś?') }}</label>
                     <select id="resubmit-kind" name="kind" x-model="kind" class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2">
-                        @foreach(['fan' => __('Kibicem'), 'parent' => __('Rodzicem zawodnika'), 'player' => __('Zawodnikiem'), 'trainer' => __('Trenerem lub w sztabie')] as $value => $label)
+                        @foreach(['fan' => __('Kibicem'), 'parent' => __('Rodzicem'), 'player' => __('Zawodnikiem'), 'trainer' => __('Trenerem lub w sztabie')] as $value => $label)
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div x-show="kind !== 'fan'" x-cloak>
-                    <label for="resubmit-team" class="block text-sm font-medium text-zinc-700">{{ __('Drużyna') }}</label>
-                    <select id="resubmit-team" name="team_id" class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2">
-                        <option value="">{{ __('Wybierz drużynę') }}</option>
-                        @foreach($allTeams as $team)
-                            <option value="{{ $team->id }}" @selected(old('team_id', $user->requested_team_id) == $team->id)>{{ $team->name }}</option>
-                        @endforeach
-                    </select>
+                    <label for="resubmit-team" class="block text-sm font-medium text-zinc-700">{{ __('Drużyna lub grupa') }}</label>
+                    <x-requested-group-select id="resubmit-team" :selected="old('team_id', \App\Support\RequestedGroup::valueFor($user->requested_team_id, $user->requested_mini_group_id))" class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2" />
                     @error('team_id')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
                 <div x-show="kind !== 'fan'" x-cloak>
@@ -114,6 +109,30 @@
                             <label class="flex items-center gap-2 text-zinc-700">
                                 <input type="checkbox" name="image_consent" value="1" @checked($player->image_consent) x-on:change="$el.form.submit()" class="rounded border-zinc-300 text-sky-club-dark">
                                 {{ __('Zgoda na oznaczanie imieniem i nazwiskiem na zdjęciach') }}
+                            </label>
+                        </form>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    @if($miniChildren->isNotEmpty())
+        <div class="mb-6 rounded-xl bg-white p-6 shadow">
+            <h2 class="text-lg font-semibold text-zinc-900">{{ __('Dzieci w minisiatkówce') }}</h2>
+            <p class="mt-1 text-sm text-zinc-500">{{ __('Klub przypisał Cię jako rodzica. Zmiany w danych dziecka zgłoś trenerowi lub przez formularz kontaktowy.') }}</p>
+            <ul class="mt-4 divide-y divide-zinc-100">
+                @foreach($miniChildren as $child)
+                    <li class="flex flex-wrap items-center justify-between gap-3 py-3">
+                        <span><span class="font-semibold">{{ $child->name() }}</span> <span class="text-sm text-zinc-500">{{ __('Minisiatkówka') }}@if($child->group): {{ $child->group->name }}@endif</span></span>
+                        @if($child->group)<a href="{{ route('mini.show', $child->group) }}" class="text-sm font-semibold text-sky-club-dark hover:underline">{{ __('Strona grupy') }} →</a>@endif
+                        <form method="POST" action="{{ route('profile.mini-consent', $child->id) }}" class="w-full text-sm" x-data>
+                            @csrf
+                            @method('PUT')
+                            <input type="hidden" name="image_consent" value="0">
+                            <label class="flex items-center gap-2 text-zinc-700">
+                                <input type="checkbox" name="image_consent" value="1" @checked($child->image_consent) x-on:change="$el.form.submit()" class="rounded border-zinc-300 text-sky-club-dark">
+                                {{ __('Zgoda na pokazywanie zdjęcia dziecka na stronie') }}
                             </label>
                         </form>
                     </li>

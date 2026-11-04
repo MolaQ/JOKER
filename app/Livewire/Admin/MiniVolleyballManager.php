@@ -406,7 +406,7 @@ class MiniVolleyballManager extends Component
             'trips' => MiniTrip::with('teams')->orderByDesc('starts_on')->get(),
             'openTrip' => $this->tripId ? MiniTrip::with(['teams.players', 'teams.group'])->find($this->tripId) : null,
             'allPlayers' => MiniPlayer::with('group')->where('is_active', true)->orderBy('last_name')->orderBy('first_name')->get(),
-            'players' => MiniPlayer::with('group')
+            'players' => MiniPlayer::with(['group', 'guardians:id,name'])
                 ->when($this->playerGroup !== '', fn ($query) => $this->playerGroup === 'none' ? $query->whereNull('mini_group_id') : $query->where('mini_group_id', (int) $this->playerGroup))
                 ->orderByDesc('is_active')->orderBy('last_name')->orderBy('first_name')->get(),
             'tournaments' => Tournament::where('is_organizer', true)->orderByDesc('start_date')->get(['id', 'name', 'edition', 'start_date']),
