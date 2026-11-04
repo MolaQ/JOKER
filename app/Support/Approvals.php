@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Livewire\Admin\AccountActivation;
 use App\Livewire\Admin\CommentModeration;
+use App\Livewire\Admin\ContactMessages;
 use App\Livewire\Admin\MiniApprovals;
 use App\Livewire\Admin\ParentAssignment;
 use App\Livewire\Admin\PhotoTagReview;
@@ -34,6 +35,15 @@ class Approvals
     private static function build(User $user): Collection
     {
         $sections = [
+            'kontakt' => [
+                'label' => 'Formularz kontaktowy',
+                'icon' => 'envelope',
+                'route' => 'admin.contact-messages.index',
+                'intro' => 'Wiadomości wysłane formularzem ze strony Kontakt. Licznik pokazuje nieprzeczytane. „Odpowiedz” otwiera Twoją pocztę z adresem nadawcy; po odpowiedzi oznacz wiadomość jako przeczytaną.',
+                'component' => 'admin.contact-messages',
+                'visible' => fn () => ContactMessages::canRead($user),
+                'count' => fn () => ContactMessages::unreadCount(),
+            ],
             'rodzice' => [
                 'label' => 'Rodzice do przypisania',
                 'icon' => 'users',

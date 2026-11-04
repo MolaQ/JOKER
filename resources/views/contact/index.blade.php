@@ -19,8 +19,17 @@
         <div>
             <h2 class="text-2xl font-bold text-zinc-900 mb-6">{{ __('Wyślij wiadomość') }}</h2>
 
+            @if(session('contact_sent'))
+                <div role="status" class="mb-6 rounded-2xl bg-green-50 p-4 text-green-800 ring-1 ring-green-600/20">
+                    <p class="font-semibold">{{ __('Dziękujemy, wiadomość dotarła do klubu.') }}</p>
+                    <p class="mt-1 text-sm">{{ __('Odpowiemy na podany adres e-mail.') }}</p>
+                </div>
+            @endif
+
             <form method="POST" action="{{ route('contact.send') }}" class="space-y-6">
                 @csrf
+                {{-- Pole-pułapka na roboty: ukryte przed ludźmi i czytnikami ekranu. --}}
+                <div class="hidden" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
 
                 <!-- Name -->
                 <div>
@@ -204,6 +213,32 @@
                 </div>
                 @endif
             </div>
+
+            @if($siteAdmins->isNotEmpty())
+                <div class="mt-8">
+                    <h3 class="text-xl font-bold text-zinc-900 mb-2">{{ __('Administrator strony') }}</h3>
+                    @if(filled($site['contact_site_admin_note']))
+                        <p class="mb-4 text-zinc-600">{{ __($site['contact_site_admin_note']) }}</p>
+                    @endif
+                    <div class="space-y-3">
+                        @foreach($siteAdmins as $siteAdmin)
+                            <div data-site-admin="{{ $siteAdmin->name }}" class="flex items-center gap-4 rounded-3xl bg-white p-4 ring-1 ring-zinc-200/70">
+                                <x-avatar :photo="$siteAdmin->avatar_path" :name="$siteAdmin->name" class="aspect-[4/5] w-16 shrink-0 rounded-2xl text-xl" />
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-xs font-semibold tracking-widest text-sky-club-dark uppercase">{{ __('Administrator strony') }}</p>
+                                    <a href="{{ $siteAdmin->profileUrl() }}" class="mt-0.5 block font-semibold text-zinc-900 hover:text-sky-club-dark">{{ $siteAdmin->name }}</a>
+                                    @guest
+                                        <a href="{{ route('login') }}" class="mt-1 inline-block text-sm font-semibold text-sky-club-dark hover:underline">{{ __('Zaloguj się, by napisać') }}</a>
+                                    @endguest
+                                </div>
+                                @auth
+                                    <x-message-button :to="$siteAdmin" />
+                                @endauth
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
 
             @if($site->socials())
                 <div class="mt-8">

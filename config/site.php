@@ -401,6 +401,10 @@ return [
             'icon' => 'envelope',
             'fields' => [
                 'contact_email' => ['type' => 'text', 'label' => 'E-mail', 'default' => 'smsjokerpila@gmail.com'],
+                'contact_forward_email' => ['type' => 'toggle', 'label' => 'Kopia wiadomości z formularza na ten e-mail', 'help' => 'Każda wiadomość z formularza i tak czeka w panelu („Do zatwierdzenia” → „Formularz kontaktowy”). Kopia e-mailem wymaga skonfigurowanej poczty na serwerze.', 'default' => true],
+                'contact_show_site_admin' => ['type' => 'toggle', 'label' => 'Pokaż administratora strony na stronie Kontakt', 'help' => 'Kafelek ze zdjęciem, profilem i przyciskiem wiadomości (dla zalogowanych).', 'default' => true],
+                'contact_site_admin' => ['type' => 'text', 'label' => 'Kontakt: e-mail konta administratora strony', 'help' => 'E-mail konta, które ma się pokazać (można kilka po przecinku). Puste = wszystkie aktywne konta z rolą Administrator.', 'default' => ''],
+                'contact_site_admin_note' => ['type' => 'text', 'label' => 'Kontakt: tekst przy administratorze strony', 'default' => 'Błąd na stronie, literówka albo pomysł? Napisz do administratora strony.'],
                 'contact_phone' => ['type' => 'text', 'label' => 'Telefon klubu', 'default' => '+48 531 064 100'],
                 'contact_address' => ['type' => 'text', 'label' => 'Adres', 'help' => 'Ulica, kod i miasto, np. ul. Wincentego Pola 11, 64-920 Piła. Na stronie Kontakt pod adresem jest link do mapy.', 'default' => 'ul. Wincentego Pola 11, 64-920 Piła'],
                 'contact_school_name' => ['type' => 'text', 'label' => 'Szkoła (puste = ukryta)', 'default' => 'Liceum Ogólnokształcące Mistrzostwa Sportowego w Pile'],
