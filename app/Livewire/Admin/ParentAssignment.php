@@ -8,6 +8,7 @@ use App\Models\Player;
 use App\Models\User;
 use App\Notifications\AccountActivated;
 use App\Notifications\AccountRejected;
+use App\Support\SafeMail;
 use App\UserRole;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -158,7 +159,7 @@ class ParentAssignment extends Component
 
         if (! $parent->is_active) {
             $parent->activate(UserRole::Parent);
-            $parent->notify(new AccountActivated);
+            SafeMail::notify($parent, new AccountActivated);
             AuditLog::record('account.linked', 'Konto '.$parent->name.' aktywowano i przypisano do: '.$label, $parent);
         } else {
             $parent->assignRole(UserRole::Parent);
@@ -201,7 +202,7 @@ class ParentAssignment extends Component
         ]);
 
         $user->rejectActivation(trim($this->rejectionReason));
-        $user->notify(new AccountRejected);
+        SafeMail::notify($user, new AccountRejected);
 
         $this->rejectingId = null;
         $this->toast('Prośba odrzucona. '.$user->name.' dostał(a) e-mail z powodem i może poprawić dane.');

@@ -9,6 +9,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Notifications\AccountActivated;
 use App\Notifications\AccountRejected;
+use App\Support\SafeMail;
 use App\UserRole;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -133,10 +134,10 @@ class AccountActivation extends Component
 
         $user->activate($role);
         AuditLog::record('account.linked', 'Konto '.$user->name.' powiązano: '.$linked, $user);
-        $user->notify(new AccountActivated);
+        $mailed = SafeMail::notify($user, new AccountActivated);
 
         $this->activatingId = null;
-        $this->toast('Konto '.$user->name.' jest aktywne.');
+        $this->toast('Konto '.$user->name.' jest aktywne.'.($mailed ? '' : SafeMail::failureNote()), $mailed ? 'success' : 'error');
     }
 
     private function linkPlayer(User $user): string
@@ -192,10 +193,10 @@ class AccountActivation extends Component
         ]);
 
         $user->rejectActivation(trim($this->rejectionReason));
-        $user->notify(new AccountRejected);
+        $mailed = SafeMail::notify($user, new AccountRejected);
 
         $this->rejectingId = null;
-        $this->toast('Prośba odrzucona. '.$user->name.' dostał(a) e-mail z powodem i może poprawić dane.');
+        $this->toast($mailed ? 'Prośba odrzucona. '.$user->name.' dostał(a) e-mail z powodem i może poprawić dane.' : 'Prośba odrzucona.'.SafeMail::failureNote(), $mailed ? 'success' : 'error');
     }
 
     /**

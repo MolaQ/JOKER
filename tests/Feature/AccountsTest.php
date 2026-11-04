@@ -102,6 +102,22 @@ test('an administrator activates a player and links the player profile', functio
     expect($player->fresh()->user_id)->toBe($account->id)->and($account->fresh()->is_active)->toBeTrue()->and($account->fresh()->hasRole(UserRole::Player))->toBeTrue();
 });
 
+test('activation finishes even when the server cannot send e-mail', function () {
+    Notification::shouldReceive('send')->andThrow(new RuntimeException('Connection refused'));
+    $player = Player::factory()->create(['team_id' => $this->team->id]);
+    $account = User::factory()->inactive()->create(['requested_role' => UserRole::Player, 'requested_team_id' => $this->team->id]);
+
+    $this->actingAs(User::factory()->admin()->create());
+    Livewire::test(AccountActivation::class)
+        ->call('start', $account->id)
+        ->set('playerId', $player->id)
+        ->call('activate')
+        ->assertHasNoErrors()
+        ->assertDispatched('toast', type: 'error');
+
+    expect($account->fresh()->is_active)->toBeTrue()->and($player->fresh()->user_id)->toBe($account->id);
+});
+
 test('a parent goes inactive with the last child and comes back with it', function () {
     $parent = User::factory()->parent()->create();
     $first = Player::factory()->create(['team_id' => $this->team->id, 'is_active' => true]);

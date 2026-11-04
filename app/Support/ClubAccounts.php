@@ -112,6 +112,6 @@ class ClubAccounts
 
     private static function sendWelcome(User $user): void
     {
-        $user->notify(new ClubAccountCreated(Password::broker()->createToken($user)));
+        SafeMail::notify($user, new ClubAccountCreated(Password::broker()->createToken($user)));
     }
 }
