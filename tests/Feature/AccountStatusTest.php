@@ -97,7 +97,7 @@ test('a user disables the account and turns it back on without a new activation'
 });
 
 test('withdrawing consent deletes personal data and unlinks the account', function () {
-    $user = User::factory()->create(['name' => 'Anna Nowak', 'instagram' => 'anna', 'activated_at' => now()]);
+    $user = User::factory()->create(['name' => 'Anna Nowak', 'instagram' => 'anna', 'social_links' => ['facebook' => 'https://facebook.com/anna'], 'activated_at' => now()]);
     $player = Player::factory()->create(['user_id' => $user->id, 'team_id' => $this->team->id]);
 
     $this->actingAs($user)->get(route('account.export'))->assertOk()->assertJsonPath('konto.name', 'Anna Nowak');
@@ -107,6 +107,7 @@ test('withdrawing consent deletes personal data and unlinks the account', functi
     expect($user->name)->toBe('Konto usunięte')
         ->and($user->email)->toEndWith('@konto.invalid')
         ->and($user->instagram)->toBeNull()
+        ->and($user->social_links)->toBeNull()
         ->and($user->accountStatus())->toBe(AccountStatus::Deleted)
         ->and($player->fresh()->user_id)->toBeNull();
     $this->assertGuest();

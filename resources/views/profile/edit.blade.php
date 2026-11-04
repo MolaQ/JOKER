@@ -213,10 +213,27 @@
                 <input type="email" name="email" value="{{ old('email', $user->email) }}" class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-zinc-700">Instagram</label>
-                <input type="text" name="instagram" value="{{ old('instagram', $user->instagram) }}" placeholder="https://instagram.com/..." class="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-            </div>
+            {{-- Serwisy z ustawień „Profile zawodników”: nowy serwis dodany w ustawieniach pojawia się tu sam --}}
+            @php
+                $socialPlatforms = app(\App\Support\SiteSettings::class)->playerSocialPlatforms();
+                $currentLinks = collect($user->socialProfiles())->mapWithKeys(fn (array $profile) => [$profile['key'] => $profile['url']]);
+            @endphp
+            @if($user->isStaffMember() && $socialPlatforms)
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700">{{ __('Media społecznościowe') }}</label>
+                    <div class="mt-1 grid gap-2 sm:grid-cols-2">
+                        @foreach($socialPlatforms as $platformKey => $platform)
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-700" title="{{ $platform['label'] }}"><x-social-icon :network="$platform['icon']" class="h-4 w-4" /></span>
+                                    <input type="url" name="social_links[{{ $platformKey }}]" value="{{ old('social_links.'.$platformKey, $currentLinks[$platformKey] ?? '') }}" placeholder="{{ $platform['label'] }}: https://..." class="min-w-0 flex-1 rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                                @error('social_links.'.$platformKey) <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
 
             <div>
                 <label class="block text-sm font-medium text-zinc-700">{{ __('Dodatkowe informacje') }}</label>

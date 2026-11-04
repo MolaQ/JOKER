@@ -555,6 +555,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'remember_token' => null,
             'avatar_path' => null,
             'instagram' => null,
+            'social_links' => null,
             'additional_info' => null,
             'birth_date' => null,
             'registration_note' => null,

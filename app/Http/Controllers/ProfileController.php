@@ -8,6 +8,7 @@ use App\Models\Player;
 use App\Models\PlayerChangeRequest;
 use App\Models\ProfileChangeRequest;
 use App\Models\Team;
+use App\Support\SiteSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
@@ -87,9 +88,14 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'name' => [$user->nameIsLocked() ? 'nullable' : 'required', 'string', 'max:255'],
             'email' => 'required|email|max:255',
-            'instagram' => 'nullable|string|max:255',
+            'social_links' => 'array',
+            'social_links.*' => ['nullable', 'string', 'max:500', 'regex:#^\s*https?://#i'],
             'additional_info' => 'nullable|string|max:2000',
-        ]);
+        ], ['social_links.*.regex' => __('Adres profilu zacznij od https://')]);
+
+        // Tylko serwisy z ustawień „Profile zawodników” (każdy nowy pojawia się w formularzu sam).
+        $platforms = array_keys(app(SiteSettings::class)->playerSocialPlatforms());
+        $validated['social_links'] = collect($validated['social_links'] ?? [])->only($platforms)->map(fn ($url) => trim((string) $url))->filter()->all();
 
         // Imię i nazwisko konta zatwierdzonego przez klub zmienia tylko klub.
         if ($user->nameIsLocked()) {

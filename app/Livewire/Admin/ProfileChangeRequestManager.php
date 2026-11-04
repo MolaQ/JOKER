@@ -38,7 +38,7 @@ class ProfileChangeRequestManager extends Component
         }
 
         $data = collect($request->proposed_data)
-            ->only(['name', 'email', 'instagram', 'additional_info'])
+            ->only(['name', 'email', 'instagram', 'additional_info', 'social_links'])
             ->toArray();
 
         validator($data, [
@@ -46,6 +46,8 @@ class ProfileChangeRequestManager extends Component
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($request->user_id)],
             'instagram' => 'nullable|string|max:255',
             'additional_info' => 'nullable|string|max:2000',
+            'social_links' => 'nullable|array',
+            'social_links.*' => ['nullable', 'string', 'max:500', 'regex:#^https?://#i'],
         ])->validate();
 
         // Konto zatwierdzone przez klub: imię i nazwisko zmienia się tylko w Użytkownikach.
@@ -53,8 +55,12 @@ class ProfileChangeRequestManager extends Component
             $data['name'] = $request->user->name;
         }
 
-        // Instagram z propozycji trafia też na listę serwisów profilu trenera.
-        if (array_key_exists('instagram', $data)) {
+        if (array_key_exists('social_links', $data)) {
+            // Nowe propozycje: cała lista serwisów; stare pole Instagram idzie za nią.
+            $data['social_links'] = array_filter((array) $data['social_links']) ?: null;
+            $data['instagram'] = $data['social_links']['instagram'] ?? null;
+        } elseif (array_key_exists('instagram', $data)) {
+            // Propozycje sprzed listy serwisów: sam Instagram trafia na listę.
             $links = (array) ($request->user->social_links ?? []);
             $handle = trim((string) $data['instagram']);
             $links['instagram'] = $handle === '' ? null : (preg_match('#^https?://#i', $handle) ? $handle : 'https://www.instagram.com/'.ltrim($handle, '@/'));

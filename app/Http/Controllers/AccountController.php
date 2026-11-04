@@ -102,7 +102,7 @@ class AccountController extends Controller
         $user = $request->user()->load(['children', 'playerProfile', 'profileChangeRequests']);
 
         $data = [
-            'konto' => $user->only(['name', 'email', 'instagram', 'additional_info', 'birth_date', 'created_at', 'email_verified_at', 'activated_at', 'privacy_consent_at']),
+            'konto' => $user->only(['name', 'email', 'instagram', 'social_links', 'additional_info', 'birth_date', 'created_at', 'email_verified_at', 'activated_at', 'privacy_consent_at']),
             'stan_konta' => $user->accountStatus()->label(),
             'role' => $user->roles()->map(fn (UserRole $role) => $role->label())->values(),
             'profil_zawodnika' => $user->playerProfile?->only(['first_name', 'last_name', 'birth_date', 'position', 'jersey_number']),

@@ -3,11 +3,13 @@
 use App\Livewire\Admin\DataImporter;
 use App\Livewire\Admin\PlayerChangeRequestManager;
 use App\Livewire\Admin\PlayerManager;
+use App\Livewire\Admin\ProfileChangeRequestManager;
 use App\Livewire\Admin\TeamList;
 use App\Livewire\Admin\UserManager;
 use App\Livewire\PlayerProposalForm;
 use App\Models\Article;
 use App\Models\Player;
+use App\Models\ProfileChangeRequest;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\User;
@@ -191,4 +193,24 @@ test('an admin edits a trainer description and social profiles directly', functi
         ->assertSee('Trener II klasy, 10 lat w klubie.')
         ->assertSee('https://facebook.com/anna', false)
         ->assertSee('https://instagram.com/anna.trener', false);
+});
+
+test('a trainer proposes every social profile from the settings and the approval applies them', function () {
+    $trainer = User::factory()->create(['role' => UserRole::Trainer, 'name' => 'Anna Trenerka', 'activated_at' => now()]);
+    $this->actingAs($trainer)->get(route('profile.edit'))->assertOk()
+        ->assertSee('social_links[instagram]', false)->assertSee('social_links[youtube]', false)->assertSee('social_links[x]', false);
+
+    $this->post(route('profile.request-change'), [
+        'name' => 'Anna Trenerka', 'email' => $trainer->email,
+        'social_links' => ['youtube' => ' https://youtube.com/@anna ', 'myspace' => 'https://myspace.com/anna', 'facebook' => ''],
+    ])->assertSessionHasNoErrors();
+
+    $request = ProfileChangeRequest::sole();
+    expect($request->proposed_data['social_links'])->toBe(['youtube' => 'https://youtube.com/@anna']);
+
+    $this->actingAs(User::factory()->admin()->create());
+    Livewire::test(ProfileChangeRequestManager::class)->call('approve', $request->id);
+
+    expect($trainer->fresh()->social_links)->toBe(['youtube' => 'https://youtube.com/@anna'])
+        ->and($trainer->fresh()->instagram)->toBeNull();
 });
