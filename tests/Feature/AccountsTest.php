@@ -118,6 +118,24 @@ test('activation finishes even when the server cannot send e-mail', function () 
     expect($account->fresh()->is_active)->toBeTrue()->and($player->fresh()->user_id)->toBe($account->id);
 });
 
+test('an administrator activates a head coach who replaces the previous one', function () {
+    $old = User::factory()->trainer()->create();
+    $this->team->update(['trainer_id' => $old->id]);
+    $account = User::factory()->inactive()->create(['requested_role' => UserRole::Trainer, 'requested_team_id' => $this->team->id]);
+
+    $this->actingAs(User::factory()->admin()->create());
+    Livewire::test(AccountActivation::class)
+        ->call('start', $account->id)
+        ->set('role', 'trainer')
+        ->set('teamId', $this->team->id)
+        ->set('headCoach', true)
+        ->call('activate')
+        ->assertHasNoErrors();
+
+    expect($this->team->fresh()->trainer_id)->toBe($account->id)->and($account->fresh()->hasRole(UserRole::Trainer))->toBeTrue();
+    $this->get(route('trainers.index'))->assertOk()->assertSee($account->name);
+});
+
 test('a parent goes inactive with the last child and comes back with it', function () {
     $parent = User::factory()->parent()->create();
     $first = Player::factory()->create(['team_id' => $this->team->id, 'is_active' => true]);
