@@ -65,7 +65,7 @@
                         @if($entry['teams']->isNotEmpty())
                             <ul class="mt-2 flex flex-wrap gap-1 sm:mt-3 sm:gap-1.5">
                                 @foreach($entry['teams'] as $team)
-                                    <li class="chip bg-zinc-100 text-xs text-zinc-700">{{ $team['name'] }}</li>
+                                    <li class="chip bg-zinc-100 text-xs text-zinc-700 ring-1 ring-zinc-200">{{ $team['name'] }}</li>
                                 @endforeach
                             </ul>
                         @endif

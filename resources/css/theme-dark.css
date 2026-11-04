@@ -494,3 +494,14 @@
     --cal-bday-bg: color-mix(in oklab, oklch(65% 0.2 350) 14%, var(--surface)) !important;
     --cal-bday-text: oklch(85% 0.09 350) !important;
 }
+
+/* Przyciski w kolorze „ink” (np. „Wyślij wiadomość”, aktywny filtr) w trybie ciemnym zlewały się z tłem strony:
+   dostają klubowy niebieski. Ciemne sekcje (nagłówki, stopka) używają bg-ink na <section>/<div>, nie na przyciskach. */
+:root.dark :is(button, a, [type='submit'])[class~='bg-ink']:not([data-theme-keep] *) {
+    background-color: var(--color-sky-club-dark);
+    color: #fff;
+}
+
+:root.dark :is(button, a, [type='submit'])[class~='bg-ink']:not([data-theme-keep] *):hover {
+    background-color: var(--color-sky-club);
+}

@@ -50,7 +50,7 @@
 
                 <div class="flex w-full flex-wrap gap-2 sm:w-auto">
                     @if($competitions->count() > 1 || $hasTournaments || $hasFriendlies || $hasMini)
-                        <select wire:model.live="competition" class="h-9 min-w-0 flex-1 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700 sm:flex-none" aria-label="{{ __('Rozgrywki') }}">
+                        <select wire:model.live="competition" class="h-9 w-full min-w-0 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700 sm:w-auto sm:flex-none" aria-label="{{ __('Rozgrywki') }}">
                             <option value="">{{ __('Wszystkie rozgrywki') }}</option>
                             @foreach($competitions as $competitionOption)
                                 <option value="{{ $competitionOption->id }}">{{ $competitionOption->name }}</option>
