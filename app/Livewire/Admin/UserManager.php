@@ -62,7 +62,7 @@ class UserManager extends Component
     /** Jak pokazać urodziny w kalendarzu meczów: ukryte, sam torcik albo z wiekiem. */
     public string $birthday_display = 'age';
 
-    /** Profil trenera i sztabu na stronie (/staff/…): media społecznościowe i opis „O mnie”. */
+    /** Profil trenera i sztabu na stronie (/staff/…): media społecznościowe i opis „Sylwetka”. */
     /** @var array<string, string> */
     public array $social_links = [];
 

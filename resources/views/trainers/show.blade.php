@@ -54,7 +54,7 @@
 
     <div class="space-y-8 lg:col-span-2">
         <div class="card p-8">
-            <h2 class="heading-md">{{ __('O mnie') }}</h2>
+            <h2 class="heading-md">{{ __('Sylwetka') }}</h2>
             <div class="prose-club mt-5">
                 @if($trainer->additional_info)
                     {!! strip_tags($trainer->additional_info, '<p><br><strong><em><b><i><ul><ol><li>') !!}
