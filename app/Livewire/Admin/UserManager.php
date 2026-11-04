@@ -62,8 +62,9 @@ class UserManager extends Component
     /** Jak pokazać urodziny w kalendarzu meczów: ukryte, sam torcik albo z wiekiem. */
     public string $birthday_display = 'age';
 
-    /** Profil trenera i sztabu na stronie (/staff/…): Instagram i opis „O mnie”. */
-    public string $instagram = '';
+    /** Profil trenera i sztabu na stronie (/staff/…): media społecznościowe i opis „O mnie”. */
+    /** @var array<string, string> */
+    public array $social_links = [];
 
     public string $additional_info = '';
 
@@ -93,9 +94,18 @@ class UserManager extends Component
             'coordinatedTeamIds.*' => 'integer|exists:teams,id',
             'birth_date' => 'nullable|date|before:today',
             'birthday_display' => 'required|in:hidden,cake,age',
-            'instagram' => 'nullable|string|max:255',
+            'social_links' => 'array',
+            'social_links.*' => ['nullable', 'string', 'max:500', 'regex:#^\s*https?://#i'],
             'additional_info' => 'nullable|string|max:2000',
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function messages(): array
+    {
+        return ['social_links.*.regex' => 'Adres profilu zacznij od https://'];
     }
 
     public function updatingSearch(): void
@@ -139,7 +149,7 @@ class UserManager extends Component
         $this->is_active = $user->is_active;
         $this->birth_date = $user->birth_date?->format('Y-m-d');
         $this->birthday_display = $user->birthday_display?->value ?? 'age';
-        $this->instagram = (string) $user->instagram;
+        $this->social_links = collect($user->socialProfiles())->mapWithKeys(fn (array $profile) => [$profile['key'] => $profile['url']])->all();
         $this->additional_info = (string) $user->additional_info;
 
         $this->showModal = true;
@@ -181,7 +191,9 @@ class UserManager extends Component
             return;
         }
 
-        $validated['instagram'] = filled($validated['instagram'] ?? null) ? trim($validated['instagram']) : null;
+        $validated['social_links'] = array_filter(array_map(fn ($url) => trim((string) $url), $validated['social_links'] ?? [])) ?: null;
+        // Stare pole Instagram (propozycje zmian w „Mój profil”) idzie za listą serwisów.
+        $validated['instagram'] = $validated['social_links']['instagram'] ?? null;
         $validated['additional_info'] = filled(trim(strip_tags((string) ($validated['additional_info'] ?? '')))) ? $validated['additional_info'] : null;
 
         if (empty($validated['password'])) {
@@ -317,7 +329,7 @@ class UserManager extends Component
         $this->is_active = true;
         $this->birth_date = null;
         $this->birthday_display = 'age';
-        $this->instagram = '';
+        $this->social_links = [];
         $this->additional_info = '';
         $this->resetErrorBag();
     }

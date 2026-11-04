@@ -164,21 +164,31 @@ test('lista drużyn w panelu pokazuje odbiór, a lista zawodników sortuje po os
     Livewire::test(TeamList::class)->call('sortBy', 'wyswietlenia')->assertDontSee('Odbiór')->assertSee('340');
 });
 
-test('an admin edits a trainer description and instagram directly', function () {
+test('an admin edits a trainer description and social profiles directly', function () {
     $this->actingAs(User::factory()->admin()->create());
-    $trainer = User::factory()->create(['role' => UserRole::Trainer, 'name' => 'Anna Trenerka']);
+    $trainer = User::factory()->create(['role' => UserRole::Trainer, 'name' => 'Anna Trenerka', 'instagram' => '@anna.stara']);
 
-    Livewire::test(UserManager::class)
+    $screen = Livewire::test(UserManager::class)
         ->call('openEditModal', $trainer->id)
-        ->set('instagram', ' anna.trener ')
+        ->assertSet('social_links.instagram', 'https://www.instagram.com/anna.stara');
+
+    $screen->set('social_links.facebook', 'facebook.com/anna')->call('save')->assertHasErrors('social_links.facebook');
+
+    $screen->set('social_links.instagram', 'https://instagram.com/anna.trener')
+        ->set('social_links.facebook', ' https://facebook.com/anna ')
+        ->set('social_links.tiktok', '')
         ->set('additional_info', '<p>Trener II klasy, 10 lat w klubie.</p>')
         ->call('save')
         ->assertHasNoErrors();
 
     $trainer->refresh();
-    expect($trainer->instagram)->toBe('anna.trener')
+    expect($trainer->social_links)->toBe(['instagram' => 'https://instagram.com/anna.trener', 'facebook' => 'https://facebook.com/anna'])
+        ->and($trainer->instagram)->toBe('https://instagram.com/anna.trener')
         ->and($trainer->additional_info)->toBe('<p>Trener II klasy, 10 lat w klubie.</p>')
         ->and($trainer->hasRole(UserRole::Trainer))->toBeTrue();
 
-    $this->get(route('trainers.show', $trainer))->assertOk()->assertSee('Trener II klasy, 10 lat w klubie.');
+    $this->get(route('trainers.show', $trainer))->assertOk()
+        ->assertSee('Trener II klasy, 10 lat w klubie.')
+        ->assertSee('https://facebook.com/anna', false)
+        ->assertSee('https://instagram.com/anna.trener', false);
 });

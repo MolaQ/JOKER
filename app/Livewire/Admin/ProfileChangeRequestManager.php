@@ -53,6 +53,14 @@ class ProfileChangeRequestManager extends Component
             $data['name'] = $request->user->name;
         }
 
+        // Instagram z propozycji trafia też na listę serwisów profilu trenera.
+        if (array_key_exists('instagram', $data)) {
+            $links = (array) ($request->user->social_links ?? []);
+            $handle = trim((string) $data['instagram']);
+            $links['instagram'] = $handle === '' ? null : (preg_match('#^https?://#i', $handle) ? $handle : 'https://www.instagram.com/'.ltrim($handle, '@/'));
+            $data['social_links'] = array_filter($links) ?: null;
+        }
+
         $request->user->update($data);
 
         $request->update([

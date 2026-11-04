@@ -232,11 +232,26 @@
                             {{-- Profil trenera i sztabu na stronie: to samo, co osoba może zaproponować w „Mój profil” --}}
                             <fieldset class="space-y-3 rounded-lg border border-gray-200 p-4">
                                 <legend class="px-1 text-sm font-medium text-gray-700">Profil na stronie (trenerzy i sztab)</legend>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700" for="user-instagram">Instagram</label>
-                                    <input id="user-instagram" type="text" wire:model="instagram" maxlength="255" placeholder="np. jan.kowalski" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
-                                    @error('instagram') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                                </div>
+                                @php
+                                    $socialPlatforms = app(\App\Support\SiteSettings::class)->playerSocialPlatforms();
+                                @endphp
+                                @if($socialPlatforms)
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Media społecznościowe</label>
+                                        <p class="text-xs text-gray-500">Te same serwisy co u zawodników (lista w Ustawienia → Profile zawodników).</p>
+                                        <div class="mt-1 grid gap-2 sm:grid-cols-2">
+                                            @foreach($socialPlatforms as $platformKey => $platform)
+                                                <div wire:key="user-social-{{ $platformKey }}">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-700" title="{{ $platform['label'] }}"><x-social-icon :network="$platform['icon']" class="h-4 w-4" /></span>
+                                                        <input type="url" wire:model="social_links.{{ $platformKey }}" placeholder="{{ $platform['label'] }}: https://..." class="min-w-0 flex-1 rounded-md border-gray-300 text-sm">
+                                                    </div>
+                                                    @error('social_links.'.$platformKey) <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">O mnie</label>
                                     <x-rich-text-editor model="additional_info" :live="false" placeholder="Doświadczenie, uprawnienia, osiągnięcia…" height="min-h-[140px]" />

@@ -52,6 +52,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'avatar_path',
         'instagram',
         'additional_info',
+        'social_links',
         'birth_date',
         'birthday_display',
         'is_active',
@@ -89,6 +90,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'last_login_at' => 'datetime',
             'password' => 'hashed',
             'birth_date' => 'date',
+            'social_links' => 'array',
             'birthday_display' => BirthdayDisplay::class,
             'is_active' => 'boolean',
             'requested_role' => UserRole::class,
@@ -775,5 +777,27 @@ class User extends Authenticatable implements MustVerifyEmail
     protected function routeSlugSource(): string
     {
         return (string) $this->name;
+    }
+
+    /**
+     * Linki trenera do serwisów z „Profile zawodników” (te same ikony co u zawodników), w kolejności z ustawień.
+     * Starsze konta mają tylko pole Instagram — wtedy ono jest linkiem do Instagrama.
+     *
+     * @return list<array{key: string, label: string, icon: string, url: string}>
+     */
+    public function socialProfiles(): array
+    {
+        $links = (array) ($this->social_links ?? []);
+
+        if (blank($links['instagram'] ?? null) && filled($this->instagram)) {
+            $handle = trim((string) $this->instagram);
+            $links['instagram'] = preg_match('#^https?://#i', $handle) ? $handle : 'https://www.instagram.com/'.ltrim($handle, '@/');
+        }
+
+        return collect(app(SiteSettings::class)->playerSocialPlatforms())
+            ->map(fn (array $platform, string $key) => $platform + ['key' => $key, 'url' => (string) ($links[$key] ?? '')])
+            ->filter(fn (array $platform) => preg_match('#^https?://#i', $platform['url']))
+            ->values()
+            ->all();
     }
 }

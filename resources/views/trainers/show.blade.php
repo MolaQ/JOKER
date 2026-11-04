@@ -43,8 +43,12 @@
             @endforelse
         </ul>
 
-        @if($trainer->instagram)
-            <a href="{{ $trainer->instagram }}" target="_blank" rel="noopener" class="btn-dark mt-6 w-full">Instagram</a>
+        @if($socialProfiles = $trainer->socialProfiles())
+            <div class="mt-6 flex flex-wrap gap-2">
+                @foreach($socialProfiles as $profile)
+                    <a href="{{ $profile['url'] }}" target="_blank" rel="noopener nofollow" class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 transition hover:bg-sky-club hover:text-white" aria-label="{{ $profile['label'] }}" title="{{ $profile['label'] }}"><x-social-icon :network="$profile['icon']" class="h-4 w-4" /></a>
+                @endforeach
+            </div>
         @endif
     </div>
 
