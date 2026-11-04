@@ -279,6 +279,7 @@ class MiniVolleyballManager extends Component
             'birth_year' => (string) $player->birth_year,
             'number' => (string) $player->jersey_number,
             'group' => (string) $player->mini_group_id,
+            'extra_groups' => $player->extraMiniGroups()->pluck('mini_groups.id')->map(fn ($id) => (string) $id)->all(),
             'image_consent' => $player->image_consent,
             'is_active' => $player->is_active,
             'photo_path' => $player->photo_path,
@@ -294,6 +295,8 @@ class MiniVolleyballManager extends Component
             'player.birth_year' => 'nullable|integer|min:2000|max:2100',
             'player.number' => 'nullable|integer|min:0|max:99',
             'player.group' => 'nullable|exists:mini_groups,id',
+            'player.extra_groups' => 'array',
+            'player.extra_groups.*' => 'integer|exists:mini_groups,id',
             'player.image_consent' => 'boolean',
             'player.is_active' => 'boolean',
             'playerPhoto' => 'nullable|image|max:8192',
@@ -316,10 +319,13 @@ class MiniVolleyballManager extends Component
 
         // Dziecko z mini to zwykły profil zawodnika: bez drużyny, z grupą mini.
         if ($this->editingPlayerId) {
-            self::children()->findOrFail($this->editingPlayerId)->update($attributes);
+            $child = self::children()->findOrFail($this->editingPlayerId);
+            $child->update($attributes);
         } else {
-            Player::create($attributes + ['team_id' => null]);
+            $child = Player::create($attributes + ['team_id' => null]);
         }
+        // Dodatkowe grupy (np. gra też w singielkach); główna grupa nie jest dodatkową.
+        $child->extraMiniGroups()->sync(collect($player['extra_groups'] ?? [])->map(fn ($id) => (int) $id)->reject(fn (int $id) => $id === $attributes['mini_group_id'])->unique()->values()->all());
         $this->toast($this->editingPlayerId ? 'Zapisano dane dziecka.' : 'Dodano dziecko.');
         $this->resetPlayer($attributes['mini_group_id']);
     }
@@ -335,7 +341,7 @@ class MiniVolleyballManager extends Component
     {
         $this->editingPlayerId = null;
         $this->playerPhoto = null;
-        $this->player = ['first_name' => '', 'last_name' => '', 'birth_year' => '', 'number' => '', 'group' => (string) ($group ?? ($this->playerGroup ?: '')), 'image_consent' => false, 'is_active' => true, 'photo_path' => null];
+        $this->player = ['first_name' => '', 'last_name' => '', 'birth_year' => '', 'number' => '', 'group' => (string) ($group ?? ($this->playerGroup ?: '')), 'extra_groups' => [], 'image_consent' => false, 'is_active' => true, 'photo_path' => null];
         $this->resetErrorBag();
     }
 
@@ -423,8 +429,10 @@ class MiniVolleyballManager extends Component
             'trips' => MiniTrip::with('teams')->orderByDesc('starts_on')->get(),
             'openTrip' => $this->tripId ? MiniTrip::with(['teams.players', 'teams.group'])->find($this->tripId) : null,
             'allPlayers' => self::children()->with('miniGroup')->where('is_active', true)->orderBy('last_name')->orderBy('first_name')->get(),
-            'players' => self::children()->with(['miniGroup', 'guardians:id,name'])
-                ->when($this->playerGroup !== '', fn ($query) => $this->playerGroup === 'none' ? $query->whereNull('mini_group_id') : $query->where('mini_group_id', (int) $this->playerGroup))
+            'players' => self::children()->with(['miniGroup', 'extraMiniGroups:id,name', 'guardians:id,name'])
+                ->when($this->playerGroup !== '', fn ($query) => $this->playerGroup === 'none' ? $query->whereNull('mini_group_id') : $query->where(fn ($inGroup) => $inGroup
+                    ->where('mini_group_id', (int) $this->playerGroup)
+                    ->orWhereHas('extraMiniGroups', fn ($extra) => $extra->whereKey((int) $this->playerGroup))))
                 ->orderByDesc('is_active')->orderBy('last_name')->orderBy('first_name')->get(),
             'tournaments' => Tournament::where('is_organizer', true)->orderByDesc('start_date')->get(['id', 'name', 'edition', 'start_date']),
         ]);

@@ -73,7 +73,7 @@
             @foreach([
                 'Data urodzenia' => $player->birth_date?->format('d.m.Y'),
                 'Rocznik' => $player->birth_date ? null : $player->birth_year,
-                'Grupa' => $player->isMini() ? $player->miniGroup?->name : null,
+                'Grupa' => $player->isMini() ? collect([$player->miniGroup?->name])->concat($player->extraMiniGroups->pluck('name'))->filter()->implode(' + ') : null,
                 (count($player->positions()) > 1 ? 'Pozycje' : 'Pozycja') => $player->positionsLabel(),
                 'Numer' => $player->jersey_number !== null ? '#'.$player->jersey_number : null,
                 'Wzrost' => $player->height ? $player->height.' cm' : null,

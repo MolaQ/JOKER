@@ -293,7 +293,9 @@ class MiniSubmissions extends Component
 
     public function render(): View
     {
-        $groups = MiniGroup::where('is_active', true)->ordered()->with(['players' => fn ($query) => $query->where('is_active', true)])->get();
+        $groups = MiniGroup::where('is_active', true)->ordered()->with(['players' => fn ($query) => $query->where('is_active', true)])->get()
+            // do składu na turniej: dzieci z grupy razem z grającymi w niej dodatkowo
+            ->each(fn (MiniGroup $group) => $group->setRelation('squad', $group->members()->where('is_active', true)->get()));
 
         /** @var Collection<int, MiniTrip> $trips */
         $trips = $this->tripQuery()->get();

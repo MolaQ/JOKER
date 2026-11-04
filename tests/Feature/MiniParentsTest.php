@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Admin\MiniVolleyballManager;
 use App\Livewire\Admin\ParentAssignment;
 use App\Livewire\Admin\PlayerManager;
 use App\Livewire\PlayerProposalForm;
@@ -159,4 +160,21 @@ test('na liście zawodników w panelu dziecko z mini ma swoją grupę, nie „be
         ->assertDontSee('bez drużyny</span>', false)
         ->call('openEditModal', $this->child->id)
         ->assertSee('Minisiatkówka: Trójki');
+});
+
+test('dziecko gra w dodatkowej grupie: jest na stronie obu grup i w składach obu', function () {
+    $singles = MiniGroup::firstWhere('slug', 'singielki');
+
+    Livewire::actingAs($this->admin)->test(MiniVolleyballManager::class)
+        ->call('editPlayer', $this->child->id)
+        ->set('player.extra_groups', [(string) $singles->id, (string) $this->group->id])
+        ->call('savePlayer')->assertHasNoErrors();
+
+    // główna grupa nie zapisuje się jako dodatkowa
+    expect($this->child->extraMiniGroups()->pluck('mini_groups.id')->all())->toBe([$singles->id])
+        ->and($singles->members()->pluck('id')->all())->toBe([$this->child->id])
+        ->and($this->group->members()->pluck('id')->all())->toBe([$this->child->id]);
+
+    $this->get(route('mini.show', $singles))->assertOk()->assertSee('Zosia Wiśniewska');
+    $this->get(route('players.show', $this->child))->assertSee('Trójki + Singielki');
 });

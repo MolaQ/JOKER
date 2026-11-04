@@ -96,6 +96,21 @@ class MiniGroup extends Model
         return DeadLinks::strip(preg_replace('/href\s*=\s*(["\'])\s*(?!https?:|mailto:|\/|#)[^"\']*\1/i', 'href="#"', $clean));
     }
 
+    /**
+     * Dzieci z tej grupy razem z tymi, które grają w niej dodatkowo (główną grupę mają inną).
+     *
+     * @return Builder<Player>
+     */
+    public function members(): Builder
+    {
+        return Player::query()->whereNull('players.team_id')
+            ->where(fn (Builder $query) => $query->where('players.mini_group_id', $this->id)
+                ->orWhereExists(fn ($extra) => $extra->selectRaw('1')->from('mini_group_player')
+                    ->whereColumn('mini_group_player.player_id', 'players.id')
+                    ->where('mini_group_player.mini_group_id', $this->id)))
+            ->orderBy('last_name')->orderBy('first_name');
+    }
+
     public function players(): HasMany
     {
         // Dzieci mają zwykłe profile zawodników; po przejściu do drużyny (np. młodzików) znikają z grupy mini.

@@ -192,7 +192,7 @@
                         </div>
                         @endif
                     </div>
-                    @php $children = $rowGroup ? $rowGroup->players : $groups->flatMap->players; @endphp
+                    @php $children = $rowGroup ? $rowGroup->squad : $groups->flatMap->squad->unique('id'); @endphp
                     @if($children->isNotEmpty())
                         <p class="mt-4 {{ $labelClass }}">{{ __('Dzieci w składzie') }}</p>
                         <div class="mt-2 flex flex-wrap gap-2">

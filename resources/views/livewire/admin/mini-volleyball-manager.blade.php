@@ -197,7 +197,17 @@
                 <div><label class="{{ $label }}">Imię</label><input type="text" wire:model="player.first_name" class="{{ $input }}">@error('player.first_name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div>
                 <div><label class="{{ $label }}">Nazwisko</label><input type="text" wire:model="player.last_name" class="{{ $input }}">@error('player.last_name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div>
                 <div class="grid grid-cols-2 gap-2"><div><label class="{{ $label }}">Rocznik</label><input type="number" wire:model="player.birth_year" placeholder="np. 2014" class="{{ $input }}"></div><div><label class="{{ $label }}">Numer</label><input type="number" min="0" max="99" wire:model="player.number" placeholder="bez" class="{{ $input }}">@error('player.number')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div></div>
-                <div><label class="{{ $label }}">Grupa</label><select wire:model="player.group" class="{{ $input }}"><option value="">bez grupy</option>@foreach($groups as $miniGroup)<option value="{{ $miniGroup->id }}">{{ $miniGroup->name }}</option>@endforeach</select></div>
+                <div><label class="{{ $label }}">Grupa</label><select wire:model.live="player.group" class="{{ $input }}"><option value="">bez grupy</option>@foreach($groups as $miniGroup)<option value="{{ $miniGroup->id }}">{{ $miniGroup->name }}</option>@endforeach</select></div>
+                <div class="sm:col-span-2 lg:col-span-4">
+                    <span class="{{ $label }}">Gra też w grupach</span>
+                    <div class="mt-1 flex flex-wrap gap-2">
+                        @foreach($groups as $miniGroup)
+                            @continue((string) $miniGroup->id === (string) ($player['group'] ?? ''))
+                            <label class="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-sm ring-1 ring-gray-300 has-[:checked]:bg-sky-50 has-[:checked]:ring-sky-400"><input type="checkbox" wire:model="player.extra_groups" value="{{ $miniGroup->id }}" class="rounded border-gray-300"> {{ $miniGroup->name }}</label>
+                        @endforeach
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Dziecko pokaże się też na stronie tych grup i będzie do wyboru w ich składach.</p>
+                </div>
                 <div class="sm:col-span-2">
                     <label class="{{ $label }}">Zdjęcie</label>
                     <div class="mt-1 flex items-center gap-3">
@@ -221,7 +231,7 @@
                     @if($child->photo_path)<img src="{{ \App\Support\Media::url($child->photo_path) }}" alt="" class="size-10 rounded-full object-cover">@else<span class="flex size-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-400"><x-admin-icon name="user" /></span>@endif
                     <div class="min-w-0 flex-1">
                         <p @class(['truncate font-semibold', 'text-gray-900' => $child->is_active, 'text-gray-400' => ! $child->is_active])>{{ $child->full_name }}</p>
-                        <p class="text-xs text-gray-500">{{ collect([$child->jersey_number !== null ? '#'.$child->jersey_number : null, $child->birth_year, $child->miniGroup?->name])->filter()->implode(' · ') }}@if($child->relationLoaded('guardians') && $child->guardians->isNotEmpty()) <span class="text-sky-800">· rodzic: {{ $child->guardians->pluck('name')->implode(', ') }}</span>@endif @if($child->photo_path && ! $child->image_consent)<span class="font-semibold text-amber-700">· zdjęcie ukryte na stronie: brak zgody rodzica</span>@elseif($child->photo_path && ! app(\App\Support\SiteSettings::class)['mini_show_photos'])<span class="font-semibold text-amber-700">· zdjęcie ukryte: zdjęcia dzieci wyłączone w ustawieniach</span>@elseif($child->photo_path)<span class="text-emerald-700">· zdjęcie widoczne na stronie grupy</span>@elseif(! $child->image_consent)<span class="text-amber-700">· bez zgody na zdjęcia</span>@endif</p>
+                        <p class="text-xs text-gray-500">{{ collect([$child->jersey_number !== null ? '#'.$child->jersey_number : null, $child->birth_year, $child->miniGroup?->name, $child->relationLoaded('extraMiniGroups') && $child->extraMiniGroups->isNotEmpty() ? 'też: '.$child->extraMiniGroups->pluck('name')->implode(', ') : null])->filter()->implode(' · ') }}@if($child->relationLoaded('guardians') && $child->guardians->isNotEmpty()) <span class="text-sky-800">· rodzic: {{ $child->guardians->pluck('name')->implode(', ') }}</span>@endif @if($child->photo_path && ! $child->image_consent)<span class="font-semibold text-amber-700">· zdjęcie ukryte na stronie: brak zgody rodzica</span>@elseif($child->photo_path && ! app(\App\Support\SiteSettings::class)['mini_show_photos'])<span class="font-semibold text-amber-700">· zdjęcie ukryte: zdjęcia dzieci wyłączone w ustawieniach</span>@elseif($child->photo_path)<span class="text-emerald-700">· zdjęcie widoczne na stronie grupy</span>@elseif(! $child->image_consent)<span class="text-amber-700">· bez zgody na zdjęcia</span>@endif</p>
                     </div>
                     <button type="button" wire:click="editPlayer({{ $child->id }})" class="admin-action">Edytuj</button>
                     <button type="button" wire:click="deletePlayer({{ $child->id }})" wire:confirm="Usunąć {{ $child->full_name }} z listy?" class="admin-action admin-action-danger">Usuń</button>
@@ -241,7 +251,17 @@
                 <div><label class="{{ $label }}">Imię</label><input type="text" wire:model="player.first_name" class="{{ $input }}">@error('player.first_name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div>
                 <div><label class="{{ $label }}">Nazwisko</label><input type="text" wire:model="player.last_name" class="{{ $input }}">@error('player.last_name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div>
                 <div class="grid grid-cols-2 gap-2"><div><label class="{{ $label }}">Rocznik</label><input type="number" wire:model="player.birth_year" placeholder="np. 2014" class="{{ $input }}"></div><div><label class="{{ $label }}">Numer</label><input type="number" min="0" max="99" wire:model="player.number" placeholder="bez" class="{{ $input }}">@error('player.number')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror</div></div>
-                <div><label class="{{ $label }}">Grupa</label><select wire:model="player.group" class="{{ $input }}"><option value="">bez grupy</option>@foreach($groups as $miniGroup)<option value="{{ $miniGroup->id }}">{{ $miniGroup->name }}</option>@endforeach</select></div>
+                <div><label class="{{ $label }}">Grupa</label><select wire:model.live="player.group" class="{{ $input }}"><option value="">bez grupy</option>@foreach($groups as $miniGroup)<option value="{{ $miniGroup->id }}">{{ $miniGroup->name }}</option>@endforeach</select></div>
+                <div class="sm:col-span-2 lg:col-span-4">
+                    <span class="{{ $label }}">Gra też w grupach</span>
+                    <div class="mt-1 flex flex-wrap gap-2">
+                        @foreach($groups as $miniGroup)
+                            @continue((string) $miniGroup->id === (string) ($player['group'] ?? ''))
+                            <label class="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-sm ring-1 ring-gray-300 has-[:checked]:bg-sky-50 has-[:checked]:ring-sky-400"><input type="checkbox" wire:model="player.extra_groups" value="{{ $miniGroup->id }}" class="rounded border-gray-300"> {{ $miniGroup->name }}</label>
+                        @endforeach
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Dziecko pokaże się też na stronie tych grup i będzie do wyboru w ich składach.</p>
+                </div>
                 <div class="sm:col-span-2">
                     <label class="{{ $label }}">Zdjęcie</label>
                     <div class="mt-1 flex items-center gap-3">
@@ -271,7 +291,7 @@
                     @if($child->photo_path)<img src="{{ \App\Support\Media::url($child->photo_path) }}" alt="" class="size-10 rounded-full object-cover">@else<span class="flex size-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-400"><x-admin-icon name="user" /></span>@endif
                     <div class="min-w-0 flex-1">
                         <p @class(['truncate font-semibold', 'text-gray-900' => $child->is_active, 'text-gray-400' => ! $child->is_active])>{{ $child->full_name }}</p>
-                        <p class="text-xs text-gray-500">{{ collect([$child->jersey_number !== null ? '#'.$child->jersey_number : null, $child->birth_year, $child->miniGroup?->name])->filter()->implode(' · ') }}@if($child->relationLoaded('guardians') && $child->guardians->isNotEmpty()) <span class="text-sky-800">· rodzic: {{ $child->guardians->pluck('name')->implode(', ') }}</span>@endif @if($child->photo_path && ! $child->image_consent)<span class="font-semibold text-amber-700">· zdjęcie ukryte na stronie: brak zgody rodzica</span>@elseif($child->photo_path && ! app(\App\Support\SiteSettings::class)['mini_show_photos'])<span class="font-semibold text-amber-700">· zdjęcie ukryte: zdjęcia dzieci wyłączone w ustawieniach</span>@elseif($child->photo_path)<span class="text-emerald-700">· zdjęcie widoczne na stronie grupy</span>@elseif(! $child->image_consent)<span class="text-amber-700">· bez zgody na zdjęcia</span>@endif</p>
+                        <p class="text-xs text-gray-500">{{ collect([$child->jersey_number !== null ? '#'.$child->jersey_number : null, $child->birth_year, $child->miniGroup?->name, $child->relationLoaded('extraMiniGroups') && $child->extraMiniGroups->isNotEmpty() ? 'też: '.$child->extraMiniGroups->pluck('name')->implode(', ') : null])->filter()->implode(' · ') }}@if($child->relationLoaded('guardians') && $child->guardians->isNotEmpty()) <span class="text-sky-800">· rodzic: {{ $child->guardians->pluck('name')->implode(', ') }}</span>@endif @if($child->photo_path && ! $child->image_consent)<span class="font-semibold text-amber-700">· zdjęcie ukryte na stronie: brak zgody rodzica</span>@elseif($child->photo_path && ! app(\App\Support\SiteSettings::class)['mini_show_photos'])<span class="font-semibold text-amber-700">· zdjęcie ukryte: zdjęcia dzieci wyłączone w ustawieniach</span>@elseif($child->photo_path)<span class="text-emerald-700">· zdjęcie widoczne na stronie grupy</span>@elseif(! $child->image_consent)<span class="text-amber-700">· bez zgody na zdjęcia</span>@endif</p>
                     </div>
                     <button type="button" wire:click="editPlayer({{ $child->id }})" class="admin-action">Edytuj</button>
                     <button type="button" wire:click="deletePlayer({{ $child->id }})" wire:confirm="Usunąć {{ $child->full_name }} z listy?" class="admin-action admin-action-danger">Usuń</button>

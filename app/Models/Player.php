@@ -88,6 +88,14 @@ class Player extends Model
         return $this->belongsTo(MiniGroup::class);
     }
 
+    /**
+     * Dodatkowe grupy mini, w których dziecko też gra (np. główna Dwójki, dodatkowo Singielki).
+     */
+    public function extraMiniGroups(): BelongsToMany
+    {
+        return $this->belongsToMany(MiniGroup::class, 'mini_group_player')->withTimestamps();
+    }
+
     public function isMini(): bool
     {
         return $this->mini_group_id !== null && $this->team_id === null;

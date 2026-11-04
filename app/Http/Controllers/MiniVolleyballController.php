@@ -19,7 +19,8 @@ class MiniVolleyballController extends Controller
     {
         abort_unless(app(SiteSettings::class)['module_mini'], 404);
 
-        $groups = MiniGroup::where('is_active', true)->ordered()->withCount(['players' => fn ($query) => $query->where('is_active', true)])->get();
+        $groups = MiniGroup::where('is_active', true)->ordered()->get()
+            ->each(fn (MiniGroup $group) => $group->setAttribute('players_count', $group->members()->where('is_active', true)->count()));
 
         return view('mini.index', [
             'groups' => $groups,
@@ -41,7 +42,7 @@ class MiniVolleyballController extends Controller
 
         return view('mini.show', [
             'group' => $miniGroup,
-            'players' => $miniGroup->players()->where('is_active', true)->get(),
+            'players' => $miniGroup->members()->where('is_active', true)->get(),
             'upcoming' => $trips->reject(fn (MiniTrip $trip) => $trip->isPast())->sortBy('starts_on')->values(),
             'past' => $trips->filter(fn (MiniTrip $trip) => $trip->isPast())->values(),
             'medals' => $miniGroup->medals(),
