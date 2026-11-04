@@ -8,6 +8,7 @@ use App\Models\SupportPackage;
 use App\Models\Team;
 use App\Models\TrainingSession;
 use App\Support\SiteSettings;
+use App\Support\TrainingWeek;
 use Illuminate\Http\Request;
 
 /**
@@ -25,20 +26,16 @@ class ClubInfoController extends Controller
     public function trainings(Request $request)
     {
         $sessions = TrainingSession::with('team')->ordered()->get();
-        // „?team=minisiatkowka” pokazuje treningi minisiatkówki (nie są przypisane do drużyny).
-        $mini = $request->query('team') === 'minisiatkowka' && $sessions->contains(fn (TrainingSession $session) => $session->isMini());
-        $team = $request->filled('team') && ! $mini ? Team::firstWhere('slug', $request->query('team')) : null;
+        $groups = TrainingWeek::groups($sessions);
+        // „?team=kadeci,kadeci-ii” zaznacza grupy na tablicy (jedna albo kilka); „minisiatkowka” to treningi minisiatkówki.
+        $slugs = array_filter(explode(',', (string) $request->query('team')));
+        $selected = $groups->filter(fn (array $group) => in_array($group['slug'], $slugs, true))->keys()->all();
+        $single = count($selected) === 1 ? $groups[$selected[0]] : null;
 
         return view('club.trainings', [
-            'days' => $sessions
-                ->when($team, fn ($all) => $all->where('team_id', $team->id))
-                ->when($mini, fn ($all) => $all->filter(fn (TrainingSession $session) => $session->isMini()))
-                ->groupBy('weekday')->sortKeys(),
-            'teams' => Team::whereIn('id', $sessions->pluck('team_id')->filter()->unique())->orderBy('display_order')->get(),
-            'hasMini' => $sessions->contains(fn (TrainingSession $session) => $session->isMini()),
-            'mini' => $mini,
-            'team' => $team,
-            'allSessions' => $sessions,
+            'sessions' => $sessions,
+            'selected' => $selected,
+            'single' => $single,
         ]);
     }
 

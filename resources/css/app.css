@@ -1438,3 +1438,36 @@ table[data-sortable] > thead th:not([data-nosort]) {
         background-position: -150% 0;
     }
 }
+
+/* Plan treningów: tablica tygodnia (wiersz na dzień, pasy sektorów i siłowni, czas w poziomie). */
+.training-week {
+    --lane: 2.1rem;
+}
+
+.training-week .tw-row {
+    display: grid;
+    grid-template-columns: 1.75rem minmax(0, 1fr);
+    column-gap: 0.375rem;
+}
+
+.training-week .tw-gym {
+    margin-top: 0.375rem;
+}
+
+/* Ściśnięte godziny bez treningów: zygzak w poprzek pasa. */
+.training-week .tw-gap {
+    background:
+        linear-gradient(135deg, transparent 40%, var(--color-zinc-300) 40% 55%, transparent 55%) 0 0 / 100% 8px repeat-y,
+        var(--color-zinc-100);
+}
+
+@media (width >= 40rem) {
+    .training-week {
+        --lane: 2.5rem;
+    }
+
+    .training-week .tw-row {
+        grid-template-columns: 7.5rem 4.75rem minmax(0, 1fr);
+        column-gap: 0.75rem;
+    }
+}
