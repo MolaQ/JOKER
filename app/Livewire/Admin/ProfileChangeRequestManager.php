@@ -31,6 +31,8 @@ class ProfileChangeRequestManager extends Component
 
     public function approve(int $id): void
     {
+        abort_unless(Auth::user()?->can('users.manage'), 403);
+
         $request = ProfileChangeRequest::with('user')->findOrFail($id);
 
         if ($request->status !== 'pending') {
@@ -82,6 +84,8 @@ class ProfileChangeRequestManager extends Component
 
     public function reject(int $id): void
     {
+        abort_unless(Auth::user()?->can('users.manage'), 403);
+
         $request = ProfileChangeRequest::findOrFail($id);
 
         if ($request->status !== 'pending') {
@@ -101,6 +105,8 @@ class ProfileChangeRequestManager extends Component
 
     public function render()
     {
+        abort_unless(Auth::user()?->can('users.manage'), 403);
+
         $requests = ProfileChangeRequest::with(['user', 'reviewer'])
             ->when($this->statusFilter !== 'all', fn ($q) => $q->where('status', $this->statusFilter))
             ->latest('id')

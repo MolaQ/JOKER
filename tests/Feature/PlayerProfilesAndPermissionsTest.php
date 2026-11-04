@@ -15,6 +15,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Notifications\ClubAccountCreated;
 use App\Permission;
+use App\Support\Approvals;
 use App\Support\DataImport;
 use App\UserRole;
 use Illuminate\Http\UploadedFile;
@@ -213,4 +214,19 @@ test('a trainer proposes every social profile from the settings and the approval
 
     expect($trainer->fresh()->social_links)->toBe(['youtube' => 'https://youtube.com/@anna'])
         ->and($trainer->fresh()->instagram)->toBeNull();
+});
+
+test('only the boss and the admin approve account profile changes', function () {
+    $trainer = User::factory()->create(['role' => UserRole::Trainer, 'activated_at' => now()]);
+    $request = ProfileChangeRequest::create(['user_id' => $trainer->id, 'proposed_data' => ['name' => $trainer->name, 'email' => $trainer->email, 'additional_info' => '<p>Nowy opis</p>'], 'status' => 'pending']);
+
+    foreach ([UserRole::Trainer, UserRole::Coordinator, UserRole::Moderator] as $role) {
+        $this->actingAs(User::factory()->create(['role' => $role]));
+        Livewire::test(ProfileChangeRequestManager::class)->assertForbidden();
+        expect(Approvals::sectionsFor(auth()->user())->has('profile'))->toBeFalse();
+    }
+
+    $this->actingAs(User::factory()->create(['role' => UserRole::Boss]));
+    Livewire::test(ProfileChangeRequestManager::class)->call('approve', $request->id);
+    expect($trainer->fresh()->additional_info)->toBe('<p>Nowy opis</p>');
 });

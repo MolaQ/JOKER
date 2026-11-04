@@ -119,9 +119,10 @@ class Approvals
                 'label' => 'Zmiany profili kont',
                 'icon' => 'envelope',
                 'route' => 'admin.profile-change-requests.index',
-                'intro' => 'Prośby o zmianę danych konta zgłoszone przez zawodników, rodziców i kibiców.',
+                'intro' => 'Prośby o zmianę danych konta i profilu trenera (opis, media społecznościowe). Zatwierdza szef albo administrator.',
                 'component' => 'admin.profile-change-request-manager',
-                'visible' => fn () => $user->can('proposals.review'),
+                // Zmiany kont zatwierdza tylko szef i administrator: trener nie zatwierdza własnego profilu.
+                'visible' => fn () => $user->can('users.manage'),
                 'count' => fn () => ProfileChangeRequest::where('status', 'pending')->count(),
             ],
         ];
