@@ -12,6 +12,10 @@
         <p class="mt-2 text-sm text-gray-700">Ustawienia całej strony: wygląd i kolory, menu, strona główna, wiadomości i kto do kogo może pisać, powiadomienia, kontakt i stopka. Zmiany widać od razu po zapisaniu. Widzi to tylko administrator i szef.</p>
     </div>
 
+    <div class="mb-6 overflow-clip bg-white shadow ring-1 ring-zinc-200 sm:rounded-lg">
+        @livewire('admin.mail-check')
+    </div>
+
     <div class="overflow-clip shadow ring-1 ring-zinc-200 sm:rounded-lg">
         @livewire('admin.site-settings-manager')
     </div>
