@@ -70,3 +70,12 @@ test('grupa minisiatkówki pokazuje swoich trenerów', function () {
     $this->group->update(['is_active' => true]);
     $this->get(route('mini.show', $this->group))->assertOk()->assertSee('Ola Mini')->assertSee(route('trainers.show', $this->mini));
 })->skip(fn () => ! app(SiteSettings::class)['module_mini'], 'moduł mini wyłączony');
+
+test('profil rodzica pokazuje sylwetkę i media społecznościowe', function () {
+    $parent = User::factory()->parent()->create(['name' => 'Marta Rodzic', 'additional_info' => '<p>Mama libero, kibicuje od lat.</p>', 'social_links' => ['instagram' => 'https://www.instagram.com/marta']]);
+
+    $this->actingAs(User::factory()->fan()->create())->get(route('people.show', $parent))->assertOk()
+        ->assertSee('Sylwetka')
+        ->assertSee('Mama libero, kibicuje od lat.')
+        ->assertSee('https://www.instagram.com/marta');
+});

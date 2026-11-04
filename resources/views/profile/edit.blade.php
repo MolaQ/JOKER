@@ -222,7 +222,7 @@
                 $socialPlatforms = app(\App\Support\SiteSettings::class)->playerSocialPlatforms();
                 $currentLinks = collect($user->socialProfiles())->mapWithKeys(fn (array $profile) => [$profile['key'] => $profile['url']]);
             @endphp
-            @if($user->isStaffMember() && $socialPlatforms)
+            @if($socialPlatforms)
                 <div>
                     <label class="block text-sm font-medium text-zinc-700">{{ __('Media społecznościowe') }}</label>
                     <div class="mt-1 grid gap-2 sm:grid-cols-2">
@@ -240,8 +240,8 @@
             @endif
 
             <div>
-                <label class="block text-sm font-medium text-zinc-700">{{ __('Dodatkowe informacje') }}</label>
-                <x-rich-text-editor name="additional_info" :value="old('additional_info', (string) $user->additional_info)" placeholder="{{ __('Opisz zmiany, które chcesz wprowadzić...') }}" height="min-h-[180px]" />
+                <label class="block text-sm font-medium text-zinc-700">{{ __('Sylwetka (opis na Twoim profilu)') }}</label>
+                <x-rich-text-editor name="additional_info" :value="old('additional_info', (string) $user->additional_info)" placeholder="{{ __('Kilka słów o sobie, widocznych na Twoim profilu w klubie...') }}" height="min-h-[180px]" />
             </div>
 
             <button type="submit" class="rounded-lg bg-ink px-5 py-2 text-white hover:bg-graphite">{{ __('Wyślij propozycję zmian') }}</button>

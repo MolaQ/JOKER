@@ -231,7 +231,7 @@
 
                             {{-- Profil trenera i sztabu na stronie: to samo, co osoba może zaproponować w „Mój profil” --}}
                             <fieldset class="space-y-3 rounded-lg border border-gray-200 p-4">
-                                <legend class="px-1 text-sm font-medium text-gray-700">Profil na stronie (trenerzy i sztab)</legend>
+                                <legend class="px-1 text-sm font-medium text-gray-700">Profil na stronie (sztab, rodzice i inne osoby)</legend>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Zdjęcie</label>
                                     <div class="mt-1 flex items-start gap-4">

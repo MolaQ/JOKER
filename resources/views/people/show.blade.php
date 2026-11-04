@@ -13,7 +13,7 @@
     <div class="net-pattern absolute inset-0 -z-10" aria-hidden="true"></div>
 
     <div class="container-site grid items-end gap-10 pt-16 pb-14 lg:grid-cols-[auto_1fr] lg:pt-24">
-        <x-avatar :photo="$person->avatar_path" :name="$person->name" class="aspect-square w-40 rounded-3xl text-6xl ring-4 ring-sky-club/40 lg:w-56" />
+        <x-avatar :photo="$person->avatar_path" :name="$person->name" class="aspect-[4/5] w-40 rounded-3xl text-6xl ring-4 ring-sky-club/40 lg:w-56" />
         <div>
             <p class="eyebrow">{{ $person->rolesLabel() ?: __('Społeczność klubu') }}</p>
             <h1 class="heading-xl mt-3 flex flex-wrap items-center gap-x-4">{{ $person->name }} <x-message-button :to="$person" /></h1>
@@ -61,11 +61,29 @@
                 </li>
             @endif
         </ul>
+
+        @if($socialProfiles = $person->socialProfiles())
+            <div class="mt-6 flex flex-wrap gap-2">
+                @foreach($socialProfiles as $profile)
+                    <a href="{{ $profile['url'] }}" target="_blank" rel="noopener nofollow" class="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 text-zinc-700 transition hover:bg-sky-club hover:text-white" aria-label="{{ $profile['label'] }}" title="{{ $profile['label'] }}"><x-social-icon :network="$profile['icon']" class="h-4 w-4" /></a>
+                @endforeach
+            </div>
+        @endif
     </div>
 
-    @if($mentions->isNotEmpty())
-        <div class="lg:col-span-2">
-            <x-mentions-list :articles="$mentions" :name="$person->name" />
+    @if(filled(strip_tags((string) $person->additional_info)) || $mentions->isNotEmpty())
+        <div class="space-y-8 lg:col-span-2">
+            @if(filled(strip_tags((string) $person->additional_info)))
+                <div class="card p-8">
+                    <h2 class="heading-md">{{ __('Sylwetka') }}</h2>
+                    <div class="prose-club mt-5">
+                        {!! strip_tags($person->additional_info, '<p><br><strong><em><b><i><ul><ol><li>') !!}
+                    </div>
+                </div>
+            @endif
+            @if($mentions->isNotEmpty())
+                <x-mentions-list :articles="$mentions" :name="$person->name" />
+            @endif
         </div>
     @endif
 </section>
