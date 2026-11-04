@@ -66,6 +66,37 @@ test('a parent proposes an article that becomes news after approval', function (
         ->and($proposal->fresh()->status)->toBe('approved');
 });
 
+test('an article proposal keeps the introduction and the formatted report', function () {
+    $this->actingAs(User::factory()->parent()->create());
+
+    Livewire::test(ContentProposalForm::class)
+        ->set('type', 'article')
+        ->set('title', 'Turniej w Pile')
+        ->set('excerpt', '<p>Kadeci <strong>wygrali</strong> turniej.</p>')
+        ->set('content', '<p>Pierwszy mecz.</p><ul><li>Drugi mecz.</li></ul>')
+        ->call('submit')
+        ->assertHasNoErrors();
+
+    $proposal = ContentProposal::firstOrFail();
+    $this->actingAs(User::factory()->editor()->create());
+    Livewire::test(ContentProposalManager::class)->call('approve', $proposal->id);
+
+    $article = Article::firstWhere('title', 'Turniej w Pile');
+    expect($article->excerpt)->toContain('<strong>wygrali</strong>')
+        ->and($article->content)->toContain('<li>Drugi mecz.</li>');
+});
+
+test('an empty editor counts as a missing report', function () {
+    $this->actingAs(User::factory()->parent()->create());
+
+    Livewire::test(ContentProposalForm::class)
+        ->set('type', 'article')
+        ->set('title', 'Bez treści')
+        ->set('content', '<p></p>')
+        ->call('submit')
+        ->assertHasErrors('content');
+});
+
 test('a player proposes photos and a stream for a match', function () {
     $this->actingAs(User::factory()->player()->create());
 

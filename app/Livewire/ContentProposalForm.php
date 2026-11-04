@@ -27,6 +27,9 @@ class ContentProposalForm extends Component
 
     public string $content = '';
 
+    /** Wprowadzenie (zajawka) pod tytułem artykułu; puste = pierwsze zdania relacji. */
+    public string $excerpt = '';
+
     public string $url = '';
 
     public array $photos = [];
@@ -51,11 +54,19 @@ class ContentProposalForm extends Component
 
         $matchKeys = MatchPicker::keys($this->matchOptions());
 
+        // Pusty edytor zostawia „<p></p>”: traktujemy to jak brak treści.
+        foreach (['content', 'excerpt'] as $field) {
+            if (trim(html_entity_decode(strip_tags($this->{$field}), ENT_QUOTES)) === '') {
+                $this->{$field} = '';
+            }
+        }
+
         $validated = $this->validate([
             'type' => ['required', Rule::in($types)],
             'match' => ['nullable', Rule::requiredIf($this->type !== ContentProposal::TYPE_ARTICLE), Rule::in($matchKeys)],
             'title' => ['nullable', Rule::requiredIf($this->type === ContentProposal::TYPE_ARTICLE), 'string', 'max:255'],
-            'content' => ['nullable', Rule::requiredIf($this->type === ContentProposal::TYPE_ARTICLE), 'string', 'max:20000'],
+            'content' => ['nullable', Rule::requiredIf($this->type === ContentProposal::TYPE_ARTICLE), 'string', 'max:40000'],
+            'excerpt' => ['nullable', 'string', 'max:2000'],
             'url' => ['nullable', Rule::requiredIf($this->type === ContentProposal::TYPE_STREAM), 'url:http,https', 'max:500'],
             'photos' => ['array', 'max:30', Rule::requiredIf($this->type === ContentProposal::TYPE_PHOTOS)],
             'photos.*' => 'image|max:10240',
@@ -65,7 +76,8 @@ class ContentProposalForm extends Component
             'photos.*.max' => __('Zdjęcie może mieć najwyżej 10 MB.'),
         ], [
             'title' => __('tytuł'),
-            'content' => __('treść'),
+            'content' => __('relacja'),
+            'excerpt' => __('wprowadzenie'),
             'url' => __('adres transmisji'),
         ]);
 
@@ -78,11 +90,12 @@ class ContentProposalForm extends Component
             'match_id' => $match?->getKey(),
             'title' => $validated['title'] ?: null,
             'content' => $validated['content'] ?: null,
+            'excerpt' => $validated['type'] === ContentProposal::TYPE_ARTICLE && filled($validated['excerpt'] ?? null) ? $validated['excerpt'] : null,
             'url' => $validated['url'] ?: null,
             'files' => collect($validated['type'] === ContentProposal::TYPE_STREAM ? [] : $this->photos)->map(fn ($photo) => $photo->store('content-proposals', 'public'))->all() ?: null,
         ]);
 
-        $this->reset(['match', 'title', 'content', 'url', 'photos']);
+        $this->reset(['match', 'title', 'content', 'excerpt', 'url', 'photos']);
         $this->toast(__('Dziękujemy! Propozycja czeka na zatwierdzenie.'));
         $this->dispatch('proposal-sent');
     }
