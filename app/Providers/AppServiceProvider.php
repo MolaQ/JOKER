@@ -67,6 +67,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('panel', fn (User $user) => $user->canAccessPanel());
         Gate::define('trash', fn (User $user) => collect(Trash::TYPES)->contains(fn (array $type) => $user->can($type[2])));
         // Zakładka „System” (ustawienia całej strony): administrator i szef.
+        // Lista osób do odczytu: każdy, kto aktywuje konta lub zatwierdza propozycje swojej drużyny.
+        Gate::define('people.view', fn (User $user) => $user->hasPermission(Permission::Users) || $user->hasPermission(Permission::Proposals) || $user->hasPermission(Permission::ActivateAccounts));
         Gate::define('system', fn (User $user) => $user->hasRole(UserRole::Admin, UserRole::Boss));
 
         // Powiadomienia push o nowych aktualnościach, wynikach i galeriach.
