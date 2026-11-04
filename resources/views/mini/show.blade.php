@@ -21,7 +21,7 @@
             @endif
             @if($trainers->isNotEmpty())
                 <div>
-                    <dt class="text-xs text-zinc-400 uppercase">{{ trans_choice('Trener|Trenerzy', $trainers->count()) }}</dt>
+                    <dt class="text-xs text-zinc-400 uppercase">{{ trans_choice('Trener|Trenerzy|Trenerzy', $trainers->count()) }}</dt>
                     <dd class="mt-1 space-y-0.5 text-sm font-semibold">
                         @foreach($trainers as $trainer)
                             <p><a href="{{ route('trainers.show', $trainer) }}" class="hover:underline">{{ $trainer->name }}</a></p>

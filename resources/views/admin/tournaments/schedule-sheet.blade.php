@@ -45,8 +45,21 @@
                 @if($tournamentLogo)<img src="{{ $tournamentLogo }}" alt="" class="h-20 w-20 shrink-0 object-contain">@endif
             </header>
 
-            @if($sheet['summary'])
-                <p class="mt-3 text-sm font-semibold text-zinc-700">{{ $sheet['summary'] }}</p>
+            @if($sheet['facts']->isNotEmpty() || $sheet['system'])
+                <div class="keep mt-4 flex flex-wrap items-stretch gap-2">
+                    @if($sheet['system'])
+                        <div class="flex flex-col justify-center rounded-lg border-l-[6px] bg-zinc-900 px-4 py-2 text-white" style="border-color: {{ $category->color() }}">
+                            <span class="text-[10px] font-semibold tracking-[0.2em] uppercase opacity-90">System</span>
+                            <span class="font-display text-lg leading-tight font-bold uppercase">{{ $sheet['system'] }}</span>
+                        </div>
+                    @endif
+                    @foreach($sheet['facts'] as [$number, $label])
+                        <div class="flex items-baseline gap-1.5 rounded-lg border-b-4 bg-zinc-50 px-4 py-2 ring-1 ring-zinc-200" style="border-bottom-color: {{ $category->color() }}">
+                            <span class="font-display text-3xl leading-none font-bold text-zinc-900">{{ $number }}</span>
+                            <span class="text-sm font-semibold text-zinc-700">{{ $label }}</span>
+                        </div>
+                    @endforeach
+                </div>
             @endif
 
             {{-- Grupy z drużynami i boiskiem --}}

@@ -588,7 +588,6 @@
     "Nikt nie pasuje do wybranych filtrów.": "Nobody matches the selected filters.",
     "Sztab zostanie wkrótce uzupełniony.": "The staff list will be added soon.",
     "Trener minisiatkówki": "Mini volleyball coach",
-    "Trener|Trenerzy": "Coach|Coaches",
     "Trenerzy i sztab klubu": "Club coaches and staff",
     "Zapisano funkcję.": "Function saved.",
     "Zapisano grupy minisiatkówki.": "Mini volleyball groups saved.",
@@ -605,5 +604,6 @@
     "Dwa, trzy zdania pod tytułem i na liście aktualności. Puste = początek relacji.": "Two or three sentences under the title and in the news list. Empty = the start of the report.",
     "Krótko: o co chodzi, jaki wynik, co najważniejsze...": "Briefly: what happened, the score, the key moments...",
     "Napisz relację, zapowiedź albo ciekawostkę...": "Write a report, a preview or a fun fact...",
-    ":name - :function w klubie siatkarskim :club: :teams.": ":name - :function at the volleyball club :club: :teams."
+    ":name - :function w klubie siatkarskim :club: :teams.": ":name - :function at the volleyball club :club: :teams.",
+    "Trener|Trenerzy|Trenerzy": "Coach|Coaches|Coaches"
 }

@@ -926,7 +926,8 @@ test('organizer prints a schedule sheet for guests with matches, groups and hall
         ->assertSee('Hala LOMS · Sektor III')
         ->assertSee('ul. Szkolna 6, Piła')
         ->assertSee('11:00')
-        ->assertSee($kalisz->name());
+        ->assertSee($kalisz->name())
+        ->assertSeeInOrder(['każdy z każdym', '3', 'zespoły', '2', 'spotkania', '2', 'mecze na zespół']);
 
     Livewire::test(TournamentEditor::class, ['tournament' => $this->tournament])->set('section', 'mecze')->assertSee('Rozpiska dla gości');
 });

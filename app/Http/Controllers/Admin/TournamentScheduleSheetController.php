@@ -71,12 +71,15 @@ class TournamentScheduleSheetController extends Controller
         $teams = $category->participants->count();
         $groupMatches = $matches->where('stage', 'group');
         $roundRobin = $category->groups->count() <= 1 && $groupMatches->count() === $matches->count() && $teams > 1;
-        $summary = collect([
-            $roundRobin ? __('System każdy z każdym') : ($category->groups->count() > 1 ? __('Faza grupowa i mecze o miejsca') : null),
-            $teams ? trans_choice(':count zespół|:count zespoły|:count zespołów', $teams, ['count' => $teams]) : null,
-            $matches->count() ? trans_choice(':count spotkanie|:count spotkania|:count spotkań', $matches->count(), ['count' => $matches->count()]) : null,
-            $roundRobin ? __('po :count meczów na zespół', ['count' => $teams - 1]) : null,
-        ])->filter()->implode(' • ');
+        // Pasek z najważniejszymi liczbami pod nagłówkiem: [liczba, podpis z poprawną odmianą].
+        $plural = fn (int $n, string $one, string $few, string $many) => $n === 1 ? $one : ($n % 10 >= 2 && $n % 10 <= 4 && ($n % 100 < 10 || $n % 100 >= 20) ? $few : $many);
+        $facts = collect([
+            $teams ? [(string) $teams, $plural($teams, 'zespół', 'zespoły', 'zespołów')] : null,
+            $matches->count() ? [(string) $matches->count(), $plural($matches->count(), 'spotkanie', 'spotkania', 'spotkań')] : null,
+            $roundRobin ? [(string) ($teams - 1), $plural($teams - 1, 'mecz na zespół', 'mecze na zespół', 'meczów na zespół')] : null,
+            $category->groups->count() > 1 ? [(string) $category->groups->count(), $plural($category->groups->count(), 'grupa', 'grupy', 'grup')] : null,
+        ])->filter()->values();
+        $system = $roundRobin ? 'każdy z każdym' : ($category->groups->count() > 1 ? 'faza grupowa i mecze o miejsca' : null);
 
         $groups = $category->groups->count() > 1
             ? $category->groups->sortBy('name', SORT_NATURAL)->map(fn ($group) => [
@@ -88,7 +91,8 @@ class TournamentScheduleSheetController extends Controller
 
         return [
             'category' => $category,
-            'summary' => $summary,
+            'facts' => $facts,
+            'system' => $system,
             'groups' => $groups,
             'days' => $rows->groupBy(fn ($row) => $row['day'] ?? ''),
             'facilities' => $this->facilities($tournament, $matches->pluck('court')->filter()->unique()),

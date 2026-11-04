@@ -46,6 +46,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Teksty w kodzie są po polsku. Odmiana liczb (trans_choice) bierze reguły z języka zapasowego, gdy klucza
+        // nie ma w tłumaczeniu, więc zapasowym musi być polski: inaczej „7 zespoły” zamiast „7 zespołów”.
+        $this->app['translator']->setFallback('pl');
+
         // Data ostatniego logowania (także z „zapamiętaj mnie”); bez ruszania updated_at.
         Event::listen(Login::class, function (Login $event) {
             if ($event->user instanceof User) {
