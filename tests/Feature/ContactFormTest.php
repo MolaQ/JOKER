@@ -4,6 +4,7 @@ use App\Livewire\Admin\ContactMessages;
 use App\Models\ContactMessage;
 use App\Models\User;
 use App\Notifications\ContactMessageReceived;
+use App\Notifications\ContactReply;
 use App\Support\Approvals;
 use App\Support\SiteSettings;
 use App\UserRole;
@@ -57,4 +58,35 @@ test('w ustawieniach można wskazać jedno konto administratora strony', functio
     $response = $this->get(route('contact.index'));
     preg_match_all('/data-site-admin="([^"]*)"/', $response->getContent(), $found);
     expect($found[1])->toBe(['Ada Administratorka']);
+});
+
+test('szef odpowiada na wiadomość z panelu i odpowiedź zostaje zapisana', function () {
+    Notification::fake();
+    $contact = ContactMessage::create(['name' => 'Jan Kibic', 'email' => 'jan@example.test', 'subject' => 'Bilety', 'message' => 'Gdzie kupić bilety?']);
+    $boss = User::factory()->boss()->create(['name' => 'Szef Klubu']);
+
+    Livewire::actingAs($boss)->test(ContactMessages::class)
+        ->call('startReply', $contact->id)
+        ->call('sendReply')
+        ->assertHasErrors('replyBody')
+        ->set('replyBody', "Dzień dobry,\n\nbilety są przy wejściu.")
+        ->call('sendReply')
+        ->assertHasNoErrors()
+        ->assertSee('bilety są przy wejściu.');
+
+    Notification::assertSentOnDemand(ContactReply::class, fn ($notification, $channels, $notifiable) => $notifiable->routes['mail'] === ['jan@example.test' => 'Jan Kibic']);
+    expect($contact->fresh())->replied_by->toBe($boss->id)->read_at->not->toBeNull();
+});
+
+test('gdy poczta zawiedzie, odpowiedź nie jest oznaczona jako wysłana', function () {
+    Notification::shouldReceive('route')->andThrow(new RuntimeException('Connection refused'));
+    $contact = ContactMessage::create(['name' => 'Jan', 'email' => 'jan@example.test', 'subject' => 'X', 'message' => 'Y']);
+
+    Livewire::actingAs(User::factory()->boss()->create())->test(ContactMessages::class)
+        ->call('startReply', $contact->id)
+        ->set('replyBody', 'Odpowiedź')
+        ->call('sendReply')
+        ->assertDispatched('toast', type: 'error');
+
+    expect($contact->fresh()->replied_at)->toBeNull();
 });

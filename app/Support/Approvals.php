@@ -39,7 +39,7 @@ class Approvals
                 'label' => 'Formularz kontaktowy',
                 'icon' => 'envelope',
                 'route' => 'admin.contact-messages.index',
-                'intro' => 'Wiadomości wysłane formularzem ze strony Kontakt. Licznik pokazuje nieprzeczytane. „Odpowiedz” otwiera Twoją pocztę z adresem nadawcy; po odpowiedzi oznacz wiadomość jako przeczytaną.',
+                'intro' => 'Wiadomości wysłane formularzem ze strony Kontakt. Licznik pokazuje nieprzeczytane. „Odpowiedz” wysyła odpowiedź e-mailem prosto z panelu i zapisuje ją przy wiadomości; „Z mojej poczty” otwiera Twój program pocztowy.',
                 'component' => 'admin.contact-messages',
                 'visible' => fn () => ContactMessages::canRead($user),
                 'count' => fn () => ContactMessages::unreadCount(),

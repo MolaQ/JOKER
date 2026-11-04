@@ -11,11 +11,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class ContactMessage extends Model
 {
-    protected $fillable = ['name', 'email', 'subject', 'message', 'user_id', 'read_at', 'read_by'];
+    protected $fillable = ['name', 'email', 'subject', 'message', 'user_id', 'read_at', 'read_by', 'reply_body', 'replied_at', 'replied_by'];
 
     protected function casts(): array
     {
-        return ['read_at' => 'datetime'];
+        return ['read_at' => 'datetime', 'replied_at' => 'datetime'];
     }
 
     public function scopeUnread(Builder $query): void
@@ -26,6 +26,11 @@ class ContactMessage extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function replier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'replied_by');
     }
 
     public function reader(): BelongsTo
