@@ -7,7 +7,8 @@
 @endphp
 <div {{ $attributes->merge(['class' => 'relative flex items-center justify-center '.($bare ? '' : $background)]) }}>
     @if($photo)
-        <img src="{{ \App\Support\Media::url($photo) }}" alt="{{ $name }}" loading="lazy" decoding="async" @class(['absolute inset-0 h-full w-full', 'object-contain' => $logo, 'object-cover' => ! $logo]) @if($bare) onerror="this.parentElement.classList.add('overflow-hidden', 'bg-gradient-to-br', 'from-graphite', 'to-ink', 'text-white'); this.nextElementSibling.hidden = false; this.remove()" @else onerror="this.remove()" @endif>
+        <img src="{{ \App\Support\Media::url($photo) }}" alt="{{ $name }}" loading="lazy" decoding="async" @class(['absolute inset-0 h-full w-full', 'object-contain' => $logo, 'object-cover' => ! $logo]) @if($bare) onerror="this.parentElement.classList.add('overflow-hidden', 'bg-gradient-to-br', 'from-graphite', 'to-ink', 'text-white'); this.nextElementSibling.hidden = false; this.remove()" @else onerror="this.nextElementSibling.hidden = false; this.remove()" @endif>
     @endif
-    <span class="font-display font-bold text-sky-club" aria-hidden="true" @if($bare) hidden @endif>{{ $label ?? collect(explode(' ', $name))->map(fn ($part) => mb_substr($part, 0, 1))->take(2)->implode('') }}</span>
+    {{-- Inicjały tylko bez zdjęcia (albo gdy zdjęcie się nie wczyta), żeby nie prześwitywały na zdjęciu. --}}
+    <span class="font-display font-bold text-sky-club" aria-hidden="true" @if($photo) hidden @endif>{{ $label ?? collect(explode(' ', $name))->map(fn ($part) => mb_substr($part, 0, 1))->take(2)->implode('') }}</span>
 </div>

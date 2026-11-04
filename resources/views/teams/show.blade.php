@@ -122,7 +122,7 @@
             <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach($staff as $member)
                     <a href="{{ route('trainers.show', $member['user']) }}" class="card card-hover group flex items-center gap-5 p-4">
-                        <x-avatar :photo="$member['user']->avatar_path" :name="$member['user']->name" class="h-20 w-20 shrink-0 rounded-2xl text-2xl" />
+                        <x-avatar :photo="$member['user']->avatar_path" :name="$member['user']->name" class="aspect-[4/5] w-20 shrink-0 rounded-2xl text-2xl" />
                         <div>
                             <p class="text-xs font-semibold tracking-widest text-sky-club-dark uppercase">{{ $member['role'] }}</p>
                             <p class="mt-1 text-lg font-semibold group-hover:text-sky-club-dark">{{ $member['user']->name }}</p>
