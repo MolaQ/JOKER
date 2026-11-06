@@ -3,7 +3,9 @@
 namespace App\Support;
 
 use App\Models\Game;
+use App\Models\Tournament;
 use App\Models\TournamentMatch;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -16,7 +18,7 @@ class LiveNow
     public const CACHE_KEY = 'live-now';
 
     /**
-     * @return array{title: string, detail: string, url: string}|null
+     * @return array{title: string, detail: string, url: string, matches?: list<array{category: string, court: ?string, home: string, away: string, score: string, url: string}>}|null
      */
     public static function current(): ?array
     {
@@ -24,7 +26,7 @@ class LiveNow
     }
 
     /**
-     * @return array{title: string, detail: string, url: string}|false
+     * @return array{title: string, detail: string, url: string, matches?: list<array<string, mixed>>}|false
      */
     private static function find(): array|false
     {
@@ -38,6 +40,7 @@ class LiveNow
                 'title' => $tournament->fullName(),
                 'detail' => trans_choice('Trwa :count mecz|Trwają :count mecze|Trwa :count meczów', $count),
                 'url' => route('tournaments.show', $tournament),
+                'matches' => self::tournamentMatches($tournament, $live),
             ];
         }
 
@@ -57,5 +60,45 @@ class LiveNow
             'detail' => __('Mecz trwa'),
             'url' => route('games.show', $game),
         ];
+    }
+
+    /**
+     * Trwające mecze turnieju z wynikiem w setach; każdy prowadzi do zakładki „Mecze” swojej kategorii.
+     * Mecze naszych drużyn idą pierwsze.
+     *
+     * @param  Collection<int, TournamentMatch>  $live
+     * @return list<array{category: string, court: ?string, home: string, away: string, score: string, url: string}>
+     */
+    private static function tournamentMatches(Tournament $tournament, Collection $live): array
+    {
+        $first = $tournament->categories()->value('id');
+        $brackets = [];
+
+        return $live->filter(fn (TournamentMatch $match) => $match->tournament()?->is($tournament))
+            ->load('home.competitor', 'away.competitor')
+            ->sortBy(fn (TournamentMatch $match) => [
+                $match->home?->isOwnTeam() || $match->away?->isOwnTeam() ? 0 : 1,
+                $match->category->display_order,
+                $match->court,
+                $match->number,
+            ])
+            ->map(function (TournamentMatch $match) use ($tournament, $first, &$brackets) {
+                $bracket = $brackets[$match->tournament_category_id] ??= TournamentBracket::for($match->category);
+
+                return [
+                    'category' => $match->category->name,
+                    'court' => $match->court,
+                    'home' => $bracket->side($match, 'home')['text'],
+                    'away' => $bracket->side($match, 'away')['text'],
+                    'score' => ($match->home_sets ?? 0).':'.($match->away_sets ?? 0),
+                    'url' => route('tournaments.show', [
+                        'tournament' => $tournament,
+                        'category' => $match->tournament_category_id === $first ? null : $match->category->slug(),
+                        'tab' => 'matches',
+                    ]),
+                ];
+            })
+            ->values()
+            ->all();
     }
 }
