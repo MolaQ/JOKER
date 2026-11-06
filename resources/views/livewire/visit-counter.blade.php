@@ -1,15 +1,16 @@
 {{--
-    Licznik odwiedzin w stopce: trzy równe kolumny (liczba nad podpisem), na telefonie na całą szerokość.
+    Licznik odwiedzin w stopce: cztery równe kolumny (liczba nad podpisem), na telefonie na całą szerokość.
     Liczba, która się zmieniła po odświeżeniu (co 15 s), wjeżdża od dołu i na chwilę się podświetla (.stat-tick).
 --}}
 @php
     $stats = [
         ['online', $online, trans_choice('osoba teraz|osoby teraz|osób teraz', $online), __('Osoby na stronie w ostatnich 5 minutach')],
         ['today', $today, trans_choice('gość dziś|gości dziś|gości dziś', $today), __('Goście dzisiaj')],
+        ['visits', $visits, trans_choice('wizyta|wizyty|wizyt', $visits), __('Wszystkie wizyty (odwiedzający liczony raz dziennie)')],
         ['total', $total, trans_choice('odsłona|odsłony|odsłon', $total), __('Wszystkie odsłony strony')],
     ];
 @endphp
-<div wire:poll.15s.visible class="grid w-full grid-cols-3 divide-x divide-white/10 overflow-hidden rounded-2xl bg-white/5 tabular-nums ring-1 ring-white/10 sm:w-auto sm:min-w-80" aria-live="polite">
+<div wire:poll.15s.visible class="grid w-full grid-cols-4 divide-x divide-white/10 overflow-hidden rounded-2xl bg-white/5 tabular-nums ring-1 ring-white/10 sm:w-auto sm:min-w-96" aria-live="polite">
     @foreach($stats as [$key, $value, $label, $title])
         <div class="flex min-w-0 flex-col items-center justify-center px-2 py-2 text-center sm:px-4" title="{{ $title }}">
             <span class="flex items-center gap-1.5 font-display text-lg leading-none font-semibold text-white">

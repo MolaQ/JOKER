@@ -16,7 +16,7 @@ class VisitCounter extends Component
     public const ONLINE_MINUTES = 5;
 
     /**
-     * @return array{online: int, today: int, total: int}
+     * @return array{online: int, today: int, visits: int, total: int}
      */
     public static function counts(): array
     {
@@ -24,7 +24,10 @@ class VisitCounter extends Component
             'online' => PageView::counted()->where('created_at', '>=', now()->subMinutes(self::ONLINE_MINUTES))->distinct()->count('visitor_hash'),
             'today' => PageView::counted()->where('created_at', '>=', today())->distinct()->count('visitor_hash'),
             'total' => PageView::counted()->where('kind', PageView::KIND_PAGE)->count(),
-        ]);
+        ]) + [
+            // Wszystkie wizyty: odwiedzający liczony raz dziennie (skrót zmienia się co dzień). Liczone rzadziej, bo to cięższe zapytanie.
+            'visits' => Cache::remember('visit-counter-visits', 120, fn () => PageView::counted()->where('kind', PageView::KIND_PAGE)->distinct()->count('visitor_hash')),
+        ];
     }
 
     public function render(): View
@@ -35,6 +38,7 @@ class VisitCounter extends Component
         return view('livewire.visit-counter', [
             'online' => max(1, $counts['online']),
             'today' => max(1, $counts['today']),
+            'visits' => max(1, $counts['visits']),
             'total' => $counts['total'],
         ]);
     }

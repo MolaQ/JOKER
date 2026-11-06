@@ -67,9 +67,10 @@ test('footer counter shows people online, visitors today and all page views', fu
     $this->withHeader('User-Agent', 'Mozilla/5.0 (iPhone) Mobile')->get('/teams');
     PageView::forceCreate(['kind' => 'page', 'path' => '/', 'visitor_hash' => str_repeat('a', 64), 'created_at' => now()->subDays(3)]);
     Cache::forget('visit-counter');
+    Cache::forget('visit-counter-visits');
 
     Livewire::test(VisitCounter::class)
-        ->assertSeeInOrder(['2', 'osoby teraz', '2', 'gości dziś', '3', 'odsłony']);
+        ->assertSeeInOrder(['2', 'osoby teraz', '2', 'gości dziś', '3', 'wizyty', '3', 'odsłony']);
 });
 
 test('admin sees who visits: visits, bounces, sources, entry pages, time of day and what is read', function () {
