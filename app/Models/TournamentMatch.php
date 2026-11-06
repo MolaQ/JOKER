@@ -206,7 +206,8 @@ class TournamentMatch extends Model
 
     /**
      * Możliwe opóźnienie meczu, który jeszcze się nie zaczął: tyle, ile spóźnił się ostatni rozpoczęty mecz
-     * na tym samym boisku tego dnia. Godziny w harmonogramie się nie zmieniają; gdy turniej nadrobi, informacja znika.
+     * na tym samym boisku tego dnia. Po zakończeniu tamtego meczu liczy się tylko, o ile skończył się po planowanym
+     * początku tego meczu. Godziny w harmonogramie się nie zmieniają; gdy turniej nadrobi, informacja znika.
      */
     public function possibleDelay(): ?int
     {
@@ -239,17 +240,30 @@ class TournamentMatch extends Model
         $matches = static::query()
             ->whereIn('tournament_category_id', TournamentCategory::where('tournament_id', $tournamentId)->select('id'))
             ->whereNotNull('planned_starts_at')
-            ->get(['id', 'court', 'starts_at', 'planned_starts_at', 'is_live', 'home_sets', 'away_sets']);
+            ->get(['id', 'court', 'starts_at', 'planned_starts_at', 'is_live', 'home_sets', 'away_sets', 'updated_at']);
 
         $delays = [];
 
         foreach ($matches->groupBy(fn (self $match) => $match->planned_starts_at->toDateString().'|'.TournamentSchedule::sector($match->court)) as $queue) {
             $last = 0;
+            // Kiedy zwolniło się boisko: zakończony mecz (moment zapisania wyniku) nie przenosi już swojego opóźnienia,
+            // tylko tyle, o ile skończył się po planowanym początku następnego meczu.
+            $freeAt = null;
 
             foreach ($queue->sortBy(fn (self $match) => [$match->planned_starts_at->getTimestamp(), $match->id]) as $match) {
                 if (($match->is_live || $match->home_sets !== null) && $match->starts_at) {
                     $last = (int) $match->planned_starts_at->diffInMinutes($match->starts_at, false);
-                } elseif ($last >= 5) {
+                    $freeAt = $match->is_live ? null : $match->updated_at;
+
+                    continue;
+                }
+
+                if ($freeAt !== null) {
+                    $last = max(0, (int) $match->planned_starts_at->diffInMinutes($freeAt, false));
+                    $freeAt = null;
+                }
+
+                if ($last >= 5) {
                     $delays[$match->id] = $last;
                 }
             }

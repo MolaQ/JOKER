@@ -203,3 +203,28 @@ test('trwające mecze są na górze listy, a zakończone na dole', function () {
     $screen->set('rows.'.$this->third->id.'.sets', '25:10, 25:12')->call('save', $this->third->id, true)
         ->assertSeeInOrder(['Mecz nr '.$this->second->number, 'Mecz nr '.$this->first->number, 'Mecz nr '.$this->third->number]);
 });
+
+test('zakończony mecz nie przenosi opóźnienia, jeśli boisko zwolniło się przed następnym meczem', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    Carbon::setTestNow('2026-11-15 10:18');
+    $screen = Livewire::test(TournamentScorer::class, ['tournament' => $this->tournament])
+        ->set('rows.'.$this->first->id.'.start', '10:18')
+        ->call('start', $this->first->id);
+
+    Once::flush();
+    expect($this->second->fresh()->possibleDelay())->toBe(18)->and($this->third->fresh()->possibleDelay())->toBe(18);
+
+    // Skończyli o 10:52, przed meczem o 11:00: bez opóźnienia.
+    Carbon::setTestNow('2026-11-15 10:52');
+    $screen->set('rows.'.$this->first->id.'.sets', '25:20, 25:22')->call('save', $this->first->id, true);
+
+    Once::flush();
+    expect($this->second->fresh()->possibleDelay())->toBeNull()->and($this->third->fresh()->possibleDelay())->toBeNull();
+
+    // Gdyby skończyli o 11:09, następny mecz może zacząć się 9 minut później.
+    Carbon::setTestNow('2026-11-15 11:09');
+    $this->first->fresh()->touch();
+
+    Once::flush();
+    expect($this->second->fresh()->possibleDelay())->toBe(9)->and($this->third->fresh()->possibleDelay())->toBe(9);
+});
