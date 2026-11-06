@@ -19,7 +19,7 @@ use Livewire\Component;
 
 /**
  * Ekran „Wpisz wyniki” na telefon dla osób wpisujących wyniki turnieju: godzina rozpoczęcia meczu
- * (domyślnie z harmonogramu), sety i zakończenie meczu. Godziny w harmonogramie się nie zmieniają;
+ * (pole podpowiada godzinę z harmonogramu, liczy się to, co wpisano; „Teraz” wstawia bieżącą), sety i zakończenie meczu. Godziny w harmonogramie się nie zmieniają;
  * późniejszy start pokazuje przy kolejnych meczach na tym boisku „możliwe opóźnienie”.
  */
 class TournamentScorer extends Component
@@ -56,6 +56,14 @@ class TournamentScorer extends Component
     public function start(int $id): void
     {
         $match = $this->match($id);
+
+        // Ktoś już rozpoczął ten mecz na innym telefonie: nie nadpisujemy jego godziny.
+        if ($match->is_live || $match->home_sets !== null) {
+            $this->toast(__('Mecz nr :number jest już rozpoczęty (od :time).', ['number' => $match->number, 'time' => $match->starts_at?->format('H:i')]), 'error');
+
+            return;
+        }
+
         $starts = $this->startTime($match);
 
         if (! $starts) {
@@ -63,6 +71,7 @@ class TournamentScorer extends Component
         }
 
         $match->update(['planned_starts_at' => $match->planned_starts_at ?? $match->starts_at ?? $starts, 'starts_at' => $starts, 'is_live' => true]);
+        $this->rows[$id]['start'] = $this->rows[$id]['start_base'] = $starts->format('H:i');
         $this->toast(__('Mecz nr :number rozpoczęty o :time.', ['number' => $match->number, 'time' => $starts->format('H:i')]));
     }
 
@@ -82,7 +91,14 @@ class TournamentScorer extends Component
             return;
         }
 
-        $starts = $match->starts_at && ($match->is_live || $match->home_sets !== null) ? $match->starts_at : $this->startTime($match);
+        // W trwającym meczu godzinę rozpoczęcia można jeszcze poprawić (np. wpisano 10:00, a grali od 10:17);
+        // pole niezmienione od wyświetlenia zostawia zapisaną godzinę.
+        $untouched = ($this->rows[$id]['start'] ?? null) === ($this->rows[$id]['start_base'] ?? null);
+        $starts = $match->starts_at && (($match->home_sets !== null && ! $match->is_live) || ($match->is_live && $untouched)) ? $match->starts_at : $this->startTime($match);
+
+        if ($starts === null && $match->is_live) {
+            return;
+        }
 
         $match->update([
             'planned_starts_at' => $match->planned_starts_at ?? $match->starts_at ?? $starts,
@@ -95,6 +111,7 @@ class TournamentScorer extends Component
         ]);
 
         TournamentBracket::sync($match->category);
+        $this->rows[$id]['start'] = $this->rows[$id]['start_base'] = $match->starts_at?->format('H:i') ?? '';
         $this->resetErrorBag("rows.{$id}.sets");
         $this->toast($finish ? __('Zakończono: :home – :away :score.', ['home' => $match->homeName(), 'away' => $match->awayName(), 'score' => $home.':'.$away]) : __('Zapisano wynik meczu nr :number.', ['number' => $match->number]));
     }
@@ -146,12 +163,7 @@ class TournamentScorer extends Component
         $this->resetErrorBag("rows.{$match->id}.start");
         $starts = Carbon::parse(($planned ?? Carbon::parse($this->day ?: today()))->toDateString().' '.$time);
 
-        // Godzina z planu zostawiona bez zmian, a mecz rusza w dniu turnieju wyraźnie później: liczy się „teraz”,
-        // żeby kibice widzieli opóźnienie, a kolejne mecze na boisku „możliwe opóźnienie”.
-        if ($planned && $starts->equalTo($planned->copy()->startOfMinute()) && $planned->isToday() && now()->greaterThan($planned->copy()->addMinutes(5)) && now()->lessThan($planned->copy()->addHours(4))) {
-            return now()->startOfMinute();
-        }
-
+        // Liczy się wpisana godzina, nie moment kliknięcia: wynik bywa wpisywany po fakcie.
         return $starts;
     }
 
@@ -200,11 +212,20 @@ class TournamentScorer extends Component
             ->values();
 
         foreach ($shown as $match) {
-            $this->rows[$match->id] ??= [
-                'start' => (($match->is_live || $match->home_sets !== null) ? $match->starts_at : ($match->planned_starts_at ?? $match->starts_at))?->format('H:i') ?? '',
-                'sets' => collect($match->sets_score ?? [])->map(fn (array $set) => $set[0].':'.$set[1])->implode(', '),
-                'mvp' => (string) $match->mvp,
-            ];
+            $current = (($match->is_live || $match->home_sets !== null) ? $match->starts_at : ($match->planned_starts_at ?? $match->starts_at))?->format('H:i') ?? '';
+            if (! isset($this->rows[$match->id])) {
+                $this->rows[$match->id] = [
+                    'start' => $current,
+                    'start_base' => $current,
+                    'sets' => collect($match->sets_score ?? [])->map(fn (array $set) => $set[0].':'.$set[1])->implode(', '),
+                    'mvp' => (string) $match->mvp,
+                ];
+            } elseif (($this->rows[$match->id]['start'] ?? '') === ($this->rows[$match->id]['start_base'] ?? '') && $current !== ($this->rows[$match->id]['start_base'] ?? '')) {
+                // „start_base”: godzina, którą pole pokazało. Niezmienione pole nadąża za zmianą zapisaną z innego telefonu
+                // (np. ktoś rozpoczął mecz o 10:17), żeby „Zapisz wynik” nie cofnął jej do starej wartości.
+                $this->rows[$match->id]['start'] = $current;
+                $this->rows[$match->id]['start_base'] = $current;
+            }
         }
 
         return view('livewire.tournament-scorer', [

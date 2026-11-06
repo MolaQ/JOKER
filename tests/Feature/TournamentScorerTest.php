@@ -118,21 +118,17 @@ test('a match started by mistake can be put back to not started', function () {
         ->and($first->home_sets)->toBeNull();
 });
 
-test('a match started late with the planned time left unchanged starts now', function () {
+test('pressing start late with the planned time left unchanged keeps the planned time', function () {
     $this->tournament->scorers()->attach($this->scorer);
     $this->actingAs($this->scorer);
 
-    Carbon::setTestNow('2026-11-15 10:03');
-    Livewire::test(TournamentScorer::class, ['tournament' => $this->tournament])->call('start', $this->first->id);
-    expect($this->first->fresh()->starts_at->format('H:i'))->toBe('10:00');
-
     Carbon::setTestNow('2026-11-15 11:42');
     Livewire::test(TournamentScorer::class, ['tournament' => $this->tournament])->call('start', $this->second->id);
-    expect($this->second->fresh()->starts_at->format('H:i'))->toBe('11:42')
+    expect($this->second->fresh()->starts_at->format('H:i'))->toBe('11:00')
         ->and($this->second->fresh()->planned_starts_at->format('H:i'))->toBe('11:00');
 
     Once::flush();
-    expect($this->third->fresh()->possibleDelay())->toBe(42);
+    expect($this->third->fresh()->possibleDelay())->toBeNull();
 });
 
 test('sets can be typed without a colon on a phone number keypad', function () {
@@ -155,4 +151,42 @@ test('a scorer can show only one category when the same clubs play in several', 
         ->assertSee('Wszystkie kategorie')->assertSee('Polonia')->assertSee('Sparta')
         ->set('category', (string) $juniors->id)
         ->assertSee('Polonia')->assertDontSee('Sparta');
+});
+
+test('liczy się wpisana godzina rozpoczęcia, nie moment kliknięcia, i w trwającym meczu można ją poprawić', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    Carbon::setTestNow('2026-11-15 10:17');
+
+    // Wynik wpisywany po fakcie: mecz zaczął się o czasie, więc bez opóźnienia przy kolejnych meczach.
+    $screen = Livewire::test(TournamentScorer::class, ['tournament' => $this->tournament])
+        ->assertSee('Teraz')
+        ->call('start', $this->first->id);
+
+    expect($this->first->fresh()->starts_at->format('H:i'))->toBe('10:00');
+    Once::flush();
+    expect($this->second->fresh()->possibleDelay())->toBeNull();
+
+    // Jednak zaczęli później: poprawka godziny w trwającym meczu.
+    $screen->set('rows.'.$this->first->id.'.start', '10:17')->set('rows.'.$this->first->id.'.sets', '25:20')->call('save', $this->first->id);
+
+    expect($this->first->fresh()->starts_at->format('H:i'))->toBe('10:17')->and($this->first->fresh()->is_live)->toBeTrue();
+    Once::flush();
+    expect($this->second->fresh()->possibleDelay())->toBe(17);
+});
+
+test('drugi telefon z nieodświeżonym ekranem nie cofa godziny rozpoczęcia wpisanej na pierwszym', function () {
+    $this->actingAs(User::factory()->admin()->create());
+
+    $stale = Livewire::test(TournamentScorer::class, ['tournament' => $this->tournament]);
+
+    Livewire::test(TournamentScorer::class, ['tournament' => $this->tournament])
+        ->set('rows.'.$this->first->id.'.start', '10:17')->call('start', $this->first->id);
+
+    // Nieodświeżony ekran: „Rozpocznij” nie nadpisuje, a po przerysowaniu „Zapisz wynik” zostawia 10:17.
+    $stale->call('start', $this->first->id);
+    expect($this->first->fresh()->starts_at->format('H:i'))->toBe('10:17');
+
+    $stale->set('category', '')->assertSet('rows.'.$this->first->id.'.start', '10:17')
+        ->set('rows.'.$this->first->id.'.sets', '25:20')->call('save', $this->first->id);
+    expect($this->first->fresh()->starts_at->format('H:i'))->toBe('10:17')->and($this->first->fresh()->home_sets)->toBe(1);
 });

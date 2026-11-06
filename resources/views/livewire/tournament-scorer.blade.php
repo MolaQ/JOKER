@@ -62,8 +62,14 @@
 
                 <div class="mt-3 grid gap-3 sm:grid-cols-[9rem_1fr]">
                     <div>
-                        <label class="block text-xs font-medium text-zinc-600" for="start-{{ $match->id }}">{{ __('Rozpoczęcie') }}</label>
-                        <x-time-input id="start-{{ $match->id }}" :model="'rows.'.$match->id.'.start'" :disabled="$live || $finished" class="mt-1 block w-full rounded-lg border border-zinc-300 text-base tabular-nums disabled:bg-zinc-50 disabled:text-zinc-500" />
+                        <div class="flex items-center justify-between gap-2">
+                            <label class="block text-xs font-medium text-zinc-600" for="start-{{ $match->id }}">{{ __('Rozpoczęcie') }}</label>
+                            @unless($finished)
+                                <button type="button" x-on:click="$wire.set('rows.{{ $match->id }}.start', new Date().toLocaleTimeString('pl-PL', { timeZone: @js(config('app.timezone')), hour: '2-digit', minute: '2-digit', hour12: false }))" class="text-xs font-semibold text-sky-club-dark hover:underline">{{ __('Teraz') }}</button>
+                            @endunless
+                        </div>
+                        <x-time-input id="start-{{ $match->id }}" :model="'rows.'.$match->id.'.start'" :disabled="$finished" class="mt-1 block w-full rounded-lg border border-zinc-300 text-base tabular-nums disabled:bg-zinc-50 disabled:text-zinc-500" />
+                        <p class="mt-1 text-[11px] leading-snug text-zinc-500">{{ $live ? __('Pomyłka w godzinie? Popraw i kliknij „Zapisz wynik”.') : __('Godzina z harmonogramu. Gdy mecz zaczął się później, wpisz właściwą.') }}</p>
                         @error("rows.{$match->id}.start")<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                     </div>
                     @if($live || $finished)
