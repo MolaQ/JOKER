@@ -340,8 +340,9 @@
                         <img src="{{ $logoUrl }}" alt="" width="28" height="28" loading="lazy" class="h-7 w-7 shrink-0 object-contain">
                         <span><span class="text-zinc-200">&copy; {{ date('Y') }} {{ $site['club_name'] }}</span>@if(filled($site['footer_note']) && $site['footer_note'] !== $site['club_name']) · {{ $site['footer_note'] }}@endif</span>
                     </p>
-                    <div class="flex flex-wrap items-center gap-3">
-                        <x-theme-switch dark />
+                    {{-- Na telefonie przełącznik motywu i licznik odwiedzin jeden pod drugim, oba na całą szerokość. --}}
+                    <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                        <x-theme-switch dark class="flex w-full sm:inline-flex sm:w-auto" />
                         <livewire:visit-counter />
                     </div>
                 </div>

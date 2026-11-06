@@ -1397,6 +1397,29 @@ table[data-sortable] > thead th:not([data-nosort]) {
     }
 }
 
+/* Licznik odwiedzin w stopce: nowa liczba wjeżdża od dołu i na chwilę rozjaśnia się na zielono. */
+.stat-tick {
+    animation: stat-tick 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+@keyframes stat-tick {
+    from {
+        opacity: 0;
+        transform: translateY(0.6em);
+        color: var(--color-emerald-300);
+    }
+    60% {
+        opacity: 1;
+        color: var(--color-emerald-300);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .stat-tick {
+        animation: none;
+    }
+}
+
 /* Wynik w pasku „Na żywo”, który właśnie się zmienił, na chwilę się podświetla. */
 .live-flash {
     animation: live-flash 1.6s ease-out;
