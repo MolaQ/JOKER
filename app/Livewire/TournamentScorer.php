@@ -197,7 +197,8 @@ class TournamentScorer extends Component
     {
         $matches = $this->allMatches()
             ->filter(fn (TournamentMatch $match) => ($match->planned_starts_at ?? $match->starts_at)?->toDateString() === $this->day)
-            ->sortBy(fn (TournamentMatch $match) => [($match->planned_starts_at ?? $match->starts_at)->getTimestamp(), (string) $match->court, $match->number]);
+            // Trwające mecze na górze, potem czekające na rozpoczęcie, zakończone na dole; w każdej części według planu.
+            ->sortBy(fn (TournamentMatch $match) => [$match->is_live ? 0 : ($match->home_sets !== null ? 2 : 1), ($match->planned_starts_at ?? $match->starts_at)->getTimestamp(), (string) $match->court, $match->number]);
 
         // Boiska dnia: najpierw hala klubowa (III, II, I, główne), potem inne obiekty po nazwie.
         $order = array_flip(TournamentHalls::MAIN_VENUES);

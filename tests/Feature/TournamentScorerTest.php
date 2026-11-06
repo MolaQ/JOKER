@@ -190,3 +190,16 @@ test('drugi telefon z nieodświeżonym ekranem nie cofa godziny rozpoczęcia wpi
         ->set('rows.'.$this->first->id.'.sets', '25:20')->call('save', $this->first->id);
     expect($this->first->fresh()->starts_at->format('H:i'))->toBe('10:17')->and($this->first->fresh()->home_sets)->toBe(1);
 });
+
+test('trwające mecze są na górze listy, a zakończone na dole', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    Carbon::setTestNow('2026-11-15 11:05');
+    $this->first->update(['home_sets' => 2, 'away_sets' => 0, 'sets_score' => [[25, 20], [25, 18]]]);
+
+    $screen = Livewire::test(TournamentScorer::class, ['tournament' => $this->tournament])
+        ->call('start', $this->third->id)
+        ->assertSeeInOrder(['Mecz nr '.$this->third->number, 'Mecz nr '.$this->second->number, 'Mecz nr '.$this->first->number]);
+
+    $screen->set('rows.'.$this->third->id.'.sets', '25:10, 25:12')->call('save', $this->third->id, true)
+        ->assertSeeInOrder(['Mecz nr '.$this->second->number, 'Mecz nr '.$this->first->number, 'Mecz nr '.$this->third->number]);
+});
