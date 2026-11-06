@@ -29,7 +29,7 @@ class DashboardController extends Controller
         // Derby dwóch pilskich drużyn liczymy jako wygraną: wygrała pilska siatkówka.
         $results = $seasonGames->map->outcome()->filter();
         $wins = $results->filter(fn (string $outcome) => $outcome !== 'loss')->count();
-        $views = PageView::where('kind', PageView::KIND_PAGE);
+        $views = PageView::counted()->where('kind', PageView::KIND_PAGE);
 
         // Kafelki: [ikona (x-admin-icon), podpis, liczba, dopisek, trasa, uprawnienie]
         $stats = [

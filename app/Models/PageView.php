@@ -45,6 +45,17 @@ class PageView extends Model
         ];
     }
 
+    /** Trasy, które nie są otwarciem strony (przed poprawką zapisywały się jak wyświetlenia). */
+    public const NOT_COUNTED_ROUTES = ['live-bar'];
+
+    /**
+     * Prawdziwe otwarcia stron i zakładek, bez odświeżeń paska „Na żywo” zapisanych przed poprawką.
+     */
+    public function scopeCounted(Builder $query): Builder
+    {
+        return $query->where(fn (Builder $views) => $views->whereNull('route_name')->orWhereNotIn('route_name', self::NOT_COUNTED_ROUTES));
+    }
+
     public function page(): BelongsTo
     {
         return $this->belongsTo(self::class, 'page_view_id');

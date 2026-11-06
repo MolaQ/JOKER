@@ -21,9 +21,9 @@ class VisitCounter extends Component
     public static function counts(): array
     {
         return Cache::remember('visit-counter', 10, fn () => [
-            'online' => PageView::where('created_at', '>=', now()->subMinutes(self::ONLINE_MINUTES))->distinct()->count('visitor_hash'),
-            'today' => PageView::where('created_at', '>=', today())->distinct()->count('visitor_hash'),
-            'total' => PageView::where('kind', PageView::KIND_PAGE)->count(),
+            'online' => PageView::counted()->where('created_at', '>=', now()->subMinutes(self::ONLINE_MINUTES))->distinct()->count('visitor_hash'),
+            'today' => PageView::counted()->where('created_at', '>=', today())->distinct()->count('visitor_hash'),
+            'total' => PageView::counted()->where('kind', PageView::KIND_PAGE)->count(),
         ]);
     }
 

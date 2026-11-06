@@ -6,6 +6,7 @@ use App\Models\PageView;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Livewire;
 
@@ -69,4 +70,41 @@ test('footer counter shows people online, visitors today and all page views', fu
 
     Livewire::test(VisitCounter::class)
         ->assertSeeInOrder(['2', 'osoby teraz', '2', 'gości dziś', '3', 'odsłony']);
+});
+
+test('admin sees who visits: visits, bounces, sources, entry pages, time of day and what is read', function () {
+    $view = fn (string $visitor, string $path, string $route, ?string $referrer = null, string $at = 'now') => PageView::forceCreate([
+        'kind' => 'page', 'path' => $path, 'title' => ucfirst(trim($path, '/')).' | Joker', 'route_name' => $route,
+        'visitor_hash' => str_repeat($visitor, 64), 'device' => 'mobile', 'locale' => 'pl', 'referrer_host' => $referrer,
+        'created_at' => $at === 'now' ? now() : Carbon::parse($at),
+    ]);
+    // Wizyta a: z Facebooka, trzy strony. Wizyta b: z Google, jedna strona (odbicie). Wizyta c: bezpośrednio, dwie strony.
+    $view('a', '/news/memorial', 'articles.show', 'm.facebook.com', '-30 minutes');
+    $view('a', '/players/jan-kowalski', 'players.show', null, '-20 minutes');
+    $view('a', '/teams/kadeci', 'teams.show', null, '-10 minutes');
+    $view('b', '/news/memorial', 'articles.show', 'www.google.com', '-3 minutes');
+    $view('c', '/', 'home', null, '-2 minutes');
+    $view('c', '/players/jan-kowalski', 'players.show', null, '-1 minute');
+    // Stare odświeżenia paska „Na żywo” nie liczą się do niczego.
+    foreach (range(1, 20) as $i) {
+        $view('d', '/live-bar', 'live-bar');
+    }
+    // Poprzedni okres do porównania: jedna wizyta.
+    $view('e', '/', 'home', null, '-40 days');
+
+    $this->actingAs(User::factory()->admin()->create());
+
+    Livewire::test(SiteStatistics::class)
+        ->assertViewHas('summary', fn (array $summary) => $summary['views'] === 6 && $summary['visits'] === 3 && (float) $summary['pages_per_visit'] === 2.0 && (int) round($summary['bounce']) === 33)
+        ->assertViewHas('sources', fn ($sources) => $sources->all() == ['Facebook' => 1, 'Google' => 1, 'Wejścia bezpośrednie' => 1])
+        ->assertViewHas('now', fn (array $now) => $now['people'] === 2)
+        ->assertViewHas('entries', fn ($entries) => $entries->firstWhere('path', '/news/memorial')->visits === 2)
+        ->assertViewHas('exits', fn ($exits) => $exits->pluck('path')->sort()->values()->all() === ['/players/jan-kowalski', '/teams/kadeci'])
+        ->assertViewHas('topPlayers', fn ($players) => $players->first()->views === 2)
+        ->assertViewHas('depth', fn ($depth) => $depth->all() === ['1 strona' => 1, '2–3 strony' => 2, '4–9 stron' => 0, '10 i więcej' => 0])
+        ->assertSee('Teraz na stronie')->assertSee('Kiedy odwiedzają')->assertSee('Strony wejścia')->assertDontSee('/live-bar');
+
+    // Odświeżenie paska nie zapisuje się już jako wyświetlenie.
+    $this->get('/live-bar?from=/');
+    expect(PageView::where('route_name', 'live-bar')->count())->toBe(20);
 });

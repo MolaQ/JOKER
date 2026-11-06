@@ -56,7 +56,8 @@ class TrackPageView
     {
         return $request->isMethod('GET')
             && ! $request->ajax()
-            && ! $request->is('panel', 'panel/*', 'livewire/*', 'storage/*', 'up')
+            // live-bar: pasek „Na żywo” pobierany co 20 sekund, to nie jest otwarcie strony.
+            && ! $request->is('panel', 'panel/*', 'livewire/*', 'storage/*', 'up', 'live-bar')
             && $response->getStatusCode() === 200
             && str_contains((string) $response->headers->get('Content-Type'), 'text/html')
             && ! preg_match(self::BOTS, (string) $request->userAgent())
