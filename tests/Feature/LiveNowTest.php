@@ -45,3 +45,16 @@ it('shows the live score and leads to the matches of that category, updating aft
     // Na stronie turnieju paska nie ma.
     $this->get(route('tournaments.show', ['tournament' => $tournament, 'category' => $juniors->slug(), 'tab' => 'matches']))->assertOk()->assertDontSee('data-live-bar', false);
 });
+
+it('marks a live match with a stream with a watch button leading to the video', function () {
+    $tournament = Tournament::create(['name' => 'Memoriał', 'edition' => 'XXV', 'start_date' => now()->toDateString(), 'has_page' => true]);
+    $category = $tournament->categories()->create(['name' => 'Kadetki', 'display_order' => 0]);
+    $match = $category->matches()->create(['stage' => TournamentMatch::STAGE_GROUP, 'starts_at' => now(), 'is_live' => true]);
+
+    $this->get(route('home'))->assertOk()->assertSee('data-live-bar', false)->assertDontSee('data-live-stream', false);
+
+    $match->update(['streams' => [['url' => 'https://www.youtube.com/watch?v=abcdefghijk', 'label' => '']]]);
+
+    $this->get(route('home'))->assertSee('data-live-stream', false)->assertSee('Oglądaj')
+        ->assertSee('https://www.youtube.com/watch?v=abcdefghijk', false);
+});

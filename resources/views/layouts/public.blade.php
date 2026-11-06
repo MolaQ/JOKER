@@ -390,32 +390,42 @@
                 'score' => $match['score'],
                 'home' => $match['home'],
                 'away' => $match['away'],
+                'stream' => $match['stream'] ?? null,
             ]);
             if ($liveSlides->isEmpty()) {
-                $liveSlides = collect([['url' => $liveNow['url'], 'title' => $liveNow['title'], 'detail' => $liveNow['detail'].' · '.__('wyniki na żywo')]]);
+                $liveSlides = collect([['url' => $liveNow['url'], 'title' => $liveNow['title'], 'detail' => $liveNow['detail'].' · '.__('wyniki na żywo'), 'stream' => $liveNow['stream'] ?? null]]);
             }
         @endphp
         <div data-live-bar x-data="{ i: 0, n: {{ $liveSlides->count() }} }" x-init="n > 1 && setInterval(() => i = (i + 1) % n, 4000)" class="live-bar fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 overflow-hidden rounded-2xl bg-ink/95 text-white shadow-2xl ring-1 ring-white/10 backdrop-blur-xl lg:inset-x-auto lg:right-5 lg:bottom-5 lg:w-96">
             @foreach($liveSlides as $slide)
-                <a href="{{ $slide['url'] }}" @if(! $loop->first) hidden @endif x-bind:hidden="i !== {{ $loop->index }}" class="flex items-center gap-3 py-2.5 pr-4 pl-3">
-                    <span class="relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-red-600 text-[10px] font-bold tracking-wider uppercase">
-                        <span class="absolute inset-0 animate-ping rounded-xl bg-red-600/60" aria-hidden="true"></span>
-                        <span class="relative">{{ __('Live') }}</span>
-                    </span>
-                    <span class="min-w-0 flex-1 leading-tight">
-                        @isset($slide['score'])
-                            <span class="flex min-w-0 items-baseline gap-1.5 text-sm font-semibold">
-                                <span class="min-w-0 flex-1 truncate text-right">{{ $slide['home'] }}</span>
-                                <span class="shrink-0 font-display text-base font-bold tabular-nums">{{ $slide['score'] }}</span>
-                                <span class="min-w-0 flex-1 truncate">{{ $slide['away'] }}</span>
-                            </span>
-                        @else
-                            <span class="block truncate text-sm font-semibold">{{ $slide['title'] }}</span>
-                        @endisset
-                        <span @class(['block truncate text-xs text-zinc-400', 'text-center' => isset($slide['score'])])>{{ $slide['detail'] }}@if($liveSlides->count() > 1) · {{ $loop->iteration }}/{{ $liveSlides->count() }}@endif</span>
-                    </span>
-                    <span class="shrink-0 text-sky-club-light" aria-hidden="true">→</span>
-                </a>
+                <div @if(! $loop->first) hidden @endif x-bind:hidden="i !== {{ $loop->index }}" class="flex items-stretch">
+                    <a href="{{ $slide['url'] }}" class="flex min-w-0 flex-1 items-center gap-3 py-2.5 pl-3 @if(empty($slide['stream'])) pr-4 @else pr-2 @endif">
+                        <span class="relative flex size-9 shrink-0 items-center justify-center rounded-xl bg-red-600 text-[10px] font-bold tracking-wider uppercase">
+                            <span class="absolute inset-0 animate-ping rounded-xl bg-red-600/60" aria-hidden="true"></span>
+                            <span class="relative">{{ __('Live') }}</span>
+                        </span>
+                        <span class="min-w-0 flex-1 leading-tight">
+                            @isset($slide['score'])
+                                <span class="flex min-w-0 items-baseline gap-1.5 text-sm font-semibold">
+                                    <span class="min-w-0 flex-1 truncate text-right">{{ $slide['home'] }}</span>
+                                    <span class="shrink-0 font-display text-base font-bold tabular-nums">{{ $slide['score'] }}</span>
+                                    <span class="min-w-0 flex-1 truncate">{{ $slide['away'] }}</span>
+                                </span>
+                            @else
+                                <span class="block truncate text-sm font-semibold">{{ $slide['title'] }}</span>
+                            @endisset
+                            <span @class(['block truncate text-xs text-zinc-400', 'text-center' => isset($slide['score'])])>{{ $slide['detail'] }}@if($liveSlides->count() > 1) · {{ $loop->iteration }}/{{ $liveSlides->count() }}@endif</span>
+                        </span>
+                        @if(empty($slide['stream']))<span class="shrink-0 text-sky-club-light" aria-hidden="true">→</span>@endif
+                    </a>
+                    @if(! empty($slide['stream']))
+                        {{-- Mecz z transmisją: wyraźny przycisk prosto do wideo --}}
+                        <a href="{{ $slide['stream'] }}" target="_blank" rel="noopener" data-live-stream class="flex shrink-0 flex-col items-center justify-center gap-0.5 border-l border-white/10 bg-red-600 px-3 text-[10px] font-bold tracking-wide uppercase transition hover:bg-red-700" title="{{ __('Oglądaj transmisję') }}">
+                            <svg class="size-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm6 4v6l5-3-5-3Z"/></svg>
+                            {{ __('Oglądaj') }}
+                        </a>
+                    @endif
+                </div>
             @endforeach
         </div>
     @endif

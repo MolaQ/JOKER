@@ -69,7 +69,7 @@ class TournamentMatch extends Model
 
         // Pasek „Na żywo” na stronie od razu po przełączeniu „Trwa” i po każdym wpisanym secie trwającego meczu.
         static::saved(function (TournamentMatch $match) {
-            if ($match->wasChanged('is_live') || ($match->wasRecentlyCreated && $match->is_live) || ($match->is_live && $match->wasChanged(['home_sets', 'away_sets', 'home_participant_id', 'away_participant_id']))) {
+            if ($match->wasChanged('is_live') || ($match->wasRecentlyCreated && $match->is_live) || ($match->is_live && $match->wasChanged(['home_sets', 'away_sets', 'home_participant_id', 'away_participant_id', 'streams']))) {
                 Cache::forget(LiveNow::CACHE_KEY);
             }
         });

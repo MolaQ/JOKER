@@ -74,6 +74,13 @@
                     Rozpiska dla gości
                 </a>
             @endif
+            @if($section === 'mecze' && $categories->isNotEmpty())
+                {{-- Wszystkie mecze jednego dnia ze wszystkich kategorii, po kolei według godziny (druk albo PDF) --}}
+                <a href="{{ route('admin.tournaments.day-sheet', $tournament) }}" target="_blank" @class(['inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-md bg-white px-3 py-1 sm:min-h-0 text-sm font-semibold text-gray-700 ring-1 ring-gray-300 hover:bg-gray-50', 'ml-auto' => ! $category])>
+                    <svg class="size-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M6 2a1 1 0 0 1 1 1v1h6V3a1 1 0 1 1 2 0v1h.5A2.5 2.5 0 0 1 18 6.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 2 15.5v-9A2.5 2.5 0 0 1 4.5 4H5V3a1 1 0 0 1 1-1Zm-1.5 6a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5h-11ZM6 10h8v1.5H6V10Zm0 3h5v1.5H6V13Z" clip-rule="evenodd"/></svg>
+                    Mecze dnia (wszystkie kategorie)
+                </a>
+            @endif
         </div>
     @endif
 
