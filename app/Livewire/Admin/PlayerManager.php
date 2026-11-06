@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
 use App\Livewire\Concerns\SortsTable;
+use App\Models\MiniGroup;
 use App\Models\Player;
 use App\Models\PlayerAchievement;
 use App\Models\Season;
@@ -14,6 +15,7 @@ use App\Support\ClubAccounts;
 use App\Support\SiteSettings;
 use App\Support\Trash;
 use App\UserRole;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -23,6 +25,8 @@ use Livewire\WithPagination;
 
 class PlayerManager extends Component
 {
+    private const MINI_PREFIX = 'mini-';
+
     use ShowsToasts, SortsTable, WithFileUploads, WithPagination;
 
     public bool $showModal = false;
@@ -79,6 +83,12 @@ class PlayerManager extends Component
     public string $bio = '';
 
     public ?int $team_id = null;
+
+    /** Grupa minisiatkówki (dziecko bez drużyny); wybierana na tej samej liście co drużyna. */
+    public ?int $mini_group_id = null;
+
+    /** Wybór z listy „Drużyna”: identyfikator drużyny albo „mini-ID” grupy minisiatkówki. */
+    public string $group = '';
 
     /** @var array<int, int> Dodatkowe drużyny w bieżącym sezonie (gra w kilku drużynach) */
     public array $extra_team_ids = [];
@@ -150,7 +160,8 @@ class PlayerManager extends Component
             'bio' => 'nullable|string',
             // Bez drużyny zapisze tylko ktoś, kto widzi wszystkie drużyny (trener straciłby dostęp do zawodnika).
             // Dziecko z minisiatkówki może zostać bez drużyny (jest w grupie mini).
-            'team_id' => [Auth::user()->managedTeamIds() === null || $this->editingMini() ? 'nullable' : 'required', Rule::in(Team::managedBy(Auth::user())->pluck('id'))],
+            'team_id' => [Auth::user()->managedTeamIds() === null || $this->mini_group_id ? 'nullable' : 'required', Rule::in(Team::managedBy(Auth::user())->pluck('id'))],
+            'mini_group_id' => ['nullable', Rule::in($this->miniGroupOptions()->pluck('id'))],
             'extra_team_ids' => 'array',
             'extra_team_ids.*' => 'exists:teams,id',
             'extra_team_numbers' => 'array',
@@ -242,6 +253,8 @@ class PlayerManager extends Component
         $this->achievements = $player->achievements->whereNull('tournament_award_id')->map(fn (PlayerAchievement $achievement) => ['season' => (string) $achievement->season, 'title' => $achievement->title])->all();
         $this->bio = (string) $player->bio;
         $this->team_id = $player->team_id;
+        $this->mini_group_id = $player->team_id ? null : $player->mini_group_id;
+        $this->group = $this->team_id ? (string) $this->team_id : ($this->mini_group_id ? self::MINI_PREFIX.$this->mini_group_id : '');
         $this->is_active = $player->is_active;
         $this->image_consent = $player->image_consent;
         $this->existingPhoto = $player->photo_path;
@@ -384,6 +397,8 @@ class PlayerManager extends Component
         $this->achievements = [];
         $this->bio = '';
         $this->team_id = null;
+        $this->mini_group_id = null;
+        $this->group = '';
         $this->extra_team_ids = [];
         $this->extra_team_numbers = [];
         $this->is_active = true;
@@ -412,9 +427,39 @@ class PlayerManager extends Component
         return ['wyswietlenia', 'polubienia', 'logowanie'];
     }
 
-    private function editingMini(): bool
+    /**
+     * Lista „Drużyna” to drużyny i (pod nimi) grupy minisiatkówki; wybór ustawia drużynę albo grupę mini.
+     */
+    public function updatedGroup(string $value): void
     {
-        return $this->editingId !== null && (bool) Player::whereKey($this->editingId)->whereNotNull('mini_group_id')->exists();
+        $this->team_id = ctype_digit($value) ? (int) $value : null;
+        $this->mini_group_id = str_starts_with($value, self::MINI_PREFIX) ? (int) substr($value, strlen(self::MINI_PREFIX)) : null;
+        $this->resetValidation(['team_id', 'mini_group_id']);
+
+        // Nowe dziecko z minisiatkówki: wizerunek dopiero po zgodzie rodzica.
+        if ($this->mini_group_id && ! $this->editingId) {
+            $this->image_consent = false;
+        }
+    }
+
+    /**
+     * Grupy minisiatkówki do wyboru: wszystkie aktywne dla zarządu, dla trenera jego grupy;
+     * zawsze też grupa edytowanego dziecka, żeby zapis jej nie zgubił.
+     *
+     * @return Collection<int, MiniGroup>
+     */
+    private function miniGroupOptions(): Collection
+    {
+        $user = Auth::user();
+        $groups = app(SiteSettings::class)['module_mini']
+            ? ($user->managedTeamIds() === null ? MiniGroup::where('is_active', true)->ordered()->get() : $user->miniGroups()->ordered()->get())
+            : collect();
+
+        if ($this->editingId && ($current = Player::find($this->editingId)?->mini_group_id) && ! $groups->contains('id', $current)) {
+            $groups->push(MiniGroup::find($current));
+        }
+
+        return $groups->filter()->values();
     }
 
     public function render()
@@ -455,7 +500,7 @@ class PlayerManager extends Component
             'duplicateNumbers' => Player::whereNotNull('team_id')->whereNotNull('jersey_number')->selectRaw('team_id, jersey_number')->groupBy('team_id', 'jersey_number')->havingRaw('count(*) > 1')->get()->map(fn ($row) => $row->team_id.'-'.$row->jersey_number)->all(),
             'teams' => $teams,
             'positions' => $positions,
-            'editingMiniGroup' => $this->showModal && $this->editingId ? Player::with('miniGroup')->find($this->editingId)?->miniGroup?->name : null,
+            'miniGroups' => $this->showModal ? $this->miniGroupOptions() : collect(),
             'playerAccounts' => $this->showModal ? User::withRole(UserRole::Player)->orderBy('name')->get(['id', 'name', 'email']) : collect(),
             'socialPlatforms' => app(SiteSettings::class)->playerSocialPlatforms(),
             'linkedAccount' => $this->showModal && $this->user_id ? User::find($this->user_id) : null,

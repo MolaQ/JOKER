@@ -178,3 +178,39 @@ test('dziecko gra w dodatkowej grupie: jest na stronie obu grup i w składach ob
     $this->get(route('mini.show', $singles))->assertOk()->assertSee('Zosia Wiśniewska');
     $this->get(route('players.show', $this->child))->assertSee('Trójki + Singielki');
 });
+
+test('przy dodawaniu zawodnika pod drużynami można wybrać grupę minisiatkówki', function () {
+    Livewire::actingAs($this->admin)->test(PlayerManager::class)
+        ->call('openCreateModal')
+        ->assertSee('Minisiatkówka: Trójki')
+        ->set('first_name', 'Kuba')->set('last_name', 'Nowak')
+        ->set('group', 'mini-'.$this->group->id)
+        ->assertSet('image_consent', false)
+        ->call('save')->assertHasNoErrors();
+
+    $kuba = Player::firstWhere('first_name', 'Kuba');
+    expect($kuba->isMini())->toBeTrue()->and($kuba->mini_group_id)->toBe($this->group->id)->and($kuba->team_id)->toBeNull();
+
+    // Przejście do drużyny: wybór drużyny z tej samej listy.
+    $team = Team::factory()->create();
+    Livewire::actingAs($this->admin)->test(PlayerManager::class)
+        ->call('openEditModal', $kuba->id)->assertSet('group', 'mini-'.$this->group->id)
+        ->set('group', (string) $team->id)->call('save')->assertHasNoErrors();
+    expect($kuba->fresh()->team_id)->toBe($team->id)->and($kuba->fresh()->isMini())->toBeFalse();
+});
+
+test('trener minisiatkówki dodaje dziecko tylko do swojej grupy', function () {
+    $trainer = User::factory()->create();
+    $trainer->assignRole(UserRole::Trainer);
+    $trainer->miniGroups()->attach($this->group);
+    $other = MiniGroup::where('id', '!=', $this->group->id)->first();
+
+    Livewire::actingAs($trainer)->test(PlayerManager::class)
+        ->call('openCreateModal')
+        ->assertSee('Minisiatkówka: Trójki')->assertDontSee('Minisiatkówka: '.$other->name)
+        ->set('first_name', 'Ola')->set('last_name', 'Kot')
+        ->set('group', 'mini-'.$other->id)->call('save')->assertHasErrors('mini_group_id')
+        ->set('group', 'mini-'.$this->group->id)->call('save')->assertHasNoErrors();
+
+    expect(Player::firstWhere('first_name', 'Ola')->mini_group_id)->toBe($this->group->id);
+});

@@ -180,20 +180,33 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Drużyna</label>
-                                <select wire:model.live="team_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                {{-- Drużyny, a pod nimi grupy minisiatkówki (dziecko z mini nie ma drużyny, tylko grupę). --}}
+                                <select wire:model.live="group" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                     <option value="">{{ auth()->user()->managedTeamIds() === null ? '— bez drużyny (uzupełnisz później) —' : 'Wybierz drużynę' }}</option>
+                                    @if($miniGroups->isNotEmpty())<optgroup label="Drużyny">@endif
                                     @foreach($teams as $team)
                                         <option value="{{ $team->id }}">{{ $team->name }}</option>
                                     @endforeach
+                                    @if($miniGroups->isNotEmpty())
+                                        </optgroup>
+                                        <optgroup label="Minisiatkówka">
+                                            @foreach($miniGroups as $miniGroup)
+                                                <option value="mini-{{ $miniGroup->id }}">Minisiatkówka: {{ $miniGroup->name }}</option>
+                                            @endforeach
+                                        </optgroup>
+                                    @endif
                                 </select>
                                 @error('team_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                                @if($editingMiniGroup)
-                                    <p class="mt-1 text-xs text-emerald-700">Minisiatkówka: {{ $editingMiniGroup }}. Bez drużyny dziecko zostaje w grupie mini; po wybraniu drużyny przechodzi do niej.</p>
+                                @error('mini_group_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                @if($mini_group_id)
+                                    <p class="mt-1 text-xs text-emerald-700">Dziecko z minisiatkówki: jest na stronie grupy, a zdjęcie pokaże się tylko za zgodą rodzica. Gdy przejdzie do drużyny, wybierz ją tutaj.</p>
                                 @endif
+@unless($mini_group_id)
                                 <label class="mt-2 flex items-center gap-2 text-sm text-gray-700">
                                     <input type="checkbox" wire:model="is_captain" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500">
                                     Kapitan drużyny w bieżącym sezonie
                                 </label>
+                                @endunless
                             </div>
 
                             <div class="grid grid-cols-3 gap-4">
