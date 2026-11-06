@@ -34,14 +34,18 @@
         <tbody class="divide-y divide-gray-200 bg-white">
             @forelse($articles as $article)
                 <tr wire:key="article-{{ $article->id }}">
-                    <td class="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 max-w-xs truncate">
-                        {{ $article->title }}
-                        @if($article->hasEnglish())
-                            <x-english-badge class="ml-1" />
-                        @endif
-                        @if($article->is_featured)
-                            <span class="ml-2 inline-flex items-center rounded-md bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">Wyróżniony</span>
-                        @endif
+                    <td class="max-w-xs py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                        {{-- Pinezka przed tytułem (długi tytuł się ucina, a ona zawsze widać): kliknięcie przypina albo odpina artykuł. --}}
+                        <div class="flex min-w-0 items-center gap-2">
+                            <button type="button" wire:click="toggleFeatured({{ $article->id }})" data-featured-toggle="{{ $article->id }}" title="{{ $article->is_featured ? 'Przypięty na górze aktualności i strony głównej. Kliknij, żeby odpiąć.' : 'Kliknij, żeby przypiąć na górze aktualności i strony głównej.' }}" aria-pressed="{{ $article->is_featured ? 'true' : 'false' }}" @class(['inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold ring-1 ring-inset transition', 'bg-blue-600 text-white ring-blue-600' => $article->is_featured, 'text-gray-300 ring-transparent hover:bg-gray-50 hover:text-gray-500' => ! $article->is_featured])>
+                                <svg class="size-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7.5 2h5a1 1 0 0 1 .8 1.6L12 5.33V9l2.6 2.6A1 1 0 0 1 13.9 13H10.75v4.25a.75.75 0 0 1-1.5 0V13H6.1a1 1 0 0 1-.7-1.7L8 9V5.33L6.7 3.6A1 1 0 0 1 7.5 2Z"/></svg>
+                                {{ $article->is_featured ? 'Przypięty' : '' }}
+                            </button>
+                            <span class="min-w-0 truncate">{{ $article->title }}</span>
+                            @if($article->hasEnglish())
+                                <x-english-badge class="shrink-0" />
+                            @endif
+                        </div>
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {{ $article->authorName() }}
@@ -269,7 +273,7 @@
                             <div class="flex items-center space-x-6">
                                 <div class="flex items-center">
                                     <input type="checkbox" wire:model="is_featured" id="is_featured" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500">
-                                    <label for="is_featured" class="ml-2 text-sm text-gray-700">Wyróżniony (przypięty na górze aktualności i strony głównej)</label>
+                                    <label for="is_featured" class="ml-2 text-sm text-gray-700">Przypięty na górze aktualności i strony głównej</label>
                                 </div>
                                 <div class="flex items-center">
                                     <input type="checkbox" wire:model="allow_comments" id="allow_comments" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500">

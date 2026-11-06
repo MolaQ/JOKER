@@ -237,6 +237,16 @@ class ArticleManager extends Component
         })->take(8)->values();
     }
 
+    /**
+     * Pinezka na liście: przypina artykuł na górze aktualności i strony głównej albo go odpina.
+     */
+    public function toggleFeatured(int $id): void
+    {
+        $article = Article::findOrFail($id);
+        $article->update(['is_featured' => ! $article->is_featured]);
+        $this->toast($article->is_featured ? 'Artykuł jest przypięty na górze aktualności.' : 'Artykuł odpięty: stoi teraz według daty publikacji.');
+    }
+
     public function delete(int $id): void
     {
         Trash::delete(Article::findOrFail($id));
