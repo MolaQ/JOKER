@@ -1566,7 +1566,7 @@ class TournamentEditor extends Component
     /**
      * @return array<int, array{0: int, 1: int}>
      */
-    public static function parseSets(string $input, string $errorKey = 'sets'): array
+    public static function parseSets(string $input, string $errorKey = 'sets', bool $openLast = false): array
     {
         if (trim($input) === '') {
             return [];
@@ -1580,8 +1580,11 @@ class TournamentEditor extends Component
             $chunks = collect($chunks)->chunk(2)->map(fn ($pair) => $pair->implode(':'))->all();
         }
 
-        foreach ($chunks as $chunk) {
-            if (! preg_match('/^(\d{1,2})[:\-.\/](\d{1,2})$/', $chunk, $points) || (int) $points[1] === (int) $points[2]) {
+        foreach (array_values($chunks) as $index => $chunk) {
+            // Ostatni set trwającego meczu to stan bieżący, więc może być remis (np. 12:12 albo 0:0 na początku seta).
+            $tieAllowed = $openLast && $index === count($chunks) - 1;
+
+            if (! preg_match('/^(\d{1,2})[:\-.\/](\d{1,2})$/', $chunk, $points) || (! $tieAllowed && (int) $points[1] === (int) $points[2])) {
                 throw ValidationException::withMessages([$errorKey => __('Wpisz sety jak „25:20, 23:25, 15:12”. Zamiast dwukropka może być myślnik albo kropka, np. 25-20 23-25 (bez remisów w secie).')]);
             }
 

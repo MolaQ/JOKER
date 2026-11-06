@@ -75,7 +75,11 @@
                     @if($live || $finished)
                         <div class="sm:col-span-2">
                             <p class="text-xs font-medium text-zinc-600">{{ __('Sety') }}</p>
-                            <x-sets-input wire:key="sets-{{ $match->id }}" :model="'rows.'.$match->id.'.sets'" :home="$match->homeName()" :away="$match->awayName()" class="mt-1 max-w-sm" />
+                            <x-sets-input wire:key="sets-{{ $match->id }}" :model="'rows.'.$match->id.'.sets'" :home="$match->homeName()" :away="$match->awayName()" :live="$live" class="mt-1 max-w-sm" />
+                            @if($live)
+                                <p class="mt-1.5 max-w-sm text-[11px] leading-snug text-zinc-500">{{ __('Wpisuj też set, który trwa, i co kilka punktów klikaj „Zapisz wynik”. Set do 25 z 2 pkt przewagi kończy się sam, krótszy (tie-break) dopiero z następnym setem albo końcem meczu.') }}</p>
+                                @if($match->currentSetLabel())<p class="mt-1 text-xs font-semibold text-red-600">{{ __('Kibice widzą') }}: {{ $match->home_sets ?? 0 }}:{{ $match->away_sets ?? 0 }} · {{ $match->currentSetLabel() }}</p>@endif
+                            @endif
                             @error("rows.{$match->id}.sets")<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                         </div>
                         <div>

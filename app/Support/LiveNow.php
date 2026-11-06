@@ -18,7 +18,7 @@ class LiveNow
     public const CACHE_KEY = 'live-now';
 
     /**
-     * @return array{title: string, detail: string, url: string, matches?: list<array{category: string, court: ?string, home: string, away: string, score: string, stream: ?string, url: string}>}|null
+     * @return array{title: string, detail: string, url: string, matches?: list<array{category: string, court: ?string, home: string, away: string, score: string, stream: ?string, set: ?string, url: string}>}|null
      */
     public static function current(): ?array
     {
@@ -68,7 +68,7 @@ class LiveNow
      * Mecze naszych drużyn idą pierwsze, potem mecze z transmisją.
      *
      * @param  Collection<int, TournamentMatch>  $live
-     * @return list<array{category: string, court: ?string, home: string, away: string, score: string, stream: ?string, url: string}>
+     * @return list<array{category: string, court: ?string, home: string, away: string, score: string, stream: ?string, set: ?string, url: string}>
      */
     private static function tournamentMatches(Tournament $tournament, Collection $live): array
     {
@@ -94,6 +94,7 @@ class LiveNow
                     'away' => $bracket->side($match, 'away')['text'],
                     'score' => ($match->home_sets ?? 0).':'.($match->away_sets ?? 0),
                     'stream' => $match->normalizedStreams()[0]['url'] ?? null,
+                    'set' => $match->currentSetLabel(),
                     'url' => route('tournaments.show', [
                         'tournament' => $tournament,
                         'category' => $match->tournament_category_id === $first ? null : $match->category->slug(),

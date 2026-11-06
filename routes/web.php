@@ -41,6 +41,11 @@ use Illuminate\Support\Facades\Route;
 
 // Public routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
+// Pasek „Na żywo” do odświeżania bez przeładowania strony (resources/js/live-bar.js); „from” to ścieżka oglądanej strony.
+Route::get('/live-bar', fn (Request $request) => response()->view('partials.live-bar', [
+    'currentUrl' => url('/'.ltrim((string) $request->query('from', '/'), '/')),
+    'animate' => false,
+])->header('Cache-Control', 'no-store'))->name('live-bar');
 
 // Dla wyszukiwarek: mapa strony i zasady indeksowania (adres mapy zależy od domeny).
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');

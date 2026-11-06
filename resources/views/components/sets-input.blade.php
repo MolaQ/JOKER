@@ -2,10 +2,13 @@
     'model',
     'home' => '',
     'away' => '',
+    'live' => false,
 ])
 {{--
     Sety na telefonie: dwa pola liczbowe na każdy set zamiast tekstu z dwukropkami (klawiatura liczbowa nie ma „:”).
     Po dwóch cyfrach kursor sam przechodzi dalej. Do Livewire trafia tekst „25:20, 23:25”, ten sam co z pola tekstowego.
+    W trwającym meczu (live) ostatni wpisany set, który nie ma jeszcze 25 pkt i 2 pkt przewagi, jest oznaczony „trwa”
+    (tak samo liczy TournamentMatch::currentSet()).
 --}}
 <div {{ $attributes->merge(['class' => 'space-y-2']) }}
     x-data="{
@@ -19,6 +22,14 @@
             const pairs = String(value || '').split(/[,;\s]+/).filter(Boolean).map((chunk) => chunk.split(/[:\-./]/));
             this.sets = pairs.map((pair) => [pair[0] ?? '', pair[1] ?? '']);
             while (this.sets.length < 3) this.sets.push(['', '']);
+        },
+        live: @js((bool) $live),
+        open(index) {
+            if (!this.live) return false;
+            const filled = this.sets.map((set, position) => set[0] !== '' && set[1] !== '' ? position : -1).filter((position) => position >= 0);
+            if (!filled.length || filled[filled.length - 1] !== index) return false;
+            const [home, away] = this.sets[index].map(Number);
+            return !(Math.max(home, away) >= 25 && Math.abs(home - away) >= 2);
         },
         sync() {
             this.raw = this.text();
@@ -38,7 +49,10 @@
     </div>
     <template x-for="(set, index) in sets" :key="index">
         <div class="grid grid-cols-[3rem_1fr_0.75rem_1fr] items-center gap-x-2">
-            <span class="text-sm font-semibold text-zinc-600" x-text="'{{ __('Set') }} ' + (index + 1)"></span>
+            <span class="text-sm leading-tight font-semibold" :class="open(index) ? 'text-red-600' : 'text-zinc-600'">
+                <span x-text="'{{ __('Set') }} ' + (index + 1)"></span>
+                <span x-show="open(index)" x-cloak class="block text-[10px] font-bold tracking-wide uppercase">● {{ __('trwa') }}</span>
+            </span>
             <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" enterkeyhint="next" autocomplete="off"
                 x-model="set[0]" x-on:input="set[0] = $event.target.value.replace(/\D/g, ''); sync(); next($event)"
                 :aria-label="'{{ __('Set') }} ' + (index + 1) + ': ' + @js($home)"

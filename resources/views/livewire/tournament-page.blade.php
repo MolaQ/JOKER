@@ -1,4 +1,4 @@
-<div @if($autoRefresh) wire:poll.120s.visible @endif style="--tm-bar-bg: {{ $site->color('tm_bar_bg') }}; --tm-bar-text: {{ $site->color('tm_bar_text') }}; --tm-number-bg: {{ $site->color('tm_number_bg') }}; --tm-number-text: {{ $site->color('tm_number_text') }};">
+<div @if($autoRefresh) wire:poll.{{ $pollSeconds }}s.visible @endif style="--tm-bar-bg: {{ $site->color('tm_bar_bg') }}; --tm-bar-text: {{ $site->color('tm_bar_text') }}; --tm-number-bg: {{ $site->color('tm_number_bg') }}; --tm-number-text: {{ $site->color('tm_number_text') }};">
     {{-- Kategorie wiekowe i zakładki --}}
     <div class="sticky top-16 z-30 border-b border-zinc-200 bg-white/90 backdrop-blur-xl lg:top-20">
         <div class="container-site space-y-3 py-3">

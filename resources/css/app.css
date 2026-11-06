@@ -1397,6 +1397,18 @@ table[data-sortable] > thead th:not([data-nosort]) {
     }
 }
 
+/* Wynik w pasku „Na żywo”, który właśnie się zmienił, na chwilę się podświetla. */
+.live-flash {
+    animation: live-flash 1.6s ease-out;
+}
+
+@keyframes live-flash {
+    0%, 30% {
+        background: rgb(239 68 68 / 0.55);
+        box-shadow: 0 0 0 3px rgb(239 68 68 / 0.55);
+    }
+}
+
 /*
  * Ładowanie w panelu: przycisk, który wysłał zapis, lekko przygasa z pulsującym kursorem, a lista
  * komponentu, który właśnie się odświeża (filtr, wyszukiwanie, sortowanie), przygasa z delikatnym

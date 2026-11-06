@@ -3,6 +3,7 @@ import { initAdminTables } from './admin-tables';
 import { registerConfirmModal } from './confirm-modal';
 import { initCountdowns } from './countdown';
 import { initDailyLineup } from './daily-lineup';
+import { initLiveBar } from './live-bar';
 import { initThumbnailExport } from './thumbnail-export';
 import { initPageStats } from './page-stats';
 import { initPush } from './push';
@@ -33,6 +34,7 @@ initDailyLineup();
 initThumbnailExport();
 initShareCards();
 initTheme();
+initLiveBar();
 
 // Pojawianie się sekcji przy przewijaniu.
 const revealObserver = 'IntersectionObserver' in window

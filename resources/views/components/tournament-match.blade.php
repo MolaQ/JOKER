@@ -28,8 +28,8 @@
             <span class="w-5 text-right font-display text-lg tabular-nums">{{ $sets ?? '' }}</span>
         </div>
     @endforeach
-    @if($match->setsLabel())
-        <p class="mt-1 text-right text-[11px] text-zinc-400 tabular-nums">({{ $match->setsLabel() }})</p>
+    @if($match->setsLabel() || $match->currentSet())
+        <p class="mt-1 flex justify-end gap-2 text-right text-[11px] text-zinc-400 tabular-nums">@if($match->setsLabel())<span>({{ $match->setsLabel() }})</span>@endif<x-live-set :match="$match" /></p>
     @endif
     <x-tournament-match-media :match="$match" />
 </div>

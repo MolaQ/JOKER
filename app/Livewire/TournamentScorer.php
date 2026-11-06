@@ -81,9 +81,12 @@ class TournamentScorer extends Component
     public function save(int $id, bool $finish = false): void
     {
         $match = $this->match($id);
-        $sets = TournamentEditor::parseSets((string) ($this->rows[$id]['sets'] ?? ''), "rows.{$id}.sets");
-        $home = collect($sets)->filter(fn (array $set) => $set[0] > $set[1])->count();
-        $away = collect($sets)->filter(fn (array $set) => $set[1] > $set[0])->count();
+        // W trwającym meczu ostatni set może być stanem bieżącym (np. „25:23, 13:10”): nie liczy się do wygranych setów,
+        // dopóki nie jest skończony; po „Zakończ mecz” liczą się wszystkie sety.
+        $sets = TournamentEditor::parseSets((string) ($this->rows[$id]['sets'] ?? ''), "rows.{$id}.sets", openLast: ! $finish);
+        $counted = ! $finish && $sets !== [] && ! TournamentMatch::setDone(end($sets)) ? array_slice($sets, 0, -1) : $sets;
+        $home = collect($counted)->filter(fn (array $set) => $set[0] > $set[1])->count();
+        $away = collect($counted)->filter(fn (array $set) => $set[1] > $set[0])->count();
 
         if ($finish && ($sets === [] || $home === $away)) {
             $this->addError("rows.{$id}.sets", __('Mecz kończy się, gdy jedna drużyna wygrała więcej setów.'));

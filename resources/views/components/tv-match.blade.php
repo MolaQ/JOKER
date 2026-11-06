@@ -15,11 +15,12 @@
         @if($match->court)<p @class(['mt-1 font-semibold text-sky-300', 'text-xl' => ! $compact, 'text-base' => $compact])>{{ \App\Support\TournamentHalls::tvLabel($match->court, $match->tournament_category_id) }}</p>@endif
     </div>
     <div @class(['min-w-0 flex-1', 'space-y-2' => ! $compact, 'space-y-1' => $compact])>
-        @if($title || $match->number || $match->setsLabel())
+        @if($title || $match->number || $match->setsLabel() || $match->currentSet())
             <p @class(['flex gap-3 font-semibold tracking-wider text-sky-300 uppercase', 'text-lg' => ! $compact, 'text-sm' => $compact])>
                 <span class="truncate">{{ $title }}</span>
                 @if($match->setsLabel())<span class="ml-auto shrink-0 font-normal tracking-normal text-white/60 tabular-nums normal-case">{{ $match->setsLabel() }}</span>@endif
-                @if($match->number)<span @class(['shrink-0 text-white/40', 'ml-auto' => ! $match->setsLabel()])>#{{ $match->number }}</span>@endif
+                @if($match->currentSet())<x-live-set :match="$match" dark @class(['shrink-0 tracking-normal normal-case', 'ml-auto' => ! $match->setsLabel()]) />@endif
+                @if($match->number)<span @class(['shrink-0 text-white/40', 'ml-auto' => ! $match->setsLabel() && ! $match->currentSet()])>#{{ $match->number }}</span>@endif
             </p>
         @endif
         @foreach(['home', 'away'] as $key)

@@ -69,7 +69,7 @@ class TournamentMatch extends Model
 
         // Pasek „Na żywo” na stronie od razu po przełączeniu „Trwa” i po każdym wpisanym secie trwającego meczu.
         static::saved(function (TournamentMatch $match) {
-            if ($match->wasChanged('is_live') || ($match->wasRecentlyCreated && $match->is_live) || ($match->is_live && $match->wasChanged(['home_sets', 'away_sets', 'home_participant_id', 'away_participant_id', 'streams']))) {
+            if ($match->wasChanged('is_live') || ($match->wasRecentlyCreated && $match->is_live) || ($match->is_live && $match->wasChanged(['home_sets', 'away_sets', 'home_participant_id', 'away_participant_id', 'streams', 'sets_score']))) {
                 Cache::forget(LiveNow::CACHE_KEY);
             }
         });
@@ -272,12 +272,63 @@ class TournamentMatch extends Model
         return $delays;
     }
 
+    /**
+     * Zakończone sety, np. „25:20, 23:25”. W trwającym meczu bez seta, który jeszcze trwa (zob. currentSet()).
+     */
     public function setsLabel(): ?string
     {
-        if (! is_array($this->sets_score) || $this->sets_score === []) {
+        $sets = array_values((array) ($this->sets_score ?? []));
+
+        if ($this->currentSet() !== null) {
+            array_pop($sets);
+        }
+
+        if ($sets === []) {
             return null;
         }
 
-        return collect($this->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(', ');
+        return collect($sets)->map(fn ($set) => implode(':', (array) $set))->implode(', ');
+    }
+
+    /**
+     * Set skończony już po samym wyniku: 25 punktów i 2 punkty przewagi. Krótszy set (np. tie-break do 15)
+     * uznajemy za skończony dopiero, gdy stolik dopisze następny set albo zakończy mecz.
+     *
+     * @param  array<int, int|string>  $set
+     */
+    public static function setDone(array $set): bool
+    {
+        [$home, $away] = array_map('intval', array_values($set) + [0, 0]);
+
+        return max($home, $away) >= 25 && abs($home - $away) >= 2;
+    }
+
+    /**
+     * Set, który trwa: w trwającym meczu ostatni wpisany set, dopóki nie jest skończony
+     * (stolik wpisuje co jakiś czas np. „25:23, 13:10”, a 13:10 to stan drugiego seta).
+     *
+     * @return array{number: int, home: int, away: int}|null
+     */
+    public function currentSet(): ?array
+    {
+        $sets = array_values((array) ($this->sets_score ?? []));
+
+        if (! $this->is_live || $sets === [] || self::setDone((array) end($sets))) {
+            return null;
+        }
+
+        [$home, $away] = array_map('intval', array_values((array) end($sets)) + [0, 0]);
+
+        return ['number' => count($sets), 'home' => $home, 'away' => $away];
+    }
+
+    /**
+     * Stan seta dla kibiców, np. „2. set 13:10”.
+     */
+    public function currentSetLabel(): ?string
+    {
+        $set = $this->currentSet();
+
+        return $set ? __(':number. set :home::away', $set) : null;
     }
 }

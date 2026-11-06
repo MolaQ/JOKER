@@ -262,11 +262,12 @@
                                             @endforeach
                                         </div>
 
-                                        @if($match->setsLabel() || (! $match->isFinished() && ($destinations['winner'] || $destinations['loser'])))
+                                        @if($match->setsLabel() || $match->currentSet() || (! $match->isFinished() && ($destinations['winner'] || $destinations['loser'])))
                                             <footer class="flex flex-wrap items-center gap-x-3 gap-y-0.5 border-t border-zinc-100 bg-zinc-50/70 px-3 py-1.5 text-[11px] text-zinc-500">
                                                 @if($match->setsLabel())
                                                     <span class="tabular-nums"><span class="sr-only">{{ __('Sety') }}: </span>{{ str_replace(', ', ' · ', $match->setsLabel()) }}</span>
                                                 @endif
+                                                <x-live-set :match="$match" />
                                                 @if(! $match->isFinished() && ($destinations['winner'] || $destinations['loser']))
                                                     <span class="ml-auto flex gap-3 text-zinc-400">
                                                         @if($destinations['winner'])<span>{{ __('zwycięzca') }} → {{ $destinations['winner'] }}</span>@endif

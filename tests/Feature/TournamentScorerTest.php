@@ -228,3 +228,50 @@ test('zakończony mecz nie przenosi opóźnienia, jeśli boisko zwolniło się p
     Once::flush();
     expect($this->second->fresh()->possibleDelay())->toBe(9)->and($this->third->fresh()->possibleDelay())->toBe(9);
 });
+
+test('w trwającym meczu ostatni wpisany set to stan bieżący dla kibiców, a po zakończeniu meczu liczą się wszystkie sety', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    Carbon::setTestNow('2026-11-15 10:30');
+    $row = 'rows.'.$this->first->id.'.sets';
+    $screen = Livewire::test(TournamentScorer::class, ['tournament' => $this->tournament])->call('start', $this->first->id);
+
+    // Początek seta może być remisem.
+    $screen->set($row, '0:0')->call('save', $this->first->id)->assertHasNoErrors();
+    expect($this->first->fresh()->currentSetLabel())->toBe('1. set 0:0');
+
+    $screen->set($row, '25:23, 13:10')->call('save', $this->first->id)->assertHasNoErrors()->assertSee('Kibice widzą: 1:0 · 2. set 13:10');
+    $match = $this->first->fresh();
+    expect([$match->home_sets, $match->away_sets])->toBe([1, 0])
+        ->and($match->setsLabel())->toBe('25:23')
+        ->and($match->currentSetLabel())->toBe('2. set 13:10')
+        ->and($match->isFinished())->toBeFalse();
+
+    $this->get(route('home'))->assertSee('2. set 13:10');
+    $this->get(route('tournaments.show', ['tournament' => $this->tournament, 'tab' => 'matches']))->assertSee('2. set 13:10');
+
+    // Set do 25 z przewagą 2 pkt jest skończony od razu.
+    $screen->set($row, '25:23, 25:20')->call('save', $this->first->id);
+    expect($this->first->fresh()->currentSet())->toBeNull()->and($this->first->fresh()->home_sets)->toBe(2);
+
+    // Tie-break do 15: trwa, dopóki mecz się nie skończy; po zakończeniu liczy się do wyniku.
+    $screen->set($row, '25:23, 20:25, 15:12')->call('save', $this->first->id);
+    expect($this->first->fresh()->currentSetLabel())->toBe('3. set 15:12')->and($this->first->fresh()->home_sets)->toBe(1);
+
+    $screen->call('save', $this->first->id, true)->assertHasNoErrors();
+    $match = $this->first->fresh();
+    expect([$match->home_sets, $match->away_sets])->toBe([2, 1])
+        ->and($match->isFinished())->toBeTrue()
+        ->and($match->currentSet())->toBeNull()
+        ->and($match->setsLabel())->toBe('25:23, 20:25, 15:12');
+
+    // Remis w secie przy kończeniu meczu to nadal błąd.
+    $screen->call('reopen', $this->first->id)->set($row, '25:23, 12:12')->call('save', $this->first->id, true)->assertHasErrors($row);
+});
+
+test('pasek na żywo pobiera się na nowo bez przeładowania strony', function () {
+    $this->first->update(['is_live' => true, 'sets_score' => [[25, 23], [13, 10]], 'home_sets' => 1, 'away_sets' => 0]);
+
+    $this->get(route('live-bar', ['from' => '/']))->assertOk()->assertSee('data-live-bar', false)
+        ->assertSeeInOrder(['Sparta', '1:0', 'Orzeł', '2. set 13:10'])->assertDontSee('live-bar fixed', false);
+    $this->get(route('live-bar', ['from' => parse_url(route('tournaments.show', $this->tournament), PHP_URL_PATH)]))->assertOk()->assertDontSee('data-live-bar', false);
+});

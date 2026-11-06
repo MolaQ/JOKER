@@ -54,9 +54,9 @@
             @if($sets !== null)<span class="w-5 text-right font-display text-lg tabular-nums">{{ $sets }}</span>@endif
         </div>
     @endforeach
-    @if($match->setsLabel() || $destinations['winner'] || $destinations['loser'])
+    @if($match->setsLabel() || $match->currentSet() || $destinations['winner'] || $destinations['loser'])
         <footer class="flex flex-wrap items-center justify-end gap-x-3 gap-y-0.5 px-3 pb-2 text-[11px] text-zinc-400">
-            @if($match->setsLabel())<span class="mr-auto tabular-nums">({{ $match->setsLabel() }})</span>@endif
+            @if($match->setsLabel() || $match->currentSet())<span class="mr-auto flex gap-2 tabular-nums">@if($match->setsLabel())<span>({{ $match->setsLabel() }})</span>@endif<x-live-set :match="$match" /></span>@endif
             @if($destinations['winner'])<span>{{ __('zwycięzca') }} → {{ $destinations['winner'] }}</span>@endif
             @if($destinations['loser'])<span>{{ __('przegrany') }} → {{ $destinations['loser'] }}</span>@endif
         </footer>
