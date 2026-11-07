@@ -37,7 +37,8 @@
 
     <p class="text-sm text-zinc-500">{{ __('Godziny w harmonogramie się nie zmieniają. Gdy mecz zacznie się później, kolejne mecze na tym boisku dostaną informację „możliwe opóźnienie”.') }}</p>
 
-    <ul class="space-y-3">
+    {{-- Na szerszym ekranie (laptop, tablet poziomo) dwa mecze obok siebie; trwające są na górze, więc stoją razem. --}}
+    <ul class="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
         @forelse($matches as $match)
             @php
                 $planned = $match->planned_starts_at ?? $match->starts_at;
@@ -104,7 +105,7 @@
                 </div>
             </li>
         @empty
-            <li class="rounded-2xl bg-white p-8 text-center text-sm text-zinc-500 ring-1 ring-zinc-200">{{ __('Brak meczów z godziną w harmonogramie tego dnia.') }}</li>
+            <li class="rounded-2xl bg-white p-8 text-center lg:col-span-2 text-sm text-zinc-500 ring-1 ring-zinc-200">{{ __('Brak meczów z godziną w harmonogramie tego dnia.') }}</li>
         @endforelse
     </ul>
 </div>
