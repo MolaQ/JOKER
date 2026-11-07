@@ -20,6 +20,7 @@ use App\Support\TournamentPractice;
 use App\Support\TournamentReport;
 use App\Support\TournamentResults;
 use App\Support\TournamentSchedule;
+use App\Support\TournamentStats;
 use App\Support\TournamentTable;
 use App\Support\TournamentTemplates;
 use Illuminate\Contracts\View\View;
@@ -48,6 +49,9 @@ class TournamentEditor extends Component
     public ?int $categoryId = null;
 
     public bool $has_page = false;
+
+    /** @var list<string> Statystyki pokazywane w zakładce „Statystyki” strony turnieju. */
+    public array $statsShown = [];
 
     public string $series = '';
 
@@ -172,6 +176,7 @@ class TournamentEditor extends Component
         $this->about_en = (string) $tournament->about_en;
         $this->rules_en = (string) $tournament->rules_en;
         $this->guest_info_en = (string) $tournament->guest_info_en;
+        $this->statsShown = TournamentStats::enabled($tournament);
         $this->scoring = self::scoringState(TournamentTable::scoring(tournament: $tournament));
         $this->categoryId ??= $tournament->categories()->value('id');
         $this->resetMatchForm();
@@ -460,6 +465,13 @@ class TournamentEditor extends Component
         if (in_array($property, ['has_page', 'series', 'rules', 'guest_info', 'about', 'image', 'description_en', 'about_en', 'rules_en', 'guest_info_en'], true)) {
             $this->saveInfo();
         }
+    }
+
+    public function updatedStatsShown(): void
+    {
+        TournamentStats::saveEnabled($this->tournament, array_map('strval', $this->statsShown));
+        $this->statsShown = TournamentStats::enabled($this->tournament);
+        $this->toast($this->statsShown === [] ? 'Zakładka „Statystyki” jest ukryta.' : 'Zapisano statystyki do pokazania.');
     }
 
     public function updatedCategoryId(): void

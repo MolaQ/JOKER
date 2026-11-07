@@ -6,6 +6,7 @@ use App\Models\Tournament;
 use App\Models\TournamentCategory;
 use App\Models\TournamentMatch;
 use App\Support\TournamentBracket;
+use App\Support\TournamentStats;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Blade;
@@ -28,9 +29,18 @@ class TournamentPage extends Component
     #[Url(as: 'tab', except: '')]
     public string $tab = '';
 
+    /** Zakres statystyk: '' = kategoria, 'grupa-{id}' = grupa, 'turniej' = cały turniej. */
+    #[Url(as: 'zakres', except: '')]
+    public string $scope = '';
+
     public function selectTab(string $tab): void
     {
         $this->tab = $tab;
+    }
+
+    public function selectScope(string $scope): void
+    {
+        $this->scope = $scope;
     }
 
     public function render(): View
@@ -59,6 +69,7 @@ class TournamentPage extends Component
             'matches' => [__('Mecze'), $matches->isNotEmpty()],
             'bracket' => [__('Drabinka i miejsca'), $knockout->isNotEmpty()],
             'ranking' => [__('Klasyfikacja'), $standings->isNotEmpty() || $current?->awards->isNotEmpty()],
+            'stats' => [__('Statystyki'), TournamentStats::enabled($this->tournament) !== [] && $categories->contains(fn (TournamentCategory $category) => self::hasResults($category->matches))],
             'rules' => [__('Zasady'), filled($this->tournament->rules)],
             'info' => [__('Informator'), filled($this->tournament->guest_info)],
         ])->filter(fn (array $entry) => $entry[1])->map(fn (array $entry) => $entry[0]);
@@ -82,7 +93,7 @@ class TournamentPage extends Component
             // W dniach turnieju wyniki u kibica odświeżają się same (tylko zakładki z wynikami, tylko widoczna karta):
             // co 30 sekund, gdy w turnieju trwa mecz, a poza tym co 2 minuty.
             'pollSeconds' => $categories->contains(fn (TournamentCategory $category) => $category->matches->contains('is_live', true)) ? 30 : 120,
-            'autoRefresh' => in_array($currentTab, ['groups', 'matches', 'bracket', 'ranking'], true)
+            'autoRefresh' => in_array($currentTab, ['groups', 'matches', 'bracket', 'ranking', 'stats'], true)
                 && today()->between($this->tournament->start_date->copy()->startOfDay(), $this->tournament->lastDay()->endOfDay()),
             'bracket' => $bracket,
             'board' => $board,
@@ -90,6 +101,7 @@ class TournamentPage extends Component
             'knockout' => $knockout->sortBy(fn (TournamentMatch $match) => [$match->starts_at?->timestamp ?? PHP_INT_MAX, $match->number ?? PHP_INT_MAX, $match->id])->values(),
             'standings' => $standings,
             'summary' => $summary,
+            'stats' => $currentTab === 'stats' ? $this->stats($categories, $current) : null,
             'schedule' => $currentTab === 'matches' && $current ? fn () => $this->schedule($categories, $current, $bracket) : null,
         ]);
     }
@@ -116,6 +128,52 @@ class TournamentPage extends Component
             'matches' => $current->matches,
             'bracket' => $bracket,
         ]));
+    }
+
+    /**
+     * Zakładka statystyk: przyciski zakresu i wyliczone statystyki wybranego zakresu (włączone w panelu).
+     *
+     * @param  Collection<int, TournamentCategory>  $categories
+     * @return array<string, mixed>
+     */
+    private function stats(Collection $categories, ?TournamentCategory $current): array
+    {
+        $scopes = collect();
+
+        if ($current && self::hasResults($current->matches)) {
+            $scopes->put('', __('Cała kategoria'));
+
+            foreach ($current->groups as $group) {
+                if (self::hasResults($group->matches)) {
+                    $scopes->put('grupa-'.$group->id, $group->name);
+                }
+            }
+        }
+
+        if ($categories->filter(fn (TournamentCategory $category) => self::hasResults($category->matches))->isNotEmpty()) {
+            $scopes->put('turniej', __('Cały turniej'));
+        }
+
+        $scope = $scopes->has($this->scope) ? $this->scope : $scopes->keys()->first();
+        $enabled = TournamentStats::enabled($this->tournament);
+        $stats = match (true) {
+            $scope === 'turniej' => TournamentStats::forTournament($categories),
+            str_starts_with((string) $scope, 'grupa-') => TournamentStats::forCategory($current, (int) substr($scope, 6)),
+            default => TournamentStats::forCategory($current),
+        };
+
+        return [
+            'scopes' => $scopes,
+            'scope' => $scope,
+            'leaders' => $stats->leaders($enabled),
+            'records' => in_array('records', $enabled, true) ? $stats->records() : collect(),
+            'totals' => in_array('totals', $enabled, true) ? $stats->totals() : null,
+            // W całym turnieju także liczby każdej kategorii obok siebie.
+            'perCategory' => $scope === 'turniej' && in_array('totals', $enabled, true)
+                ? $categories->filter(fn (TournamentCategory $category) => self::hasResults($category->matches))
+                    ->map(fn (TournamentCategory $category) => ['name' => $category->name, 'totals' => TournamentStats::forCategory($category)->totals()])->values()
+                : collect(),
+        ];
     }
 
     /**

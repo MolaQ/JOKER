@@ -127,6 +127,19 @@
             </div>
 
             <div class="rounded-lg border border-gray-200 p-4">
+                <p class="text-sm font-semibold text-gray-900">Zakładka „Statystyki” na stronie turnieju</p>
+                <p class="text-xs text-gray-500">Liczone z zakończonych meczów: kategoria, każda grupa i cały turniej. Liderzy to podium (top 3). Odznacz wszystko, żeby ukryć zakładkę.</p>
+                <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                    @foreach(\App\Support\TournamentStats::options() as $statKey => $statName)
+                        <label class="flex items-start gap-2 text-sm text-gray-700">
+                            <input type="checkbox" value="{{ $statKey }}" wire:model.live="statsShown" class="mt-0.5 rounded border-gray-300 text-sky-700">
+                            <span>{{ $statName }}</span>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="rounded-lg border border-gray-200 p-4">
                 @php $scoringFields = ['win' => 'Wygrana', 'win_tiebreak' => 'Wygrana w tie-breaku', 'loss_tiebreak' => 'Porażka w tie-breaku', 'loss' => 'Porażka', 'per_set' => 'Za każdy wygrany set']; @endphp
                 <p class="text-sm font-semibold text-gray-900">Punktacja meczów grupowych (domyślna dla wszystkich grup)</p>
                 <p class="text-xs text-gray-500">Tie-break to mecz rozstrzygnięty w ostatnim secie (2:1, 3:2). Grupa może mieć własną punktację w zakładce „Grupy”.</p>

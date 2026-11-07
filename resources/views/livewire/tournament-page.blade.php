@@ -338,6 +338,115 @@
             @endif
         @endif
 
+        {{-- STATYSTYKI --}}
+        @if($currentTab === 'stats' && $stats)
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <h2 class="heading-md">{{ __('Statystyki') }} @if($stats['scope'] !== 'turniej' && $current)<span class="text-zinc-400">· {{ $current->name }}</span>@endif</h2>
+                @if($stats['scopes']->count() > 1)
+                    <div data-scroll-fade class="scrollbar-none -mx-4 flex max-w-full gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0" aria-label="{{ __('Zakres statystyk') }}">
+                        @foreach($stats['scopes'] as $key => $label)
+                            <button type="button" wire:click="selectScope('{{ $key }}')" @if($stats['scope'] === $key) aria-current="true" @endif @class(['chip shrink-0 whitespace-nowrap transition', 'bg-club-navy text-white' => $stats['scope'] === $key, 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => $stats['scope'] !== $key])>{{ $label }}</button>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+            <p class="mt-2 text-sm text-zinc-500">{{ __('Liczone z zakończonych meczów.') }}</p>
+
+            @if($stats['totals'])
+                @php
+                    $t = $stats['totals'];
+                    $tiles = array_filter([
+                        __('mecze') => $t['matches'],
+                        __('sety') => $t['sets'],
+                        __('punkty') => $t['points'] ?: null,
+                        __('śr. punktów w secie') => $t['avg_points'] !== null ? number_format($t['avg_points'], 1, ',', '') : null,
+                        __('tie-breaki') => $t['points'] ? $t['tiebreaks'] : null,
+                        __('sety na przewagi') => $t['points'] ? $t['deuce'] : null,
+                        __('odwrócone mecze') => $t['points'] ? $t['comebacks'] : null,
+                        __('powroty z 0:2') => $t['big_comebacks'] ?: null,
+                        __('wygrane bez straty seta') => $t['sweeps'],
+                    ], fn ($value) => $value !== null);
+                @endphp
+                <div class="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-3xl bg-white/10 text-white ring-1 ring-white/10 sm:grid-cols-4" data-theme-keep>
+                    @foreach($tiles as $label => $value)
+                        <div class="bg-ink px-4 py-4 sm:px-6 sm:py-5">
+                            <p class="font-display text-3xl leading-none font-bold text-sky-club-light tabular-nums sm:text-4xl">{{ is_int($value) ? number_format($value, 0, ',', ' ') : $value }}</p>
+                            <p class="mt-1.5 text-xs font-semibold tracking-wide text-zinc-400 uppercase">{{ $label }}</p>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+
+            @if($stats['perCategory']->count() > 1)
+                <div class="mt-4 overflow-x-auto rounded-2xl bg-white ring-1 ring-zinc-200">
+                    <table class="w-full min-w-[28rem] text-sm">
+                        <thead class="text-xs text-zinc-500 uppercase">
+                            <tr class="border-b border-zinc-100">
+                                <th class="px-4 py-2.5 text-left font-semibold">{{ __('Kategoria') }}</th>
+                                <th class="px-3 py-2.5 text-right font-semibold">{{ __('Mecze') }}</th>
+                                <th class="px-3 py-2.5 text-right font-semibold">{{ __('Sety') }}</th>
+                                <th class="px-3 py-2.5 text-right font-semibold">{{ __('Punkty') }}</th>
+                                <th class="px-4 py-2.5 text-right font-semibold">{{ __('Tie-breaki') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="tabular-nums">
+                            @foreach($stats['perCategory'] as $row)
+                                <tr class="border-b border-zinc-100 last:border-0">
+                                    <td class="px-4 py-2.5 font-semibold">{{ $row['name'] }}</td>
+                                    <td class="px-3 py-2.5 text-right">{{ $row['totals']['matches'] }}</td>
+                                    <td class="px-3 py-2.5 text-right">{{ $row['totals']['sets'] }}</td>
+                                    <td class="px-3 py-2.5 text-right">{{ $row['totals']['points'] ? number_format($row['totals']['points'], 0, ',', ' ') : '–' }}</td>
+                                    <td class="px-4 py-2.5 text-right">{{ $row['totals']['points'] ? $row['totals']['tiebreaks'] : '–' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+
+            @if($stats['leaders']->isNotEmpty())
+                <ul class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach($stats['leaders'] as $key => $stat)
+                        <li wire:key="stat-{{ $stats['scope'] }}-{{ $key }}" class="rounded-2xl bg-white p-5 ring-1 ring-zinc-200">
+                            <p class="font-display text-lg leading-tight font-bold uppercase">{{ $stat['label'] }}</p>
+                            <p class="mt-0.5 text-xs text-zinc-500">{{ $stat['help'] }}</p>
+                            <ol class="mt-4 space-y-2.5">
+                                @foreach($stat['rows'] as $row)
+                                    <li @class(['flex items-center gap-3', 'rounded-xl bg-sky-club/10 -mx-2 px-2 py-1' => $row['own']])>
+                                        <span @class(['flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold', 'bg-amber-400 text-amber-950' => $row['position'] === 1, 'bg-zinc-300 text-zinc-900' => $row['position'] === 2, 'bg-orange-400 text-orange-950' => $row['position'] === 3])>{{ $row['position'] }}</span>
+                                        <x-avatar logo :photo="$row['logo']" :name="$row['team']" class="size-8 shrink-0 rounded-full text-[10px]" />
+                                        <span @class(['min-w-0 flex-1 text-sm leading-tight', 'font-semibold' => $row['position'] === 1, 'text-sky-club-dark' => $row['own']])>{{ $row['name'] }}</span>
+                                        <span @class(['shrink-0 font-display font-bold tabular-nums', 'text-2xl text-sky-club-dark' => $row['position'] === 1, 'text-lg text-zinc-700' => $row['position'] !== 1])>{{ $row['display'] }}</span>
+                                    </li>
+                                @endforeach
+                            </ol>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+
+            @if($stats['records']->isNotEmpty())
+                <h3 class="heading-md mt-12">{{ __('Rekordy') }}</h3>
+                <ul class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    @foreach($stats['records'] as $record)
+                        <li class="rounded-2xl bg-white p-5 ring-1 ring-zinc-200">
+                            <p class="text-xs font-semibold tracking-wide text-sky-club-dark uppercase">{{ $record['label'] }}</p>
+                            <p class="mt-1 font-display text-3xl leading-none font-bold tabular-nums">{{ $record['value'] }}</p>
+                            <div class="mt-3 space-y-1.5">
+                                @foreach($record['teams'] as $team)
+                                    <p class="flex items-center gap-2 text-sm leading-tight">
+                                        <x-avatar logo :photo="$team['logo']" :name="$team['name']" class="size-6 shrink-0 rounded-full text-[9px]" />
+                                        <span @class(['min-w-0', 'font-semibold text-sky-club-dark' => $team['own']])>{{ $team['name'] }}</span>
+                                    </p>
+                                @endforeach
+                            </div>
+                            <p class="mt-2 text-xs text-zinc-500">{{ $record['match'] }}</p>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+        @endif
+
         {{-- ZASADY I INFORMATOR --}}
         @foreach(['about' => $tournament->localized('about'), 'rules' => $tournament->localized('rules'), 'info' => $tournament->localized('guest_info')] as $key => $content)
             @if($currentTab === $key)
