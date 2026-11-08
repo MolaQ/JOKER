@@ -117,21 +117,21 @@
         @endphp
         @if($individualAwards->isNotEmpty())
             <div class="card overflow-hidden ring-amber-200!">
-                <div class="flex items-center gap-3 bg-gradient-to-r from-amber-50 to-transparent px-6 pt-6 pb-4">
-                    <span class="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-amber-400 text-amber-950 shadow-lg shadow-amber-500/30" aria-hidden="true">
-                        <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 21h8m-4-4v4M7 4h10v5a5 5 0 0 1-10 0V4Zm0 2H4v1a3 3 0 0 0 3 3m10-4h3v1a3 3 0 0 1-3 3"/></svg>
+                <div class="flex items-center gap-2.5 bg-gradient-to-r from-amber-50 to-transparent px-5 pt-4 pb-3">
+                    <span class="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-400 text-amber-950 shadow-md shadow-amber-500/30" aria-hidden="true">
+                        <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 21h8m-4-4v4M7 4h10v5a5 5 0 0 1-10 0V4Zm0 2H4v1a3 3 0 0 0 3 3m10-4h3v1a3 3 0 0 1-3 3"/></svg>
                     </span>
-                    <h2 class="heading-md">{{ __('Nagrody indywidualne') }}</h2>
+                    <h2 class="font-display text-lg leading-none font-bold uppercase">{{ __('Nagrody indywidualne') }}</h2>
                 </div>
                 <ul class="divide-y divide-zinc-100">
                     @foreach($individualAwards as $award)
                         @php $awardTournament = $award->tournamentAward?->category?->tournament; @endphp
-                        <li class="flex gap-4 px-6 py-5">
-                            <span class="mt-1 w-1 shrink-0 rounded-full bg-amber-400" aria-hidden="true"></span>
+                        <li class="flex gap-3 px-5 py-3">
+                            <span class="w-0.5 shrink-0 rounded-full bg-amber-400" aria-hidden="true"></span>
                             <div class="min-w-0">
-                                <p class="font-display text-xl leading-tight font-bold text-amber-600 uppercase sm:text-2xl">{{ $award->name }}</p>
+                                <p class="font-display text-base leading-tight font-bold text-amber-600 uppercase sm:text-lg">{{ $award->name }}</p>
                                 @if($award->event)
-                                    <p class="mt-1 font-semibold text-zinc-900">
+                                    <p class="mt-0.5 text-sm font-semibold text-zinc-900">
                                         @if($awardTournament?->has_page)
                                             <a href="{{ route('tournaments.show', ['tournament' => $awardTournament, 'tab' => 'ranking']) }}" class="hover:text-sky-club-dark hover:underline">{{ $award->event }}</a>
                                         @else
@@ -139,15 +139,15 @@
                                         @endif
                                     </p>
                                 @endif
-                                <p class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-500">
+                                <p class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-zinc-500">
                                     @if($award->awarded_on)
-                                        <span class="inline-flex items-center gap-1.5"><svg class="size-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M16 3v4M8 3v4M3 10h18"/></svg>{{ $award->awarded_on->translatedFormat('j F Y') }}</span>
+                                        <span class="inline-flex items-center gap-1.5"><svg class="size-3.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M16 3v4M8 3v4M3 10h18"/></svg>{{ $award->awarded_on->translatedFormat('j F Y') }}</span>
                                     @endif
                                     @if($award->place)
-                                        <span class="inline-flex items-center gap-1.5"><svg class="size-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>{{ $award->place }}</span>
+                                        <span class="inline-flex items-center gap-1.5"><svg class="size-3.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>{{ $award->place }}</span>
                                     @endif
                                     @if($award->note)
-                                        <span class="inline-flex items-center gap-1.5"><svg class="size-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h10"/></svg>{{ $award->note }}</span>
+                                        <span class="inline-flex items-center gap-1.5"><svg class="size-3.5 text-amber-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h10"/></svg>{{ $award->note }}</span>
                                     @endif
                                 </p>
                             </div>
