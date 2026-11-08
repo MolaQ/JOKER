@@ -7,6 +7,7 @@ use App\Livewire\Concerns\SortsTable;
 use App\Models\MiniGroup;
 use App\Models\Player;
 use App\Models\PlayerAchievement;
+use App\Models\PlayerAward;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\User;
@@ -79,6 +80,9 @@ class PlayerManager extends Component
 
     /** @var array<int, array{season: string, title: string}> Osiągnięcia pokazywane w profilu */
     public array $achievements = [];
+
+    /** @var list<array{name: string, event: string, date: string, place: string}> Nagrody indywidualne spoza turniejów na stronie. */
+    public array $awards = [];
 
     public string $bio = '';
 
@@ -157,6 +161,11 @@ class PlayerManager extends Component
             'achievements' => 'array',
             'achievements.*.season' => 'nullable|string|max:20',
             'achievements.*.title' => 'nullable|string|max:255',
+            'awards' => 'array',
+            'awards.*.name' => 'nullable|string|max:150',
+            'awards.*.event' => 'nullable|string|max:200',
+            'awards.*.date' => 'nullable|date',
+            'awards.*.place' => 'nullable|string|max:120',
             'bio' => 'nullable|string',
             // Bez drużyny zapisze tylko ktoś, kto widzi wszystkie drużyny (trener straciłby dostęp do zawodnika).
             // Dziecko z minisiatkówki może zostać bez drużyny (jest w grupie mini).
@@ -251,6 +260,7 @@ class PlayerManager extends Component
         $this->user_id = $player->user_id;
         $this->guardian_ids = $player->guardians()->pluck('users.id')->all();
         $this->achievements = $player->achievements->whereNull('tournament_award_id')->map(fn (PlayerAchievement $achievement) => ['season' => (string) $achievement->season, 'title' => $achievement->title])->all();
+        $this->awards = $player->awards->map(fn (PlayerAward $award) => ['name' => $award->name, 'event' => (string) $award->event, 'date' => (string) $award->awarded_on?->toDateString(), 'place' => (string) $award->place])->values()->all();
         $this->bio = (string) $player->bio;
         $this->team_id = $player->team_id;
         $this->mini_group_id = $player->team_id ? null : $player->mini_group_id;
@@ -279,7 +289,7 @@ class PlayerManager extends Component
         $captain = $validated['is_captain'];
         $accountEmail = trim($validated['account_email'] ?? '');
         $newGuardians = array_filter($validated['new_guardians'] ?? [], fn (array $row) => trim($row['email'] ?? '') !== '');
-        unset($validated['extra_team_numbers'], $validated['extra_team_ids'], $validated['guardian_ids'], $validated['achievements'], $validated['photo'], $validated['is_captain'], $validated['account_email'], $validated['new_guardians']);
+        unset($validated['extra_team_numbers'], $validated['extra_team_ids'], $validated['guardian_ids'], $validated['achievements'], $validated['awards'], $validated['photo'], $validated['is_captain'], $validated['account_email'], $validated['new_guardians']);
         $validated['position'] = $validated['position'] ?: null;
         $validated['interests'] = trim($validated['interests'] ?? '') ?: null;
         $validated['social_links'] = array_filter(array_map(fn ($url) => trim((string) $url), $validated['social_links'] ?? [])) ?: null;
@@ -318,6 +328,18 @@ class PlayerManager extends Component
             ]);
         }
 
+        $player->awards()->delete();
+
+        foreach (array_values(array_filter($this->awards, fn (array $row) => trim($row['name'] ?? '') !== '')) as $order => $row) {
+            $player->awards()->create([
+                'name' => trim($row['name']),
+                'event' => trim($row['event'] ?? '') ?: null,
+                'awarded_on' => ($row['date'] ?? '') ?: null,
+                'place' => trim($row['place'] ?? '') ?: null,
+                'display_order' => $order,
+            ]);
+        }
+
         $currentSeasonId = Season::current()->value('id');
 
         if ($currentSeasonId) {
@@ -347,6 +369,17 @@ class PlayerManager extends Component
         }
 
         $this->closeModal();
+    }
+
+    public function addAward(): void
+    {
+        $this->awards[] = ['name' => '', 'event' => '', 'date' => '', 'place' => ''];
+    }
+
+    public function removeAward(int $index): void
+    {
+        unset($this->awards[$index]);
+        $this->awards = array_values($this->awards);
     }
 
     public function addAchievement(): void
@@ -395,6 +428,7 @@ class PlayerManager extends Component
         $this->user_id = null;
         $this->guardian_ids = [];
         $this->achievements = [];
+        $this->awards = [];
         $this->bio = '';
         $this->team_id = null;
         $this->mini_group_id = null;

@@ -304,9 +304,10 @@
 
                             <div>
                                 <div class="flex items-center justify-between">
-                                    <label class="block text-sm font-medium text-gray-700">Osiągnięcia</label>
-                                    <button type="button" wire:click="addAchievement" class="text-sm font-semibold text-sky-700 hover:underline">+ Dodaj</button>
+                                    <label class="block text-sm font-medium text-gray-700">Nagrody indywidualne</label>
+                                    <button type="button" wire:click="addAward" class="text-sm font-semibold text-sky-700 hover:underline">+ Dodaj</button>
                                 </div>
+                                <p class="text-xs text-gray-500">Z imprez spoza turniejów na stronie. Nagrody z naszych turniejów dodajesz w turnieju, w sekcji „Wyróżnienia”, i trafiają tu same.</p>
                                 @if($editingId && ($fromTournaments = \App\Models\PlayerAchievement::where('player_id', $editingId)->whereNotNull('tournament_award_id')->get())->isNotEmpty())
                                     <ul class="mt-1 space-y-1 text-sm text-gray-700">
                                         @foreach($fromTournaments as $auto)
@@ -314,6 +315,25 @@
                                         @endforeach
                                     </ul>
                                 @endif
+                                <div class="mt-2 space-y-3">
+                                    @foreach($awards as $index => $award)
+                                        <div class="grid gap-2 rounded-md border border-amber-200 bg-amber-50/50 p-2 sm:grid-cols-[1fr_1fr_auto]" wire:key="award-{{ $index }}">
+                                            <input type="text" wire:model="awards.{{ $index }}.name" placeholder="Wyróżnienie, np. MVP turnieju" class="min-w-0 rounded-md border-gray-300 text-sm">
+                                            <input type="text" wire:model="awards.{{ $index }}.event" placeholder="Impreza, np. Turniej o Puchar Prezydenta" class="min-w-0 rounded-md border-gray-300 text-sm">
+                                            <button type="button" wire:click="removeAward({{ $index }})" class="px-2 text-gray-400 hover:text-red-600 max-sm:justify-self-end" aria-label="Usuń nagrodę">✕</button>
+                                            <input type="date" wire:model="awards.{{ $index }}.date" class="min-w-0 rounded-md border-gray-300 text-sm" aria-label="Data">
+                                            <input type="text" wire:model="awards.{{ $index }}.place" placeholder="Miejsce, np. Kalisz" class="min-w-0 rounded-md border-gray-300 text-sm">
+                                        </div>
+                                        @error("awards.{$index}.date") <p class="text-sm text-red-600">{{ $message }}</p> @enderror
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex items-center justify-between">
+                                    <label class="block text-sm font-medium text-gray-700">Osiągnięcia</label>
+                                    <button type="button" wire:click="addAchievement" class="text-sm font-semibold text-sky-700 hover:underline">+ Dodaj</button>
+                                </div>
                                 <div class="mt-1 space-y-2">
                                     @foreach($achievements as $index => $achievement)
                                         <div class="flex gap-2" wire:key="achievement-{{ $index }}">

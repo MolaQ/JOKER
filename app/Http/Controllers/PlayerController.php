@@ -19,7 +19,7 @@ class PlayerController extends Controller
      */
     public function show(Player $player): View
     {
-        $player->load(['team', 'miniGroup', 'extraMiniGroups', 'likes', 'achievements']);
+        $player->load(['team', 'miniGroup', 'extraMiniGroups', 'likes', 'achievements.tournamentAward.category.tournament', 'achievements.tournamentAward.participant.competitor', 'awards']);
         $player->registerView();
 
         $currentSeasonId = Season::current()->value('id');

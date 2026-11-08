@@ -13,6 +13,7 @@ use App\Models\Player;
 use App\Models\ProfileChangeRequest;
 use App\Models\Season;
 use App\Models\Team;
+use App\Models\Tournament;
 use App\Models\User;
 use App\Notifications\ClubAccountCreated;
 use App\Permission;
@@ -289,4 +290,29 @@ test('profile change requests show readable changes instead of raw data', functi
         ->assertSee('O mnie')->assertSeeHtml('<strong>Szymon</strong> zdobywał doświadczenie')->assertSee('Stary opis')
         ->assertSee('bez zmian')->assertSee('Oczekuje')
         ->assertDontSeeHtml('<script>alert(1)</script>')->assertDontSee('"additional_info"')->assertDontSee('social_links');
+});
+
+test('individual awards from club tournaments and from other events show on the player profile', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $player = Player::create(['first_name' => 'Filip', 'last_name' => 'Hryncewicz', 'team_id' => $this->team->id]);
+
+    $tournament = Tournament::create(['name' => 'Memoriał im. Włodzimierza Winklera', 'edition' => 'VII', 'start_date' => '2026-11-07', 'end_date' => '2026-11-08', 'city' => 'Piła', 'has_page' => true]);
+    $category = $tournament->categories()->create(['name' => 'Junior młodszy', 'display_order' => 0]);
+    $tournament->categories()->create(['name' => 'Junior', 'display_order' => 1]);
+    $category->awards()->create(['name' => 'Najlepszy zawodnik drużyny', 'player_id' => $player->id])->syncAchievement();
+
+    Livewire::test(PlayerManager::class)->call('openEditModal', $player->id)
+        ->call('addAward')
+        ->set('awards.0.name', 'MVP turnieju')->set('awards.0.event', 'Turniej o Puchar Prezydenta')->set('awards.0.date', '2026-10-12')->set('awards.0.place', 'Kalisz')
+        ->call('addAward')
+        ->call('save')->assertHasNoErrors();
+
+    expect($player->awards()->count())->toBe(1)
+        ->and($player->fresh()->individualAwards()->pluck('name')->all())->toBe(['Najlepszy zawodnik drużyny', 'MVP turnieju']);
+
+    $this->get(route('players.show', $player))->assertOk()
+        ->assertSeeInOrder(['Nagrody indywidualne', 'Najlepszy zawodnik drużyny', 'VII Memoriał im. Włodzimierza Winklera', '8 listopada 2026', 'Piła', 'Junior młodszy', 'MVP turnieju', 'Turniej o Puchar Prezydenta', '12 października 2026', 'Kalisz'])
+        ->assertDontSeeHtml('heading-md">Osiągnięcia');
+
+    Livewire::test(PlayerManager::class)->call('openEditModal', $player->id)->assertSet('awards.0.place', 'Kalisz');
 });

@@ -110,6 +110,52 @@
     <div class="min-w-0 space-y-8 lg:col-span-2">
         @livewire('player-proposal-form', ['player' => $player], key('player-proposal-'.$player->id))
 
+        @php
+            // Nagrody indywidualne (z turniejów na stronie i wpisane w panelu zawodnika) osobno, na górze; reszta osiągnięć niżej jak dotąd.
+            $individualAwards = $player->individualAwards();
+            $otherAchievements = $player->achievements->filter(fn ($achievement) => ! $achievement->tournamentAward?->category?->tournament);
+        @endphp
+        @if($individualAwards->isNotEmpty())
+            <div class="overflow-hidden rounded-3xl bg-ink text-white ring-1 ring-white/10" data-theme-keep>
+                <div class="flex items-center gap-3 px-6 pt-6">
+                    <span class="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-amber-950 shadow-lg shadow-amber-500/30" aria-hidden="true">
+                        <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 21h8m-4-4v4M7 4h10v5a5 5 0 0 1-10 0V4Zm0 2H4v1a3 3 0 0 0 3 3m10-4h3v1a3 3 0 0 1-3 3"/></svg>
+                    </span>
+                    <h2 class="font-display text-2xl leading-none font-bold uppercase">{{ __('Nagrody indywidualne') }}</h2>
+                </div>
+                <ul class="mt-5 grid gap-px bg-white/10">
+                    @foreach($individualAwards as $award)
+                        <li class="relative bg-ink px-6 py-5">
+                            <p class="font-display text-xl leading-tight font-bold text-amber-300 uppercase sm:text-2xl">{{ $award['name'] }}</p>
+                            @if($award['event'])
+                                <p class="mt-1 font-semibold">
+                                    @if($award['url'])
+                                        <a href="{{ $award['url'] }}" class="hover:text-sky-club-light hover:underline">{{ $award['event'] }}</a>
+                                    @else
+                                        {{ $award['event'] }}
+                                    @endif
+                                </p>
+                            @endif
+                            <p class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-zinc-400">
+                                @if($award['date'])
+                                    <span class="inline-flex items-center gap-1.5"><svg class="size-4 text-sky-club" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M16 3v4M8 3v4M3 10h18"/></svg>{{ $award['date']->translatedFormat('j F Y') }}</span>
+                                @endif
+                                @if($award['place'])
+                                    <span class="inline-flex items-center gap-1.5"><svg class="size-4 text-sky-club" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>{{ $award['place'] }}</span>
+                                @endif
+                                @if($award['category'])
+                                    <span class="inline-flex items-center gap-1.5"><svg class="size-4 text-sky-club" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h10"/></svg>{{ $award['category'] }}</span>
+                                @endif
+                                @if($award['team'])
+                                    <span class="inline-flex items-center gap-1.5"><svg class="size-4 text-sky-club" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 19v-1a4 4 0 0 0-8 0v1M12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/></svg>{{ $award['team'] }}</span>
+                                @endif
+                            </p>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         @if($miniTrips->isNotEmpty())
             <div class="card p-6">
                 <h2 class="heading-md">{{ __('Turnieje minisiatkówki') }}</h2>
@@ -158,11 +204,11 @@
             </div>
         @endif
 
-        @if($player->achievements->isNotEmpty())
+        @if($otherAchievements->isNotEmpty())
             <div class="card p-6">
                 <h2 class="heading-md">{{ __('Osiągnięcia') }}</h2>
                 <ul class="mt-5 space-y-3">
-                    @foreach($player->achievements as $achievement)
+                    @foreach($otherAchievements as $achievement)
                         <li class="flex items-start gap-3">
                             <span class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600" aria-hidden="true">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 21h8m-4-4v4M7 4h10v5a5 5 0 0 1-10 0V4Zm0 2H4v1a3 3 0 0 0 3 3m10-4h3v1a3 3 0 0 1-3 3"/></svg>
