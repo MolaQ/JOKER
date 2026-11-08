@@ -307,22 +307,23 @@
                                     <label class="block text-sm font-medium text-gray-700">Nagrody indywidualne</label>
                                     <button type="button" wire:click="addAward" class="text-sm font-semibold text-sky-700 hover:underline">+ Dodaj</button>
                                 </div>
-                                <p class="text-xs text-gray-500">Z imprez spoza turniejów na stronie. Nagrody z naszych turniejów dodajesz w turnieju, w sekcji „Wyróżnienia”, i trafiają tu same.</p>
-                                @if($editingId && ($fromTournaments = \App\Models\PlayerAchievement::where('player_id', $editingId)->whereNotNull('tournament_award_id')->get())->isNotEmpty())
-                                    <ul class="mt-1 space-y-1 text-sm text-gray-700">
-                                        @foreach($fromTournaments as $auto)
-                                            <li class="flex gap-2 rounded-md bg-amber-50 px-2 py-1"><span class="text-amber-600">★</span><span class="w-20 shrink-0 text-gray-500">{{ $auto->season }}</span><span class="min-w-0 flex-1">{{ $auto->title }}</span><span class="text-xs text-gray-500">z turnieju</span></li>
-                                        @endforeach
-                                    </ul>
-                                @endif
+                                <p class="text-xs text-gray-500">Kolejność jak w profilu (strzałki). Nagrody z naszych turniejów (★) trafiają tu same z sekcji „Wyróżnienia” turnieju; tu możesz je poprawić, np. dopisać miejsce.</p>
                                 <div class="mt-2 space-y-3">
                                     @foreach($awards as $index => $award)
-                                        <div class="grid gap-2 rounded-md border border-amber-200 bg-amber-50/50 p-2 sm:grid-cols-[1fr_1fr_auto]" wire:key="award-{{ $index }}">
-                                            <input type="text" wire:model="awards.{{ $index }}.name" placeholder="Wyróżnienie, np. MVP turnieju" class="min-w-0 rounded-md border-gray-300 text-sm">
-                                            <input type="text" wire:model="awards.{{ $index }}.event" placeholder="Impreza, np. Turniej o Puchar Prezydenta" class="min-w-0 rounded-md border-gray-300 text-sm">
-                                            <button type="button" wire:click="removeAward({{ $index }})" class="px-2 text-gray-400 hover:text-red-600 max-sm:justify-self-end" aria-label="Usuń nagrodę">✕</button>
-                                            <input type="date" wire:model="awards.{{ $index }}.date" class="min-w-0 rounded-md border-gray-300 text-sm" aria-label="Data">
-                                            <input type="text" wire:model="awards.{{ $index }}.place" placeholder="Miejsce, np. Kalisz" class="min-w-0 rounded-md border-gray-300 text-sm">
+                                        <div class="flex gap-2 rounded-md border border-amber-200 bg-amber-50/50 p-2" wire:key="award-{{ $award['id'] ?? 'new-'.$index }}">
+                                            <div class="flex shrink-0 flex-col items-center gap-1 pt-1">
+                                                <button type="button" wire:click="moveAward({{ $index }}, -1)" @disabled($loop->first) class="text-gray-400 hover:text-sky-700 disabled:opacity-30" aria-label="Wyżej">▲</button>
+                                                @if($award['tournament'])<span class="text-amber-500" title="Z turnieju na stronie">★</span>@endif
+                                                <button type="button" wire:click="moveAward({{ $index }}, 1)" @disabled($loop->last) class="text-gray-400 hover:text-sky-700 disabled:opacity-30" aria-label="Niżej">▼</button>
+                                            </div>
+                                            <div class="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
+                                                <input type="text" wire:model="awards.{{ $index }}.name" placeholder="Wyróżnienie, np. MVP turnieju" class="min-w-0 rounded-md border-gray-300 text-sm">
+                                                <input type="text" wire:model="awards.{{ $index }}.event" placeholder="Impreza, np. Turniej o Puchar Prezydenta" class="min-w-0 rounded-md border-gray-300 text-sm">
+                                                <input type="date" wire:model="awards.{{ $index }}.date" class="min-w-0 rounded-md border-gray-300 text-sm" aria-label="Data">
+                                                <input type="text" wire:model="awards.{{ $index }}.place" placeholder="Miejsce, np. Kalisz" class="min-w-0 rounded-md border-gray-300 text-sm">
+                                                <input type="text" wire:model="awards.{{ $index }}.note" placeholder="Dopisek, np. kategoria i drużyna (opcjonalnie)" class="min-w-0 rounded-md border-gray-300 text-sm sm:col-span-2">
+                                            </div>
+                                            <button type="button" wire:click="removeAward({{ $index }})" class="self-start px-1 text-gray-400 hover:text-red-600" aria-label="Usuń nagrodę">✕</button>
                                         </div>
                                         @error("awards.{$index}.date") <p class="text-sm text-red-600">{{ $message }}</p> @enderror
                                     @endforeach

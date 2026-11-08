@@ -19,6 +19,8 @@ use App\Notifications\ClubAccountCreated;
 use App\Permission;
 use App\Support\Approvals;
 use App\Support\DataImport;
+use App\Support\SearchIndex;
+use App\Support\SiteSettings;
 use App\UserRole;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
@@ -292,27 +294,45 @@ test('profile change requests show readable changes instead of raw data', functi
         ->assertDontSeeHtml('<script>alert(1)</script>')->assertDontSee('"additional_info"')->assertDontSee('social_links');
 });
 
-test('individual awards from club tournaments and from other events show on the player profile', function () {
+test('individual awards from club tournaments and from other events show on the player profile, editable and sortable', function () {
     $this->actingAs(User::factory()->admin()->create());
     $player = Player::create(['first_name' => 'Filip', 'last_name' => 'Hryncewicz', 'team_id' => $this->team->id]);
+    app(SiteSettings::class)->set(['contact_address' => 'ul. Wincentego Pola 11, 64-920 Piła']);
 
-    $tournament = Tournament::create(['name' => 'Memoriał im. Włodzimierza Winklera', 'edition' => 'VII', 'start_date' => '2026-11-07', 'end_date' => '2026-11-08', 'city' => 'Piła', 'has_page' => true]);
+    // Memoriał bez wpisanej miejscowości: miejsce to miasto klubu.
+    $tournament = Tournament::create(['name' => 'Memoriał im. Włodzimierza Winklera', 'edition' => 'VII', 'start_date' => '2026-11-07', 'end_date' => '2026-11-08', 'series' => Tournament::SERIES_MEMORIAL, 'has_page' => true]);
     $category = $tournament->categories()->create(['name' => 'Junior młodszy', 'display_order' => 0]);
     $tournament->categories()->create(['name' => 'Junior', 'display_order' => 1]);
-    $category->awards()->create(['name' => 'Najlepszy zawodnik drużyny', 'player_id' => $player->id])->syncAchievement();
+    $tournamentAward = $category->awards()->create(['name' => 'Najlepszy zawodnik drużyny', 'player_id' => $player->id]);
+    $tournamentAward->syncAchievement();
 
-    Livewire::test(PlayerManager::class)->call('openEditModal', $player->id)
+    expect($player->awards()->first())->toMatchArray(['name' => 'Najlepszy zawodnik drużyny', 'event' => 'VII Memoriał im. Włodzimierza Winklera', 'place' => 'Piła', 'note' => 'Junior młodszy']);
+
+    $editor = Livewire::test(PlayerManager::class)->call('openEditModal', $player->id)
+        ->assertSet('awards.0.tournament', true)
         ->call('addAward')
-        ->set('awards.0.name', 'MVP turnieju')->set('awards.0.event', 'Turniej o Puchar Prezydenta')->set('awards.0.date', '2026-10-12')->set('awards.0.place', 'Kalisz')
+        ->set('awards.1.name', 'MVP turnieju')->set('awards.1.event', 'Turniej o Puchar Prezydenta')->set('awards.1.date', '2026-10-12')->set('awards.1.place', 'Kalisz')
         ->call('addAward')
+        ->call('moveAward', 1, -1)
+        ->set('awards.1.note', 'Junior młodszy · LOMS Joker Piła (kadeci)')
         ->call('save')->assertHasNoErrors();
 
-    expect($player->awards()->count())->toBe(1)
-        ->and($player->fresh()->individualAwards()->pluck('name')->all())->toBe(['Najlepszy zawodnik drużyny', 'MVP turnieju']);
+    $player->refresh();
+    expect($player->awards->pluck('name')->all())->toBe(['MVP turnieju', 'Najlepszy zawodnik drużyny'])
+        ->and($player->awards[1]->tournament_award_id)->toBe($tournamentAward->id)
+        ->and($player->awards[1]->note)->toBe('Junior młodszy · LOMS Joker Piła (kadeci)');
+
+    // Ponowna synchronizacja wyróżnienia nie nadpisuje poprawek z panelu zawodnika.
+    $tournamentAward->syncAchievement();
+    expect($player->awards()->count())->toBe(2)->and($player->awards()->where('tournament_award_id', $tournamentAward->id)->value('note'))->toBe('Junior młodszy · LOMS Joker Piła (kadeci)');
 
     $this->get(route('players.show', $player))->assertOk()
-        ->assertSeeInOrder(['Nagrody indywidualne', 'Najlepszy zawodnik drużyny', 'VII Memoriał im. Włodzimierza Winklera', '8 listopada 2026', 'Piła', 'Junior młodszy', 'MVP turnieju', 'Turniej o Puchar Prezydenta', '12 października 2026', 'Kalisz'])
+        ->assertSeeInOrder(['Nagrody indywidualne', 'MVP turnieju', 'Turniej o Puchar Prezydenta', '12 października 2026', 'Kalisz', 'Najlepszy zawodnik drużyny', 'VII Memoriał im. Włodzimierza Winklera', '8 listopada 2026', 'Piła', 'LOMS Joker Piła (kadeci)'])
         ->assertDontSeeHtml('heading-md">Osiągnięcia');
 
-    Livewire::test(PlayerManager::class)->call('openEditModal', $player->id)->assertSet('awards.0.place', 'Kalisz');
+    expect(collect(SearchIndex::entries())->firstWhere('title', 'MVP turnieju · Filip Hryncewicz'))->not->toBeNull();
+
+    // Usunięte wyróżnienie w turnieju znika też z profilu.
+    $tournamentAward->delete();
+    expect($player->awards()->pluck('name')->all())->toBe(['MVP turnieju']);
 });

@@ -81,7 +81,7 @@ class PlayerManager extends Component
     /** @var array<int, array{season: string, title: string}> Osiągnięcia pokazywane w profilu */
     public array $achievements = [];
 
-    /** @var list<array{name: string, event: string, date: string, place: string}> Nagrody indywidualne spoza turniejów na stronie. */
+    /** @var list<array{id: ?int, tournament: bool, name: string, event: string, date: string, place: string, note: string}> Nagrody indywidualne w kolejności z profilu. */
     public array $awards = [];
 
     public string $bio = '';
@@ -166,6 +166,7 @@ class PlayerManager extends Component
             'awards.*.event' => 'nullable|string|max:200',
             'awards.*.date' => 'nullable|date',
             'awards.*.place' => 'nullable|string|max:120',
+            'awards.*.note' => 'nullable|string|max:200',
             'bio' => 'nullable|string',
             // Bez drużyny zapisze tylko ktoś, kto widzi wszystkie drużyny (trener straciłby dostęp do zawodnika).
             // Dziecko z minisiatkówki może zostać bez drużyny (jest w grupie mini).
@@ -260,7 +261,15 @@ class PlayerManager extends Component
         $this->user_id = $player->user_id;
         $this->guardian_ids = $player->guardians()->pluck('users.id')->all();
         $this->achievements = $player->achievements->whereNull('tournament_award_id')->map(fn (PlayerAchievement $achievement) => ['season' => (string) $achievement->season, 'title' => $achievement->title])->all();
-        $this->awards = $player->awards->map(fn (PlayerAward $award) => ['name' => $award->name, 'event' => (string) $award->event, 'date' => (string) $award->awarded_on?->toDateString(), 'place' => (string) $award->place])->values()->all();
+        $this->awards = $player->awards->map(fn (PlayerAward $award) => [
+            'id' => $award->id,
+            'tournament' => $award->tournament_award_id !== null,
+            'name' => $award->name,
+            'event' => (string) $award->event,
+            'date' => (string) $award->awarded_on?->toDateString(),
+            'place' => (string) $award->place,
+            'note' => (string) $award->note,
+        ])->values()->all();
         $this->bio = (string) $player->bio;
         $this->team_id = $player->team_id;
         $this->mini_group_id = $player->team_id ? null : $player->mini_group_id;
@@ -328,17 +337,24 @@ class PlayerManager extends Component
             ]);
         }
 
-        $player->awards()->delete();
+        // Nagrody: poprawione zostają (także kopie z turniejów), usunięte z listy znikają, kolejność jak na liście.
+        $kept = [];
 
         foreach (array_values(array_filter($this->awards, fn (array $row) => trim($row['name'] ?? '') !== '')) as $order => $row) {
-            $player->awards()->create([
+            $values = [
                 'name' => trim($row['name']),
                 'event' => trim($row['event'] ?? '') ?: null,
                 'awarded_on' => ($row['date'] ?? '') ?: null,
                 'place' => trim($row['place'] ?? '') ?: null,
+                'note' => trim($row['note'] ?? '') ?: null,
                 'display_order' => $order,
-            ]);
+            ];
+            $award = filled($row['id'] ?? null) ? $player->awards()->find((int) $row['id']) : null;
+            $award ? $award->update($values) : $award = $player->awards()->create($values);
+            $kept[] = $award->id;
         }
+
+        $player->awards()->whereNotIn('id', $kept)->get()->each->delete();
 
         $currentSeasonId = Season::current()->value('id');
 
@@ -373,7 +389,18 @@ class PlayerManager extends Component
 
     public function addAward(): void
     {
-        $this->awards[] = ['name' => '', 'event' => '', 'date' => '', 'place' => ''];
+        $this->awards[] = ['id' => null, 'tournament' => false, 'name' => '', 'event' => '', 'date' => '', 'place' => '', 'note' => ''];
+    }
+
+    public function moveAward(int $index, int $direction): void
+    {
+        $target = $index + $direction;
+
+        if (! isset($this->awards[$index], $this->awards[$target])) {
+            return;
+        }
+
+        [$this->awards[$index], $this->awards[$target]] = [$this->awards[$target], $this->awards[$index]];
     }
 
     public function removeAward(int $index): void

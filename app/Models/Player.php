@@ -10,7 +10,6 @@ use App\Permission;
 use App\PlayerPosition;
 use App\Support\Media;
 use App\Support\SiteSettings;
-use Carbon\CarbonInterface;
 use Database\Factories\PlayerFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -169,46 +168,12 @@ class Player extends Model
         return $this->belongsToMany(User::class, 'player_guardian')->withTimestamps();
     }
 
+    /**
+     * Nagrody indywidualne (wpisane w panelu zawodnika i kopie wyróżnień z turniejów) w kolejności ustawionej w panelu.
+     */
     public function awards(): HasMany
     {
-        return $this->hasMany(PlayerAward::class)->orderByDesc('awarded_on')->orderBy('display_order');
-    }
-
-    /**
-     * Nagrody indywidualne do profilu: z turniejów na stronie i wpisane ręcznie, od najnowszej.
-     *
-     * @return Collection<int, array{name: string, event: ?string, url: ?string, date: ?CarbonInterface, place: ?string, category: ?string, team: ?string}>
-     */
-    public function individualAwards(): Collection
-    {
-        $fromTournaments = $this->achievements
-            ->filter(fn (PlayerAchievement $achievement) => $achievement->tournamentAward?->category?->tournament)
-            ->map(function (PlayerAchievement $achievement) {
-                $award = $achievement->tournamentAward;
-                $tournament = $award->category->tournament;
-
-                return [
-                    'name' => $award->name,
-                    'event' => $tournament->fullName(),
-                    'url' => $tournament->has_page ? route('tournaments.show', ['tournament' => $tournament, 'tab' => 'ranking']) : null,
-                    'date' => $tournament->lastDay(),
-                    'place' => $tournament->city ?: $tournament->venue,
-                    'category' => $tournament->categories()->count() > 1 ? $award->category->name : null,
-                    'team' => $award->teamLabel(),
-                ];
-            });
-
-        $manual = $this->awards->map(fn (PlayerAward $award) => [
-            'name' => $award->name,
-            'event' => $award->event,
-            'url' => null,
-            'date' => $award->awarded_on,
-            'place' => $award->place,
-            'category' => null,
-            'team' => null,
-        ]);
-
-        return $fromTournaments->concat($manual)->sortByDesc(fn (array $award) => $award['date']?->getTimestamp() ?? 0)->values();
+        return $this->hasMany(PlayerAward::class)->orderBy('display_order')->orderByDesc('awarded_on')->orderBy('id');
     }
 
     public function achievements(): HasMany

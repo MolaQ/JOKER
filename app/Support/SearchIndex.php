@@ -157,9 +157,15 @@ class SearchIndex
                 $team->description.' '.$team->trainer?->name.' '.$team->category);
         }
 
-        foreach (Player::with(['team', 'miniGroup'])->where('is_active', true)->orderBy('last_name')->get() as $player) {
+        foreach (Player::with(['team', 'miniGroup', 'awards'])->where('is_active', true)->orderBy('last_name')->get() as $player) {
             $add(__('Zawodnik'), $player->displayName(), collect([$player->positionsLabel(), $player->team?->name ?? ($player->isMini() ? __('Minisiatkówka').': '.$player->miniGroup?->name : null), $player->jersey_number ? '#'.$player->jersey_number : null])->filter()->implode(' · '),
-                route('players.show', $player, false), $player->bio);
+                route('players.show', $player, false), $player->bio.' '.$player->awards->map(fn ($award) => $award->name.' '.$award->event)->implode(' '));
+
+            // Nagrody indywidualne osobno: „MVP turnieju” albo nazwa imprezy prowadzą do profilu zawodnika.
+            foreach ($player->awards as $award) {
+                $add(__('Nagroda'), $award->name.' · '.$player->displayName(), collect([$award->event, $award->awarded_on?->format('d.m.Y'), $award->place])->filter()->implode(' · '),
+                    route('players.show', $player, false), $award->name.' '.$award->event.' '.$award->place.' '.$award->note.' '.$player->displayName());
+            }
         }
 
         foreach (StaffDirectory::entries() as $entry) {

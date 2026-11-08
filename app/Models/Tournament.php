@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\HasEnglishVersion;
 use App\Models\Concerns\HasReadableRouteKey;
 use App\Models\Concerns\Likeable;
+use App\Support\SiteSettings;
 use Database\Factories\TournamentFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -196,6 +197,22 @@ class Tournament extends Model
     public function lastDay(): Carbon
     {
         return ($this->end_date ?? $this->start_date)->copy();
+    }
+
+    /**
+     * Miejsce do nagród zawodników: miejscowość turnieju, hala, a w turnieju klubu miasto klubu z adresu kontaktowego.
+     */
+    public function awardPlace(): ?string
+    {
+        if ($this->city || $this->venue) {
+            return $this->city ?: $this->venue;
+        }
+
+        if ($this->is_organizer || $this->series === self::SERIES_MEMORIAL) {
+            return preg_match('/\d{2}-\d{3}\s+([^,\n]+)/u', (string) app(SiteSettings::class)['contact_address'], $match) ? trim($match[1]) : null;
+        }
+
+        return null;
     }
 
     /**
