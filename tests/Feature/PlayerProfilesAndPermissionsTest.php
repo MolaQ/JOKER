@@ -332,6 +332,13 @@ test('individual awards from club tournaments and from other events show on the 
 
     expect(collect(SearchIndex::entries())->firstWhere('title', 'MVP turnieju · Filip Hryncewicz'))->not->toBeNull();
 
+    // Kolejne wyróżnienie z turnieju trafia na górę, bez ujemnej kolejności (MySQL: kolumna bez znaku).
+    $second = $category->awards()->create(['name' => 'Najlepszy przyjmujący', 'player_id' => $player->id]);
+    $second->syncAchievement();
+    expect($player->awards()->pluck('name')->all())->toBe(['Najlepszy przyjmujący', 'MVP turnieju', 'Najlepszy zawodnik drużyny'])
+        ->and($player->awards()->min('display_order'))->toBe(0);
+    $second->delete();
+
     // Usunięte wyróżnienie w turnieju znika też z profilu.
     $tournamentAward->delete();
     expect($player->awards()->pluck('name')->all())->toBe(['MVP turnieju']);

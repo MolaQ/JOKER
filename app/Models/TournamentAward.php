@@ -102,6 +102,9 @@ class TournamentAward extends Model
         $category = $this->category()->with('tournament')->first();
         $tournament = $category->tournament;
 
+        // Nowa nagroda na górę: pozostałe o jedno miejsce niżej (kolejność bez liczb ujemnych, kolumna jest bez znaku).
+        PlayerAward::where('player_id', $this->player_id)->increment('display_order');
+
         PlayerAward::create([
             'player_id' => $this->player_id,
             'tournament_award_id' => $this->id,
@@ -110,7 +113,7 @@ class TournamentAward extends Model
             'awarded_on' => $tournament->lastDay(),
             'place' => $tournament->awardPlace(),
             'note' => mb_substr(collect([$tournament->categories()->count() > 1 ? $category->name : null, $this->teamLabel()])->filter()->implode(' · '), 0, 200) ?: null,
-            'display_order' => (int) PlayerAward::where('player_id', $this->player_id)->min('display_order') - 1,
+            'display_order' => 0,
         ]);
     }
 }
