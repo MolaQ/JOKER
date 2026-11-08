@@ -18,8 +18,8 @@
         </p>
         {{-- Druga linia zawsze, żeby kafle w drabince miały równą wysokość --}}
         <p class="mt-1.5 flex min-h-5 items-center justify-between gap-3">
-                @if($match->starts_at)
-                    <span class="inline-flex items-baseline gap-1.5 text-xs opacity-80"><span>{{ $match->starts_at->translatedFormat('D d.m') }}</span><span class="font-display text-lg leading-none font-semibold tabular-nums opacity-100">{{ $match->starts_at->format('H:i') }}</span><x-match-delay :match="$match" class="self-center" /></span>
+                @if($scheduled = $match->scheduledAt())
+                    <span class="inline-flex items-baseline gap-1.5 text-xs opacity-80"><span>{{ $scheduled->translatedFormat('D d.m') }}</span><span class="font-display text-lg leading-none font-semibold tabular-nums opacity-100">{{ $scheduled->format('H:i') }}</span><x-match-delay :match="$match" class="self-center text-current!" /></span>
                 @else
                     <span class="text-xs opacity-60">{{ __('Godzina do ustalenia') }}</span>
                 @endif

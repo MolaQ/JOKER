@@ -6,6 +6,7 @@ use App\Models\Concerns\HasMatchMedia;
 use App\Models\Concerns\Likeable;
 use App\Support\LiveNow;
 use App\Support\TournamentSchedule;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Cache;
@@ -191,11 +192,29 @@ class TournamentMatch extends Model
     }
 
     /**
-     * Minuty opóźnienia względem planu (ujemne: mecz zaczyna się wcześniej); null, gdy różnica jest mniejsza niż 5 minut.
+     * Czy mecz już się zaczął (trwa albo ma wynik).
+     */
+    public function hasStarted(): bool
+    {
+        return $this->is_live || $this->home_sets !== null;
+    }
+
+    /**
+     * Godzina z harmonogramu: przed meczem to po prostu jego godzina (zmiana w panelu to nowy plan),
+     * po rozpoczęciu godzina planowana sprzed wpisania rzeczywistego początku.
+     */
+    public function scheduledAt(): ?CarbonInterface
+    {
+        return $this->hasStarted() ? ($this->planned_starts_at ?? $this->starts_at) : $this->starts_at;
+    }
+
+    /**
+     * Minuty opóźnienia rozpoczętego meczu względem harmonogramu (ujemne: zaczął się wcześniej); null przed meczem
+     * albo gdy różnica jest mniejsza niż 5 minut.
      */
     public function delayMinutes(): ?int
     {
-        if ($this->starts_at === null || $this->planned_starts_at === null || $this->isFinished()) {
+        if (! $this->hasStarted() || $this->starts_at === null || $this->planned_starts_at === null) {
             return null;
         }
 
@@ -211,7 +230,7 @@ class TournamentMatch extends Model
      */
     public function possibleDelay(): ?int
     {
-        if ($this->is_live || $this->home_sets !== null || $this->delayMinutes() !== null) {
+        if ($this->hasStarted()) {
             return null;
         }
 
@@ -239,27 +258,27 @@ class TournamentMatch extends Model
     {
         $matches = static::query()
             ->whereIn('tournament_category_id', TournamentCategory::where('tournament_id', $tournamentId)->select('id'))
-            ->whereNotNull('planned_starts_at')
+            ->whereNotNull('starts_at')
             ->get(['id', 'court', 'starts_at', 'planned_starts_at', 'is_live', 'home_sets', 'away_sets', 'updated_at']);
 
         $delays = [];
 
-        foreach ($matches->groupBy(fn (self $match) => $match->planned_starts_at->toDateString().'|'.TournamentSchedule::sector($match->court)) as $queue) {
+        foreach ($matches->groupBy(fn (self $match) => $match->scheduledAt()->toDateString().'|'.TournamentSchedule::sector($match->court)) as $queue) {
             $last = 0;
             // Kiedy zwolniło się boisko: zakończony mecz (moment zapisania wyniku) nie przenosi już swojego opóźnienia,
             // tylko tyle, o ile skończył się po planowanym początku następnego meczu.
             $freeAt = null;
 
-            foreach ($queue->sortBy(fn (self $match) => [$match->planned_starts_at->getTimestamp(), $match->id]) as $match) {
-                if (($match->is_live || $match->home_sets !== null) && $match->starts_at) {
-                    $last = (int) $match->planned_starts_at->diffInMinutes($match->starts_at, false);
+            foreach ($queue->sortBy(fn (self $match) => [$match->scheduledAt()->getTimestamp(), $match->id]) as $match) {
+                if ($match->hasStarted()) {
+                    $last = (int) $match->scheduledAt()->diffInMinutes($match->starts_at, false);
                     $freeAt = $match->is_live ? null : $match->updated_at;
 
                     continue;
                 }
 
                 if ($freeAt !== null) {
-                    $last = max(0, (int) $match->planned_starts_at->diffInMinutes($freeAt, false));
+                    $last = max(0, (int) $match->scheduledAt()->diffInMinutes($freeAt, false));
                     $freeAt = null;
                 }
 

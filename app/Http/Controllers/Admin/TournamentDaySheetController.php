@@ -27,9 +27,9 @@ class TournamentDaySheetController extends Controller
             ->get();
 
         $matches = $categories->flatMap(fn (TournamentCategory $category) => $category->matches->each->setRelation('category', $category))
-            ->filter(fn (TournamentMatch $match) => $match->starts_at !== null);
+            ->filter(fn (TournamentMatch $match) => $match->scheduledAt() !== null);
 
-        $days = $matches->map(fn (TournamentMatch $match) => $match->starts_at->toDateString())->unique()->sort()->values();
+        $days = $matches->map(fn (TournamentMatch $match) => $match->scheduledAt()->toDateString())->unique()->sort()->values();
         $day = $days->contains($request->query('day')) ? (string) $request->query('day')
             : ($days->contains(today()->toDateString()) ? today()->toDateString() : (string) $days->first());
 
@@ -37,14 +37,14 @@ class TournamentDaySheetController extends Controller
         $courtOrder = fn (?string $court) => ($venue = TrainingSession::venueForCourt($court)) ? '0-'.$order[$venue] : '1-'.mb_strtolower((string) $court);
         $brackets = [];
 
-        $rows = $matches->filter(fn (TournamentMatch $match) => $match->starts_at->toDateString() === $day)
-            ->sortBy(fn (TournamentMatch $match) => [$match->starts_at->format('H:i'), $courtOrder($match->court), $match->category->display_order, $match->number ?? PHP_INT_MAX])
+        $rows = $matches->filter(fn (TournamentMatch $match) => $match->scheduledAt()->toDateString() === $day)
+            ->sortBy(fn (TournamentMatch $match) => [$match->scheduledAt()->format('H:i'), $courtOrder($match->court), $match->category->display_order, $match->number ?? PHP_INT_MAX])
             ->map(function (TournamentMatch $match) use (&$brackets) {
                 $category = $match->category;
                 $bracket = $brackets[$category->id] ??= TournamentBracket::for($category);
 
                 return [
-                    'time' => $match->starts_at->format('G:i'),
+                    'time' => $match->scheduledAt()->format('G:i'),
                     'court' => $match->court ? TournamentHalls::label($match->court, $category->id) : null,
                     'icon' => TournamentHalls::icon($match->court, $category->id),
                     'category' => $category,

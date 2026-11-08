@@ -70,7 +70,7 @@ class TournamentScorer extends Component
             return;
         }
 
-        $match->update(['planned_starts_at' => $match->planned_starts_at ?? $match->starts_at ?? $starts, 'starts_at' => $starts, 'is_live' => true]);
+        $match->update(['planned_starts_at' => $match->scheduledAt() ?? $starts, 'starts_at' => $starts, 'is_live' => true]);
         $this->rows[$id]['start'] = $this->rows[$id]['start_base'] = $starts->format('H:i');
         $this->toast(__('Mecz nr :number rozpoczęty o :time.', ['number' => $match->number, 'time' => $starts->format('H:i')]));
     }
@@ -104,7 +104,7 @@ class TournamentScorer extends Component
         }
 
         $match->update([
-            'planned_starts_at' => $match->planned_starts_at ?? $match->starts_at ?? $starts,
+            'planned_starts_at' => $match->scheduledAt() ?? $starts,
             'starts_at' => $starts ?? $match->starts_at,
             'sets_score' => $sets ?: null,
             'home_sets' => $sets ? $home : null,
@@ -155,7 +155,7 @@ class TournamentScorer extends Component
     private function startTime(TournamentMatch $match): ?Carbon
     {
         $time = trim((string) ($this->rows[$match->id]['start'] ?? ''));
-        $planned = $match->planned_starts_at ?? $match->starts_at;
+        $planned = $match->scheduledAt();
 
         if (! preg_match('/^([01]?\d|2[0-3]):([0-5]\d)$/', $time)) {
             $this->addError("rows.{$match->id}.start", __('Wpisz godzinę jak 10:45.'));
@@ -183,7 +183,7 @@ class TournamentScorer extends Component
      */
     private function days(): array
     {
-        return $this->allMatches()->map(fn (TournamentMatch $match) => ($match->planned_starts_at ?? $match->starts_at)?->toDateString())->filter()->unique()->sort()->values()->all();
+        return $this->allMatches()->map(fn (TournamentMatch $match) => $match->scheduledAt()?->toDateString())->filter()->unique()->sort()->values()->all();
     }
 
     /**
@@ -199,9 +199,9 @@ class TournamentScorer extends Component
     public function render(): View
     {
         $matches = $this->allMatches()
-            ->filter(fn (TournamentMatch $match) => ($match->planned_starts_at ?? $match->starts_at)?->toDateString() === $this->day)
+            ->filter(fn (TournamentMatch $match) => $match->scheduledAt()?->toDateString() === $this->day)
             // Trwające mecze na górze, potem czekające na rozpoczęcie, zakończone na dole; w każdej części według planu.
-            ->sortBy(fn (TournamentMatch $match) => [$match->is_live ? 0 : ($match->home_sets !== null ? 2 : 1), ($match->planned_starts_at ?? $match->starts_at)->getTimestamp(), (string) $match->court, $match->number]);
+            ->sortBy(fn (TournamentMatch $match) => [$match->is_live ? 0 : ($match->home_sets !== null ? 2 : 1), $match->scheduledAt()->getTimestamp(), (string) $match->court, $match->number]);
 
         // Boiska dnia: najpierw hala klubowa (III, II, I, główne), potem inne obiekty po nazwie.
         $order = array_flip(TournamentHalls::MAIN_VENUES);
@@ -216,7 +216,7 @@ class TournamentScorer extends Component
             ->values();
 
         foreach ($shown as $match) {
-            $current = (($match->is_live || $match->home_sets !== null) ? $match->starts_at : ($match->planned_starts_at ?? $match->starts_at))?->format('H:i') ?? '';
+            $current = $match->starts_at?->format('H:i') ?? '';
             if (! isset($this->rows[$match->id])) {
                 $this->rows[$match->id] = [
                     'start' => $current,

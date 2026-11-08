@@ -159,7 +159,7 @@
                             <details class="border-t border-zinc-100 px-5 py-3">
                                 <summary class="cursor-pointer text-sm font-semibold text-sky-club-dark" data-track="{{ __('Mecze grupy') }}: {{ $group->name }}">{{ __('Mecze grupy') }} ({{ $group->matches->count() }})</summary>
                                 {{-- Mecze dniami turnieju, w dniu według godziny --}}
-                                @foreach($group->matches->sortBy(fn ($match) => [$match->starts_at?->timestamp ?? PHP_INT_MAX, $match->number ?? PHP_INT_MAX])->groupBy(fn ($match) => $match->starts_at?->toDateString() ?? '') as $day => $dayMatches)
+                                @foreach($group->matches->sortBy(fn ($match) => [$match->scheduledAt()?->timestamp ?? PHP_INT_MAX, $match->number ?? PHP_INT_MAX])->groupBy(fn ($match) => $match->scheduledAt()?->toDateString() ?? '') as $day => $dayMatches)
                                     <h3 class="mt-4 mb-2 flex items-center gap-2 text-xs font-bold tracking-wide text-zinc-500 uppercase">
                                         <span>{{ $day ? \Illuminate\Support\Str::ucfirst(\Illuminate\Support\Carbon::parse($day)->translatedFormat('l, j F')) : __('Termin do ustalenia') }}</span>
                                         <span class="h-px flex-1 bg-zinc-200"></span>
@@ -256,7 +256,7 @@
                 <ol x-show="list" x-cloak class="mt-6 divide-y divide-zinc-100 overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200">
                     @foreach($knockout as $match)
                         <li class="grid grid-cols-[4rem_minmax(0,1fr)] items-center gap-x-3 gap-y-1 px-4 py-3 sm:grid-cols-[4.5rem_3.5rem_minmax(0,1fr)_9rem]" wire:key="list-{{ $match->id }}">
-                            <span class="font-display text-xl font-semibold tabular-nums text-zinc-900">{{ $match->starts_at?->format('H:i') ?? '–' }}</span>
+                            <span class="font-display text-xl font-semibold tabular-nums text-zinc-900">{{ $match->scheduledAt()?->format('H:i') ?? '–' }}</span>
                             <span class="hidden sm:block"><span class="rounded-md bg-(--tm-number-bg) px-1.5 text-sm font-bold text-(--tm-number-text) tabular-nums">#{{ $match->number }}</span></span>
                             <span class="min-w-0">
                                 <span class="block truncate text-sm font-semibold text-zinc-900"><span class="sm:hidden">#{{ $match->number }} · </span>{{ $match->title() }} <x-match-delay :match="$match" /></span>

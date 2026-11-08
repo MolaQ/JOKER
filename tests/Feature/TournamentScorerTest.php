@@ -275,3 +275,28 @@ test('pasek na żywo pobiera się na nowo bez przeładowania strony', function (
         ->assertSeeInOrder(['Sparta', '1:0', 'Orzeł', '2. set 13:10'])->assertDontSee('live-bar fixed', false);
     $this->get(route('live-bar', ['from' => parse_url(route('tournaments.show', $this->tournament), PHP_URL_PATH)]))->assertOk()->assertDontSee('data-live-bar', false);
 });
+
+test('godzina zmieniona w panelu przed meczem to nowy plan, a opóźnienie pokazuje się w nawiasie przy godzinie z harmonogramu', function () {
+    // Stary zapis z panelu (zamiana meczów w dniu turnieju): godzina 12:00, w „planie” jeszcze 10:45.
+    $this->third->update(['planned_starts_at' => '2026-11-15 10:45']);
+    $third = $this->third->fresh();
+    expect($third->delayMinutes())->toBeNull()
+        ->and($third->scheduledAt()->format('H:i'))->toBe('12:00')
+        ->and($third->possibleDelay())->toBeNull();
+    $this->get(route('tournaments.show', [$this->tournament, 'tab' => 'matches']))->assertDontSee('opóźnienie')->assertDontSee('wcześniej o');
+
+    // Stolik rusza z meczem o 12:18: plan to 12:00, nie stara godzina.
+    $this->tournament->scorers()->attach($this->scorer);
+    $this->actingAs($this->scorer);
+    Livewire::test(TournamentScorer::class, ['tournament' => $this->tournament])
+        ->set('rows.'.$this->third->id.'.start', '12:18')->call('start', $this->third->id)
+        ->set('rows.'.$this->third->id.'.sets', '25:20, 25:22')->call('save', $this->third->id, true);
+
+    $third = $this->third->fresh();
+    expect($third->planned_starts_at->format('H:i'))->toBe('12:00')
+        ->and($third->delayMinutes())->toBe(18)
+        ->and($third->scheduledAt()->format('H:i'))->toBe('12:00');
+
+    $this->get(route('tournaments.show', [$this->tournament, 'tab' => 'matches']))->assertSee('(opóźnienie 18 min)');
+    $this->get(route('tournaments.matches.show', [$this->tournament, $third]))->assertSee('12:00')->assertSee('(opóźnienie 18 min)');
+});

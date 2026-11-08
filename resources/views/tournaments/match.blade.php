@@ -21,7 +21,7 @@
         <p class="eyebrow mt-6 text-sky-club-light">{{ collect([$match->category?->name, $match->title()])->filter()->implode(' · ') }}</p>
         <h1 class="sr-only">{{ $match->homeName() }} – {{ $match->awayName() }}</h1>
         @if($match->starts_at || $match->court)
-            <p class="mt-2 text-sm text-white/80">{{ $match->starts_at?->translatedFormat('l, d F Y · H:i') }}@if($match->court) · {{ $match->court }}@endif</p>
+            <p class="mt-2 text-sm text-white/80">{{ $match->scheduledAt()?->translatedFormat('l, d F Y · H:i') }}@if($delay = $match->delayMinutes()) ({{ $delay > 0 ? __('opóźnienie :min min', ['min' => $delay]) : __('wcześniej o :min min', ['min' => abs($delay)]) }})@endif @if($match->court) · {{ $match->court }}@endif</p>
         @endif
 
         <div class="mt-10 grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8">

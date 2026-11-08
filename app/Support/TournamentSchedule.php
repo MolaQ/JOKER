@@ -44,8 +44,8 @@ class TournamentSchedule
     }
 
     /**
-     * Godzina z planu po zmianie terminu: w dniu meczu zmiana to opóźnienie (plan zostaje),
-     * wcześniej to po prostu nowy plan.
+     * Godzina z planu po zmianie terminu w panelu: przed meczem to nowy plan (np. zamiana meczów w trakcie turnieju,
+     * bez „opóźnienia” u kibiców). W rozpoczętym meczu to poprawka rzeczywistego początku, więc plan zostaje.
      */
     public static function plannedAfterChange(TournamentMatch $match, ?CarbonInterface $old, ?CarbonInterface $new): ?CarbonInterface
     {
@@ -53,7 +53,7 @@ class TournamentSchedule
             return null;
         }
 
-        return $old !== null && $old->isSameDay(now()) ? ($match->planned_starts_at ?? $old) : $new;
+        return self::locked($match) ? ($match->planned_starts_at ?? $old ?? $new) : $new;
     }
 
     /**

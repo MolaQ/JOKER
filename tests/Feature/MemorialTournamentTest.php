@@ -598,7 +598,8 @@ test('match times are arranged per sector every interval and a delay shifts the 
     expect(collect([$first, $second, $third, $fourth])->map(fn ($m) => $m->fresh()->starts_at->format('H:i'))->all())->toBe(['09:00', '09:00', '10:15', '11:30'])
         ->and($finished->fresh()->starts_at)->toBeNull();
 
-    // W dniu turnieju mecz #3 zaczyna się 20 minut później: #4 i mecz innej kategorii na Sektorze III też, Sektor II bez zmian.
+    // W dniu turnieju admin przesuwa mecz #3 o 20 minut: #4 i mecz innej kategorii na Sektorze III też, Sektor II bez zmian.
+    // Zmiana w panelu to nowy harmonogram, nie opóźnienie (np. zamiana meczów w trakcie turnieju).
     $this->travelTo('2026-11-14 10:00');
     $editor->set("results.{$third->id}.starts_at", '2026-11-14T10:35')
         ->assertSee('Sektor III: przesunięto 2 kolejne mecze o +20 min');
@@ -606,10 +607,11 @@ test('match times are arranged per sector every interval and a delay shifts the 
     expect($fourth->fresh()->starts_at->format('H:i'))->toBe('11:50')
         ->and($foreign->fresh()->starts_at->format('H:i'))->toBe('15:20')
         ->and($second->fresh()->starts_at->format('H:i'))->toBe('09:00')
-        ->and($third->fresh()->delayMinutes())->toBe(20)
-        ->and($fourth->fresh()->planned_starts_at->format('H:i'))->toBe('11:30');
+        ->and($third->fresh()->delayMinutes())->toBeNull()
+        ->and($third->fresh()->scheduledAt()->format('H:i'))->toBe('10:35')
+        ->and($fourth->fresh()->planned_starts_at->format('H:i'))->toBe('11:50');
 
-    Livewire::test(TournamentPage::class, ['tournament' => $this->tournament])->call('selectTab', 'matches')->assertSee('opóźnienie 20 min');
+    Livewire::test(TournamentPage::class, ['tournament' => $this->tournament])->call('selectTab', 'matches')->assertDontSee('opóźnienie')->assertSee('10:35');
 
     $editor->call('undoSchedule');
     expect($third->fresh()->starts_at->format('H:i'))->toBe('10:15')

@@ -12,7 +12,8 @@
     $categoryId = $matches->first()?->tournament_category_id;
 
     // Strony meczów liczone raz: nazwa, stan (pewna / prognoza / czekamy) i drużyny do filtra.
-    $rows = $matches->map(function ($match) use ($bracket) {
+    // Kolejność i godziny według harmonogramu (rozpoczęty mecz zostaje na swojej planowej godzinie, opóźnienie obok).
+    $rows = $matches->sortBy(fn ($match) => [$match->scheduledAt()?->getTimestamp() ?? PHP_INT_MAX, $match->id])->values()->map(function ($match) use ($bracket) {
         $sides = ['home' => $bracket->side($match, 'home'), 'away' => $bracket->side($match, 'away')];
         $teams = collect($sides)
             ->filter(fn ($side) => $side['participant'] && $side['state'] !== TournamentBracket::PENDING)
@@ -35,19 +36,19 @@
     $teamInfo = $participants->mapWithKeys(function ($participant) use ($rows) {
         $id = (string) $participant->id;
         $own = $rows->filter(fn ($row) => in_array($id, $row['teams'], true));
-        $next = $own->first(fn ($row) => ! $row['match']->isFinished() && $row['match']->starts_at);
+        $next = $own->first(fn ($row) => ! $row['match']->isFinished() && $row['match']->scheduledAt());
 
         return [$id => [
             'name' => $participant->name(),
             'count' => trans_choice(':count mecz|:count mecze|:count meczów', $own->count()),
             'next' => $next ? __('Najbliższy: :when · #:number', [
-                'when' => Str::ucfirst($next['match']->starts_at->translatedFormat('D')).' '.$next['match']->starts_at->format('H:i'),
+                'when' => Str::ucfirst($next['match']->scheduledAt()->translatedFormat('D')).' '.$next['match']->scheduledAt()->format('H:i'),
                 'number' => $next['match']->number,
             ]) : null,
         ]];
     });
 
-    $days = $rows->groupBy(fn ($row) => $row['match']->starts_at?->toDateString() ?? '')
+    $days = $rows->groupBy(fn ($row) => $row['match']->scheduledAt()?->toDateString() ?? '')
         ->sortKeysUsing(fn ($a, $b) => ($a === '') <=> ($b === '') ?: strcmp($a, $b));
 
     // Boiska kategorii w naturalnej kolejności: na szerokim ekranie każde ma swoją kolumnę.
@@ -94,7 +95,7 @@
     @forelse($days as $day => $dayRows)
         @php
             $date = $day !== '' ? Carbon::parse($day) : null;
-            $slots = $dayRows->groupBy(fn ($row) => $row['match']->starts_at?->format('H:i') ?? '');
+            $slots = $dayRows->groupBy(fn ($row) => $row['match']->scheduledAt()?->format('H:i') ?? '');
             $dayTeams = $dayRows->flatMap(fn ($row) => $row['teams'])->unique()->values()->all();
             $isToday = $date?->isSameDay($now);
         @endphp

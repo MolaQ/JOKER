@@ -41,7 +41,7 @@
     <ul class="grid grid-cols-1 items-start gap-3 lg:grid-cols-2">
         @forelse($matches as $match)
             @php
-                $planned = $match->planned_starts_at ?? $match->starts_at;
+                $planned = $match->scheduledAt();
                 $finished = $match->isFinished();
                 $live = $match->is_live;
             @endphp
