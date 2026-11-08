@@ -9,6 +9,7 @@
         </select>
     </div>
 
+    <div class="overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-300 bg-white">
         <thead class="bg-gray-50">
             <tr>
@@ -21,17 +22,41 @@
         <tbody class="divide-y divide-gray-200">
             @foreach($requests as $request)
                 <tr>
-                    <td class="px-4 py-3 text-sm text-gray-900">{{ $request->user->name }}<br><span class="text-xs text-gray-500">{{ $request->user->email }}</span></td>
-                    <td class="px-4 py-3 text-xs text-gray-700">
+                    <td class="px-4 py-3 align-top text-sm text-gray-900">{{ $request->user->name }}<br><span class="text-xs text-gray-500">{{ $request->user->email }}</span></td>
+                    <td class="px-4 py-3 align-top text-xs text-gray-700">
                         @if(filled($request->proposed_data['avatar_path'] ?? null))
                             <p class="mb-1 font-semibold">Nowe zdjęcie:</p>
                             <img src="{{ \App\Support\Media::url($request->proposed_data['avatar_path']) }}" alt="" class="aspect-[4/5] w-24 rounded-lg object-cover ring-1 ring-gray-200">
                         @endif
-                        @if(collect($request->proposed_data)->except('avatar_path')->isNotEmpty())
-                            <pre class="whitespace-pre-wrap">{{ json_encode(collect($request->proposed_data)->except('avatar_path'), JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE) }}</pre>
+                        @php $changes = \App\Livewire\Admin\ProfileChangeRequestManager::changes($request); @endphp
+                        @if($changes !== [])
+                            <dl class="max-w-3xl space-y-3">
+                                @foreach($changes as $change)
+                                    <div @class(['opacity-60' => ! $change['changed']])>
+                                        <dt class="text-[11px] font-semibold tracking-wide text-gray-500 uppercase">{{ $change['label'] }} @unless($change['changed'])<span class="font-normal normal-case">· bez zmian</span>@endunless</dt>
+                                        @if($change['changed'] && $change['current'] !== null)
+                                            <dd class="mt-0.5 text-sm text-gray-500 line-through decoration-red-300 [&_p]:my-0.5">
+                                                @if($change['html']){!! strip_tags($change['current'], '<p><br><strong><em><b><i><ul><ol><li>') !!}@else<span class="whitespace-pre-line">{{ $change['current'] }}</span>@endif
+                                            </dd>
+                                        @endif
+                                        <dd @class(['mt-0.5 text-sm [&_p]:my-0.5', 'rounded-md bg-green-50 px-2 py-1 text-gray-900 ring-1 ring-green-200' => $change['changed'], 'text-gray-700' => ! $change['changed']])>
+                                            @if($change['proposed'] === null)
+                                                <span class="text-gray-400 italic">(puste)</span>
+                                            @elseif($change['html'])
+                                                {!! strip_tags($change['proposed'], '<p><br><strong><em><b><i><ul><ol><li>') !!}
+                                            @else
+                                                <span class="whitespace-pre-line break-all">{{ $change['proposed'] }}</span>
+                                            @endif
+                                        </dd>
+                                    </div>
+                                @endforeach
+                            </dl>
                         @endif
                     </td>
-                    <td class="px-4 py-3 text-sm">{{ $request->status }}</td>
+                    <td class="px-4 py-3 text-sm">
+                        <span @class(['rounded-full px-2 py-0.5 text-xs font-semibold', 'bg-amber-100 text-amber-800' => $request->status === 'pending', 'bg-green-100 text-green-800' => $request->status === 'approved', 'bg-red-100 text-red-800' => $request->status === 'rejected'])>{{ ['pending' => 'Oczekuje', 'approved' => 'Zaakceptowany', 'rejected' => 'Odrzucony'][$request->status] ?? $request->status }}</span>
+                        <span class="mt-1 block text-xs text-gray-500">{{ $request->created_at?->format('d.m.Y H:i') }}</span>
+                    </td>
                     <td class="px-4 py-3 text-sm">
                         @if($request->status === 'pending')
                             <button wire:click="selectForReview({{ $request->id }})" class="text-blue-700 hover:underline">Oceń</button>
@@ -43,6 +68,7 @@
             @endforeach
         </tbody>
     </table>
+    </div>
 
     <div class="p-4">{{ $requests->links() }}</div>
 

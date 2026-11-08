@@ -276,3 +276,17 @@ test('a trainer photo is set by the admin or proposed by the trainer in a 4:5 cr
     $this->actingAs(User::factory()->create(['role' => UserRole::Fan]));
     Livewire::test(ProfilePhotoProposal::class)->assertForbidden();
 });
+
+test('profile change requests show readable changes instead of raw data', function () {
+    $trainer = User::factory()->create(['role' => UserRole::Trainer, 'activated_at' => now(), 'name' => 'Szymon Pietraszak', 'additional_info' => '<p>Stary opis</p>']);
+    ProfileChangeRequest::create(['user_id' => $trainer->id, 'status' => 'pending', 'proposed_data' => [
+        'email' => $trainer->email, 'name' => 'Szymon Pietraszak', 'social_links' => [],
+        'additional_info' => '<p><strong>Szymon</strong> zdobywał doświadczenie</p><script>alert(1)</script>',
+    ]]);
+
+    $this->actingAs(User::factory()->admin()->create());
+    Livewire::test(ProfileChangeRequestManager::class)
+        ->assertSee('O mnie')->assertSeeHtml('<strong>Szymon</strong> zdobywał doświadczenie')->assertSee('Stary opis')
+        ->assertSee('bez zmian')->assertSee('Oczekuje')
+        ->assertDontSeeHtml('<script>alert(1)</script>')->assertDontSee('"additional_info"')->assertDontSee('social_links');
+});

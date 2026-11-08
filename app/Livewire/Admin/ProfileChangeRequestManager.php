@@ -115,6 +115,48 @@ class ProfileChangeRequestManager extends Component
         $this->reviewNote = '';
     }
 
+    /**
+     * Czytelne zmiany wniosku: pole, obecna wartość i proponowana (pola bez zmian oznaczone, zdjęcie osobno).
+     *
+     * @return list<array{label: string, current: ?string, proposed: ?string, html: bool, changed: bool}>
+     */
+    public static function changes(ProfileChangeRequest $request): array
+    {
+        $labels = ['name' => 'Imię i nazwisko', 'email' => 'E-mail', 'additional_info' => 'O mnie', 'social_links' => 'Media społecznościowe', 'instagram' => 'Instagram'];
+        $user = $request->user;
+        $text = function (string $key, mixed $value): ?string {
+            if ($key === 'social_links') {
+                $links = array_filter((array) $value);
+
+                return $links === [] ? null : collect($links)->map(fn ($url, $platform) => $platform.': '.$url)->implode("\n");
+            }
+
+            $value = trim((string) $value);
+
+            return $key === 'additional_info' ? (filled(strip_tags($value)) ? $value : null) : ($value === '' ? null : $value);
+        };
+
+        return collect($request->proposed_data ?? [])
+            ->except('avatar_path')
+            ->map(function ($value, string $key) use ($labels, $user, $text) {
+                $current = $text($key, $user?->{$key});
+                $proposed = $text($key, $value);
+
+                return [
+                    'label' => $labels[$key] ?? $key,
+                    'current' => $current,
+                    'proposed' => $proposed,
+                    'html' => $key === 'additional_info',
+                    'changed' => $current !== $proposed,
+                ];
+            })
+            // Puste pole, które dalej jest puste, nic nie mówi.
+            ->reject(fn (array $row) => ! $row['changed'] && $row['proposed'] === null)
+            ->sortBy(fn (array $row) => ! $row['changed'])
+            ->values()
+            ->all();
+    }
+
     public function render()
     {
         abort_unless(Auth::user()?->can('users.manage'), 403);
