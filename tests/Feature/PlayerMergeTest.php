@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Admin\DuplicatePlayerReview;
 use App\Livewire\Admin\PlayerManager;
 use App\Models\Like;
 use App\Models\Player;
@@ -8,6 +9,8 @@ use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\TrashItem;
 use App\Models\User;
+use App\Support\Approvals;
+use App\Support\PlayerMerge;
 use Livewire\Livewire;
 
 test('dwa wpisy tej samej osoby scalają się w jeden profil z nagrodami, drużynami i serduszkami', function () {
@@ -51,4 +54,23 @@ test('dwa wpisy tej samej osoby scalają się w jeden profil z nagrodami, druży
     // Stary adres duplikatu prowadzi do scalonego profilu.
     $response = $this->get($oldUrl);
     $response->isRedirect() ? $response->assertRedirect(route('players.show', $keep)) : $response->assertOk()->assertSee('MVP turnieju');
+});
+
+test('możliwe duble zawodników są w „Do zatwierdzenia”: zostaw jeden albo oznacz jako różne osoby', function () {
+    $admin = User::factory()->admin()->create();
+    $a = Player::create(['first_name' => 'Dawid', 'last_name' => 'Lisowski']);
+    $b = Player::create(['first_name' => 'dawid', 'last_name' => 'Lisowski']);
+    $x = Player::create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
+    $y = Player::create(['first_name' => 'Jan', 'last_name' => 'Kowalski']);
+
+    expect(Approvals::sectionsFor($admin)->get('duble-zawodnikow')['count'])->toBe(2);
+    $this->actingAs($admin)->get(route('admin.duplicate-players.index'))->assertOk()->assertSee('Możliwe duble zawodników')->assertSee('Lisowski');
+
+    Livewire::test(DuplicatePlayerReview::class)
+        ->call('keep', $a->id.','.$b->id, $a->id)
+        ->call('dismiss', $x->id.','.$y->id)
+        ->assertSee('Nie ma możliwych dubli');
+
+    expect(Player::find($b->id))->toBeNull()->and(Player::whereKey([$x->id, $y->id])->count())->toBe(2)
+        ->and(PlayerMerge::groups())->toBeEmpty();
 });

@@ -575,9 +575,7 @@ class PlayerManager extends Component
             'positionCounts' => (clone $base)->selectRaw('position, count(*) as total')->groupBy('position')->pluck('total', 'position'),
             'duplicateNumbers' => Player::whereNotNull('team_id')->whereNotNull('jersey_number')->selectRaw('team_id, jersey_number')->groupBy('team_id', 'jersey_number')->havingRaw('count(*) > 1')->get()->map(fn ($row) => $row->team_id.'-'.$row->jersey_number)->all(),
             // Ta sama osoba wpisana dwa razy (to samo imię i nazwisko): podpowiedź do scalenia.
-            'duplicatePeople' => Player::get(['id', 'first_name', 'last_name'])
-                ->groupBy(fn (Player $player) => mb_strtolower(trim($player->first_name).' '.trim($player->last_name)))
-                ->filter(fn ($group) => $group->count() > 1)->flatten()->pluck('id')->all(),
+            'duplicatePeople' => PlayerMerge::groups()->flatten()->pluck('id')->all(),
             'teams' => $teams,
             'positions' => $positions,
             'miniGroups' => $this->showModal ? $this->miniGroupOptions() : collect(),

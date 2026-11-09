@@ -89,6 +89,15 @@ class Approvals
                 'visible' => fn () => $user->can('games.manage'),
                 'count' => fn () => DuplicateGames::count($user),
             ],
+            'duble-zawodnikow' => [
+                'label' => 'Możliwe duble zawodników',
+                'icon' => 'user',
+                'route' => 'admin.duplicate-players.index',
+                'intro' => 'Zawodnicy z tym samym imieniem i nazwiskiem, np. ta sama osoba wpisana osobno w dwóch drużynach. „Zostaw ten” scala resztę z wybranym profilem: drużyny (jako dodatkowe, z numerem), nagrody, osiągnięcia, zdjęcia, serduszka i rodzice przechodzą do niego, a drugi wpis trafia do kosza. Gdy to różne osoby, kliknij „To różne osoby”.',
+                'component' => 'admin.duplicate-player-review',
+                'visible' => fn () => $user->can('teams.manage'),
+                'count' => fn () => PlayerMerge::groups()->count(),
+            ],
             'komentarze' => [
                 'label' => 'Komentarze',
                 'icon' => 'chat',

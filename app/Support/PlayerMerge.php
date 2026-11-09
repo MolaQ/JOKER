@@ -18,18 +18,41 @@ class PlayerMerge
 {
     public const REDIRECTS_KEY = 'merged_players';
 
+    public const DISMISSED_KEY = 'player_duplicates_dismissed';
+
     /**
-     * Inni zawodnicy o tym samym imieniu i nazwisku (podpowiedź do scalenia).
+     * Inni zawodnicy o tym samym imieniu i nazwisku (podpowiedź do scalenia), bez par oznaczonych „to różne osoby”.
      *
      * @return Collection<int, Player>
      */
     public static function candidates(Player $player): Collection
     {
-        return Player::with('team')
-            ->whereKeyNot($player->id)
-            ->whereRaw('LOWER(TRIM(first_name)) = ?', [mb_strtolower(trim($player->first_name))])
-            ->whereRaw('LOWER(TRIM(last_name)) = ?', [mb_strtolower(trim($player->last_name))])
-            ->get();
+        return self::groups()->first(fn (Collection $group) => $group->contains('id', $player->id))?->reject(fn (Player $other) => $other->is($player))->values() ?? collect();
+    }
+
+    /**
+     * Grupy możliwych duplikatów: to samo imię i nazwisko (bez wielkości liter i spacji).
+     *
+     * @return Collection<string, Collection<int, Player>> klucz: posortowane id, np. "12,40"
+     */
+    public static function groups(): Collection
+    {
+        $dismissed = array_flip((array) app(SiteSettings::class)->get(self::DISMISSED_KEY, []));
+
+        return Player::with('team')->orderBy('id')->get()
+            ->groupBy(fn (Player $player) => mb_strtolower(preg_replace('/\s+/u', ' ', trim($player->first_name).' '.trim($player->last_name))))
+            ->filter(fn (Collection $group) => $group->count() > 1)
+            ->mapWithKeys(fn (Collection $group) => [$group->pluck('id')->sort()->implode(',') => $group->values()])
+            ->reject(fn (Collection $group, string $key) => isset($dismissed[$key]));
+    }
+
+    /**
+     * „To różne osoby” (np. dwóch Janów Kowalskich): ta grupa przestaje być podpowiadana.
+     */
+    public static function dismiss(string $key): void
+    {
+        $dismissed = (array) app(SiteSettings::class)->get(self::DISMISSED_KEY, []);
+        app(SiteSettings::class)->set([self::DISMISSED_KEY => array_values(array_unique([...$dismissed, $key]))]);
     }
 
     public static function merge(Player $keep, Player $duplicate): void
