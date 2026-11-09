@@ -13,6 +13,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\PlayerPosition;
 use App\Support\ClubAccounts;
+use App\Support\PlayerMerge;
 use App\Support\SiteSettings;
 use App\Support\Trash;
 use App\UserRole;
@@ -426,6 +427,20 @@ class PlayerManager extends Component
         $this->toast('Zawodnik trafił do kosza. Przywrócisz go w: System → Kosz.');
     }
 
+    /**
+     * Ta sama osoba wpisana dwa razy: duplikat przechodzi do edytowanego zawodnika (zob. PlayerMerge).
+     */
+    public function mergeDuplicate(int $duplicateId): void
+    {
+        $keep = Player::managedBy(Auth::user())->findOrFail((int) $this->editingId);
+        $duplicate = Player::managedBy(Auth::user())->findOrFail($duplicateId);
+        abort_unless(PlayerMerge::candidates($keep)->contains('id', $duplicate->id), 403);
+
+        PlayerMerge::merge($keep, $duplicate);
+        $this->openEditModal($keep->id);
+        $this->toast('Scalono: '.$keep->full_name.' ma teraz jeden profil (drugi wpis jest w koszu).');
+    }
+
     public function closeModal(): void
     {
         $this->showModal = false;
@@ -559,6 +574,10 @@ class PlayerManager extends Component
             'totalCount' => (clone $base)->count(),
             'positionCounts' => (clone $base)->selectRaw('position, count(*) as total')->groupBy('position')->pluck('total', 'position'),
             'duplicateNumbers' => Player::whereNotNull('team_id')->whereNotNull('jersey_number')->selectRaw('team_id, jersey_number')->groupBy('team_id', 'jersey_number')->havingRaw('count(*) > 1')->get()->map(fn ($row) => $row->team_id.'-'.$row->jersey_number)->all(),
+            // Ta sama osoba wpisana dwa razy (to samo imię i nazwisko): podpowiedź do scalenia.
+            'duplicatePeople' => Player::get(['id', 'first_name', 'last_name'])
+                ->groupBy(fn (Player $player) => mb_strtolower(trim($player->first_name).' '.trim($player->last_name)))
+                ->filter(fn ($group) => $group->count() > 1)->flatten()->pluck('id')->all(),
             'teams' => $teams,
             'positions' => $positions,
             'miniGroups' => $this->showModal ? $this->miniGroupOptions() : collect(),

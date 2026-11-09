@@ -9,6 +9,7 @@ use App\Models\Concerns\Likeable;
 use App\Permission;
 use App\PlayerPosition;
 use App\Support\Media;
+use App\Support\PlayerMerge;
 use App\Support\SiteSettings;
 use Database\Factories\PlayerFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -28,7 +29,9 @@ class Player extends Model
     /** @use HasFactory<PlayerFactory> */
     use HasFactory, Likeable;
 
-    use HasReadableRouteKey;
+    use HasReadableRouteKey {
+        resolveRouteBinding as resolveReadableRouteBinding;
+    }
 
     protected static function booted(): void
     {
@@ -166,6 +169,23 @@ class Player extends Model
     public function guardians(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'player_guardian')->withTimestamps();
+    }
+
+    /**
+     * Adres scalonego duplikatu prowadzi do zawodnika, z którym go scalono.
+     *
+     * @param  mixed  $value
+     * @param  string|null  $field
+     */
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        $player = $this->resolveReadableRouteBinding($value, $field);
+
+        if ($player === null && $field === null && preg_match('/^(\d+)/', (string) $value, $match) && ($target = PlayerMerge::redirectTarget((int) $match[1]))) {
+            return $this->newQuery()->find($target);
+        }
+
+        return $player;
     }
 
     /**

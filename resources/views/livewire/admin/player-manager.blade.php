@@ -67,6 +67,9 @@
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                         {{ $player->full_name }}
+                        @if(in_array($player->id, $duplicatePeople, true))
+                            <span class="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800" title="Ta sama osoba jest wpisana drugi raz. Otwórz Edytuj i scal profile.">duplikat?</span>
+                        @endif
                         @if($player->user_id)<span class="ml-1 inline-flex align-middle text-sky-600" title="Ma konto na stronie"><x-admin-icon name="user" class="h-4 w-4" /></span>@endif
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
@@ -131,6 +134,20 @@
                         </div>
 
                         <div class="px-6 py-4 space-y-4">
+                            @if($editingId && ($mergeCandidates = \App\Support\PlayerMerge::candidates(\App\Models\Player::find($editingId)))->isNotEmpty())
+                                <div class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm">
+                                    <p class="font-semibold text-amber-900">Ta sama osoba jest wpisana jeszcze raz</p>
+                                    <p class="mt-0.5 text-xs text-amber-800">Scalenie przenosi do tego profilu drużynę (jako dodatkową, z numerem), nagrody, osiągnięcia, zdjęcia, serduszka i rodziców, a drugi wpis trafia do kosza. Stary adres profilu prowadzi tutaj.</p>
+                                    <ul class="mt-2 space-y-1.5">
+                                        @foreach($mergeCandidates as $candidate)
+                                            <li class="flex flex-wrap items-center justify-between gap-2">
+                                                <span>{{ $candidate->full_name }} · {{ $candidate->team?->name ?? 'bez drużyny' }}@if($candidate->jersey_number) · #{{ $candidate->jersey_number }}@endif</span>
+                                                <button type="button" wire:click="mergeDuplicate({{ $candidate->id }})" wire:confirm="Scalić {{ $candidate->full_name }} ({{ $candidate->team?->name ?? 'bez drużyny' }}) z tym profilem? Zapisz najpierw zmiany w formularzu." class="rounded-md bg-amber-500 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-600">Scal z tym profilem</button>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Imię</label>
