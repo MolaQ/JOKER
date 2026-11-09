@@ -61,7 +61,7 @@ class StaffDirectory
                 ->map(fn ($team) => ['key' => 'team-'.$team->id, 'name' => $team->name, 'role' => __($team->pivot->role ?: 'Asystent trenera'), 'url' => route('teams.show', $team), 'order' => $team->display_order]))
             ->sortBy('order')
             ->merge($miniEnabled ? $user->miniGroups->sortBy('display_order')
-                ->map(fn ($group) => ['key' => 'mini-'.$group->id, 'name' => __('Minisiatkówka').' · '.$group->name, 'role' => __('Trener minisiatkówki'), 'url' => route('mini.show', $group), 'order' => 1000 + $group->display_order]) : [])
+                ->map(fn ($group) => ['key' => 'mini-'.$group->id, 'name' => __('Minisiatkówka').' · '.$group->name, 'role' => $user->isMiniCoordinator() ? __('Koordynator minisiatkówki') : __('Trener minisiatkówki'), 'url' => route('mini.show', $group), 'order' => 1000 + $group->display_order]) : [])
             ->map(fn (array $team) => collect($team)->except('order')->all())
             ->values();
 
@@ -72,7 +72,7 @@ class StaffDirectory
         if ($user->hasRole(UserRole::Trainer) || $user->headCoachTeams->isNotEmpty() || $assistantRoles->contains(fn ($role) => $isCoachFunction($role))) {
             $groups[] = 'coaches';
         }
-        if ($miniEnabled && ($user->hasRole(UserRole::MiniTrainer) || $user->miniGroups->isNotEmpty())) {
+        if ($miniEnabled && ($user->hasRole(UserRole::MiniTrainer, UserRole::MiniCoordinator) || $user->miniGroups->isNotEmpty())) {
             $groups[] = 'mini';
         }
         if ($user->hasRole(UserRole::Staff) || $assistantRoles->contains(fn ($role) => ! $isCoachFunction($role))
@@ -84,7 +84,7 @@ class StaffDirectory
             $user->headCoachTeams->isNotEmpty() => __('Trener'),
             $assistantRoles->filter()->isNotEmpty() => __($assistantRoles->filter()->first()),
             $assistantRoles->isNotEmpty() => __('Asystent trenera'),
-            in_array('mini', $groups, true) && ! in_array('coaches', $groups, true) => __('Trener minisiatkówki'),
+            in_array('mini', $groups, true) && ! in_array('coaches', $groups, true) => $user->isMiniCoordinator() ? __('Koordynator minisiatkówki') : __('Trener minisiatkówki'),
             $user->hasRole(UserRole::Trainer) => __('Trener'),
             default => __('Sztab klubu'),
         };

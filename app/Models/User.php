@@ -287,7 +287,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function scopeWithPublicProfile(Builder $query): void
     {
         $query->withAccountStatus(AccountStatus::Active)->where(fn (Builder $query) => $query
-            ->withRole(UserRole::Admin, UserRole::Boss, UserRole::Trainer, UserRole::Staff, UserRole::MiniTrainer)
+            ->withRole(UserRole::Admin, UserRole::Boss, UserRole::Trainer, UserRole::Staff, UserRole::MiniTrainer, UserRole::MiniCoordinator)
             ->orWhereHas('headCoachTeams')
             ->orWhereHas('assistantTeams')
             ->orWhereHas('miniGroups'));
@@ -777,7 +777,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function isStaffMember(): bool
     {
-        return $this->hasRole(UserRole::Trainer, UserRole::Staff, UserRole::MiniTrainer)
+        return $this->hasRole(UserRole::Trainer, UserRole::Staff, UserRole::MiniTrainer, UserRole::MiniCoordinator)
             || $this->headCoachTeams()->exists()
             || $this->assistantTeams()->exists()
             || $this->miniGroups()->exists();
@@ -786,6 +786,11 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Grupy minisiatkówki prowadzone przez trenera mini (strona „Sztab” i profil trenera).
      */
+    public function isMiniCoordinator(): bool
+    {
+        return $this->hasRole(UserRole::MiniCoordinator) && ! $this->hasRole(UserRole::MiniTrainer);
+    }
+
     public function miniGroups(): BelongsToMany
     {
         return $this->belongsToMany(MiniGroup::class, 'mini_group_trainers')->withTimestamps();
@@ -798,7 +803,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $query->withAccountStatus(AccountStatus::Active)
             ->where(fn (Builder $query) => $query
-                ->withRole(UserRole::Trainer, UserRole::Staff, UserRole::MiniTrainer)
+                ->withRole(UserRole::Trainer, UserRole::Staff, UserRole::MiniTrainer, UserRole::MiniCoordinator)
                 ->orWhereHas('headCoachTeams')
                 ->orWhereHas('assistantTeams')
                 ->orWhereHas('miniGroups'))

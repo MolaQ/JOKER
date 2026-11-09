@@ -9,6 +9,7 @@ use App\Models\MiniTripTeam;
 use App\Models\Player;
 use App\Models\Tournament;
 use App\Support\AgeColors;
+use App\Support\MiniRules;
 use App\Support\SiteSettings;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -67,6 +68,22 @@ class MiniVolleyballManager extends Component
     public array $group = [];
 
     public ?int $editingGroupId = null;
+
+    /** Zmienia się po wstawieniu propozycji zasad, żeby edytor pokazał nową treść. */
+    public int $rulesVersion = 0;
+
+    /**
+     * Wstawia propozycję zasad gry (Kinder Joy of Moving / PZPS) dla liczby zawodników na boisku.
+     */
+    public function insertRulesTemplate(): void
+    {
+        $players = (int) ($this->group['players_on_court'] ?? 0);
+        abort_unless(MiniRules::has($players), 422);
+
+        $this->group['rules'] = MiniRules::template($players);
+        $this->rulesVersion++;
+        $this->toast(__('Wstawiono propozycję zasad. Sprawdź ją i zapisz grupę.'));
+    }
 
     public $groupPhoto = null;
 

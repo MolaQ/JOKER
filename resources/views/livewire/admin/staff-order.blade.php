@@ -1,7 +1,7 @@
 <div class="space-y-4 p-4 sm:p-6">
     <p class="text-sm text-zinc-600">
         Kolejność ustawiasz strzałkami, tak samo pokażą się kafelki na stronie <a href="{{ route('trainers.index') }}" target="_blank" class="font-semibold text-sky-700 underline">Sztab ↗</a>.
-        Na liście są konta z rolą Trener, Członek sztabu albo Trener mini oraz osoby przypisane do drużyny lub grupy mini. Opis, zdjęcie i media społecznościowe zmieniasz w „Użytkownicy”.
+        Na liście są konta z rolą Trener, Członek sztabu albo Trener mini, Koordynator mini oraz osoby przypisane do drużyny lub grupy mini. Opis, zdjęcie i media społecznościowe zmieniasz w „Użytkownicy”.
     </p>
 
     <ol class="divide-y divide-zinc-200 rounded-lg border border-zinc-200 bg-white">
@@ -23,7 +23,7 @@
                         @endforeach
                     </p>
                     <p class="truncate text-sm text-zinc-600">{{ $entry['teams']->map(fn ($team) => $team['role'].': '.$team['name'])->implode(' · ') ?: 'Brak przypisanych drużyn' }}</p>
-                    @if ($miniGroups->isNotEmpty() && (in_array('mini', $entry['groups'], true) || $user->hasRole(\App\UserRole::MiniTrainer)))
+                    @if ($miniGroups->isNotEmpty() && (in_array('mini', $entry['groups'], true) || $user->hasRole(\App\UserRole::MiniTrainer, \App\UserRole::MiniCoordinator)))
                         <fieldset class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                             <legend class="sr-only">Grupy minisiatkówki: {{ $user->name }}</legend>
                             @foreach ($miniGroups as $miniGroup)

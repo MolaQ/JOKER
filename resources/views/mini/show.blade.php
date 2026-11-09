@@ -19,16 +19,22 @@
             @if($site['mini_show_trips'] && $upcoming->first())
                 <div><dt class="text-xs text-zinc-400 uppercase">{{ __('Najbliższy wyjazd') }}</dt><dd class="font-display text-2xl font-semibold uppercase">{{ $upcoming->first()->dateLabel() }}@if($upcoming->first()->city) · {{ $upcoming->first()->city }}@endif</dd></div>
             @endif
-            @if($trainers->isNotEmpty())
-                <div>
-                    <dt class="text-xs text-zinc-400 uppercase">{{ trans_choice('Trener|Trenerzy|Trenerzy', $trainers->count()) }}</dt>
-                    <dd class="mt-1 space-y-0.5 text-sm font-semibold">
-                        @foreach($trainers as $trainer)
-                            <p><a href="{{ route('trainers.show', $trainer) }}" class="hover:underline">{{ $trainer->name }}</a></p>
-                        @endforeach
-                    </dd>
-                </div>
-            @endif
+            {{-- Koordynatorzy i trenerzy grupy: kliknięcie w nazwisko otwiera profil (opis, zdjęcie, kontakt) --}}
+            @foreach($trainers->partition(fn ($person) => $person->isMiniCoordinator()) as $index => $people)
+                @if($people->isNotEmpty())
+                    <div>
+                        <dt class="text-xs text-zinc-400 uppercase">{{ $index === 0 ? trans_choice('Koordynator|Koordynatorzy|Koordynatorzy', $people->count()) : trans_choice('Trener|Trenerzy|Trenerzy', $people->count()) }}</dt>
+                        <dd class="mt-1.5 space-y-1.5 text-sm font-semibold">
+                            @foreach($people as $person)
+                                <a href="{{ route('trainers.show', $person) }}" class="group/person flex items-center gap-2">
+                                    <x-avatar :photo="$person->avatar_path" :name="$person->name" class="size-7 shrink-0 rounded-full text-[11px] ring-1 ring-white/30" />
+                                    <span class="underline-offset-2 group-hover/person:underline">{{ $person->name }}</span>
+                                </a>
+                            @endforeach
+                        </dd>
+                    </div>
+                @endif
+            @endforeach
             @if($trainings->isNotEmpty())
                 <div>
                     <dt class="text-xs text-zinc-400 uppercase">{{ __('Treningi') }}</dt>
@@ -70,7 +76,7 @@
     </nav>
 </div>
 
-<section class="container-site py-10 lg:py-14" x-data="{ tab: (new URLSearchParams(location.search)).get('tab') || @js($tabs->keys()->first()) }">
+<section class="container-site py-10 lg:py-14" x-data="{ tab: (t => ({ rules: 'zasady' })[t] ?? t)((new URLSearchParams(location.search)).get('tab')) || @js($tabs->keys()->first()) }" x-init="location.hash && $nextTick(() => document.getElementById(location.hash.slice(1))?.scrollIntoView({ block: 'center' }))">
     <nav class="flex flex-wrap gap-2" role="tablist">
         @foreach($tabs as $key => [$name])
             <button type="button" role="tab" x-on:click="tab = '{{ $key }}'; history.replaceState(null, '', '?tab={{ $key }}')" :aria-selected="tab === '{{ $key }}'" :class="tab === '{{ $key }}' ? 'bg-sky-club text-white' : 'bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50'" class="rounded-full px-4 py-2 text-sm font-semibold">{{ $name }}</button>

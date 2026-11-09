@@ -38,7 +38,7 @@
                     <li class="flex items-center gap-4 px-4 py-3">
                         <span @class(['w-12 text-center font-display text-3xl font-bold', 'text-amber-500' => $team->place === 1, 'text-zinc-400' => $team->place === 2, 'text-orange-600' => $team->place === 3, 'text-zinc-800' => $team->place > 3])>{{ $team->place }}.</span>
                         <div class="min-w-0">
-                            <p class="font-semibold text-zinc-900">{{ $team->trip->title }}</p>
+                            <p class="font-semibold text-zinc-900"><a href="{{ $team->group ? $team->trip->url($team->group) : $team->trip->url() }}" class="hover:underline">{{ $team->trip->title }}</a></p>
                             <p class="text-sm text-zinc-500">{{ collect([$team->group?->name, $team->name, $team->teams_count ? __('na :count drużyn', ['count' => $team->teams_count]) : null, $team->trip->starts_on->translatedFormat('j M Y')])->filter()->implode(' · ') }}</p>
                         </div>
                     </li>

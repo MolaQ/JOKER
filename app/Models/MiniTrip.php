@@ -142,4 +142,19 @@ class MiniTrip extends Model
         return '--mini-tint: '.$colors[0].'; --tw-ring-color: color-mix(in srgb, '.$colors[0].' 45%, var(--tint-base, white)); '
             .'background: linear-gradient(to bottom, '.$stripes.') left / 5px 100% no-repeat, color-mix(in srgb, '.$colors[0].' '.$strength.'%, var(--tint-base, white));';
     }
+
+    /**
+     * Adres wyjazdu: na stronie jego grupy (zakładka wyjazdów albo wyników), przy kilku grupach na stronie minisiatkówki.
+     */
+    public function url(?MiniGroup $group = null): string
+    {
+        $groups = $this->teams->pluck('group')->filter()->unique('id');
+        $group ??= $groups->count() === 1 ? $groups->first() : null;
+
+        if ($group && $group->is_active) {
+            return route('mini.show', ['miniGroup' => $group, 'tab' => $this->isPast() ? 'wyniki' : 'wyjazdy']).'#wyjazd-'.$this->id;
+        }
+
+        return route('mini.index').'#wyjazd-'.$this->id;
+    }
 }
