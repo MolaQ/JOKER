@@ -1,16 +1,22 @@
 @props(['group', 'size' => 'md'])
-{{-- Znak grupy mini: tyle kółek z sylwetką zawodnika, ilu graczy jest na boisku (czwórki = 4), w kolorze grupy,
-     zachodzące na siebie jak awatary drużyny (kolor ustawia się w panelu przy grupie). --}}
 @php
-    $box = ['xs' => 'size-4', 'sm' => 'size-5', 'md' => 'size-7', 'lg' => 'size-11'][$size] ?? 'size-7';
-    $overlap = ['xs' => '-ml-1', 'sm' => '-ml-1.5', 'md' => '-ml-2', 'lg' => '-ml-3'][$size] ?? '-ml-2';
-    $ring = ['xs' => 'ring-1', 'sm' => 'ring-[1.5px]', 'md' => 'ring-2', 'lg' => 'ring-[3px]'][$size] ?? 'ring-2';
+    // Piłka w kolorze grupy i cyfra: tylu zawodników gra na boisku. Zawsze ten sam kwadrat, niezależnie od grupy.
+    $box = ['xs' => 'size-[18px]', 'sm' => 'size-6', 'md' => 'size-8', 'lg' => 'size-12'][$size] ?? 'size-8';
     $color = $group->iconColor();
+    $clip = 'mini-ball-'.$group->id.'-'.\Illuminate\Support\Str::random(6);
 @endphp
-<span {{ $attributes->merge(['class' => 'inline-flex shrink-0 items-center']) }} role="img" aria-label="{{ trans_choice(':count gracz na boisku|:count graczy na boisku|:count graczy na boisku', $group->players_on_court) }}">
-    @for($i = 0; $i < max(1, (int) $group->players_on_court); $i++)
-        <span @class(["{$box} {$ring} relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full ring-white shadow-sm", $overlap => $i > 0]) style="background: linear-gradient(145deg, color-mix(in srgb, {{ $color }} 75%, white), {{ $color }} 55%, color-mix(in srgb, {{ $color }} 70%, black)); z-index: {{ 10 - $i }}" aria-hidden="true">
-            <svg viewBox="0 0 24 24" class="absolute inset-x-0 bottom-0 mx-auto h-[82%] w-[82%] text-white/95" fill="currentColor"><circle cx="12" cy="8.3" r="4.4"/><path d="M3.2 24c0-5.2 3.9-9 8.8-9s8.8 3.8 8.8 9z"/></svg>
-        </span>
-    @endfor
+<span {{ $attributes->merge(['class' => "{$box} inline-flex shrink-0"]) }} role="img" aria-label="{{ $group->name }} · {{ trans_choice(':count zawodnik na boisku|:count zawodników na boisku|:count zawodników na boisku', (int) $group->players_on_court, ['count' => (int) $group->players_on_court]) }}">
+    <svg viewBox="0 0 24 24" class="size-full" aria-hidden="true">
+        <g transform="translate(0.3 0.3) scale(0.84)">
+            <clipPath id="{{ $clip }}"><circle cx="12" cy="12" r="11.2"/></clipPath>
+            <circle cx="12" cy="12" r="11.2" fill="{{ $color }}"/>
+            <g clip-path="url(#{{ $clip }})" fill="none" stroke="#fff" stroke-width="1.6">
+                @foreach([0, 120, 240] as $angle)
+                    <g transform="rotate({{ $angle }} 12 12)"><path d="M12 12C12.6 7 16.5 3.4 22 3.6"/><path d="M8.6 9.6C9.6 4.8 13.4 1.4 18.5.2"/></g>
+                @endforeach
+            </g>
+        </g>
+        <circle cx="17.8" cy="17.8" r="6" fill="{{ $color }}" stroke="#fff" stroke-width="1.2"/>
+        <text x="17.8" y="21.5" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="800" font-size="10.5" fill="#fff">{{ (int) $group->players_on_court }}</text>
+    </svg>
 </span>

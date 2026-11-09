@@ -111,7 +111,7 @@ test('a mini coordinator adds, moves and retires children without profiles', fun
 
 test('group icons use the colour set in the panel', function () {
     app(SiteSettings::class)->set([AgeColors::key('mini4') => '#123abc']);
-    $this->get(route('mini.show', $this->group))->assertOk()->assertSee('color-mix(in srgb, #123abc 75%', false);
+    $this->get(route('mini.show', $this->group))->assertOk()->assertSee('fill="#123abc"', false);
     expect(MiniGroup::firstWhere('slug', 'trojki')->iconColor())->toBe(AgeColors::forMini(3));
 });
 

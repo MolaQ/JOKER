@@ -171,7 +171,7 @@
                                                 @endforeach
                                                 @foreach($day['mini'] as $trip)
                                                     <a href="#mini-{{ $trip->id }}" class="inline-flex items-center" aria-label="{{ __('Minisiatkówka') }}: {{ $trip->title }}">
-                                                        @if($miniGroup = $trip->teams->pluck('group')->filter()->first())<x-mini-players :group="$miniGroup" size="xs" />@else<span class="text-xs">🏐</span>@endif
+                                                        @forelse($trip->teams->pluck('group')->filter()->unique('id') as $miniGroup)<x-mini-players :group="$miniGroup" size="xs" />@empty<span class="text-xs">🏐</span>@endforelse
                                                     </a>
                                                 @endforeach
                                                 @foreach($day['tournaments'] as $tournament)
