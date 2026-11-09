@@ -53,3 +53,23 @@ test('admins insert proposed rules for singles, twos, threes and fours', functio
     expect($this->group->fresh()->rules)->toContain('14 × 4,5 m');
     $this->get(route('mini.show', $this->group->fresh()))->assertOk()->assertSee('14 × 4,5 m');
 });
+
+test('admins add and remove coordinators and trainers of a group in the mini panel', function () {
+    $coordinator = User::factory()->create(['role' => UserRole::MiniCoordinator, 'name' => 'Ewa Koordynatorka']);
+    $trainer = User::factory()->create(['role' => UserRole::MiniTrainer, 'name' => 'Anna Trenerka']);
+    $parent = User::factory()->create(['role' => UserRole::Parent, 'name' => 'Rodzic Zwykły']);
+    $this->actingAs(User::factory()->admin()->create());
+
+    $component = Livewire::test(MiniVolleyballManager::class)
+        ->call('openGroup', $this->group->id, 'kadra')
+        ->assertSee('Ewa Koordynatorka')->assertDontSee('Rodzic Zwykły')
+        ->set('staffToAdd', (string) $coordinator->id)->call('addGroupStaff')
+        ->set('staffToAdd', (string) $trainer->id)->call('addGroupStaff')
+        ->assertSeeInOrder(['Koordynatorzy (1)', 'Ewa Koordynatorka', 'Trenerzy (1)', 'Anna Trenerka']);
+
+    expect($this->group->trainers()->pluck('users.id')->sort()->values()->all())->toBe(collect([$coordinator->id, $trainer->id])->sort()->values()->all());
+
+    $component->set('staffToAdd', (string) $parent->id)->call('addGroupStaff')->assertStatus(422);
+    Livewire::test(MiniVolleyballManager::class)->call('openGroup', $this->group->id, 'kadra')->call('removeGroupStaff', $trainer->id);
+    expect($this->group->trainers()->pluck('users.id')->all())->toBe([$coordinator->id]);
+});

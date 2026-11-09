@@ -146,11 +146,51 @@
             <p class="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200">Grupa jest ukryta: nie ma jej strony ani kafla pod drużynami i na stronie głównej. Włącz „Widoczna na stronie”, gdy treść będzie gotowa.</p>
         @endunless
 
-        <div class="grid grid-cols-2 gap-1 rounded-lg bg-gray-100 p-1 sm:inline-grid">
-            @foreach(['strona' => 'Strona grupy', 'dzieci' => 'Dzieci ('.$currentGroup->players_count.')'] as $key => $name)
+        <div class="grid grid-cols-3 gap-1 rounded-lg bg-gray-100 p-1 sm:inline-grid">
+            @foreach(['strona' => 'Strona grupy', 'dzieci' => 'Dzieci ('.$currentGroup->players_count.')', 'kadra' => 'Koordynatorzy i trenerzy ('.$groupStaff->count().')'] as $key => $name)
                 <button type="button" wire:click="$set('groupPane', '{{ $key }}')" @class(['rounded-md px-4 py-1.5 text-sm font-semibold', 'bg-white text-gray-900 shadow' => $groupPane === $key, 'text-gray-600 hover:text-gray-900' => $groupPane !== $key])>{{ $name }}</button>
             @endforeach
         </div>
+
+        @if($groupPane === 'kadra')
+            <div class="space-y-4 rounded-lg bg-white p-5 shadow ring-1 ring-zinc-200">
+                <p class="text-sm text-gray-600">Osoby, które prowadzą grupę. Na stronie grupy pokazują się z nazwiskiem i zdjęciem, a kliknięcie otwiera ich profil. Kto jest koordynatorem, a kto trenerem, wynika z roli konta (zmienisz ją w „Użytkownicy”).</p>
+                <div class="grid gap-4 md:grid-cols-2">
+                    @foreach(['Koordynatorzy' => $groupStaff->filter->isMiniCoordinator(), 'Trenerzy' => $groupStaff->reject->isMiniCoordinator()] as $heading => $people)
+                        <div>
+                            <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $heading }} ({{ $people->count() }})</h3>
+                            <ul class="mt-2 divide-y divide-gray-100 rounded-lg ring-1 ring-gray-200">
+                                @forelse($people as $person)
+                                    <li wire:key="group-staff-{{ $person->id }}" class="flex items-center gap-3 px-3 py-2">
+                                        <x-avatar :photo="$person->avatar_path" :name="$person->name" class="size-9 shrink-0 rounded-full text-xs" />
+                                        <div class="min-w-0 flex-1">
+                                            <a href="{{ route('trainers.show', $person) }}" target="_blank" class="block truncate text-sm font-semibold text-gray-900 hover:underline">{{ $person->name }}</a>
+                                            <p class="truncate text-xs text-gray-500">{{ $person->email }}</p>
+                                        </div>
+                                        <button type="button" wire:click="removeGroupStaff({{ $person->id }})" wire:confirm="Usunąć {{ $person->name }} z grupy {{ $currentGroup->name }}? Konto zostaje." class="text-xs font-semibold text-red-600 hover:text-red-800">Usuń z grupy</button>
+                                    </li>
+                                @empty
+                                    <li class="px-3 py-3 text-sm text-gray-500">Nikt nie jest przypisany.</li>
+                                @endforelse
+                            </ul>
+                        </div>
+                    @endforeach
+                </div>
+                @php $available = $staffCandidates->reject(fn ($candidate) => $groupStaff->contains('id', $candidate->id)); @endphp
+                <form wire:submit="addGroupStaff" class="flex flex-wrap items-end gap-2">
+                    <label class="min-w-64 flex-1 text-sm font-medium text-gray-700">Dodaj osobę do grupy
+                        <select wire:model="staffToAdd" class="{{ $input }}">
+                            <option value="">wybierz konto…</option>
+                            @foreach($available as $candidate)
+                                <option value="{{ $candidate->id }}">{{ $candidate->name }} · {{ $candidate->isMiniCoordinator() ? 'koordynator mini' : ($candidate->hasRole(\App\UserRole::MiniTrainer) ? 'trener mini' : 'trener / sztab') }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <button type="submit" class="{{ $primary }}" @disabled($available->isEmpty())>Dodaj</button>
+                </form>
+                @if($available->isEmpty())<p class="text-xs text-gray-500">Brak innych kont trenerów i koordynatorów. Nowe konto z rolą „Trener mini” albo „Koordynator mini” dodasz w „Użytkownicy”.</p>@endif
+            </div>
+        @endif
 
         @if($groupPane === 'strona')
         <form wire:submit="saveGroup" class="space-y-4 rounded-lg bg-white p-5 shadow ring-1 ring-zinc-200">
@@ -189,7 +229,7 @@
                                 <button type="submit" class="{{ $primary }}">{{ $editingGroupId ? 'Zapisz' : 'Dodaj grupę' }}</button>
             </div>
         </form>
-        @else
+        @elseif($groupPane === 'dzieci')
             <p class="text-sm text-gray-600">Baza dzieci tej grupy. Drużyny i składy na konkretny turniej ustawiasz w „Turnieje i wyniki”, bo zgłasza się je przed zawodami.</p>
         <form wire:submit="savePlayer" class="space-y-4 rounded-lg bg-white p-5 shadow ring-1 ring-zinc-200">
             <h2 class="text-lg font-semibold text-gray-900">{{ $editingPlayerId ? 'Edytuj dane dziecka' : 'Dodaj dziecko' }}</h2>

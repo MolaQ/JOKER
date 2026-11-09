@@ -2,17 +2,21 @@
 
 namespace App\Livewire\Admin;
 
+use App\AccountStatus;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\MiniGroup;
 use App\Models\MiniTrip;
 use App\Models\MiniTripTeam;
 use App\Models\Player;
 use App\Models\Tournament;
+use App\Models\User;
 use App\Support\AgeColors;
 use App\Support\MiniRules;
 use App\Support\SiteSettings;
+use App\UserRole;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Url;
@@ -108,10 +112,43 @@ class MiniVolleyballManager extends Component
     {
         $this->section = 'grupa';
         $this->groupTab = $id;
-        $this->groupPane = in_array($pane, ['strona', 'dzieci'], true) ? $pane : 'strona';
+        $this->groupPane = in_array($pane, ['strona', 'dzieci', 'kadra'], true) ? $pane : 'strona';
         $this->editGroup($id);
         $this->playerGroup = (string) $id;
         $this->resetPlayer($id);
+    }
+
+    /** Osoba dopisywana do kadry grupy (id konta). */
+    public string $staffToAdd = '';
+
+    /**
+     * Konta, które mogą prowadzić grupę: trenerzy mini, koordynatorzy mini, trenerzy i sztab.
+     *
+     * @return Collection<int, User>
+     */
+    private static function staffCandidates()
+    {
+        return User::withAccountStatus(AccountStatus::Active)
+            ->withRole(UserRole::MiniCoordinator, UserRole::MiniTrainer, UserRole::Trainer, UserRole::Staff)
+            ->orderBy('name')->get();
+    }
+
+    public function addGroupStaff(): void
+    {
+        $group = MiniGroup::findOrFail($this->groupTab);
+        $user = self::staffCandidates()->firstWhere('id', (int) $this->staffToAdd);
+        abort_unless($user, 422);
+
+        $group->trainers()->syncWithoutDetaching([$user->id]);
+        $this->staffToAdd = '';
+        $this->toast(__(':name prowadzi teraz grupę :group.', ['name' => $user->name, 'group' => $group->name]));
+    }
+
+    public function removeGroupStaff(int $userId): void
+    {
+        $group = MiniGroup::findOrFail($this->groupTab);
+        $group->trainers()->detach($userId);
+        $this->toast(__('Usunięto z grupy :group.', ['group' => $group->name]));
     }
 
     public function toggleGroupVisible(int $id): void
@@ -451,6 +488,8 @@ class MiniVolleyballManager extends Component
                     ->where('mini_group_id', (int) $this->playerGroup)
                     ->orWhereHas('extraMiniGroups', fn ($extra) => $extra->whereKey((int) $this->playerGroup))))
                 ->orderByDesc('is_active')->orderBy('last_name')->orderBy('first_name')->get(),
+            'groupStaff' => $this->section === 'grupa' && $this->groupTab ? MiniGroup::find($this->groupTab)?->trainers()->orderBy('name')->get() ?? collect() : collect(),
+            'staffCandidates' => $this->section === 'grupa' && $this->groupPane === 'kadra' ? self::staffCandidates() : collect(),
             'tournaments' => Tournament::where('is_organizer', true)->orderByDesc('start_date')->get(['id', 'name', 'edition', 'start_date']),
         ]);
     }
