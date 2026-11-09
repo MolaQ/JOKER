@@ -116,6 +116,119 @@ class PlayerManager extends Component
     /** Filtr pozycji, np. sami atakujący; „brak” = bez pozycji. */
     public string $positionFilter = '';
 
+    /** Więcej filtrów: klucz z filterDefinitions() => 'tak' (jest) albo 'nie' (brak). */
+    public array $filters = [];
+
+    /** Urodziny w miesiącu (1–12). */
+    public string $birthMonth = '';
+
+    /** Rocznik od / do (z daty urodzenia albo wpisanego rocznika). */
+    public string $yearFrom = '';
+
+    public string $yearTo = '';
+
+    public bool $showFilters = false;
+
+    /**
+     * Filtry „jest / brak”: etykieta, sekcja i warunek dla „jest” (dla „brak” odwrotny).
+     *
+     * @return array<string, array{label: string, section: string, yes?: string, no?: string}>
+     */
+    public static function filterDefinitions(): array
+    {
+        return [
+            'aktywny' => ['label' => 'Aktywny', 'section' => 'Status', 'yes' => 'Tak', 'no' => 'Nie'],
+            'zgoda' => ['label' => 'Zgoda na wizerunek', 'section' => 'Status', 'yes' => 'Tak', 'no' => 'Nie'],
+            'konto' => ['label' => 'Konto zawodnika', 'section' => 'Status'],
+            'rodzic' => ['label' => 'Rodzic przypisany', 'section' => 'Status'],
+            'urodzenie' => ['label' => 'Data urodzenia', 'section' => 'Dane'],
+            'rocznik' => ['label' => 'Rocznik (data albo sam rok)', 'section' => 'Dane'],
+            'numer' => ['label' => 'Numer na koszulce', 'section' => 'Dane'],
+            'zdjecie' => ['label' => 'Zdjęcie', 'section' => 'Dane'],
+            'wzrost' => ['label' => 'Wzrost', 'section' => 'Wymiary'],
+            'waga' => ['label' => 'Waga', 'section' => 'Wymiary'],
+            'zasieg' => ['label' => 'Zasięg', 'section' => 'Wymiary'],
+            'atak' => ['label' => 'Zasięg w ataku', 'section' => 'Wymiary'],
+            'blok' => ['label' => 'Zasięg w bloku', 'section' => 'Wymiary'],
+            'opis' => ['label' => 'Opis (bio)', 'section' => 'Profil'],
+            'zainteresowania' => ['label' => 'Zainteresowania', 'section' => 'Profil'],
+            'nagrody' => ['label' => 'Nagrody indywidualne', 'section' => 'Profil'],
+            'osiagniecia' => ['label' => 'Osiągnięcia', 'section' => 'Profil'],
+        ];
+    }
+
+    /**
+     * Warunek „jest” dla filtra; $has = false odwraca go na „brak”.
+     */
+    private static function applyPresence($query, string $key, bool $has)
+    {
+        $columns = ['urodzenie' => 'birth_date', 'numer' => 'jersey_number', 'wzrost' => 'height', 'waga' => 'weight', 'zasieg' => 'reach', 'atak' => 'spike_reach', 'blok' => 'block_reach', 'konto' => 'user_id'];
+        $texts = ['zdjecie' => 'photo_path', 'opis' => 'bio', 'zainteresowania' => 'interests'];
+        $relations = ['nagrody' => 'awards', 'osiagniecia' => 'achievements', 'rodzic' => 'guardians'];
+
+        return match (true) {
+            isset($columns[$key]) => $has ? $query->whereNotNull($columns[$key]) : $query->whereNull($columns[$key]),
+            isset($texts[$key]) => $has
+                ? $query->whereNotNull($texts[$key])->where($texts[$key], '!=', '')
+                : $query->where(fn ($q) => $q->whereNull($texts[$key])->orWhere($texts[$key], '')),
+            isset($relations[$key]) => $has ? $query->whereHas($relations[$key]) : $query->whereDoesntHave($relations[$key]),
+            $key === 'aktywny' => $query->where('is_active', $has),
+            $key === 'zgoda' => $query->where('image_consent', $has),
+            $key === 'rocznik' => $has
+                ? $query->where(fn ($q) => $q->whereNotNull('birth_date')->orWhereNotNull('birth_year'))
+                : $query->whereNull('birth_date')->whereNull('birth_year'),
+            default => $query,
+        };
+    }
+
+    private function applyFilters($query)
+    {
+        foreach ($this->filters as $key => $value) {
+            if (isset(self::filterDefinitions()[$key]) && in_array($value, ['tak', 'nie'], true)) {
+                self::applyPresence($query, $key, $value === 'tak');
+            }
+        }
+
+        if (ctype_digit($this->birthMonth) && (int) $this->birthMonth >= 1 && (int) $this->birthMonth <= 12) {
+            $query->whereMonth('birth_date', (int) $this->birthMonth);
+        }
+
+        $year = DB::getDriverName() === 'sqlite' ? "coalesce(cast(strftime('%Y', birth_date) as integer), birth_year)" : 'coalesce(year(birth_date), birth_year)';
+        if (ctype_digit($this->yearFrom)) {
+            $query->whereRaw("{$year} >= ?", [(int) $this->yearFrom]);
+        }
+        if (ctype_digit($this->yearTo)) {
+            $query->whereRaw("{$year} <= ?", [(int) $this->yearTo]);
+        }
+
+        return $query;
+    }
+
+    public function activeFiltersCount(): int
+    {
+        return collect($this->filters)->filter(fn ($value) => in_array($value, ['tak', 'nie'], true))->count()
+            + (int) ($this->birthMonth !== '') + (int) ($this->yearFrom !== '') + (int) ($this->yearTo !== '');
+    }
+
+    public function clearFilters(): void
+    {
+        $this->reset('filters', 'birthMonth', 'yearFrom', 'yearTo');
+        $this->resetPage();
+    }
+
+    public function clearYears(): void
+    {
+        $this->reset('yearFrom', 'yearTo');
+        $this->resetPage();
+    }
+
+    public function updated(string $name): void
+    {
+        if (str_starts_with($name, 'filters') || in_array($name, ['birthMonth', 'yearFrom', 'yearTo'], true)) {
+            $this->resetPage();
+        }
+    }
+
     /**
      * Inni zawodnicy tej drużyny z tym samym numerem (ostrzeżenie, nie blokada).
      *
@@ -548,6 +661,7 @@ class PlayerManager extends Component
                 ->orWhereRaw((DB::getDriverName() === 'sqlite' ? "first_name || ' ' || last_name" : "CONCAT(first_name, ' ', last_name)").' like ?', ["%{$search}%"])
                 ->when(preg_match('/^#?(\d{1,2})$/', $search, $number), fn ($q3) => $q3->orWhere('jersey_number', (int) $number[1]))
             ));
+        $this->applyFilters($base);
 
         // Drużyna to drużyna macierzysta albo skład w bieżącym sezonie (np. junior grający też w seniorach).
         $seasonId = Season::current()->value('id');
@@ -558,6 +672,8 @@ class PlayerManager extends Component
             ->when(ctype_digit($this->teamFilter), fn ($q) => $q->inTeam($this->teamFilter, $seasonId))
             ->when($this->positionFilter === 'brak', fn ($q) => $q->whereNull('position'))
             ->when(PlayerPosition::tryFrom($this->positionFilter), fn ($q, PlayerPosition $position) => $q->where(fn ($q2) => $q2->where('position', $position)->orWhereJsonContains('extra_positions', $position->value)))
+            // Urodziny w miesiącu: po kolei od początku miesiąca.
+            ->when($this->birthMonth !== '', fn ($q) => $q->orderByRaw(DB::getDriverName() === 'sqlite' ? "strftime('%d', birth_date)" : 'day(birth_date)'))
             ->orderBy('team_id')
             ->orderBy('jersey_number')
         )->paginate(12);
@@ -572,6 +688,8 @@ class PlayerManager extends Component
                 ->put('', (clone $base)->whereNull('team_id')->whereNull('mini_group_id')->count())
                 ->put('mini', (clone $base)->mini()->count()),
             'totalCount' => (clone $base)->count(),
+            // Przy otwartym panelu: ilu zawodników (po wyszukiwaniu i filtrach) ma brak w danym polu.
+            'missingCounts' => $this->showFilters ? collect(self::filterDefinitions())->map(fn ($definition, string $key) => self::applyPresence((clone $base), $key, false)->count()) : collect(),
             'positionCounts' => (clone $base)->selectRaw('position, count(*) as total')->groupBy('position')->pluck('total', 'position'),
             'duplicateNumbers' => Player::whereNotNull('team_id')->whereNotNull('jersey_number')->selectRaw('team_id, jersey_number')->groupBy('team_id', 'jersey_number')->havingRaw('count(*) > 1')->get()->map(fn ($row) => $row->team_id.'-'.$row->jersey_number)->all(),
             // Ta sama osoba wpisana dwa razy (to samo imię i nazwisko): podpowiedź do scalenia.

@@ -41,6 +41,74 @@
                 <button type="button" wire:click="$set('positionFilter', 'brak')" class="{{ $chip }} {{ $positionFilter === 'brak' ? $on : $off }}">Bez pozycji {!! $count($positionCounts['']) !!}</button>
             @endif
         </div>
+        @php
+            $definitions = \App\Livewire\Admin\PlayerManager::filterDefinitions();
+            $months = ['', 'styczeń', 'luty', 'marzec', 'kwiecień', 'maj', 'czerwiec', 'lipiec', 'sierpień', 'wrzesień', 'październik', 'listopad', 'grudzień'];
+            $activeFilters = $this->activeFiltersCount();
+        @endphp
+        <div class="flex flex-wrap items-center gap-2">
+            <button type="button" wire:click="$toggle('showFilters')" aria-expanded="{{ $showFilters ? 'true' : 'false' }}" class="{{ $chip }} {{ $showFilters || $activeFilters ? 'bg-sky-50 text-sky-800 ring-sky-300' : $off }}">
+                <svg class="size-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M3 4.75A.75.75 0 0 1 3.75 4h12.5a.75.75 0 0 1 .55 1.26L12 10.43v4.82a.75.75 0 0 1-.42.67l-2.5 1.25A.75.75 0 0 1 8 16.5v-6.07L3.2 5.26A.75.75 0 0 1 3 4.75Z"/></svg>
+                Więcej filtrów @if($activeFilters){!! $count($activeFilters) !!}@endif
+                <svg @class(['size-4 transition', 'rotate-180' => $showFilters]) viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>
+            </button>
+            {{-- Włączone filtry jako etykiety z krzyżykiem --}}
+            @foreach($filters as $key => $value)
+                @if(isset($definitions[$key]) && in_array($value, ['tak', 'nie'], true))
+                    <button type="button" wire:key="active-filter-{{ $key }}" wire:click="$set('filters.{{ $key }}', '')" class="{{ $chip }} bg-sky-600 text-white ring-sky-600" title="Usuń filtr">
+                        {{ $definitions[$key]['label'] }}: {{ $value === 'tak' ? ($definitions[$key]['yes'] ?? 'jest') : ($definitions[$key]['no'] ?? 'brak') }} <span aria-hidden="true">×</span>
+                    </button>
+                @endif
+            @endforeach
+            @if($birthMonth !== '')
+                <button type="button" wire:click="$set('birthMonth', '')" class="{{ $chip }} bg-sky-600 text-white ring-sky-600">Urodziny: {{ $months[(int) $birthMonth] ?? $birthMonth }} <span aria-hidden="true">×</span></button>
+            @endif
+            @if($yearFrom !== '' || $yearTo !== '')
+                <button type="button" wire:click="clearYears" class="{{ $chip }} bg-sky-600 text-white ring-sky-600">Rocznik {{ $yearFrom ?: '…' }}–{{ $yearTo ?: '…' }} <span aria-hidden="true">×</span></button>
+            @endif
+            @if($activeFilters)
+                <button type="button" wire:click="clearFilters" class="text-sm font-medium text-sky-700 hover:underline">Wyczyść filtry</button>
+            @endif
+        </div>
+        @if($showFilters)
+            <div class="rounded-xl bg-gray-50 p-4 ring-1 ring-gray-200">
+                <div class="grid gap-x-8 gap-y-5 md:grid-cols-2 xl:grid-cols-3">
+                    <fieldset>
+                        <legend class="text-xs font-semibold uppercase tracking-wide text-gray-500">Urodziny</legend>
+                        <div class="mt-2 grid grid-cols-2 gap-2">
+                            <label class="col-span-2 text-sm text-gray-700">Urodziny w miesiącu
+                                <select wire:model.live="birthMonth" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                    <option value="">dowolny</option>
+                                    @foreach(range(1, 12) as $month)<option value="{{ $month }}">{{ $months[$month] }}</option>@endforeach
+                                </select>
+                            </label>
+                            <label class="text-sm text-gray-700">Rocznik od<input type="number" inputmode="numeric" min="1950" max="2100" wire:model.live.debounce.400ms="yearFrom" placeholder="2008" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"></label>
+                            <label class="text-sm text-gray-700">do<input type="number" inputmode="numeric" min="1950" max="2100" wire:model.live.debounce.400ms="yearTo" placeholder="2010" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500"></label>
+                        </div>
+                    </fieldset>
+                    @foreach(collect($definitions)->groupBy('section', true) as $section => $items)
+                        <fieldset>
+                            <legend class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $section }}</legend>
+                            <div class="mt-2 divide-y divide-gray-200 rounded-lg bg-white ring-1 ring-gray-200">
+                                @foreach($items as $key => $definition)
+                                    @php $current = $filters[$key] ?? ''; @endphp
+                                    <div wire:key="filter-row-{{ $key }}" class="flex items-center justify-between gap-3 px-3 py-2">
+                                        <span class="min-w-0 text-sm text-gray-800">{{ $definition['label'] }}</span>
+                                        <div class="inline-flex shrink-0 rounded-md bg-gray-100 p-0.5 text-xs font-semibold" role="radiogroup" aria-label="{{ $definition['label'] }}">
+                                            @foreach(['' => 'Wszyscy', 'tak' => $definition['yes'] ?? 'Jest', 'nie' => $definition['no'] ?? 'Brak'] as $option => $optionLabel)
+                                                <button type="button" role="radio" aria-checked="{{ $current === $option ? 'true' : 'false' }}" wire:click="$set('filters.{{ $key }}', '{{ $option }}')" @class(['rounded px-2 py-1 transition', 'bg-white text-gray-900 shadow-sm' => $current === $option, 'text-gray-500 hover:text-gray-800' => $current !== $option])>
+                                                    {{ $optionLabel }}@if($option === 'nie' && ($missingCounts[$key] ?? 0) > 0 && $current !== 'tak') <span class="tabular-nums text-amber-700">{{ $missingCounts[$key] }}</span>@endif
+                                                </button>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </fieldset>
+                    @endforeach
+                </div>
+            </div>
+        @endif
     </div>
 
     <table class="min-w-full divide-y divide-gray-300">
@@ -71,6 +139,9 @@
                             <span class="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800" title="Ta sama osoba jest wpisana drugi raz. Otwórz Edytuj i scal profile.">duplikat?</span>
                         @endif
                         @if($player->user_id)<span class="ml-1 inline-flex align-middle text-sky-600" title="Ma konto na stronie"><x-admin-icon name="user" class="h-4 w-4" /></span>@endif
+                        @if($birthMonth !== '' || $yearFrom !== '' || $yearTo !== '' || isset($filters['urodzenie']) || isset($filters['rocznik']))
+                            <span class="block text-xs font-normal text-gray-500">{{ $player->birth_date?->format('d.m.Y') ?? ($player->birth_year ? 'rocznik '.$player->birth_year : 'brak daty urodzenia') }}</span>
+                        @endif
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {{ $player->position?->label() ?? '—' }}
