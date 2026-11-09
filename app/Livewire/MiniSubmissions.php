@@ -279,9 +279,12 @@ class MiniSubmissions extends Component
     private function overview(): array
     {
         $search = trim($this->search);
+        // Na stronie grupy przegląd pokazuje tylko jej turnieje i jej drużyny.
+        $group = $this->groupId ?: ($this->filterGroup !== '' ? (int) $this->filterGroup : null);
         $trips = $this->tripQuery()
-            ->with(['teams' => fn ($query) => $query->with(['group', 'players'])->orderBy('name')])
-            ->when($this->filterGroup !== '', fn ($query) => $query->whereHas('teams', fn ($teams) => $teams->where('mini_group_id', (int) $this->filterGroup)))
+            ->with(['teams' => fn ($query) => $query->with(['group', 'players'])->when($this->groupId, fn ($teams) => $teams->where('mini_group_id', $this->groupId))->orderBy('name')])
+            // turniej bez drużyn jest jeszcze bez kategorii, więc widać go wszędzie
+            ->when($group, fn ($query) => $query->where(fn ($where) => $where->whereHas('teams', fn ($teams) => $teams->where('mini_group_id', $group))->orWhereDoesntHave('teams')))
             ->when($search !== '', fn ($query) => $query->where(fn ($where) => $where->where('title', 'like', "%{$search}%")->orWhere('city', 'like', "%{$search}%")->orWhere('venue', 'like', "%{$search}%")))
             ->get();
 

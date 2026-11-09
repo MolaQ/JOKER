@@ -111,7 +111,7 @@ test('a mini coordinator adds, moves and retires children without profiles', fun
 
 test('group icons use the colour set in the panel', function () {
     app(SiteSettings::class)->set([AgeColors::key('mini4') => '#123abc']);
-    $this->get(route('mini.show', $this->group))->assertOk()->assertSee('color: #123abc', false);
+    $this->get(route('mini.show', $this->group))->assertOk()->assertSee('color-mix(in srgb, #123abc 75%', false);
     expect(MiniGroup::firstWhere('slug', 'trojki')->iconColor())->toBe(AgeColors::forMini(3));
 });
 
@@ -162,4 +162,20 @@ test('a mini report has a lead, formatted text and tags children by their public
     auth()->logout();
     $this->get(route('articles.show', $article))->assertOk()->assertSee('Ania K.')->assertDontSee('Ania Kowalska')
         ->assertSee(route('players.show', Player::firstWhere('first_name', 'Ania'), false));
+});
+
+test('the overview on a group page lists only that group tournaments and teams', function () {
+    $other = MiniGroup::where('id', '!=', $this->group->id)->first();
+    $own = MiniTrip::create(['title' => 'Turniej Czwórek', 'city' => 'Piła', 'starts_on' => now()->addWeek()]);
+    $own->teams()->create(['mini_group_id' => $this->group->id, 'name' => 'Joker Czwórki']);
+    $own->teams()->create(['mini_group_id' => $other->id, 'name' => 'Joker Inni']);
+    $foreign = MiniTrip::create(['title' => 'Turniej Obcy', 'city' => 'Ujście', 'starts_on' => now()->addWeek()]);
+    $foreign->teams()->create(['mini_group_id' => $other->id, 'name' => 'Joker Obcy']);
+    $this->actingAs(User::factory()->create(['role' => UserRole::MiniTrainer]));
+
+    Livewire::test(MiniSubmissions::class, ['groupId' => $this->group->id])
+        ->assertSee('Turniej Czwórek')->assertSee('Joker Czwórki')
+        ->assertDontSee('Turniej Obcy')->assertDontSee('Joker Inni')->assertDontSee('Wszystkie kategorie');
+
+    Livewire::test(MiniSubmissions::class)->assertSee('Turniej Obcy')->assertSee('Joker Inni')->assertSee('Wszystkie kategorie');
 });

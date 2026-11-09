@@ -170,7 +170,9 @@
                                                     </a>
                                                 @endforeach
                                                 @foreach($day['mini'] as $trip)
-                                                    <a href="#mini-{{ $trip->id }}" class="text-xs leading-4 sm:text-sm" aria-label="{{ __('Minisiatkówka') }}: {{ $trip->title }}">🏐</a>
+                                                    <a href="#mini-{{ $trip->id }}" class="inline-flex items-center" aria-label="{{ __('Minisiatkówka') }}: {{ $trip->title }}">
+                                                        @if($miniGroup = $trip->teams->pluck('group')->filter()->first())<x-mini-players :group="$miniGroup" size="xs" />@else<span class="text-xs">🏐</span>@endif
+                                                    </a>
                                                 @endforeach
                                                 @foreach($day['tournaments'] as $tournament)
                                                     <a href="#turniej-{{ $tournament->id }}" class="text-xs leading-4 sm:text-sm" aria-label="{{ __('Turniej') }}: {{ $tournament->fullName() }}">🏆</a>
@@ -184,7 +186,7 @@
                                             <ul class="mt-1.5 hidden space-y-1 lg:block">
                                                 @foreach($day['mini'] as $trip)
                                                     <li wire:key="cell-mini-{{ $trip->id }}" class="rounded-lg bg-gradient-to-br from-emerald-100 to-emerald-50 py-1 pr-1.5 pl-2 text-[11px] leading-tight text-emerald-950 ring-1 ring-emerald-300" @if($tint = $trip->tintStyle()) style="{{ $tint }}" @endif title="{{ $trip->title }}{{ $trip->venue ? ' · '.$trip->venue : '' }}">
-                                                        <p class="font-semibold"><a href="{{ route('mini.index') }}" class="hover:underline">🏐 {{ $trip->title }}</a>@if($article = $trip->articles->first()) <a href="{{ route('articles.show', $article) }}" title="{{ __('Relacja') }}: {{ $article->title }}">📰</a>@endif</p>
+                                                        <p class="font-semibold">@foreach($trip->teams->pluck('group')->filter()->unique('id') as $miniGroup)<x-mini-players :group="$miniGroup" size="xs" class="mr-1 mb-0.5 align-middle" />@endforeach<a href="{{ route('mini.index') }}" class="hover:underline">{{ $trip->title }}</a>@if($article = $trip->articles->first()) <a href="{{ route('articles.show', $article) }}" title="{{ __('Relacja') }}: {{ $article->title }}">📰</a>@endif</p>
                                                         <p class="text-emerald-800">{{ $trip->city }}</p>
                                                         @foreach($trip->teams as $miniTeam)
                                                             <details class="group/mini">
@@ -348,7 +350,7 @@
                 @foreach($month['mini'] as $trip)
                     <li id="mini-{{ $trip->id }}" wire:key="list-mini-{{ $trip->id }}" class="card scroll-mt-24 lg:scroll-mt-48 bg-emerald-50 p-4 pl-5 text-sm text-emerald-950 ring-emerald-200" @if($tint = $trip->tintStyle()) style="{{ $tint }}" @endif>
                         <p class="text-xs font-semibold tracking-wide text-emerald-700 uppercase">{{ $trip->dateLabel() }}{{ $trip->city ? ' · '.$trip->city : '' }}</p>
-                        <p class="mt-1 font-display text-lg font-semibold uppercase">🏐 {{ $trip->title }}</p>
+                        <p class="mt-1 flex flex-wrap items-center gap-2 font-display text-lg font-semibold uppercase">@foreach($trip->teams->pluck('group')->filter()->unique('id') as $miniGroup)<x-mini-players :group="$miniGroup" size="sm" />@endforeach<span>{{ $trip->title }}</span></p>
                         @if($trip->venue)
                             <p class="text-xs text-emerald-800">{{ $trip->venue }}</p>
                         @endif

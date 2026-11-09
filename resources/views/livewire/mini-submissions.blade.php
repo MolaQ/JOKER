@@ -28,6 +28,7 @@
                 @foreach(['' => __('Wszystkie'), 'upcoming' => __('Zaplanowane'), 'past' => __('Zakończone')] as $when => $whenLabel)
                     <button type="button" wire:click="$set('filterWhen', '{{ $when }}')" @class(['shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1 transition', 'bg-club-navy text-white ring-club-navy' => $filterWhen === $when, 'bg-white text-zinc-700 ring-zinc-200 hover:bg-zinc-50' => $filterWhen !== $when])>{{ $whenLabel }}</button>
                 @endforeach
+                @unless($groupId)
                 <span class="mx-1 w-px shrink-0 bg-zinc-200" aria-hidden="true"></span>
                 <button type="button" wire:click="$set('filterGroup', '')" @class(['shrink-0 rounded-full px-3.5 py-1.5 text-sm font-semibold ring-1 transition', 'bg-sky-club text-white ring-sky-club' => $filterGroup === '', 'bg-white text-zinc-700 ring-zinc-200 hover:bg-zinc-50' => $filterGroup !== ''])>{{ __('Wszystkie kategorie') }}</button>
                 @foreach($groups as $groupOption)
@@ -35,6 +36,7 @@
                         <x-mini-players :group="$groupOption" size="xs" aria-hidden="true" />{{ $groupOption->name }}
                     </button>
                 @endforeach
+                @endunless
             </div>
         </div>
 
