@@ -12,6 +12,8 @@ use App\Models\User;
 use App\Support\AgeColors;
 use App\Support\SiteSettings;
 use App\UserRole;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -100,13 +102,47 @@ test('a mini coordinator adds, moves and retires children without profiles', fun
     $component = Livewire::test(MiniSubmissions::class, ['groupId' => $this->group->id])
         ->set('section', 'dzieci')
         ->set('child.first_name', 'Hania')->set('child.last_name', 'Kot')->set('child.birth_year', '2015')
-        ->call('addChild')->assertHasNoErrors();
+        ->call('saveChild')->assertHasNoErrors();
 
     $hania = Player::firstWhere('first_name', 'Hania');
     expect($hania->mini_group_id)->toBe($this->group->id)->and($hania->image_consent)->toBeFalse();
 
     $component->call('moveChild', $hania->id, (string) $threes->id)->call('retireChild', $this->child->id);
     expect($hania->fresh()->mini_group_id)->toBe($threes->id)->and($this->child->fresh()->is_active)->toBeFalse();
+});
+
+test('a mini coordinator fills in birth date, number, photo and consent and edits a child later', function () {
+    Storage::fake('public');
+    $this->actingAs(User::factory()->create(['role' => UserRole::MiniCoordinator]));
+
+    $component = Livewire::test(MiniSubmissions::class, ['groupId' => $this->group->id])
+        ->set('section', 'dzieci')
+        ->set('child.first_name', 'Ola')->set('child.last_name', 'Lis')->set('child.birth_date', '2016-05-14')->set('child.number', '9')
+        ->set('childPhoto', UploadedFile::fake()->image('ola.jpg', 600, 600))
+        ->set('child.image_consent', true)
+        ->call('saveChild')->assertHasNoErrors();
+
+    $ola = Player::firstWhere('first_name', 'Ola');
+    expect($ola->birth_date->format('Y-m-d'))->toBe('2016-05-14')
+        ->and($ola->birth_year)->toBe(2016)
+        ->and($ola->jersey_number)->toBe(9)
+        ->and($ola->image_consent)->toBeTrue()
+        ->and($ola->image_consent_changed_at)->not->toBeNull()
+        ->and($ola->photo_path)->not->toBeNull();
+    Storage::disk('public')->assertExists($ola->photo_path);
+
+    $consentBefore = $this->child->fresh()->image_consent;
+
+    $component->call('editChild', $this->child->id)
+        ->assertSet('editingChildId', $this->child->id)
+        ->set('child.birth_date', '2015-02-03')->set('child.number', '4')
+        ->set('childPhoto', UploadedFile::fake()->image('dziecko.jpg', 600, 600))
+        ->call('saveChild')->assertHasNoErrors()
+        ->assertSet('editingChildId', null);
+
+    $child = $this->child->fresh();
+    expect($child->birth_year)->toBe(2015)->and($child->jersey_number)->toBe(4)->and($child->photo_path)->not->toBeNull()
+        ->and($child->image_consent)->toBe($consentBefore);
 });
 
 test('group icons use the colour set in the panel', function () {

@@ -7,6 +7,7 @@ use App\Models\ContentProposal;
 use App\Models\MiniGroup;
 use App\Models\MiniTrip;
 use App\Models\Player;
+use App\Support\Media;
 use App\Support\MessageHtml;
 use App\Support\MiniResults;
 use App\Support\SiteSettings;
@@ -47,8 +48,13 @@ class MiniSubmissions extends Component
     /** @var list<array{id: ?int, group: string, name: string, place: string, teams_count: string, players: list<int>}> */
     public array $rows = [];
 
-    /** @var array{first_name: string, last_name: string, birth_year: string, number: string, group: string} */
-    public array $child = ['first_name' => '', 'last_name' => '', 'birth_year' => '', 'number' => '', 'group' => ''];
+    /** @var array{first_name: string, last_name: string, birth_date: string, birth_year: string, number: string, group: string, image_consent: bool, photo_url: ?string} */
+    public array $child = ['first_name' => '', 'last_name' => '', 'birth_date' => '', 'birth_year' => '', 'number' => '', 'group' => '', 'image_consent' => false, 'photo_url' => null];
+
+    public ?int $editingChildId = null;
+
+    /** @var TemporaryUploadedFile|null zdjęcie dziecka w kadrze 1:1 */
+    public $childPhoto = null;
 
     public string $reportTrip = '';
 
@@ -71,32 +77,82 @@ class MiniSubmissions extends Component
     }
 
     /**
-     * Dziecko na liście grupy: tylko imię, nazwisko i rocznik, bez konta i bez profilu.
-     * Zgodę na zdjęcie i zdjęcie ustawia administrator w panelu.
+     * Dziecko na liście grupy: imię, nazwisko, data urodzenia (albo sam rocznik), numer i zdjęcie.
+     * Zdjęcie widać na stronie dopiero przy zaznaczonej zgodzie rodzica na wizerunek.
      */
-    public function addChild(): void
+    public function saveChild(): void
     {
         $data = $this->validate([
             'child.first_name' => 'required|string|max:60',
             'child.last_name' => 'required|string|max:60',
+            'child.birth_date' => 'nullable|date|after:2000-01-01|before:today',
             'child.birth_year' => 'nullable|integer|min:2000|max:2100',
             'child.number' => 'nullable|integer|min:0|max:99',
             'child.group' => 'required|exists:mini_groups,id',
-        ], ['child.group.required' => __('Wybierz grupę.')], ['child.first_name' => __('imię'), 'child.last_name' => __('nazwisko'), 'child.birth_year' => __('rocznik'), 'child.number' => __('numer')])['child'];
+            'child.image_consent' => 'boolean',
+            'childPhoto' => 'nullable|image|max:8192',
+        ], ['child.group.required' => __('Wybierz grupę.')], ['child.first_name' => __('imię'), 'child.last_name' => __('nazwisko'), 'child.birth_date' => __('data urodzenia'), 'child.birth_year' => __('rocznik'), 'child.number' => __('numer'), 'childPhoto' => __('zdjęcie')])['child'];
 
-        // Dziecko dostaje zwykły profil zawodnika (bez drużyny, z grupą mini).
-        Player::create([
+        $birthDate = filled($data['birth_date'] ?? null) ? $data['birth_date'] : null;
+        $attributes = [
             'mini_group_id' => (int) $data['group'],
             'first_name' => trim($data['first_name']),
             'last_name' => trim($data['last_name']),
-            'birth_year' => $data['birth_year'] ?: null,
+            'birth_date' => $birthDate,
+            'birth_year' => $birthDate ? (int) substr($birthDate, 0, 4) : (filled($data['birth_year'] ?? null) ? (int) $data['birth_year'] : null),
             'jersey_number' => ($data['number'] ?? '') === '' ? null : (int) $data['number'],
-            'is_active' => true,
-            'image_consent' => false,
-        ]);
+            'image_consent' => (bool) ($data['image_consent'] ?? false),
+        ];
 
-        $this->child = ['first_name' => '', 'last_name' => '', 'birth_year' => '', 'number' => '', 'group' => $data['group']];
-        $this->toast(__('Dziecko dopisane do grupy.'));
+        if ($this->childPhoto) {
+            $attributes['photo_path'] = $this->childPhoto->store('mini', 'public');
+        }
+
+        if ($this->editingChildId) {
+            $kid = Player::mini()->where('is_active', true)->findOrFail($this->editingChildId);
+
+            if ($kid->image_consent !== $attributes['image_consent']) {
+                $attributes['image_consent_changed_at'] = now();
+            }
+
+            $kid->update($attributes);
+            $this->toast(__('Zapisano dane dziecka.'));
+        } else {
+            // Dziecko dostaje zwykły profil zawodnika (bez drużyny, z grupą mini).
+            Player::create($attributes + [
+                'is_active' => true,
+                'image_consent_changed_at' => $attributes['image_consent'] ? now() : null,
+            ]);
+            $this->toast(__('Dziecko dopisane do grupy.'));
+        }
+
+        $this->resetChild($data['group']);
+    }
+
+    public function editChild(int $id): void
+    {
+        $kid = Player::mini()->where('is_active', true)->findOrFail($id);
+        $this->editingChildId = $kid->id;
+        $this->childPhoto = null;
+        $this->child = [
+            'first_name' => (string) $kid->first_name,
+            'last_name' => (string) $kid->last_name,
+            'birth_date' => (string) $kid->birth_date?->format('Y-m-d'),
+            'birth_year' => (string) $kid->birth_year,
+            'number' => (string) $kid->jersey_number,
+            'group' => (string) $kid->mini_group_id,
+            'image_consent' => (bool) $kid->image_consent,
+            'photo_url' => $kid->photo_path ? Media::url($kid->photo_path) : null,
+        ];
+        $this->resetErrorBag();
+    }
+
+    public function resetChild(?string $group = null): void
+    {
+        $this->editingChildId = null;
+        $this->childPhoto = null;
+        $this->child = ['first_name' => '', 'last_name' => '', 'birth_date' => '', 'birth_year' => '', 'number' => '', 'group' => (string) ($group ?? $this->groupId ?? ''), 'image_consent' => false, 'photo_url' => null];
+        $this->resetErrorBag();
     }
 
     public function moveChild(int $id, string $groupId): void

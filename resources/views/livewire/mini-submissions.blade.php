@@ -257,8 +257,12 @@
     @endif
     @if($section === 'dzieci')
         <div class="card mt-6 space-y-5 p-5 sm:p-6">
-            <form wire:submit="addChild" class="space-y-4">
-                <p class="text-sm text-zinc-600">{{ __('Na stronie dziecko ma tylko imię, nazwisko i rocznik, bez profilu i bez linku. Zdjęcie dodaje administrator po zgodzie rodzica.') }}</p>
+            <form wire:submit="saveChild" id="mini-child-form" class="scroll-mt-32 space-y-4">
+                @if($editingChildId)
+                    <p class="rounded-lg bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-club-dark">{{ __('Edytujesz: :name', ['name' => trim($child['first_name'].' '.$child['last_name'])]) }}</p>
+                @else
+                    <p class="text-sm text-zinc-600">{{ __('Na stronie dziecko ma imię, nazwisko i rocznik, bez profilu i bez linku. Zdjęcie widać tylko przy zgodzie rodzica na publikację wizerunku. Pełna data urodzenia nie jest pokazywana.') }}</p>
+                @endif
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
                         <label class="{{ $labelClass }}" for="mini-child-first">{{ __('Imię') }}</label>
@@ -271,10 +275,17 @@
                         @error('child.last_name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="{{ $labelClass }}" for="mini-child-year">{{ __('Rocznik (opcjonalnie)') }}</label>
-                        <input id="mini-child-year" type="number" inputmode="numeric" wire:model="child.birth_year" class="{{ $field }}" placeholder="{{ now()->year - 10 }}">
-                        @error('child.birth_year') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        <label class="{{ $labelClass }}" for="mini-child-birth">{{ __('Data urodzenia (opcjonalnie)') }}</label>
+                        <input id="mini-child-birth" type="date" wire:model.live="child.birth_date" max="{{ now()->subDay()->format('Y-m-d') }}" class="{{ $field }}">
+                        @error('child.birth_date') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
+                    @if(blank($child['birth_date'] ?? null))
+                        <div>
+                            <label class="{{ $labelClass }}" for="mini-child-year">{{ __('albo sam rocznik') }}</label>
+                            <input id="mini-child-year" type="number" inputmode="numeric" wire:model="child.birth_year" class="{{ $field }}" placeholder="{{ now()->year - 10 }}">
+                            @error('child.birth_year') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+                    @endif
                     <div>
                         <label class="{{ $labelClass }}" for="mini-child-number">{{ __('Numer na koszulce (opcjonalnie)') }}</label>
                         <input id="mini-child-number" type="number" inputmode="numeric" min="0" max="99" wire:model="child.number" class="{{ $field }}" placeholder="{{ __('np. 7') }}">
@@ -289,17 +300,33 @@
                         @error('child.group') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                 </div>
-                <button type="submit" class="btn-primary w-full sm:w-auto">{{ __('Dopisz dziecko') }}</button>
+                <div>
+                    <span class="{{ $labelClass }}">{{ __('Zdjęcie (opcjonalnie)') }}</span>
+                    <x-photo-cropper wire:key="child-photo-{{ $editingChildId ?? 'nowe' }}" model="childPhoto" class="mt-1" aspect="1/1" :width="600" :current="$child['photo_url'] ?? null" :pending="$childPhoto && ! $errors->has('childPhoto') ? $childPhoto->temporaryUrl() : null" :hint="__('Kadr 1:1. Przesuń i powiększ zdjęcie, a potem kliknij „Użyj tego kadru”.')" />
+                    @error('childPhoto') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                </div>
+                <label class="flex items-start gap-2 text-sm text-zinc-700">
+                    <input type="checkbox" wire:model="child.image_consent" class="mt-0.5 rounded border-zinc-300">
+                    <span>{{ __('Rodzic zgodził się na publikację wizerunku dziecka (zdjęcie widać na stronie)') }}</span>
+                </label>
+                <div class="flex flex-wrap gap-2">
+                    <button type="submit" class="btn-primary w-full sm:w-auto">{{ $editingChildId ? __('Zapisz zmiany') : __('Dopisz dziecko') }}</button>
+                    @if($editingChildId)
+                        <button type="button" wire:click="resetChild" class="rounded-lg px-4 py-2 text-sm font-semibold text-zinc-700 ring-1 ring-zinc-300 hover:bg-zinc-50">{{ __('Anuluj') }}</button>
+                    @endif
+                </div>
             </form>
 
-            <p class="border-t border-zinc-100 pt-4 text-xs text-zinc-500">{{ __('Przy każdym dziecku: lista „grupa” przenosi je do innej kategorii (np. z dwójek do trójek), a „Nie trenuje już” usuwa je z listy, gdy skończyło treningi. Wyniki dawnych turniejów zostają.') }}</p>
+            <p class="border-t border-zinc-100 pt-4 text-xs text-zinc-500">{{ __('Przy każdym dziecku: „Edytuj” uzupełnia dane i zdjęcie, lista „grupa” przenosi je do innej kategorii (np. z dwójek do trójek), a „Nie trenuje już” usuwa je z listy, gdy skończyło treningi. Wyniki dawnych turniejów zostają.') }}</p>
             @foreach($groups as $groupOption)
                 <div wire:key="kids-{{ $groupOption->id }}" class="border-t border-zinc-100 pt-4">
                     <h3 class="flex items-center gap-2 font-display text-lg font-semibold uppercase"><x-mini-players :group="$groupOption" size="xs" /> {{ $groupOption->name }} <span class="text-sm font-normal text-zinc-500">({{ $groupOption->players->count() }})</span></h3>
                     <ul class="mt-2 divide-y divide-zinc-100">
                         @forelse($groupOption->players as $kid)
                             <li wire:key="kid-{{ $kid->id }}" class="flex flex-wrap items-center gap-2 py-2 text-sm">
-                                <span class="min-w-0 flex-1 font-medium">@if($kid->jersey_number !== null)<span class="mr-1 font-bold text-sky-club-dark">#{{ $kid->jersey_number }}</span>@endif{{ $kid->first_name }} {{ $kid->last_name }}@if($kid->birth_year) <span class="text-zinc-500">· {{ $kid->birth_year }}</span>@endif</span>
+                                @if($kid->photo_path)<img src="{{ \App\Support\Media::url($kid->photo_path) }}" alt="" class="size-8 rounded-full object-cover {{ $kid->image_consent ? '' : 'opacity-40 grayscale' }}" title="{{ $kid->image_consent ? __('Zdjęcie widoczne na stronie') : __('Zdjęcie ukryte: brak zgody rodzica') }}">@else<span class="size-8 rounded-full bg-zinc-100"></span>@endif
+                                <span class="min-w-0 flex-1 font-medium">@if($kid->jersey_number !== null)<span class="mr-1 font-bold text-sky-club-dark">#{{ $kid->jersey_number }}</span>@endif{{ $kid->first_name }} {{ $kid->last_name }}@if($kid->birth_date) <span class="text-zinc-500">· {{ $kid->birth_date->format('d.m.Y') }}</span>@elseif($kid->birth_year) <span class="text-zinc-500">· {{ $kid->birth_year }}</span>@endif</span>
+                                <button type="button" wire:click="editChild({{ $kid->id }})" x-on:click="$nextTick(() => setTimeout(() => document.getElementById('mini-child-form')?.scrollIntoView({ behavior: 'smooth' }), 150))" class="rounded-lg px-2 py-1 text-xs font-semibold text-sky-club-dark ring-1 ring-sky-200 hover:bg-sky-50">{{ __('Edytuj') }}</button>
                                 <select wire:change="moveChild({{ $kid->id }}, $event.target.value)" class="rounded-lg border border-zinc-300 bg-white px-2 py-1 text-xs" aria-label="{{ __('Przenieś do grupy') }}">
                                     @foreach($groups as $target)<option value="{{ $target->id }}" @selected($target->id === $groupOption->id)>{{ $target->name }}</option>@endforeach
                                 </select>
