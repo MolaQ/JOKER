@@ -3,6 +3,18 @@
  * options: aspect (np. 0.8 dla 4:5, 0 = dowolny kadr), width (px), format ('jpeg' albo 'png' z przezroczystością).
  * Przycięty plik trafia do właściwości komponentu Livewire.
  */
+// Kod odpowiedzi serwera na ostatnie wysłanie pliku: Livewire pokazuje tylko ogólny błąd, a kod (np. 401, 403, 413, 500)
+// mówi, co poszło nie tak. Status 0 = połączenie przerwane albo zablokowane przed stroną (np. zapora hostingu).
+let lastUploadStatus = null;
+const originalOpen = XMLHttpRequest.prototype.open;
+XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+    if (String(url).includes('/upload-file')) {
+        this.addEventListener('loadend', () => { lastUploadStatus = this.status; });
+    }
+
+    return originalOpen.call(this, method, url, ...rest);
+};
+
 export function registerPhotoCropper() {
     document.addEventListener('alpine:init', () => {
         window.Alpine.data('photoCropper', (property, options = {}) => ({
@@ -208,10 +220,13 @@ export function registerPhotoCropper() {
                     canvas = round;
                 }
 
+                lastUploadStatus = null;
+
                 const failed = (message) => {
                     this.stopWatchdog();
                     this.uploading = false;
-                    this.error = message ?? (document.documentElement.lang === 'en' ? 'Could not upload the photo. Please try again.' : 'Nie udało się wysłać zdjęcia. Spróbuj ponownie.');
+                    const code = lastUploadStatus === null ? '' : ` (${document.documentElement.lang === 'en' ? 'code' : 'kod'} ${lastUploadStatus})`;
+                    this.error = message ?? (document.documentElement.lang === 'en' ? `Could not upload the photo${code}. Please try again.` : `Nie udało się wysłać zdjęcia${code}. Spróbuj ponownie.`);
                 };
 
                 // Gdy serwer nie odpowie (np. wygasła sesja albo błąd po stronie serwera), Livewire nie woła żadnej
