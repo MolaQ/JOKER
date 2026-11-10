@@ -118,7 +118,7 @@ test('a mini coordinator fills in birth date, number, photo and consent and edit
     $component = Livewire::test(MiniSubmissions::class, ['groupId' => $this->group->id])
         ->set('section', 'dzieci')
         ->set('child.first_name', 'Ola')->set('child.last_name', 'Lis')->set('child.birth_date', '2016-05-14')->set('child.number', '9')
-        ->set('childPhoto', UploadedFile::fake()->image('ola.jpg', 600, 600))
+        ->set('childPhoto', UploadedFile::fake()->image('ola.jpg', 800, 1000))
         ->set('child.image_consent', true)
         ->call('saveChild')->assertHasNoErrors();
 
@@ -136,7 +136,7 @@ test('a mini coordinator fills in birth date, number, photo and consent and edit
     $component->call('editChild', $this->child->id)
         ->assertSet('editingChildId', $this->child->id)
         ->set('child.birth_date', '2015-02-03')->set('child.number', '4')
-        ->set('childPhoto', UploadedFile::fake()->image('dziecko.jpg', 600, 600))
+        ->set('childPhoto', UploadedFile::fake()->image('dziecko.jpg', 800, 1000))
         ->call('saveChild')->assertHasNoErrors()
         ->assertSet('editingChildId', null);
 

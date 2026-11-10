@@ -252,7 +252,7 @@
                     <label class="{{ $label }}">Zdjęcie</label>
                     <div class="mt-1 flex items-center gap-3">
                         @if($playerPhoto)<img src="{{ $playerPhoto->temporaryUrl() }}" alt="" class="size-16 rounded-full object-cover">@elseif($player['photo_path'] ?? null)<img src="{{ \App\Support\Media::url($player['photo_path']) }}" alt="" class="size-16 rounded-full object-cover">@endif
-                        <x-photo-cropper model="playerPhoto" :preview="false" aspect="1/1" :width="600" />
+                        <x-photo-cropper model="playerPhoto" :preview="false" aspect="4/5" :width="800" hint="Kadr 4:5 jak na kafelkach dzieci i w profilach zawodników." />
                     </div>
                 </div>
                 <div class="space-y-2 sm:col-span-2">
@@ -306,7 +306,7 @@
                     <label class="{{ $label }}">Zdjęcie</label>
                     <div class="mt-1 flex items-center gap-3">
                         @if($playerPhoto)<img src="{{ $playerPhoto->temporaryUrl() }}" alt="" class="size-16 rounded-full object-cover">@elseif($player['photo_path'] ?? null)<img src="{{ \App\Support\Media::url($player['photo_path']) }}" alt="" class="size-16 rounded-full object-cover">@endif
-                        <x-photo-cropper model="playerPhoto" :preview="false" aspect="1/1" :width="600" />
+                        <x-photo-cropper model="playerPhoto" :preview="false" aspect="4/5" :width="800" hint="Kadr 4:5 jak na kafelkach dzieci i w profilach zawodników." />
                     </div>
                 </div>
                 <div class="space-y-2 sm:col-span-2">

@@ -302,7 +302,7 @@
                 </div>
                 <div>
                     <span class="{{ $labelClass }}">{{ __('Zdjęcie (opcjonalnie)') }}</span>
-                    <x-photo-cropper wire:key="child-photo-{{ $editingChildId ?? 'nowe' }}" model="childPhoto" class="mt-1" aspect="1/1" :width="600" :current="$child['photo_url'] ?? null" :pending="$childPhoto && ! $errors->has('childPhoto') ? $childPhoto->temporaryUrl() : null" :hint="__('Kadr 1:1. Przesuń i powiększ zdjęcie, a potem kliknij „Użyj tego kadru”.')" />
+                    <x-photo-cropper wire:key="child-photo-{{ $editingChildId ?? 'nowe' }}" model="childPhoto" class="mt-1" aspect="4/5" :width="800" :current="$child['photo_url'] ?? null" :pending="$childPhoto && ! $errors->has('childPhoto') ? $childPhoto->temporaryUrl() : null" :hint="__('Kadr 4:5 jak w profilach zawodników. Przesuń i powiększ zdjęcie, a potem kliknij „Użyj tego kadru”.')" />
                     @error('childPhoto') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                 </div>
                 <label class="flex items-start gap-2 text-sm text-zinc-700">

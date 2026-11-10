@@ -53,7 +53,7 @@ class MiniSubmissions extends Component
 
     public ?int $editingChildId = null;
 
-    /** @var TemporaryUploadedFile|null zdjęcie dziecka w kadrze 1:1 */
+    /** @var TemporaryUploadedFile|null zdjęcie dziecka w kadrze 4:5 */
     public $childPhoto = null;
 
     public string $reportTrip = '';
