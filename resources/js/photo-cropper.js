@@ -12,6 +12,7 @@ export function registerPhotoCropper() {
             cropper: null,
             source: null,
             uploading: false,
+            watchdog: null,
             ready: false,
             error: null,
             original: null,
@@ -23,6 +24,8 @@ export function registerPhotoCropper() {
             async choose(event) {
                 const file = event.target.files[0];
                 this.error = null;
+                this.stopWatchdog();
+                this.uploading = false;
 
                 if (! file) {
                     return;
@@ -44,6 +47,10 @@ export function registerPhotoCropper() {
                 this.ready = false;
 
                 await this.$nextTick();
+
+                // Duże zdjęcia z aparatu dekodują się chwilę; Cropper mierzy obrazek przy starcie,
+                // więc bez czekania potrafił zbudować kadr o wysokości 100 px z malutkim zdjęciem.
+                await this.$refs.image.decode?.().catch(() => {});
 
                 this.cropper = new Cropper(this.$refs.image, {
                     aspectRatio: this.aspect > 0 ? this.aspect : (this.shape === 'free' ? NaN : 1),
@@ -201,17 +208,42 @@ export function registerPhotoCropper() {
                     canvas = round;
                 }
 
+                const failed = (message) => {
+                    this.stopWatchdog();
+                    this.uploading = false;
+                    this.error = message ?? (document.documentElement.lang === 'en' ? 'Could not upload the photo. Please try again.' : 'Nie udało się wysłać zdjęcia. Spróbuj ponownie.');
+                };
+
+                // Gdy serwer nie odpowie (np. wygasła sesja albo błąd po stronie serwera), Livewire nie woła żadnej
+                // funkcji zwrotnej i przycisk zostawał na zawsze w stanie „Wysyłanie…”.
+                this.watchdog = setTimeout(() => failed(document.documentElement.lang === 'en'
+                    ? 'The server did not respond. Refresh the page and try again.'
+                    : 'Serwer nie odpowiedział. Odśwież stronę (F5) i spróbuj ponownie.'), 45000);
+
                 canvas.toBlob((blob) => {
+                    if (! blob) {
+                        failed();
+
+                        return;
+                    }
+
                     const file = new File([blob], png ? 'obrazek.png' : 'zdjecie.jpg', { type: png ? 'image/png' : 'image/jpeg' });
 
-                    this.$wire.upload(property, file, () => {
-                        this.uploading = false;
-                        this.destroy();
-                    }, () => {
-                        this.uploading = false;
-                        this.error = document.documentElement.lang === 'en' ? 'Could not upload the photo. Please try again.' : 'Nie udało się wysłać zdjęcia. Spróbuj ponownie.';
-                    });
+                    try {
+                        this.$wire.upload(property, file, () => {
+                            this.stopWatchdog();
+                            this.uploading = false;
+                            this.destroy();
+                        }, () => failed());
+                    } catch (exception) {
+                        failed();
+                    }
                 }, png ? 'image/png' : 'image/jpeg', 0.9);
+            },
+
+            stopWatchdog() {
+                clearTimeout(this.watchdog);
+                this.watchdog = null;
             },
 
             destroy() {
