@@ -479,7 +479,7 @@
 
         {{-- Skrócona tabela wybranej drużyny: obok kalendarza na dużym ekranie, rozwijana nad kalendarzem na telefonie --}}
         @if($teamTable)
-            <aside wire:key="team-table-{{ $teamTable['row']->id }}" class="order-first mb-6 xl:sticky xl:top-40 xl:order-none xl:mb-0" x-data="{ open: window.matchMedia('(min-width: 1280px)').matches }">
+            <aside wire:key="team-table-{{ $teamTable['row']->id }}" class="order-first mb-6 xl:sticky xl:top-64 xl:order-none xl:mb-0" x-data="{ open: window.matchMedia('(min-width: 1280px)').matches }">
                 <div class="card overflow-hidden">
                     <button type="button" x-on:click="open = ! open" :aria-expanded="open" class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left">
                         <span class="min-w-0">
