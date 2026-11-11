@@ -1,5 +1,6 @@
 import { initAdminApp } from './admin-app';
 import { initAdminTables } from './admin-tables';
+import { registerCalendarDetails } from './calendar-details';
 import { registerConfirmModal } from './confirm-modal';
 import { initCountdowns } from './countdown';
 import { initDailyLineup } from './daily-lineup';
@@ -21,6 +22,7 @@ registerPhotoCropper();
 registerRichEditor();
 registerToasts();
 registerConfirmModal();
+registerCalendarDetails();
 registerSearchSelect();
 registerTimeInputs();
 

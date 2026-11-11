@@ -56,14 +56,14 @@ test('calendar marks home and away games, results with V or X and opens the newe
         ->set('period', 'all')
         ->assertSeeHtml('bg-(--cal-home-bg) text-(--cal-home-text) ring-1 ring-(--cal-home-border)')
         ->assertSeeHtml('bg-(--cal-away-bg) text-(--cal-away-text)')
-        ->assertSeeHtml('aria-label="Wygrana"')
-        ->assertSeeHtml('aria-label="Porażka"')
+        // Kafelek kalendarza: wynik w kolorze wygranej/porażki, a okno szczegółów prowadzi do najnowszego artykułu.
+        ->assertSeeHtml('text-emerald-600">3:1</span>')
+        ->assertSeeHtml('text-red-600">3:0</span>')
         ->assertSeeHtml('href="'.route('articles.show', $newer).'"')
         ->assertDontSeeHtml('href="'.route('articles.show', $older).'"')
         ->assertSee('Wygrana 3:1')
         ->assertSee('Porażka 0:3')
         ->assertSeeHtml('ring-current/20 text-zinc-700">'.e($this->team->name).'</span>')
-        ->assertSeeHtml('ring-current/20 ml-1">'.e($this->team->name).'</span>')
         ->assertDontSee('(kadeci)');
 });
 
@@ -293,7 +293,7 @@ test('tournaments and friendlies appear in the calendar and can be filtered', fu
         ->assertSee('XII Turniej im. Włodzimierza Winklera')
         ->assertSee('2. miejsce')
         ->assertSee('Sparingowy Rywal')
-        ->assertSeeHtml('>sparing</span>')
+        ->assertSeeHtml('text-zinc-500">Sparing</span>')
         ->set('competition', GamesBrowser::FILTER_TOURNAMENTS)
         ->assertSee('Winklera')
         ->assertSee('MKS Sulęcin')

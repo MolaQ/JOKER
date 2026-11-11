@@ -4,10 +4,13 @@
     <div x-show="away" x-cloak x-transition.opacity.duration.200ms class="fixed inset-x-0 top-16 z-40 border-b border-zinc-200 bg-white/95 py-2 shadow-sm backdrop-blur-xl lg:hidden">
         <div class="flex items-center gap-2 pl-4">
             <div data-scroll-fade x-on:click="if ($event.target.closest('button')) setTimeout(() => document.querySelector('[data-games-list]')?.scrollIntoView({ behavior: 'smooth' }), 400)" class="scrollbar-none flex min-w-0 flex-1 gap-2 overflow-x-auto">
-                <button type="button" wire:click="$set('team', '')" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $team === '', 'bg-zinc-100 text-zinc-700' => $team !== ''])>{{ __('Wszystkie') }}</button>
+                <button type="button" wire:click="allTeams" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $team === '' && $competition !== \App\Livewire\GamesBrowser::FILTER_MINI, 'bg-zinc-100 text-zinc-700' => $team !== '' || $competition === \App\Livewire\GamesBrowser::FILTER_MINI])>{{ __('Wszystkie') }}</button>
                 @foreach($teams as $teamOption)
                     <button type="button" wire:click="toggleTeam('{{ $teamOption->slug }}')" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $team === $teamOption->slug, 'bg-zinc-100 text-zinc-700' => $team !== $teamOption->slug])>{{ $teamOption->name }}</button>
                 @endforeach
+                @if($hasMini)
+                    <button type="button" wire:click="toggleMini" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $competition === \App\Livewire\GamesBrowser::FILTER_MINI, 'bg-zinc-100 text-zinc-700' => $competition !== \App\Livewire\GamesBrowser::FILTER_MINI])>{{ __('Minisiatkówka') }}</button>
+                @endif
             </div>
             <button type="button" x-on:click="window.scrollTo({ top: 0, behavior: 'smooth' })" class="mr-3 flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-ink px-3 text-xs font-semibold text-white" aria-label="{{ __('Pokaż wszystkie filtry') }}">
                 <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
@@ -17,7 +20,7 @@
     </div>
 
     {{-- Filtry: działają od razu, bez przeładowania strony; na komputerze przyklejone pod menu (na telefonie zajęłyby pół ekranu) --}}
-    <div x-init="new IntersectionObserver(([entry]) => away = ! entry.isIntersecting && entry.boundingClientRect.top < 136, { rootMargin: '-136px 0px 0px 0px' }).observe($el)" class="relative z-30 lg:sticky border-y border-zinc-200 bg-white/90 backdrop-blur-xl lg:top-20">
+    <div x-init="new IntersectionObserver(([entry]) => away = ! entry.isIntersecting && entry.boundingClientRect.top < 136, { rootMargin: '-136px 0px 0px 0px' }).observe($el)" class="relative border-y border-zinc-200 bg-white lg:sticky lg:top-20 lg:z-30 lg:bg-white/90 lg:backdrop-blur-xl">
         <div class="container-site space-y-3 py-3">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
                 <label class="relative flex-1">
@@ -40,53 +43,104 @@
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2">
-                <div data-scroll-fade class="scrollbar-none -mx-4 flex min-w-0 flex-1 basis-full gap-2 overflow-x-auto px-4 sm:mx-0 sm:basis-auto sm:px-0">
-                    <button type="button" wire:click="$set('team', '')" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $team === '', 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => $team !== ''])>{{ __('Wszystkie drużyny') }}</button>
+            @php
+                $chip = 'chip shrink-0 transition';
+                $chipOn = 'bg-sky-club text-white shadow-sm';
+                $chipOff = 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200';
+                $rowLabel = 'hidden w-24 shrink-0 text-[10px] font-bold tracking-[0.16em] text-zinc-400 uppercase lg:block';
+                $isMini = $competition === \App\Livewire\GamesBrowser::FILTER_MINI;
+                $moreActive = (int) ($competition !== '' && ! $isMini) + (int) ($place !== '') + (int) ($season !== '');
+            @endphp
+            {{-- Drużyny i minisiatkówka: zawsze na wierzchu, także na telefonie --}}
+            <div class="flex min-w-0 items-center gap-2">
+                <span class="{{ $rowLabel }}">{{ __('Drużyna') }}</span>
+                <div data-scroll-fade class="scrollbar-none -mx-4 flex min-w-0 flex-1 gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+                    <button type="button" wire:click="allTeams" @class([$chip, $chipOn => $team === '' && ! $isMini, $chipOff => $team !== '' || $isMini])>{{ __('Wszystkie drużyny') }}</button>
                     @foreach($teams as $teamOption)
-                        <button type="button" data-track="{{ __('Mecze') }}: {{ $teamOption->name }}" wire:click="toggleTeam('{{ $teamOption->slug }}')" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $team === $teamOption->slug, 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200' => $team !== $teamOption->slug])>{{ $teamOption->name }}</button>
+                        <button type="button" data-track="{{ __('Mecze') }}: {{ $teamOption->name }}" wire:click="toggleTeam('{{ $teamOption->slug }}')" @class([$chip, $chipOn => $team === $teamOption->slug, $chipOff => $team !== $teamOption->slug])>{{ $teamOption->name }}</button>
                     @endforeach
+                    @if($hasMini)
+                        <button type="button" data-track="{{ __('Mecze') }}: {{ __('Minisiatkówka') }}" wire:click="toggleMini" aria-pressed="{{ $isMini ? 'true' : 'false' }}" @class([$chip, $chipOn => $isMini, $chipOff => ! $isMini])>{{ __('Minisiatkówka') }}</button>
+                    @endif
                 </div>
+            </div>
 
-                <div class="flex w-full flex-wrap gap-2 sm:w-auto">
-                    @if($competitions->count() > 1 || $hasTournaments || $hasFriendlies || $hasMini)
-                        <select wire:model.live="competition" class="h-9 w-full min-w-0 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700 sm:w-auto sm:flex-none" aria-label="{{ __('Rozgrywki') }}">
-                            <option value="">{{ __('Wszystkie rozgrywki') }}</option>
-                            @foreach($competitions as $competitionOption)
-                                <option value="{{ $competitionOption->id }}">{{ $competitionOption->name }}</option>
-                            @endforeach
-                            @if($hasTournaments)
-                                <option value="{{ \App\Livewire\GamesBrowser::FILTER_TOURNAMENTS }}">{{ __('Turnieje') }}</option>
-                            @endif
-                            @if($hasFriendlies)
-                                <option value="{{ \App\Livewire\GamesBrowser::FILTER_FRIENDLIES }}">{{ __('Sparingi') }}</option>
-                            @endif
-                            @if($hasMini)
-                                <option value="{{ \App\Livewire\GamesBrowser::FILTER_MINI }}">{{ __('Minisiatkówka') }}</option>
-                            @endif
-                        </select>
+            @if($isMini && $miniGroups->isNotEmpty())
+                <div class="flex min-w-0 items-center gap-2">
+                    <span class="{{ $rowLabel }}">{{ __('Grupa') }}</span>
+                    <div data-scroll-fade class="scrollbar-none -mx-4 flex min-w-0 flex-1 gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+                        <button type="button" wire:click="$set('miniGroup', '')" @class([$chip, $chipOn => $miniGroup === '', $chipOff => $miniGroup !== ''])>{{ __('Wszystkie grupy') }}</button>
+                        @foreach($miniGroups as $groupOption)
+                            <button type="button" wire:key="mini-group-{{ $groupOption->id }}" wire:click="setMiniGroup('{{ $groupOption->id }}')" @class([$chip, 'inline-flex items-center gap-1.5 !pl-1.5', $chipOn => $miniGroup === (string) $groupOption->id, $chipOff => $miniGroup !== (string) $groupOption->id])><x-mini-players :group="$groupOption" size="xs" />{{ $groupOption->name }}</button>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            {{-- Telefon: rozgrywki, dom/wyjazd i sezon w panelu od dołu; komputer: w rzędzie pod drużynami --}}
+            <div x-data="{ sheet: false }" x-on:keydown.escape.window="sheet = false">
+                <button type="button" x-on:click="sheet = true" class="flex h-10 w-full items-center justify-center gap-2 rounded-full text-sm font-semibold text-zinc-700 ring-1 ring-zinc-200 lg:hidden">
+                    <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
+                    {{ __('Więcej filtrów') }}
+                    @if($moreActive)<span class="rounded-full bg-sky-club px-1.5 text-[11px] text-white tabular-nums">{{ $moreActive }}</span>@endif
+                </button>
+                <div x-show="sheet" x-cloak x-transition.opacity x-on:click="sheet = false" class="fixed inset-0 z-[60] bg-ink/40 backdrop-blur-sm lg:hidden"></div>
+                <div :class="sheet ? 'max-lg:translate-y-0' : 'max-lg:translate-y-full max-lg:invisible'" class="flex flex-col gap-4 transition-transform duration-300 ease-out max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-[61] max-lg:max-h-[85vh] max-lg:overflow-y-auto max-lg:rounded-t-3xl max-lg:bg-white max-lg:px-4 max-lg:pt-3 max-lg:pb-[max(1rem,env(safe-area-inset-bottom))] max-lg:shadow-2xl lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-6 lg:gap-y-2" role="group" aria-label="{{ __('Więcej filtrów') }}">
+                    <div class="mx-auto h-1 w-10 rounded-full bg-zinc-300 lg:hidden" aria-hidden="true"></div>
+                    <p class="font-display text-xl font-semibold uppercase lg:hidden">{{ __('Filtry') }}</p>
+
+                    @if($competitions->count() > 1 || $hasTournaments || $hasFriendlies)
+                        <div class="flex min-w-0 flex-col gap-2 lg:flex-1 lg:flex-row lg:items-center">
+                            <span class="text-[10px] font-bold tracking-[0.16em] text-zinc-400 uppercase lg:w-24 lg:shrink-0">{{ __('Rozgrywki') }}</span>
+                            <div data-scroll-fade class="flex min-w-0 flex-1 flex-wrap gap-2">
+                                <button type="button" wire:click="setCompetition('')" @class([$chip, $chipOn => $competition === '' || $isMini, $chipOff => $competition !== '' && ! $isMini])>{{ __('Wszystkie') }}</button>
+                                @foreach($competitions as $competitionOption)
+                                    <button type="button" wire:key="comp-{{ $competitionOption->id }}" wire:click="setCompetition('{{ $competitionOption->id }}')" @class([$chip, $chipOn => $competition === (string) $competitionOption->id, $chipOff => $competition !== (string) $competitionOption->id])>{{ $competitionOption->name }}</button>
+                                @endforeach
+                                @if($hasTournaments)
+                                    <button type="button" wire:click="setCompetition('{{ \App\Livewire\GamesBrowser::FILTER_TOURNAMENTS }}')" @class([$chip, $chipOn => $competition === \App\Livewire\GamesBrowser::FILTER_TOURNAMENTS, $chipOff => $competition !== \App\Livewire\GamesBrowser::FILTER_TOURNAMENTS])>{{ __('Turnieje') }}</button>
+                                @endif
+                                @if($hasFriendlies)
+                                    <button type="button" wire:click="setCompetition('{{ \App\Livewire\GamesBrowser::FILTER_FRIENDLIES }}')" @class([$chip, $chipOn => $competition === \App\Livewire\GamesBrowser::FILTER_FRIENDLIES, $chipOff => $competition !== \App\Livewire\GamesBrowser::FILTER_FRIENDLIES])>{{ __('Sparingi') }}</button>
+                                @endif
+                            </div>
+                        </div>
                     @endif
-                    <select wire:model.live="place" class="h-9 flex-1 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700 sm:flex-none" aria-label="{{ __('U siebie czy na wyjeździe') }}">
-                        <option value="">{{ __('Dom i wyjazd') }}</option>
-                        <option value="home">{{ __('U siebie') }}</option>
-                        <option value="away">{{ __('Na wyjeździe') }}</option>
-                    </select>
+
+                    <div class="flex flex-col gap-2 lg:flex-row lg:items-center">
+                        <span class="text-[10px] font-bold tracking-[0.16em] text-zinc-400 uppercase lg:sr-only">{{ __('Gdzie') }}</span>
+                        <div class="flex rounded-full bg-zinc-100 p-1 text-[13px] font-semibold" role="radiogroup" aria-label="{{ __('U siebie czy na wyjeździe') }}">
+                            @foreach(['' => __('Wszędzie'), 'home' => __('U siebie'), 'away' => __('Na wyjeździe')] as $placeKey => $placeLabel)
+                                <button type="button" role="radio" aria-checked="{{ $place === $placeKey ? 'true' : 'false' }}" wire:click="setPlace('{{ $placeKey }}')" @class(['flex-1 rounded-full px-3 py-1.5 whitespace-nowrap transition', 'bg-ink text-white shadow' => $place === $placeKey, 'text-zinc-600 hover:text-zinc-900' => $place !== $placeKey])>{{ $placeLabel }}</button>
+                            @endforeach
+                        </div>
+                    </div>
+
                     @if($seasons->count() > 1)
-                        <select wire:model.live="season" class="h-9 flex-1 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700 sm:flex-none" aria-label="{{ __('Sezon') }}">
-                            @foreach($seasons as $seasonOption)
-                                <option value="{{ $seasonOption->is_current ? '' : $seasonOption->id }}">{{ __('Sezon') }} {{ $seasonOption->name }}</option>
-                            @endforeach
-                        </select>
+                        <div class="flex flex-col gap-2 lg:ml-auto lg:flex-row lg:items-center">
+                            <span class="text-[10px] font-bold tracking-[0.16em] text-zinc-400 uppercase lg:sr-only">{{ __('Sezon') }}</span>
+                            <select wire:model.live="season" class="h-9 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700" aria-label="{{ __('Sezon') }}">
+                                @foreach($seasons as $seasonOption)
+                                    <option value="{{ $seasonOption->is_current ? '' : $seasonOption->id }}">{{ __('Sezon') }} {{ $seasonOption->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     @endif
+
+                    <button type="button" x-on:click="sheet = false" class="h-12 shrink-0 rounded-full bg-ink text-sm font-bold text-white lg:hidden">{{ trans_choice('Pokaż :count mecz|Pokaż :count mecze|Pokaż :count meczów', $total) }}</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <section data-games-list class="container-site scroll-mt-32 py-10 transition-opacity" wire:loading.class="opacity-50" wire:target="search,team,competition,place,season,setPeriod,setMonth,toggleTeam,resetFilters">
+    <section data-games-list class="container-site scroll-mt-32 py-10 transition-opacity" wire:loading.class="opacity-50" wire:target="search,team,competition,place,season,miniGroup,setPeriod,setMonth,toggleTeam,allTeams,toggleMini,setMiniGroup,setCompetition,setPlace,resetFilters">
         <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
             <p class="text-sm text-zinc-500" aria-live="polite">
-                {{ trans_choice(':count mecz|:count mecze|:count meczów', $total) }}
+                @if($competition === \App\Livewire\GamesBrowser::FILTER_MINI)
+                    {{ trans_choice('{1} :count turniej minisiatkówki|[2,4] :count turnieje minisiatkówki|[0,*] :count turniejów minisiatkówki', $miniTotal) }}
+                @else
+                    {{ trans_choice(':count mecz|:count mecze|:count meczów', $total) }}
+                @endif
                 @if($search !== '') {{ __('dla') }} „<span class="font-semibold text-zinc-800">{{ $search }}</span>”@endif
             </p>
             @if($hasFilters)
@@ -100,13 +154,15 @@
                 <p class="text-xs font-semibold tracking-wider text-zinc-500 uppercase">{{ __('Nasze miejsca w tabelach') }}</p>
                 <div data-scroll-fade class="scrollbar-none -mx-4 mt-2 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
                     @foreach($ourPlaces as $place)
-                        @php $isActive = $team === $place['team']->slug; @endphp
-                        <button type="button" wire:key="place-{{ $place['team']->id }}" wire:click="toggleTeam('{{ $place['team']->slug }}')" aria-pressed="{{ $isActive ? 'true' : 'false' }}" title="{{ $place['competition']->name }}{{ $place['row']->stage_name ? ' · '.$place['row']->stage_name : '' }}{{ $place['row']->group_name ? ' · '.$place['row']->group_name : '' }}" @class([
+                        @php $isActive = $team === $place['team']->slug; $isLeader = (int) $place['row']->position === 1; @endphp
+                        <button type="button" wire:key="place-{{ $place['team']->id }}" wire:click="toggleTeam('{{ $place['team']->slug }}')" aria-pressed="{{ $isActive ? 'true' : 'false' }}" title="{{ $place['competition']->name }}{{ $place['row']->stage_name ? ' · '.$place['row']->stage_name : '' }}{{ $place['row']->group_name ? ' · '.$place['row']->group_name : '' }}" @if($isLeader) style="--leader: {{ $site->color('cal_first_place') }}" @endif @class([
                             'flex shrink-0 items-center gap-2.5 rounded-2xl px-3 py-2 text-left transition',
                             'bg-club-navy text-white shadow' => $isActive,
-                            'bg-white text-zinc-800 ring-1 ring-zinc-200 hover:bg-zinc-50' => ! $isActive,
+                            'bg-white text-zinc-800 ring-1 ring-zinc-200 hover:bg-zinc-50' => ! $isActive && ! $isLeader,
+                            // Pierwsze miejsce: złote wyróżnienie (kolor w Ustawieniach → Kalendarz meczów).
+                            'bg-linear-to-br from-(--leader)/15 to-white text-zinc-800 ring-1 ring-(--leader)/50 hover:from-(--leader)/25' => ! $isActive && $isLeader,
                         ])>
-                            <span @class(['font-display text-2xl leading-none font-bold tabular-nums', 'text-sky-club-light' => $isActive, 'text-sky-club-dark' => ! $isActive])>{{ $place['row']->position }}.</span>
+                            <span @class(['font-display text-2xl leading-none font-bold tabular-nums', 'text-sky-club-light' => $isActive && ! $isLeader, 'text-(--leader)' => $isLeader, 'text-sky-club-dark' => ! $isActive && ! $isLeader])>{{ $place['row']->position }}.</span>
                             <span class="leading-tight">
                                 <span class="block text-sm font-semibold">{{ $place['team']->name }}</span>
                                 <span @class(['block max-w-44 truncate text-[11px]', 'text-white/75' => $isActive, 'text-zinc-500' => ! $isActive])>{{ __('z :count drużyn', ['count' => $place['rows']->count()]) }} · {{ $place['competition']->name }}</span>
@@ -122,23 +178,26 @@
         {{-- Miesiące jako przyciski: domyślnie bieżący, „Wszystkie” pokazuje cały sezon jedną kartką pod drugą --}}
         @if($monthCounts->count() > 1 || $selectedMonth === 'all')
             @php $multiYear = $monthCounts->keys()->map(fn ($key) => substr($key, 0, 4))->unique()->count() > 1; @endphp
-            <nav data-scroll-fade class="scrollbar-none -mx-4 mb-2 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:px-0" aria-label="{{ __('Miesiące') }}"
+            <nav data-scroll-fade class="scrollbar-none -mx-4 mb-2 flex gap-1 overflow-x-auto border-b border-zinc-200 px-4 sm:mx-0 sm:px-0" aria-label="{{ __('Miesiące') }}"
                  x-init="$nextTick(() => $el.querySelector('[aria-current]')?.scrollIntoView({ inline: 'center', block: 'nearest' }))">
                 <button type="button" wire:click="setMonth('all')" @if($selectedMonth === 'all') aria-current="true" @endif @class([
-                    'shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition',
-                    'bg-club-navy text-white shadow' => $selectedMonth === 'all',
-                    'bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50' => $selectedMonth !== 'all',
+                    '-mb-px shrink-0 border-b-[3px] px-3.5 pt-2 pb-2.5 text-sm font-semibold transition',
+                    'border-club-navy text-club-navy' => $selectedMonth === 'all',
+                    'border-transparent text-zinc-600 hover:border-zinc-300 hover:text-zinc-900' => $selectedMonth !== 'all',
                 ])>{{ __('Wszystkie') }}</button>
                 @foreach($monthCounts as $monthKey => $monthCount)
-                    @php $monthDate = \Illuminate\Support\Carbon::createFromFormat('Y-m-d', $monthKey.'-01'); $isCurrentMonth = $monthKey === now()->format('Y-m'); @endphp
-                    <button type="button" wire:key="month-btn-{{ $monthKey }}" wire:click="setMonth('{{ $monthKey }}')" @if($selectedMonth === $monthKey) aria-current="true" @endif title="{{ $monthDate->translatedFormat('F Y') }}" @class([
-                        'relative flex shrink-0 flex-col items-center rounded-2xl px-3.5 py-1.5 leading-tight transition',
-                        'bg-club-navy text-white shadow' => $selectedMonth === $monthKey,
-                        'bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50' => $selectedMonth !== $monthKey,
-                        'ring-2 ring-sky-club' => $isCurrentMonth && $selectedMonth !== $monthKey,
+                    @php $monthDate = \Illuminate\Support\Carbon::createFromFormat('Y-m-d', $monthKey.'-01'); $isCurrentMonth = $monthKey === now()->format('Y-m'); $isPastMonth = $monthKey < now()->format('Y-m'); $isSelected = $selectedMonth === $monthKey; @endphp
+                    {{-- Miesiące jak zakładki: wybrany podkreślony granatem, minione wyszarzone, bieżący z kropką --}}
+                    <button type="button" wire:key="month-btn-{{ $monthKey }}" wire:click="setMonth('{{ $monthKey }}')" @if($isSelected) aria-current="true" @endif title="{{ $monthDate->translatedFormat('F Y') }}" @class([
+                        'relative -mb-px flex shrink-0 flex-col items-center border-b-[3px] px-3 pt-1.5 pb-2 leading-tight transition',
+                        'border-club-navy text-club-navy' => $isSelected,
+                        'border-transparent hover:border-zinc-300' => ! $isSelected,
+                        'text-zinc-400 hover:text-zinc-600' => ! $isSelected && $isPastMonth,
+                        'text-zinc-700 hover:text-zinc-900' => ! $isSelected && ! $isPastMonth,
                     ])>
                         <span class="text-sm font-semibold capitalize">{{ $monthDate->translatedFormat('M') }}@if($multiYear) <span class="text-[11px] font-normal opacity-70">{{ $monthDate->format('y') }}</span>@endif</span>
-                        <span @class(['text-[11px] tabular-nums', 'text-white/75' => $selectedMonth === $monthKey, 'text-zinc-400' => $selectedMonth !== $monthKey])>{{ $monthCount ?: '–' }}</span>
+                        <span class="text-[11px] tabular-nums opacity-70">{{ $monthCount ?: '–' }}</span>
+                        @if($isCurrentMonth && ! $isSelected)<span class="absolute top-1 right-1 size-1.5 rounded-full bg-sky-club" aria-hidden="true"></span>@endif
                     </button>
                 @endforeach
             </nav>
@@ -183,7 +242,7 @@
                                         'relative min-h-14 border-b border-zinc-100 p-1 sm:min-h-20 sm:p-2 lg:min-h-32',
                                         'border-r' => ! $loop->last,
                                         'bg-zinc-50/70' => ! $day['inMonth'],
-                                        'bg-sky-club/5' => $day['inMonth'] && $day['games']->isNotEmpty(),
+                                        'bg-sky-club/5' => $day['inMonth'] && $day['tiles']->isNotEmpty(),
                                     ])>
                                         <p @class([
                                             'font-display text-base leading-none font-semibold tabular-nums sm:text-2xl',
@@ -194,122 +253,17 @@
                                             <span @class(['inline-flex h-7 min-w-7 items-center justify-center rounded-full sm:h-9 sm:min-w-9', 'bg-sky-club text-white' => $day['isToday']])>{{ $day['date']->day }}</span>
                                         </p>
 
-                                        @if($day['inMonth'] && ($day['games']->isNotEmpty() || $day['tournaments']->isNotEmpty() || $day['mini']->isNotEmpty() || $day['birthdays']->isNotEmpty()))
-                                            {{-- Telefon i tablet: znaczniki (granat = u siebie, szary = wyjazd, V/X = wynik); dotknięcie całego dnia przewija do pierwszego wydarzenia na liście --}}
-                                            @php
-                                                $dayTarget = ($first = $day['games']->first()) ? '#mecz-'.$first->id
-                                                    : (($first = $day['mini']->first()) ? '#mini-'.$first->id
-                                                    : (($first = $day['tournaments']->first()) ? '#turniej-'.$first->id : '#urodziny-'.$month['key']));
-                                            @endphp
-                                            <a href="{{ $dayTarget }}" class="absolute inset-0 z-10 rounded-sm active:bg-sky-club/10 lg:hidden" aria-label="{{ $day['date']->translatedFormat('j F') }}: {{ __('pokaż na liście') }}"></a>
-                                            <div class="pointer-events-none mt-1 flex flex-wrap gap-1 lg:hidden">
-                                                @foreach($day['games'] as $game)
-                                                    @php $outcome = $game->outcome(); $won = $outcome === 'derby' ? null : ($outcome ? $outcome === 'win' : null); @endphp
-                                                    <a href="#mecz-{{ $game->id }}" @class([
-                                                        'inline-flex h-4 w-4 items-center justify-center rounded sm:h-5 sm:w-5',
-                                                        'bg-(--cal-home-bg) ring-1 ring-(--cal-home-border)' => $game->is_home,
-                                                        'bg-(--cal-away-bg) ring-1 ring-(--cal-away-border)' => ! $game->is_home,
-                                                    ]) aria-label="{{ $game->is_home ? __('U siebie') : __('Wyjazd') }}: {{ $game->team?->name }} - {{ $game->opponentShortName() }}">
-                                                        @if($outcome === 'derby')
-                                                            <x-derby-heart class="h-3 w-3 text-sky-club-light" />
-                                                        @elseif($won === true)
-                                                            <svg class="h-3 w-3 text-emerald-400" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7"/></svg>
-                                                        @elseif($won === false)
-                                                            <svg class="h-3 w-3 text-red-500" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
-                                                        @endif
-                                                    </a>
-                                                @endforeach
-                                                @foreach($day['mini'] as $trip)
-                                                    <a href="#mini-{{ $trip->id }}" class="inline-flex items-center" aria-label="{{ __('Minisiatkówka') }}: {{ $trip->title }}">
-                                                        @forelse($trip->teams->pluck('group')->filter()->unique('id') as $miniGroup)<x-mini-players :group="$miniGroup" size="xs" />@empty<span class="text-xs">🏐</span>@endforelse
-                                                    </a>
-                                                @endforeach
-                                                @foreach($day['tournaments'] as $tournament)
-                                                    <a href="#turniej-{{ $tournament->id }}" class="text-xs leading-4 sm:text-sm" aria-label="{{ __('Turniej') }}: {{ $tournament->fullName() }}">🏆</a>
+                                        @if($day['inMonth'] && ($day['tiles']->isNotEmpty() || $day['birthdays']->isNotEmpty()))
+                                            <div class="mt-1 space-y-1 md:mt-1.5">
+                                                @foreach($day['tiles'] as $tile)
+                                                    <x-calendar.tile :tile="$tile" wire:key="tile-{{ $tile['key'] }}" />
                                                 @endforeach
                                                 @foreach($day['birthdays'] as $person)
-                                                    <a href="#urodziny-{{ $month['key'] }}" class="text-xs leading-4 sm:text-sm" aria-label="{{ __('Urodziny') }}: {{ $person['name'] }}">{{ $birthdayIcon }}</a>
+                                                    <a href="#urodziny-{{ $month['key'] }}" class="block truncate rounded-lg bg-(--cal-bday-bg) px-1.5 py-1 text-[11px] leading-tight text-(--cal-bday-text)" title="{{ __('Urodziny') }}: {{ $person['name'] }}{{ $person['showAge'] ? ' '.__('kończy').' '.$person['ageLabel'] : '' }} ({{ __($person['role']) }})">
+                                                        {{ $birthdayIcon }}<span class="hidden md:inline"> <span class="font-semibold">{{ $person['name'] }}</span>{{ $person['showAge'] ? ' · '.$person['age'] : '' }}</span>
+                                                    </a>
                                                 @endforeach
                                             </div>
-
-                                            {{-- Komputer: mecze wpisane w kartkę; granat = u siebie, szary = wyjazd --}}
-                                            <ul class="mt-1.5 hidden space-y-1 lg:block">
-                                                @foreach($day['mini'] as $trip)
-                                                    <li wire:key="cell-mini-{{ $trip->id }}" class="rounded-lg bg-gradient-to-br from-emerald-100 to-emerald-50 py-1 pr-1.5 pl-2 text-[11px] leading-tight text-emerald-950 ring-1 ring-emerald-300" @if($tint = $trip->tintStyle()) style="{{ $tint }}" @endif title="{{ $trip->title }}{{ $trip->venue ? ' · '.$trip->venue : '' }}">
-                                                        <p class="font-semibold">@foreach($trip->teams->pluck('group')->filter()->unique('id') as $miniGroup)<x-mini-players :group="$miniGroup" size="xs" class="mr-1 mb-0.5 align-middle" />@endforeach<a href="{{ $trip->url() }}" class="hover:underline">{{ $trip->title }}</a>@if($article = $trip->articles->first()) <a href="{{ route('articles.show', $article) }}" title="{{ __('Relacja') }}: {{ $article->title }}">📰</a>@endif</p>
-                                                        <p class="text-emerald-800">{{ $trip->city }}</p>
-                                                        @foreach($trip->teams as $miniTeam)
-                                                            <details class="group/mini">
-                                                                <summary class="cursor-pointer list-none truncate hover:underline [&::-webkit-details-marker]:hidden"><span class="text-emerald-700" @if($miniTeam->group) style="color: color-mix(in srgb, {{ $miniTeam->group->iconColor() }} 60%, black)" @endif>{{ $miniTeam->group?->name }}</span> {{ $miniTeam->name }}@if($miniTeam->place) · <strong>{{ $miniTeam->place }}.</strong>@if($miniTeam->teams_count)<span class="text-emerald-700">/{{ $miniTeam->teams_count }}</span>@endif @endif</summary>
-                                                                @if($site['mini_show_lineups'] && $miniTeam->players->isNotEmpty())
-                                                                    <p class="mt-0.5 rounded bg-white/70 px-1 py-0.5 text-emerald-900">{{ $miniTeam->players->map->displayName()->implode(', ') }}</p>
-                                                                @endif
-                                                            </details>
-                                                        @endforeach
-                                                    </li>
-                                                @endforeach
-                                                @foreach($day['tournaments'] as $tournament)
-                                                    <li wire:key="cell-tournament-{{ $tournament->id }}-{{ $day['date']->format('d') }}" class="rounded-lg bg-gradient-to-br from-amber-100 to-amber-50 px-1.5 py-1 text-[11px] leading-tight text-amber-950 ring-1 ring-amber-300" title="{{ $tournament->fullName() }} · {{ $tournament->dateRangeLabel() }}{{ $tournament->city ? ' · '.$tournament->city : '' }}">
-                                                        <p class="font-semibold">@if($tournament->has_page)<a href="{{ route('tournaments.show', $tournament) }}" class="hover:underline">🏆 {{ $tournament->fullName() }}</a>@else🏆 {{ $tournament->fullName() }}@endif</p>
-                                                        <p class="text-amber-800">{{ $tournament->is_organizer ? __('organizujemy') : ($tournament->city ?? __('wyjazd')) }}</p>
-                                                        @foreach($tournament->teams as $tournamentTeam)
-                                                            <p class="truncate">{{ $tournamentTeam->name }}@if($tournamentTeam->pivot->placement) · <strong>{{ $tournamentTeam->pivot->placement }}</strong>@endif</p>
-                                                        @endforeach
-                                                    </li>
-                                                @endforeach
-                                                @foreach($day['games'] as $game)
-                                                    @php
-                                                        $result = $game->ourSetsResult();
-                                                        $outcome = $game->outcome();
-                                                        $won = $outcome && $outcome !== 'derby' ? $outcome === 'win' : null;
-                                                        $hasTime = $game->game_date->format('H:i') !== '00:00';
-                                                        $article = $game->latestArticle();
-                                                        $tag = 'a';
-                                                    @endphp
-                                                    <li wire:key="cell-{{ $game->id }}">
-                                                        <{{ $tag }} href="{{ route('games.show', $game) }}" title="{{ $game->is_home ? __('U siebie') : __('Wyjazd') }} · {{ $game->competitionLabel() }}@if($game->round_label) · {{ $game->round_label }}@endif{{ $game->venue ? ' · '.$game->venue : '' }}{{ is_array($game->sets_score) && count($game->sets_score) ? ' · '.collect($game->sets_score)->map(fn ($set) => implode(':', (array) $set))->implode(', ') : '' }}{{ $article ? ' · '.__('Artykuł').': '.$article->localizedTitle() : '' }}" @class([
-                                                            'block rounded-lg px-1.5 py-1 text-[11px] leading-tight transition',
-                                                            'bg-(--cal-home-bg) text-(--cal-home-text) ring-1 ring-(--cal-home-border) shadow-sm' => $game->is_home,
-                                                            'bg-(--cal-away-bg) text-(--cal-away-text) shadow-sm ring-1 ring-(--cal-away-border)' => ! $game->is_home,
-                                                            'hover:ring-2 hover:ring-sky-club' => true,
-                                                        ])>
-                                                            <span class="flex items-start justify-between gap-1">
-                                                                {{-- Zawsze gospodarz na pierwszym miejscu: u siebie my, na wyjeździe rywal --}}
-                                                                @if($game->is_home)
-                                                                    <x-team-label :label="$game->ourLabel()" class="min-w-0 font-semibold break-words" />
-                                                                @else
-                                                                    <span class="min-w-0 font-semibold break-words">{{ $game->opponentShortName() }}</span>
-                                                                @endif
-                                                                <span class="flex shrink-0 items-center gap-0.5 font-bold tabular-nums">
-                                                                    @if($outcome === 'derby')
-                                                                        <x-derby-heart class="h-3.5 w-3.5 {{ $game->is_home ? 'text-sky-club-light' : 'text-sky-club' }}" />
-                                                                    @elseif($won === true)
-                                                                        <svg class="h-3.5 w-3.5 {{ $game->is_home ? 'text-emerald-300' : 'text-emerald-600' }}" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-label="{{ __('Wygrana') }}"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7"/></svg>
-                                                                    @elseif($won === false)
-                                                                        <svg class="h-3.5 w-3.5 {{ $game->is_home ? 'text-red-300' : 'text-red-600' }}" fill="none" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24" aria-label="{{ __('Porażka') }}"><path stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></svg>
-                                                                    @endif
-                                                                    @if($game->isFinished())
-                                                                        {{ $result ? $game->home_score.':'.$game->away_score : '' }}
-                                                                    @else
-                                                                        {{ $hasTime ? $game->game_date->format('H:i') : '' }}
-                                                                    @endif
-                                                                </span>
-                                                            </span>
-                                                            <span @class(['flex items-center gap-1', 'truncate' => $game->is_home, 'text-sky-club-light' => $game->is_home, 'text-zinc-600' => ! $game->is_home])>
-                                                                <span @class(['truncate' => $game->is_home, 'min-w-0 break-words' => ! $game->is_home])>@if($game->isFriendly())<span class="mr-0.5 rounded bg-amber-300 px-1 text-[9px] font-bold text-amber-950 uppercase">{{ __('sparing') }}</span>@elseif($game->tournament_id)<span class="mr-0.5">🏆</span>@endif{{ __('vs') }} @if($game->is_home){{ $game->opponentShortName() }}@else<x-team-label :label="$game->ourLabel()" />@endif</span>
-                                                                @if($article)
-                                                                    <svg class="ml-auto h-3 w-3 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-label="{{ __('Artykuł') }}"><path stroke-linecap="round" stroke-linejoin="round" d="M7 4h10a1 1 0 0 1 1 1v15l-3-2-3 2-3-2-3 2V5a1 1 0 0 1 1-1Zm2 5h6m-6 4h4"/></svg>
-                                                                @endif
-                                                            </span>
-                                                        </{{ $tag }}>
-                                                    </li>
-                                                @endforeach
-                                                @foreach($day['birthdays'] as $person)
-                                                    <li class="truncate rounded-lg bg-(--cal-bday-bg) px-1.5 py-1 text-[11px] leading-tight text-(--cal-bday-text)" title="{{ __('Urodziny') }}: {{ $person['name'] }}{{ $person['showAge'] ? ' '.__('kończy').' '.$person['ageLabel'] : '' }} ({{ __($person['role']) }})">
-                                                        {{ $birthdayIcon }} @if($person['url'])<a href="{{ $person['url'] }}" class="font-semibold hover:underline">{{ $person['name'] }}</a>@else<span class="font-semibold">{{ $person['name'] }}</span>@endif{{ $person['showAge'] ? ' · '.$person['age'] : '' }}
-                                                    </li>
-                                                @endforeach
-                                            </ul>
                                         @endif
                                     </div>
                                 @endforeach
@@ -523,4 +477,55 @@
         @endif
         </div>
     </section>
+
+    {{-- Okno szczegółów meczów z kafelka kalendarza (wyrasta z klikniętego kafelka) --}}
+    <div wire:ignore x-data="calendarDetails" x-on:match-details.window="open($event.detail)" x-on:keydown.escape.window="tile && close()">
+        <template x-if="tile">
+            <div class="fixed inset-0 z-[70] flex items-end justify-center p-3 sm:items-center sm:p-6" role="dialog" aria-modal="true" :aria-label="tile.label">
+                <div class="absolute inset-0 bg-ink/50 backdrop-blur-sm" x-on:click="close()" x-transition.opacity></div>
+                <div x-ref="panel" class="relative flex max-h-[88vh] w-full max-w-lg origin-center flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" :style="`--tile: ${tile.color}`">
+                    <div class="flex items-start justify-between gap-3 bg-club-navy px-5 pt-4 pb-3.5 text-white">
+                        <div class="min-w-0">
+                            <p class="truncate text-[11px] font-semibold tracking-[0.16em] text-white/70 uppercase" x-text="tile.competition"></p>
+                            <p class="mt-0.5 font-display text-2xl leading-tight font-semibold uppercase" x-text="tile.label"></p>
+                        </div>
+                        <button type="button" data-close x-on:click="close()" class="grid size-9 shrink-0 place-items-center rounded-full bg-white/10 text-lg hover:bg-white/20" aria-label="{{ __('Zamknij') }}">✕</button>
+                    </div>
+                    <div class="space-y-3 overflow-y-auto p-4">
+                        <template x-for="(match, index) in tile.matches" :key="match.id">
+                            <article class="calendar-details-rise rounded-2xl p-4 ring-1 ring-zinc-200" :style="`animation-delay: ${80 + index * 90}ms`">
+                                <div class="flex items-center justify-between gap-2 text-xs text-zinc-500">
+                                    <span class="rounded-full bg-(--tile) px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase" x-text="tile.label"></span>
+                                    <span class="truncate font-medium" x-text="match.date"></span>
+                                </div>
+                                <div class="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                                    <template x-for="side in ['home', 'away']" :key="side">
+                                        <div class="flex flex-col items-center gap-1.5 text-center text-sm leading-tight font-semibold text-zinc-900" :class="side === 'away' && 'order-3'">
+                                            <span class="relative grid size-14 place-items-center overflow-hidden rounded-full" :class="match[side].logo ? '' : 'bg-gradient-to-br from-graphite to-ink'">
+                                                <template x-if="match[side].logo"><img :src="match[side].logo" alt="" class="size-full object-contain"></template>
+                                                <template x-if="! match[side].logo"><span class="font-display text-lg font-bold text-sky-club" x-text="initials(match[side].name)"></span></template>
+                                            </span>
+                                            <span x-text="match[side].name"></span>
+                                        </div>
+                                    </template>
+                                    <div class="order-2 text-center">
+                                        <p class="font-display text-3xl leading-none font-bold tabular-nums" :class="resultClass(match)" x-text="match.mid || '{{ __('vs') }}'"></p>
+                                        <p class="mt-1 text-[11px] font-semibold text-zinc-500" x-text="match.outcomeLabel"></p>
+                                    </div>
+                                </div>
+                                <p x-show="match.sets" class="mt-2 text-center text-xs text-zinc-500 tabular-nums" x-text="'{{ __('Sety') }}: ' + match.sets"></p>
+                                <p x-show="match.note" class="mt-1 text-center text-xs font-semibold text-amber-700" x-text="match.note"></p>
+                                <p class="mt-3 text-xs text-zinc-500"><span x-text="[match.competition, match.round].filter(Boolean).join(' · ')"></span><template x-if="match.venue"><span> · <span x-text="match.venue"></span></span></template></p>
+                                <div class="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                                    <template x-if="match.url"><a :href="match.url" class="rounded-full bg-sky-club/10 px-3 py-1.5 text-sky-club-dark hover:bg-sky-club/20">{{ __('Szczegóły meczu') }} →</a></template>
+                                    <template x-if="match.article"><a :href="match.article" class="rounded-full bg-sky-club/10 px-3 py-1.5 text-sky-club-dark hover:bg-sky-club/20">{{ __('Czytaj artykuł') }} →</a></template>
+                                    <template x-if="match.calendar"><a :href="match.calendar" class="rounded-full bg-zinc-100 px-3 py-1.5 text-zinc-700 hover:bg-zinc-200">+ {{ __('Do kalendarza') }}</a></template>
+                                </div>
+                            </article>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
 </div>

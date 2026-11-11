@@ -1506,3 +1506,25 @@ table[data-sortable] > thead th:not([data-nosort]) {
         column-gap: 0.75rem;
     }
 }
+
+/* Okno szczegółów meczów z kalendarza: mecze wjeżdżają jeden po drugim. */
+.calendar-details-rise {
+    opacity: 0;
+    transform: translateY(12px);
+    animation: calendar-details-rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes calendar-details-rise {
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .calendar-details-rise {
+        opacity: 1;
+        transform: none;
+        animation: none;
+    }
+}

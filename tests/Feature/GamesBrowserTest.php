@@ -153,3 +153,41 @@ test('our places in the tables show above the calendar and a chosen team gets it
 
     $this->get('/matches')->assertOk()->assertSee('Terminarz i wyniki')->assertSee('Tabele');
 });
+
+test('minivolleyball sits next to the teams and narrows to one group', function () {
+    $fours = MiniGroup::firstOrCreate(['name' => 'Czwórki'], ['players_on_court' => 4]);
+    $twos = MiniGroup::firstOrCreate(['name' => 'Dwójki'], ['players_on_court' => 2]);
+    MiniTrip::create(['title' => 'Turniej czwórek', 'starts_on' => now()->addDays(3)->toDateString(), 'city' => 'Piła'])->teams()->create(['mini_group_id' => $fours->id, 'name' => 'Joker 1']);
+    MiniTrip::create(['title' => 'Turniej dwójek', 'starts_on' => now()->addDays(4)->toDateString(), 'city' => 'Wałcz'])->teams()->create(['mini_group_id' => $twos->id, 'name' => 'Joker 2']);
+
+    Livewire::test(GamesBrowser::class)
+        ->call('toggleMini')
+        ->assertSet('competition', GamesBrowser::FILTER_MINI)
+        ->assertSee(['Turniej czwórek', 'Turniej dwójek', 'Wszystkie grupy'])
+        ->assertDontSee('Warta Zawiercie')
+        ->call('setMiniGroup', (string) $twos->id)
+        ->assertSee('Turniej dwójek')
+        ->assertDontSee('Turniej czwórek')
+        // Drużyna zdejmuje filtr minisiatkówki i grupy.
+        ->call('toggleTeam', 'seniorzy')
+        ->assertSet('competition', '')
+        ->assertSet('miniGroup', '')
+        ->assertSee('Warta Zawiercie')
+        ->assertDontSee('Turniej dwójek');
+});
+
+test('a tournament run on the site shows our matches in the calendar instead of the tournament tile', function () {
+    $tournament = Tournament::create(['name' => 'Memoriał', 'start_date' => now()->addDays(3)->toDateString(), 'end_date' => now()->addDays(3)->toDateString(), 'city' => 'Piła', 'is_organizer' => true, 'has_page' => true, 'season_id' => $this->season->id]);
+    $tournament->teams()->attach($this->juniors->id);
+    $category = $tournament->categories()->create(['name' => 'Juniorzy']);
+    $ours = $category->participants()->create(['competitor_type' => 'team', 'competitor_id' => $this->juniors->id]);
+    $rival = $category->participants()->create(['competitor_type' => 'rival_team', 'competitor_id' => RivalTeam::create(['full_name' => 'MKS Kalisz'])->id]);
+    $category->matches()->create(['stage' => 'group', 'home_participant_id' => $ours->id, 'away_participant_id' => $rival->id, 'starts_at' => now()->addDays(3)->setTime(9, 45)]);
+
+    Livewire::test(GamesBrowser::class)
+        ->assertSeeHtml('MKS Kalisz')
+        ->assertSeeHtml('09:45')
+        ->assertDontSeeHtml('title="Memoriał')
+        ->call('toggleTeam', 'seniorzy')
+        ->assertDontSeeHtml('MKS Kalisz');
+});
