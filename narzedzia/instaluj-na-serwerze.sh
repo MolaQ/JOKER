@@ -50,6 +50,12 @@ if [ -z "$PHPBIN" ]; then
     exit 1
 fi
 
+# Kopia zapasowa (baza, .env, zdjęcia) raz na dobę po 3:00, tylko gdy coś się zmieniło - szczegóły w kopia-na-serwerze.sh.
+if [ -f .env ] && [ -f narzedzia/kopia-na-serwerze.sh ] && [ "$(date +%H)" -ge 3 ] \
+    && [ "$(cat "$DOMENA/kopie-joker/.ostatnia-nocna" 2>/dev/null)" != "$(date +%Y-%m-%d)" ]; then
+    bash narzedzia/kopia-na-serwerze.sh
+fi
+
 # Strona zainstalowana i nic nowego nie wgrano: tylko zadania okresowe (terminarze co 3 godziny, sprzątanie statystyk).
 if [ -f "$ZNACZNIK" ] && [ "$ZNACZNIK" -nt vendor/autoload.php ] && [ "$ZNACZNIK" -nt .env ] \
     && { [ ! -f "$WERSJA" ] || cmp -s "$WERSJA" "$ZNACZNIK"; }; then
@@ -91,6 +97,13 @@ find "$APP" -path "$APP/storage/app/public" -prune -o -type f ! -perm 644 -exec 
 # Pliki z paczki mają datę z 1980 roku: OPcache serwera uznałby zmieniony plik PHP za ten sam
 # i dalej uruchamiał starą wersję. Świeża data wymusza wczytanie nowego kodu.
 find "$APP" \( -path "$APP/storage" -o -path "$APP/node_modules" \) -prune -o -type f -name '*.php' -exec touch {} +
+
+# Kopia bazy i .env przed migracjami nowej paczki (do folderu kopie-joker obok strony).
+if [ -f narzedzia/kopia-na-serwerze.sh ]; then
+    echo "--- kopia zapasowa bazy przed instalacją"
+    bash narzedzia/kopia-na-serwerze.sh --przed-instalacja && echo "zrobiona (szczegóły w $DOMENA/kopie-joker/kopie.log)" \
+        || echo "UWAGA: kopia nie wyszła - szczegóły w $DOMENA/kopie-joker/kopie.log. Instalacja idzie dalej."
+fi
 
 BLAD=0
 krok() {
