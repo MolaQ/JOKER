@@ -76,7 +76,6 @@ class Sitemap
             ['loc' => route('home'), 'lastmod' => Article::published()->max('updated_at'), 'priority' => '1.0'],
             ['loc' => route('articles.index'), 'lastmod' => Article::published()->max('updated_at'), 'priority' => '0.8'],
             ['loc' => route('schedule.index'), 'lastmod' => Game::max('updated_at'), 'priority' => '0.8'],
-            ['loc' => route('standings'), 'lastmod' => null, 'priority' => '0.6'],
             ['loc' => route('teams.index'), 'lastmod' => Team::max('updated_at'), 'priority' => '0.8'],
             ['loc' => route('trainers.index'), 'lastmod' => null, 'priority' => '0.7'],
             ['loc' => route('galleries.index'), 'lastmod' => Gallery::max('updated_at'), 'priority' => '0.6'],

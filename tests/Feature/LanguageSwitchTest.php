@@ -46,7 +46,6 @@ test('switching to English translates the menu and the calendar', function () {
         ->assertSee('<html lang="en">', false)
         ->assertSee('News')
         ->assertSee('Matches')
-        ->assertSee('Standings')
         ->assertSee('Teams')
         ->assertSee('November')
         ->assertSeeInOrder(['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'])

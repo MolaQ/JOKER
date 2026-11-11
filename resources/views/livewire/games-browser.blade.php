@@ -94,6 +94,31 @@
             @endif
         </div>
 
+        {{-- Nasze miejsca w tabelach: kliknięcie pokazuje mecze drużyny i jej tabelę obok kalendarza --}}
+        @if($ourPlaces->isNotEmpty())
+            <div class="mb-6">
+                <p class="text-xs font-semibold tracking-wider text-zinc-500 uppercase">{{ __('Nasze miejsca w tabelach') }}</p>
+                <div data-scroll-fade class="scrollbar-none -mx-4 mt-2 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+                    @foreach($ourPlaces as $place)
+                        @php $isActive = $team === $place['team']->slug; @endphp
+                        <button type="button" wire:key="place-{{ $place['team']->id }}" wire:click="toggleTeam('{{ $place['team']->slug }}')" aria-pressed="{{ $isActive ? 'true' : 'false' }}" title="{{ $place['competition']->name }}{{ $place['row']->stage_name ? ' · '.$place['row']->stage_name : '' }}{{ $place['row']->group_name ? ' · '.$place['row']->group_name : '' }}" @class([
+                            'flex shrink-0 items-center gap-2.5 rounded-2xl px-3 py-2 text-left transition',
+                            'bg-club-navy text-white shadow' => $isActive,
+                            'bg-white text-zinc-800 ring-1 ring-zinc-200 hover:bg-zinc-50' => ! $isActive,
+                        ])>
+                            <span @class(['font-display text-2xl leading-none font-bold tabular-nums', 'text-sky-club-light' => $isActive, 'text-sky-club-dark' => ! $isActive])>{{ $place['row']->position }}.</span>
+                            <span class="leading-tight">
+                                <span class="block text-sm font-semibold">{{ $place['team']->name }}</span>
+                                <span @class(['block max-w-44 truncate text-[11px]', 'text-white/75' => $isActive, 'text-zinc-500' => ! $isActive])>{{ __('z :count drużyn', ['count' => $place['rows']->count()]) }} · {{ $place['competition']->name }}</span>
+                            </span>
+                        </button>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        <div @class(['flex flex-col xl:grid xl:grid-cols-[minmax(0,1fr)_19rem] xl:items-start xl:gap-8' => $teamTable])>
+        <div class="min-w-0">
         {{-- Miesiące jako przyciski: domyślnie bieżący, „Wszystkie” pokazuje cały sezon jedną kartką pod drugą --}}
         @if($monthCounts->count() > 1 || $selectedMonth === 'all')
             @php $multiYear = $monthCounts->keys()->map(fn ($key) => substr($key, 0, 4))->unique()->count() > 1; @endphp
@@ -450,5 +475,52 @@
                 @endif
             </div>
         @endforelse
+        </div>
+
+        {{-- Skrócona tabela wybranej drużyny: obok kalendarza na dużym ekranie, rozwijana nad kalendarzem na telefonie --}}
+        @if($teamTable)
+            <aside wire:key="team-table-{{ $teamTable['row']->id }}" class="order-first mb-6 xl:sticky xl:top-40 xl:order-none xl:mb-0" x-data="{ open: window.matchMedia('(min-width: 1280px)').matches }">
+                <div class="card overflow-hidden">
+                    <button type="button" x-on:click="open = ! open" :aria-expanded="open" class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left">
+                        <span class="min-w-0">
+                            <span class="block text-xs font-semibold tracking-wider text-zinc-500 uppercase">{{ __('Tabela') }}</span>
+                            <span class="block truncate font-semibold text-zinc-900">{{ $teamTable['competition']->name }}</span>
+                            @if($teamTable['row']->stage_name || $teamTable['row']->group_name)
+                                <span class="block truncate text-xs text-zinc-500">{{ collect([$teamTable['row']->stage_name, $teamTable['row']->group_name])->filter()->join(' · ') }}</span>
+                            @endif
+                        </span>
+                        <span class="flex shrink-0 items-center gap-2">
+                            <span class="rounded-full bg-sky-club/15 px-2.5 py-1 text-sm font-bold text-sky-club-dark">{{ $teamTable['row']->position }}. {{ __('miejsce') }}</span>
+                            <span class="text-sm text-zinc-400 transition" :class="open && 'rotate-180'" aria-hidden="true">▾</span>
+                        </span>
+                    </button>
+                    <div x-show="open" x-collapse>
+                        <table class="w-full border-t border-zinc-100 text-sm tabular-nums">
+                            <thead class="text-[11px] font-semibold tracking-wider text-zinc-500 uppercase">
+                                <tr>
+                                    <th class="py-2 pr-1 pl-4 text-left" scope="col">#</th>
+                                    <th class="px-1 py-2 text-left" scope="col">{{ __('Drużyna') }}</th>
+                                    <th class="px-1 py-2 text-center" scope="col" title="{{ __('Mecze') }}">{{ __('M') }}</th>
+                                    <th class="py-2 pr-4 pl-1 text-center" scope="col">{{ __('Pkt') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-zinc-100">
+                                @foreach($teamTable['rows'] as $tableRow)
+                                    @php $isOurs = $tableRow->isOwnTeam(); @endphp
+                                    <tr wire:key="tt-{{ $tableRow->id }}" @class(['bg-sky-club/10 font-semibold' => $isOurs])>
+                                        <td class="py-2 pr-1 pl-4 text-zinc-500">{{ $tableRow->position }}</td>
+                                        <td class="max-w-0 truncate px-1 py-2 text-zinc-800" title="{{ $tableRow->competitorName() }}">{{ $isOurs && $tableRow->competitor ? $tableRow->competitor->name : $tableRow->competitorShortName() }}</td>
+                                        <td class="px-1 py-2 text-center text-zinc-500">{{ $tableRow->played }}</td>
+                                        <td class="py-2 pr-4 pl-1 text-center font-bold text-sky-club-dark">{{ $tableRow->points }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        <a href="{{ route('schedule.index', ['tab' => 'tables', 'league' => $teamTable['competition']->getRouteKey()]) }}" class="block border-t border-zinc-100 px-4 py-3 text-sm font-semibold text-sky-club-dark hover:bg-zinc-50">{{ __('Pełna tabela') }} →</a>
+                    </div>
+                </div>
+            </aside>
+        @endif
+        </div>
     </section>
 </div>

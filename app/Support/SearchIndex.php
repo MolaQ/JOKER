@@ -219,7 +219,7 @@ class SearchIndex
     {
         return [
             [__('Terminarz meczów'), __('Wszystkie mecze sezonu'), route('schedule.index', [], false), 'terminarz kalendarz mecze kiedy gramy godziny schedule fixtures matches calendar'],
-            [__('Tabele ligowe'), __('Pozycje w rozgrywkach'), route('standings', [], false), 'tabela liga punkty miejsce ranking standings table league points'],
+            [__('Tabele ligowe'), __('Pozycje w rozgrywkach'), route('schedule.index', ['tab' => 'tables'], false), 'tabela liga punkty miejsce ranking standings table league points'],
             [__('Drużyny'), __('Wszystkie drużyny klubu'), route('teams.index', [], false), 'druzyny zespoly roczniki kadra seniorzy juniorzy mlodzicy kadeci teams squad seniors juniors'],
             [__('Sztab'), __('Trenerzy i sztab klubu'), route('trainers.index', [], false), 'sztab trenerzy trener fizjoterapeuta fizjo statystyk kierownik minisiatkowka staff coaches physio'],
             [__('Kontakt i zapisy'), __('Napisz do klubu, zapisz dziecko'), route('contact.index', [], false), 'kontakt telefon email adres zapisy nabor trening probny dolacz hala contact phone address join training'],

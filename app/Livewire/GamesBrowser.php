@@ -3,7 +3,9 @@
 namespace App\Livewire;
 
 use App\BirthdayDisplay;
+use App\Models\Competition;
 use App\Models\Game;
+use App\Models\LeagueStanding;
 use App\Models\MiniTrip;
 use App\Models\Player;
 use App\Models\Season;
@@ -313,6 +315,8 @@ class GamesBrowser extends Component
         return view('livewire.games-browser', [
             'months' => $this->calendarMonths($games, $tournaments, $miniTrips, $this->search === '' && $this->competition === '' && $this->place === '', $this->period === 'results', $selectedMonth === 'all' ? null : $selectedMonth),
             'monthCounts' => $monthCounts,
+            'ourPlaces' => $ourPlaces = $this->ourPlaces(),
+            'teamTable' => $this->team !== '' ? $ourPlaces->first(fn (array $place) => $place['team']->slug === $this->team) : null,
             'selectedMonth' => $selectedMonth,
             'total' => $games->count(),
             'periodCounts' => $periodCounts,
@@ -335,6 +339,48 @@ class GamesBrowser extends Component
      * @param  Collection<int, Tournament>  $tournaments
      * @return Collection<int, array{key: string, month: Carbon, games: Collection<int, Game>, tournaments: Collection<int, Tournament>, birthdays: Collection<int, array{name: string, age: int, ageLabel: string, role: string, date: Carbon, url: ?string, showAge: bool}>, weeks: array<int, array<int, array{date: Carbon, inMonth: bool, isToday: bool, games: Collection<int, Game>, tournaments: Collection<int, Tournament>, birthdays: Collection<int, array{name: string, age: int, ageLabel: string, role: string, date: Carbon, url: ?string, showAge: bool}>}>>}>
      */
+    /**
+     * Miejsca naszych drużyn w tabelach sezonu: dla każdej drużyny najnowszy etap jej rozgrywek i jej grupa
+     * (do paska „Nasze miejsca” i skróconej tabeli obok kalendarza).
+     *
+     * @return Collection<int, array{team: Team, row: LeagueStanding, rows: Collection<int, LeagueStanding>, competition: Competition}>
+     */
+    #[Computed]
+    public function ourPlaces(): Collection
+    {
+        $seasonId = $this->selectedSeason()?->id;
+
+        if (! $seasonId) {
+            return collect();
+        }
+
+        $all = LeagueStanding::with(['competitor', 'competition.teams'])
+            ->where('season_id', $seasonId)
+            ->whereIn('competition_id', LeagueStanding::where('season_id', $seasonId)->where('competitor_type', 'team')->select('competition_id'))
+            ->orderBy('position')
+            ->get();
+        $stageNumber = fn (?string $stage) => (int) preg_replace('/\D/', '', (string) $stage);
+
+        return $all->filter(fn (LeagueStanding $row) => $row->isOwnTeam() && $row->competitor instanceof Team && $row->competition)
+            ->groupBy('competitor_id')
+            ->map(function (Collection $rows) use ($all, $stageNumber) {
+                // Najnowszy etap, a przy kilku rozgrywkach te wyżej w kolejności (np. liga przed pucharem).
+                $row = $rows->sortBy([
+                    fn (LeagueStanding $a, LeagueStanding $b) => $stageNumber($b->stage_name) <=> $stageNumber($a->stage_name),
+                    fn (LeagueStanding $a, LeagueStanding $b) => [$a->competition->display_order, $a->competition->name] <=> [$b->competition->display_order, $b->competition->name],
+                ])->first();
+
+                return [
+                    'team' => $row->competitor,
+                    'row' => $row,
+                    'competition' => $row->competition,
+                    'rows' => $all->where('competition_id', $row->competition_id)->where('stage_name', $row->stage_name)->where('group_name', $row->group_name)->sortBy('position')->values(),
+                ];
+            })
+            ->sortBy(fn (array $place) => $place['team']->display_order)
+            ->values();
+    }
+
     /**
      * Liczba wydarzeń (mecze, turnieje, wyjazdy mini) w każdym miesiącu, do przycisków miesięcy.
      *

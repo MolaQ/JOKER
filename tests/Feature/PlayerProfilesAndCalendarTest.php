@@ -17,6 +17,7 @@ use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\User;
 use App\Support\Media;
+use App\Support\SiteSettings;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -100,7 +101,9 @@ test('standings use the club name set for the competition and badges only for tw
         'position' => 1, 'points' => 9,
     ]);
 
-    $this->get('/standings')
+    $this->get('/standings')->assertRedirect(route('schedule.index', ['tab' => 'tables']))->assertStatus(301);
+
+    $this->get('/matches?tab=tables')
         ->assertOk()
         ->assertSeeText('LOMS Joker Piła')
         ->assertDontSeeText('(kadeci)')
@@ -116,7 +119,7 @@ test('standings use the club name set for the competition and badges only for tw
         'position' => 2, 'points' => 6,
     ]);
 
-    $this->get('/standings')->assertOk()->assertSeeHtml('ml-1">Kadeci II</span>');
+    $this->get('/matches?tab=tables')->assertOk()->assertSeeHtml('ml-1">Kadeci II</span>');
 
     expect(Competition::defaultTeamLabel('Seniorzy', 'seniorzy', 'LOMS Joker Piła'))->toBe(['display_name' => 'LOMS Joker Piła', 'display_suffix' => null])
         ->and(Competition::defaultTeamLabel('Kadeci II', 'kadeci-ii', 'ASBL; KS ASBL Piła'))->toBe(['display_name' => 'KS ASBL Piła', 'display_suffix' => null]);
@@ -242,8 +245,12 @@ test('player profile shows physical data, career, achievements and recent matche
         ->assertSee('UKS Kłos');
 });
 
-test('main menu starts with news, matches and standings', function () {
-    $this->get('/contact')->assertSeeInOrder(['href="'.url('/news').'"', 'href="'.url('/matches').'"', 'href="'.url('/standings').'"', 'href="'.url('/teams').'"'], false);
+test('main menu starts with news and matches, standings are a tab of the matches page', function () {
+    $this->get('/contact')->assertSeeInOrder(['href="'.url('/news').'"', 'href="'.url('/matches').'"', 'href="'.url('/teams').'"'], false);
+
+    // Stara pozycja „Tabela” zapisana w ustawieniach menu znika, bo tabele są zakładką meczów.
+    app(SiteSettings::class)->set(['nav_items' => [['label' => 'Mecze', 'url' => '/matches'], ['label' => 'Tabela', 'url' => '/standings']]]);
+    $this->get('/contact')->assertSee('href="'.url('/matches').'"', false)->assertDontSee('href="'.url('/standings').'"', false);
 });
 
 test('a player can play several positions', function () {

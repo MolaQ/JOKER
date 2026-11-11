@@ -16,8 +16,11 @@ use Livewire\Component;
  */
 class StandingsBrowser extends Component
 {
-    /** Rozgrywki w adresie jako „6-iii-liga-mezczyzn” (czytelne dla ludzi i Google). */
-    #[Url(as: 'competition', except: '')]
+    /**
+     * Rozgrywki w adresie jako „6-iii-liga-mezczyzn” (czytelne dla ludzi i Google). Parametr „league”, bo tabele są
+     * zakładką strony meczów, a tam „competition” to filtr kalendarza.
+     */
+    #[Url(as: 'league', except: '')]
     public string $competition = '';
 
     /** Etap rozgrywek (np. „Etap 2”) - młodzież gra w kilku etapach. */

@@ -1,7 +1,9 @@
 <?php
 
 use App\Livewire\GamesBrowser;
+use App\Models\Competition;
 use App\Models\Game;
+use App\Models\LeagueStanding;
 use App\Models\MiniGroup;
 use App\Models\MiniTrip;
 use App\Models\Player;
@@ -131,4 +133,23 @@ test('search finds tournaments by any team or category and games by result words
 
     Livewire::test(GamesBrowser::class)->call('setPeriod', 'results')
         ->set('search', 'wygrana')->assertSee('Gwardia Wrocław');
+});
+
+test('our places in the tables show above the calendar and a chosen team gets its table beside it', function () {
+    $league = Competition::create(['name' => 'III Liga Mężczyzn', 'season_id' => $this->season->id]);
+    $rival = RivalTeam::create(['full_name' => 'Sparta Złotów', 'short_name' => 'Sparta']);
+    LeagueStanding::create(['competition_id' => $league->id, 'season_id' => $this->season->id, 'competitor_type' => 'rival_team', 'competitor_id' => $rival->id, 'position' => 1, 'played' => 4, 'points' => 12]);
+    LeagueStanding::create(['competition_id' => $league->id, 'season_id' => $this->season->id, 'competitor_type' => 'team', 'competitor_id' => $this->seniors->id, 'position' => 2, 'played' => 4, 'points' => 9]);
+
+    Livewire::test(GamesBrowser::class)
+        ->assertSee('Nasze miejsca w tabelach')
+        ->assertSee('z 2 drużyn')
+        ->assertDontSee('Pełna tabela')
+        ->call('toggleTeam', 'seniorzy')
+        ->assertSee('2. miejsce')
+        ->assertSee('Sparta')
+        ->assertSee('Pełna tabela')
+        ->assertSeeHtml('tab=tables&amp;league='.$league->getRouteKey());
+
+    $this->get('/matches')->assertOk()->assertSee('Terminarz i wyniki')->assertSee('Tabele');
 });

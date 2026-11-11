@@ -14,7 +14,7 @@ beforeEach(function () {
 
 test('public pages load', function (string $url) {
     $this->get($url)->assertOk();
-})->with(['/', '/teams', '/news', '/matches', '/standings', '/contact', '/photo-credits', '/documents', '/search', '/page/faq', '/page/o-klubie']);
+})->with(['/', '/teams', '/news', '/matches', '/matches?tab=tables', '/contact', '/photo-credits', '/documents', '/search', '/page/faq', '/page/o-klubie']);
 
 test('team page lists players and staff with roles, each linking to a profile', function () {
     $team = Team::firstWhere('slug', 'seniorzy');

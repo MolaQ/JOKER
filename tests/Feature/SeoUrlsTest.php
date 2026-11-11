@@ -49,8 +49,9 @@ test('standings switch competitions without reloading and accept old links', fun
         ->assertSet('competition', "{$youth->id}-mlodzicy")
         ->assertSee('UKS Kłos');
 
-    $this->get("/standings?competition={$league->getRouteKey()}")->assertOk()->assertSee('III Liga Mężczyzn');
-    $this->get("/standings?competition={$youth->id}")->assertOk()->assertSee('UKS Kłos');
+    $this->get("/standings?competition={$league->getRouteKey()}")->assertStatus(301)->assertRedirect(route('schedule.index', ['tab' => 'tables', 'league' => $league->getRouteKey()]));
+    $this->get("/matches?tab=tables&league={$league->getRouteKey()}")->assertOk()->assertSee('III Liga Mężczyzn');
+    $this->get("/matches?tab=tables&league={$youth->id}")->assertOk()->assertSee('UKS Kłos');
     $this->get("/tabele?competition={$youth->id}")->assertRedirect("/standings?competition={$youth->id}");
 });
 

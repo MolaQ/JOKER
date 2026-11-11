@@ -340,7 +340,6 @@ return [
                 'nav_items' => ['type' => 'links', 'label' => 'Pozycje menu', 'help' => 'Kolejność ustawiasz strzałkami.', 'default' => [
                     ['label' => 'Aktualności', 'url' => '/news'],
                     ['label' => 'Mecze', 'url' => '/matches'],
-                    ['label' => 'Tabela', 'url' => '/standings'],
                     ['label' => 'Memoriał', 'url' => '/memorial'],
                     ['label' => 'Drużyny', 'url' => '/teams'],
                     ['label' => 'Sztab', 'url' => '/staff'],

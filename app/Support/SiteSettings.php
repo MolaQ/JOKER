@@ -98,9 +98,17 @@ class SiteSettings implements ArrayAccess
             '/minisiatkowka' => ! $this->get('module_mini'),
         ]));
 
-        return collect((array) $this->get($key, []))
-            ->filter(fn ($link) => filled($link['label'] ?? null) && filled($link['url'] ?? null))
-            ->reject(fn ($link) => in_array(rtrim(LegacyUrls::translate((string) parse_url($link['url'], PHP_URL_PATH)), '/'), $disabled, true))
+        $links = collect((array) $this->get($key, []))
+            ->filter(fn ($link) => filled($link['label'] ?? null) && filled($link['url'] ?? null));
+        $path = fn ($link) => rtrim(LegacyUrls::translate((string) parse_url($link['url'], PHP_URL_PATH)), '/');
+
+        // Tabele są zakładką strony meczów: osobna pozycja „Tabela” w menu głównym znika, gdy jest „Mecze”.
+        if ($key === 'nav_items' && $links->contains(fn ($link) => $path($link) === '/matches')) {
+            $disabled[] = '/standings';
+        }
+
+        return $links
+            ->reject(fn ($link) => in_array($path($link), $disabled, true))
             ->values()
             ->all();
     }
