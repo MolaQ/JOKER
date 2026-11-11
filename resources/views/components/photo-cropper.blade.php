@@ -12,6 +12,11 @@
     'preview' => true,
     'hint' => null,
     'label' => null,
+    // Adres obrazka, od którego można zacząć zamiast wybierać plik (np. obecne logo przy robieniu wariantu na ciemne tło).
+    'startFrom' => null,
+    'startLabel' => null,
+    // true = podgląd kadrowania od razu na ciemnym tle.
+    'dark' => false,
 ])
 @php
     [$ratioW, $ratioH] = $aspect === 'free' ? [0, 0] : array_map('floatval', explode('/', $aspect));
@@ -48,6 +53,9 @@
                 {{ $label ?? __('Wybierz zdjęcie') }}
                 <input type="file" accept="image/*" class="sr-only" x-ref="input" @change="choose($event)">
             </label>
+            @if($startFrom)
+                <button type="button" @click="startFrom(@js($startFrom), @js((bool) $dark))" class="ml-1 inline-flex items-center gap-2 rounded-md bg-white px-3 py-2 font-semibold text-zinc-800 ring-1 ring-zinc-300 hover:bg-zinc-50">{{ $startLabel ?? __('Zacznij od obecnego logo') }}</button>
+            @endif
             <p class="text-xs text-zinc-500">{{ $hint }}</p>
             <p x-show="error" x-text="error" class="text-xs text-red-600"></p>
             <p wire:loading wire:target="{{ $model }}" class="text-xs text-zinc-500">{{ __('Wysyłanie…') }}</p>
@@ -55,7 +63,7 @@
     </div>
 
     <div x-show="source" x-cloak class="space-y-2">
-        <div wire:ignore :class="shape === 'circle' && 'cropper-round'" class="h-[45vh] min-h-56 overflow-hidden rounded-xl sm:h-[60vh] {{ $format === 'png' ? 'bg-[repeating-conic-gradient(#e4e4e7_0_25%,#fff_0_50%)] bg-[length:16px_16px]' : 'bg-zinc-900' }}">
+        <div wire:ignore :class="[shape === 'circle' && 'cropper-round', darkPreview && '!bg-slate-900 !bg-none']" class="h-[45vh] min-h-56 overflow-hidden rounded-xl sm:h-[60vh] {{ $format === 'png' ? 'bg-[repeating-conic-gradient(#e4e4e7_0_25%,#fff_0_50%)] bg-[length:16px_16px]' : 'bg-zinc-900' }}">
             <img x-ref="image" :src="source" alt="{{ __('Kadrowanie') }}" class="block max-w-full">
         </div>
         <div class="flex flex-wrap gap-2 text-sm">
@@ -76,21 +84,36 @@
             @if($format === 'png')
                 <span class="flex flex-wrap items-center gap-2 rounded-md bg-zinc-50 px-2 py-1 ring-1 ring-zinc-200">
                     <button type="button" @click="removeBackground()" :disabled="! ready" class="rounded-md bg-white px-3 py-1 font-semibold text-zinc-800 ring-1 ring-zinc-300 hover:bg-zinc-100 disabled:opacity-50" title="{{ __('Usuwa jednolite tło (np. białe) od brzegów obrazka; napisy w środku logo zostają.') }}">{{ __('Usuń tło') }}</button>
-                    <button type="button" @click="startPicking()" :disabled="! ready" :aria-pressed="picking" :class="picking ? 'bg-blue-600 text-white ring-blue-600' : 'bg-white text-zinc-800 ring-zinc-300 hover:bg-zinc-100'" class="inline-flex items-center gap-1.5 rounded-md px-3 py-1 font-semibold ring-1 disabled:opacity-50" title="{{ __('Kliknij potem w logo: wybrany kolor zniknie w całym obrazku, także w środku liter.') }}">
+                    <button type="button" @click="startPicking()" :disabled="! ready" :aria-pressed="picking === 'color'" :class="picking === 'color' ? 'bg-blue-600 text-white ring-blue-600' : 'bg-white text-zinc-800 ring-zinc-300 hover:bg-zinc-100'" class="inline-flex items-center gap-1.5 rounded-md px-3 py-1 font-semibold ring-1 disabled:opacity-50" title="{{ __('Kliknij potem w logo: wybrany kolor zniknie w całym obrazku, także w środku liter.') }}">
                         <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m14 6 4 4M4 20l1-4L15.5 5.5a2.1 2.1 0 0 1 3 3L8 19l-4 1Z"/></svg>
                         {{ __('Usuń kolor') }}
                     </button>
+                    <span class="inline-flex items-center rounded-md ring-1 ring-zinc-300" :class="picking === 'replace' ? 'bg-blue-600 text-white ring-blue-600' : 'bg-white text-zinc-800'">
+                        <button type="button" @click="startPicking('replace')" :disabled="! ready" :aria-pressed="picking === 'replace'" class="inline-flex items-center gap-1.5 px-3 py-1 font-semibold disabled:opacity-50" title="{{ __('Kliknij potem w logo: wybrany kolor zmieni się na kolor obok (np. granatowy na biały, do miniatur na ciemnym tle).') }}">
+                            <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h11l-3-3M17 17H6l3 3"/></svg>
+                            {{ __('Zamień kolor') }}
+                        </button>
+                        <label class="flex items-center gap-1 border-l border-zinc-300 py-1 pr-2 pl-1.5 text-xs" title="{{ __('Nowy kolor') }}">{{ __('na') }}
+                            <input type="color" :value="replaceTo" @change="setReplaceTo($event.target.value)" class="h-5 w-7 cursor-pointer rounded border-0 bg-transparent p-0" aria-label="{{ __('Nowy kolor') }}">
+                        </label>
+                    </span>
                     <template x-for="item in colorOps()" :key="item.index">
-                        <button type="button" @click="removeColorOp(item.index)" class="inline-flex items-center gap-1 rounded-full bg-white py-0.5 pr-2 pl-0.5 text-xs text-zinc-600 ring-1 ring-zinc-300 hover:bg-zinc-100" :title="@js(__('Przywróć ten kolor'))">
-                            <span class="size-4 rounded-full ring-1 ring-zinc-300" :style="`background: rgb(${item.op.color.join(',')})`"></span>✕
+                        <button type="button" @click="removeColorOp(item.index)" class="inline-flex items-center gap-1 rounded-full bg-white py-0.5 pr-2 pl-0.5 text-xs text-zinc-600 ring-1 ring-zinc-300 hover:bg-zinc-100" :title="item.op.replace ? @js(__('Cofnij zamianę koloru')) : @js(__('Przywróć ten kolor'))">
+                            <span class="size-4 rounded-full ring-1 ring-zinc-300" :style="`background: ${rgb(item.op.color || item.op.replace)}`"></span>
+                            <template x-if="item.op.replace"><span class="inline-flex items-center gap-1">→<span class="size-4 rounded-full ring-1 ring-zinc-300" :style="`background: ${rgb(item.op.to)}`"></span></span></template>
+                            ✕
                         </button>
                     </template>
                     <label class="flex items-center gap-1.5 text-xs text-zinc-600">{{ __('czułość') }}
                         <input type="range" min="5" max="120" step="5" x-model="tolerance" @change="ops.length && applyOps()" class="w-24 accent-blue-600">
                     </label>
                     <button type="button" x-show="backgroundRemoved" @click="restoreBackground()" class="text-xs font-semibold text-zinc-500 underline hover:text-zinc-800">{{ __('przywróć') }}</button>
+                    <label class="flex items-center gap-1.5 text-xs text-zinc-600" title="{{ __('Sprawdź, jak logo wygląda na ciemnej miniaturze') }}">
+                        <input type="checkbox" x-model="darkPreview" class="rounded border-zinc-300 text-blue-600">{{ __('ciemne tło podglądu') }}
+                    </label>
                 </span>
-                <p x-show="picking" x-cloak class="w-full text-xs font-semibold text-blue-700">{{ __('Kliknij w logo kolor, który ma zniknąć (np. białe wypełnienie).') }}</p>
+                <p x-show="picking === 'color'" x-cloak class="w-full text-xs font-semibold text-blue-700">{{ __('Kliknij w logo kolor, który ma zniknąć (np. białe wypełnienie).') }}</p>
+                <p x-show="picking === 'replace'" x-cloak class="w-full text-xs font-semibold text-blue-700">{{ __('Kliknij w logo kolor, który ma się zmienić (np. granatowy). Nowy kolor wybierasz w polu „na”.') }}</p>
             @endif
             <button type="button" @click="confirm()" :disabled="! ready || uploading" class="ml-auto rounded-md bg-blue-600 px-4 py-1.5 font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
                 <span x-show="! uploading">{{ __('Użyj tego kadru') }}</span><span x-show="uploading">{{ __('Wysyłanie…') }}</span>

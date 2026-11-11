@@ -18,6 +18,7 @@ class RivalClub extends Model
     protected $fillable = [
         'name',
         'logo_path',
+        'logo_light_path',
     ];
 
     public function teams(): HasMany

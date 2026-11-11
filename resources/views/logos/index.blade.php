@@ -37,13 +37,20 @@
                 <li x-show="match(@js($logo['name']), @js($logo['teams']))" :style="'order: ' + order({{ $logo['popular_rank'] }}, {{ $logo['name_rank'] }})" title="{{ trans_choice('{0}|{1} :count pobranie|[2,4] :count pobrania|[5,*] :count pobrań', $logo['downloads'], ['count' => $logo['downloads']]) }}">
                     <a href="{{ route('logos.download', $logo['key']) }}" download class="group block overflow-hidden rounded-2xl ring-1 ring-zinc-200 transition hover:ring-sky-club">
                         <span class="flex aspect-square items-center justify-center p-4"
-                            :class="{ 'bg-zinc-900': bg === 'dark', 'bg-white': bg === 'light' }"
-                            :style="bg === 'checker' ? 'background: repeating-conic-gradient(#e4e4e7 0 25%, #fff 0 50%) 0 0 / 16px 16px' : ''">
+                            @if($logo['dark'])
+                                {{-- Wariant na ciemne tło (np. białe logo): zawsze na ciemnym podglądzie, inaczej byłby niewidoczny --}}
+                                :class="bg === 'light' ? 'bg-slate-700' : 'bg-zinc-900'"
+                            @else
+                                :class="{ 'bg-zinc-900': bg === 'dark', 'bg-white': bg === 'light' }"
+                                :style="bg === 'checker' ? 'background: repeating-conic-gradient(#e4e4e7 0 25%, #fff 0 50%) 0 0 / 16px 16px' : ''"
+                            @endif
+                            >
                             <img src="{{ $logo['url'] }}" alt="{{ $logo['name'] }}" loading="lazy" class="max-h-full max-w-full object-contain">
                         </span>
                         <span class="flex items-center justify-between gap-2 border-t border-zinc-100 bg-white px-3 py-2">
                             <span class="min-w-0">
-                                <span class="line-clamp-2 text-sm leading-tight font-semibold text-zinc-900" title="{{ $logo['name'] }}">{{ $logo['name'] }}</span>
+                                @if($logo['dark'])<span class="mb-0.5 inline-block rounded bg-zinc-900 px-1.5 py-0.5 text-[10px] font-semibold text-white">{{ __('na ciemne tło') }}</span>@endif
+                                <span class="line-clamp-2 text-sm leading-tight font-semibold text-zinc-900" title="{{ $logo['name'] }}">{{ $logo['dark'] ? \Illuminate\Support\Str::beforeLast($logo['name'], ' '.__('(na ciemne tło)')) : $logo['name'] }}</span>
                                 @if($logo['teams'])<span x-show="teamHits(@js($logo['name']), @js($logo['teams']))" x-text="teamHits(@js($logo['name']), @js($logo['teams']))" class="mt-0.5 line-clamp-2 block text-xs leading-tight text-zinc-500"></span>@endif
                             </span>
                             <span class="shrink-0 text-xs font-semibold text-sky-club-dark uppercase group-hover:underline">{{ $logo['extension'] }} ⬇</span>

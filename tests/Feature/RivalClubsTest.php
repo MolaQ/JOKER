@@ -125,3 +125,37 @@ test('a team with a sponsor in its name is suggested for the existing club', fun
     expect($sponsored->fresh()->rival_club_id)->toBe($club->id)
         ->and(RivalClub::count())->toBe(1);
 });
+
+test('a club and a team keep a second logo for dark backgrounds', function () {
+    Storage::fake('public');
+    $club = RivalClub::create(['name' => 'UKS Piątka Turek', 'logo_path' => 'rival-clubs/piatka.png']);
+    $team = RivalTeam::create(['full_name' => 'UKS Piątka Turek 2', 'rival_club_id' => $club->id]);
+    $section = RivalTeam::create(['full_name' => 'Piątka Turek plażówka', 'rival_club_id' => $club->id, 'logo_path' => 'rival-teams/plaza.png']);
+
+    Livewire::test(RivalTeamManager::class)
+        ->call('openClubModal', $club->id)
+        ->set('clubLogoLight', UploadedFile::fake()->image('biale.png'))
+        ->call('saveClub')
+        ->assertHasNoErrors();
+
+    $light = $club->fresh()->logo_light_path;
+    expect($light)->toStartWith('rival-clubs/')
+        ->and($club->fresh()->logo_path)->toBe('rival-clubs/piatka.png')
+        ->and($team->fresh()->logoLightPath())->toBe($light)
+        // Drużyna z innym własnym logo nie dostaje wariantu klubu, który do niego nie pasuje.
+        ->and($section->fresh()->logoLightPath())->toBeNull();
+
+    Livewire::test(RivalTeamManager::class)
+        ->call('openEditModal', $section->id)
+        ->set('logoLight', UploadedFile::fake()->image('plaza-biala.png'))
+        ->call('save')
+        ->assertHasNoErrors();
+    expect($section->fresh()->logoLightPath())->toStartWith('rival-teams/');
+
+    Livewire::test(RivalTeamManager::class)
+        ->call('openClubModal', $club->id)
+        ->assertSet('existingClubLogoLight', $light)
+        ->call('removeClubLogoLight');
+    expect($club->fresh()->logo_light_path)->toBeNull()
+        ->and($club->fresh()->logo_path)->toBe('rival-clubs/piatka.png');
+});

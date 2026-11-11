@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\RivalClub;
 use App\Models\RivalTeam;
+use App\Support\ThumbnailData;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -35,6 +36,11 @@ class RivalTeamManager extends Component
 
     public ?string $existingLogo = null;
 
+    /** Wariant logo na ciemne tło (np. białe zamiast granatowego, do miniatur transmisji). */
+    public $logoLight = null;
+
+    public ?string $existingLogoLight = null;
+
     public bool $showClubModal = false;
 
     public ?int $editingClubId = null;
@@ -44,6 +50,10 @@ class RivalTeamManager extends Component
     public $clubLogo = null;
 
     public ?string $existingClubLogo = null;
+
+    public $clubLogoLight = null;
+
+    public ?string $existingClubLogoLight = null;
 
     public string $search = '';
 
@@ -67,6 +77,7 @@ class RivalTeamManager extends Component
             'rival_club_id' => 'nullable|exists:rival_clubs,id',
             'aliases' => 'nullable|string|max:3000',
             'logo' => 'nullable|image|max:2048',
+            'logoLight' => 'nullable|image|max:2048',
         ];
     }
 
@@ -87,6 +98,7 @@ class RivalTeamManager extends Component
         $this->rival_club_id = (string) $rivalTeam->rival_club_id;
         $this->aliases = implode("\n", $rivalTeam->aliases ?? []);
         $this->existingLogo = $rivalTeam->logo_path;
+        $this->existingLogoLight = $rivalTeam->logo_light_path;
         $this->showModal = true;
     }
 
@@ -104,6 +116,10 @@ class RivalTeamManager extends Component
 
         if ($this->logo) {
             $data['logo_path'] = $this->logo->store('rival-teams', 'public');
+        }
+
+        if ($this->logoLight) {
+            $data['logo_light_path'] = $this->logoLight->store('rival-teams', 'public');
         }
 
         if ($this->editingId) {
@@ -126,6 +142,18 @@ class RivalTeamManager extends Component
         $this->existingLogo = null;
     }
 
+    public function removeOwnLogoLight(): void
+    {
+        RivalTeam::whereKey($this->editingId)->update(['logo_light_path' => null]);
+        $this->existingLogoLight = null;
+    }
+
+    public function removeClubLogoLight(): void
+    {
+        RivalClub::whereKey($this->editingClubId)->update(['logo_light_path' => null]);
+        $this->existingClubLogoLight = null;
+    }
+
     public function delete(int $id): void
     {
         RivalTeam::findOrFail($id)->delete();
@@ -145,18 +173,24 @@ class RivalTeamManager extends Component
         $this->clubName = (string) $club?->name;
         $this->existingClubLogo = $club?->logo_path;
         $this->clubLogo = null;
+        $this->existingClubLogoLight = $club?->logo_light_path;
+        $this->clubLogoLight = null;
         $this->resetErrorBag();
         $this->showClubModal = true;
     }
 
     public function saveClub(): void
     {
-        $this->validate(['clubName' => 'required|string|max:255', 'clubLogo' => 'nullable|image|max:2048']);
+        $this->validate(['clubName' => 'required|string|max:255', 'clubLogo' => 'nullable|image|max:2048', 'clubLogoLight' => 'nullable|image|max:2048']);
 
         $data = ['name' => trim($this->clubName)];
 
         if ($this->clubLogo) {
             $data['logo_path'] = $this->clubLogo->store('rival-clubs', 'public');
+        }
+
+        if ($this->clubLogoLight) {
+            $data['logo_light_path'] = $this->clubLogoLight->store('rival-clubs', 'public');
         }
 
         RivalClub::updateOrCreate(['id' => $this->editingClubId], $data);
@@ -248,6 +282,25 @@ class RivalTeamManager extends Component
         $this->flash('Wszystkie nowe nazwy zostały jako osobne drużyny.');
     }
 
+    /**
+     * Obrazek, od którego zaczyna się wariant na ciemne tło: dopiero wybrane logo, własne logo drużyny albo logo klubu.
+     */
+    private function lightSource(): ?string
+    {
+        if (! $this->showModal) {
+            return null;
+        }
+
+        if ($this->logo && method_exists($this->logo, 'temporaryUrl')) {
+            // Podpisany adres podglądu: zostawiamy go w całości (bez podpisu serwer odmawia).
+            return $this->logo->temporaryUrl();
+        }
+
+        $path = $this->existingLogo ?: RivalClub::find($this->rival_club_id ?: null)?->logo_path;
+
+        return $path ? ThumbnailData::src($path) : null;
+    }
+
     public function closeModal(): void
     {
         $this->showModal = false;
@@ -256,7 +309,7 @@ class RivalTeamManager extends Component
 
     private function resetForm(): void
     {
-        $this->reset('editingId', 'full_name', 'short_name', 'rival_club_id', 'aliases', 'logo', 'existingLogo');
+        $this->reset('editingId', 'full_name', 'short_name', 'rival_club_id', 'aliases', 'logo', 'existingLogo', 'logoLight', 'existingLogoLight');
         $this->resetErrorBag();
     }
 
@@ -325,6 +378,7 @@ class RivalTeamManager extends Component
             'toReview' => $toReview,
             'suggestions' => $this->clubSuggestions($all->where('needs_review', false)->values()),
             'allClubs' => RivalClub::orderBy('name')->get(['id', 'name']),
+            'lightSource' => $this->lightSource(),
             'allTeams' => $all,
             'archivedCount' => $all->whereNotIn('id', $activeIds)->count(),
         ]);

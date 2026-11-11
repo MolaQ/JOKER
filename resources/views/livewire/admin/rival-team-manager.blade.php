@@ -168,6 +168,21 @@
                                 @error('logo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
                             <div>
+                                <label class="block text-sm font-medium text-gray-700">Logo na ciemne tło <span class="font-normal text-gray-500">(opcjonalnie)</span></label>
+                                <p class="text-xs text-gray-500">Np. białe zamiast granatowego, do miniatur transmisji na ciemnym tle. „Zacznij od zwykłego logo”, potem Usuń tło, Usuń kolor i Zamień kolor (np. granatowy na biały). Puste = wariant klubu, jeśli jest.</p>
+                                @if($existingLogoLight && ! $logoLight)
+                                    <div class="mt-2 flex items-center gap-3">
+                                        <img src="{{ \App\Support\Media::url($existingLogoLight) }}" class="h-16 w-16 rounded bg-slate-900 object-contain p-1" alt="Logo na ciemne tło">
+                                        <button type="button" wire:click="removeOwnLogoLight" class="text-xs text-red-600 underline">Usuń wariant</button>
+                                    </div>
+                                @endif
+                                @if($logoLight)
+                                    <img src="{{ $logoLight->temporaryUrl() }}" class="mt-2 h-16 w-16 rounded bg-slate-900 object-contain p-1" alt="Podgląd">
+                                @endif
+                                <x-photo-cropper model="logoLight" class="mt-2" :preview="false" aspect="free" format="png" :width="400" label="Wybierz plik" :start-from="$lightSource" start-label="Zacznij od zwykłego logo" dark />
+                                @error('logoLight') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
                                 <label class="block text-sm font-medium text-gray-700">Dawne nazwy (jedna w linii)</label>
                                 <textarea wire:model="aliases" rows="3" class="mt-1 {{ $input }}" placeholder="np. Energetyk Poznań bez sponsora"></textarea>
                                 <p class="mt-1 text-xs text-gray-500">Import z tymi nazwami trafi do tej drużyny.</p>
@@ -210,6 +225,21 @@
                                 @endif
                                 <x-photo-cropper model="clubLogo" class="mt-2" :preview="false" aspect="free" format="png" :width="400" label="Wybierz logo" />
                                 @error('clubLogo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Logo na ciemne tło <span class="font-normal text-gray-500">(opcjonalnie)</span></label>
+                                <p class="text-xs text-gray-500">Np. białe zamiast granatowego, do miniatur transmisji na ciemnym tle. „Zacznij od zwykłego logo”, potem Usuń tło, Usuń kolor i Zamień kolor (np. granatowy na biały).</p>
+                                @if($existingClubLogoLight && ! $clubLogoLight)
+                                    <div class="mt-2 flex items-center gap-3">
+                                        <img src="{{ \App\Support\Media::url($existingClubLogoLight) }}" class="h-16 w-16 rounded bg-slate-900 object-contain p-1" alt="Logo na ciemne tło">
+                                        <button type="button" wire:click="removeClubLogoLight" class="text-xs text-red-600 underline">Usuń wariant</button>
+                                    </div>
+                                @endif
+                                @if($clubLogoLight)
+                                    <img src="{{ $clubLogoLight->temporaryUrl() }}" class="mt-2 h-16 w-16 rounded bg-slate-900 object-contain p-1" alt="Podgląd">
+                                @endif
+                                <x-photo-cropper model="clubLogoLight" class="mt-2" :preview="false" aspect="free" format="png" :width="400" label="Wybierz plik" :start-from="$existingClubLogo ? \App\Support\ThumbnailData::src($existingClubLogo) : null" start-label="Zacznij od zwykłego logo" dark />
+                                @error('clubLogoLight') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
                         </div>
                         <div class="sticky bottom-0 z-10 flex justify-end space-x-3 rounded-b-lg border-t border-gray-200 bg-gray-50 px-6 py-4">

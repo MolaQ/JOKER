@@ -33,8 +33,33 @@ export function registerPhotoCropper() {
             // Kształt kadru logo przy dowolnych proporcjach: 'free', 'square' (1:1) albo 'circle' (koło, reszta przezroczysta).
             shape: 'free',
 
+            // Podgląd kadrowania na ciemnym tle (sprawdzenie wariantu logo na ciemne miniatury).
+            darkPreview: false,
+
             async choose(event) {
-                const file = event.target.files[0];
+                await this.open(event.target.files[0]);
+            },
+
+            /** Zaczyna od obrazka, który już jest na stronie (np. obecne logo, z którego robimy wariant na ciemne tło). */
+            async startFrom(url, dark = false) {
+                this.error = null;
+
+                try {
+                    const response = await fetch(url, { credentials: 'same-origin' });
+
+                    if (! response.ok) {
+                        throw new Error(response.status);
+                    }
+
+                    const blob = await response.blob();
+                    this.darkPreview = dark;
+                    await this.open(new File([blob], 'logo.png', { type: blob.type || 'image/png' }));
+                } catch (exception) {
+                    this.error = document.documentElement.lang === 'en' ? 'Could not load the current image.' : 'Nie udało się wczytać obecnego obrazka.';
+                }
+            },
+
+            async open(file) {
                 this.error = null;
                 this.stopWatchdog();
                 this.uploading = false;
@@ -90,6 +115,13 @@ export function registerPhotoCropper() {
                 const box = this.$refs.image?.parentElement;
                 const container = this.cropper?.cropper;
 
+                // Zaraz po wczytaniu nie ma jeszcze kadru użytkownika: przy pierwszym dopasowaniu ustawiamy go od nowa na cały obrazek.
+                // Gdy pole było jeszcze ukryte (0 px), czekamy z tym na pierwsze dopasowanie po jego pokazaniu, inaczej kadr
+                // zostawał w proporcjach pola startowego 200×100 (np. 309×400 z kwadratowego logo).
+                if (fresh) {
+                    this.freshFit = true;
+                }
+
                 if (! this.ready || ! box || ! container || ! box.offsetWidth) {
                     return;
                 }
@@ -97,16 +129,23 @@ export function registerPhotoCropper() {
                 if (Math.abs(container.offsetWidth - box.offsetWidth) > 1 || Math.abs(container.offsetHeight - box.offsetHeight) > 1) {
                     this.cropper.resize();
 
-                    // Zaraz po wczytaniu nie ma jeszcze kadru użytkownika: ustawiamy go od nowa na całe pole.
-                    if (fresh) {
+                    if (this.freshFit) {
                         this.cropper.reset();
                     }
                 }
+
+                this.freshFit = false;
             },
 
-            /** Kolejne operacje na logo, liczone od oryginału: 'edge' (tło od brzegów) i {color: [r, g, b]} (kolor w całym logo). */
+            /**
+             * Kolejne operacje na logo, liczone od oryginału: 'edge' (tło od brzegów), {color: [r, g, b]} (usuń kolor w całym logo)
+             * i {replace: [r, g, b], to: [r, g, b]} (zamień kolor, np. granatowy na biały — wariant logo na ciemne tło).
+             */
             ops: [],
+            freshFit: false,
+            // Tryb pipety: 'color' (usuń kolor) albo 'replace' (zamień kolor); false = wyłączony.
             picking: false,
+            replaceTo: '#ffffff',
             pickHandler: null,
             resizeObserver: null,
 
@@ -123,8 +162,11 @@ export function registerPhotoCropper() {
                 await this.applyOps();
             },
 
-            /** Tryb pipety: następne kliknięcie w logo wybiera kolor do usunięcia w całym obrazku (np. biały środek liter). */
-            startPicking() {
+            /**
+             * Tryb pipety: następne kliknięcie w logo wybiera kolor w całym obrazku, który zniknie (mode 'color', np. biały środek liter)
+             * albo zostanie zamieniony na kolor z próbnika (mode 'replace').
+             */
+            startPicking(mode = 'color') {
                 if (! this.cropper) {
                     return;
                 }
@@ -138,12 +180,15 @@ export function registerPhotoCropper() {
                 };
 
                 if (this.picking) {
+                    const same = this.picking === mode;
                     stop();
 
-                    return;
+                    if (same) {
+                        return;
+                    }
                 }
 
-                this.picking = true;
+                this.picking = mode;
                 container.classList.add('cursor-crosshair', '[&_*]:!cursor-crosshair');
 
                 const pick = async (event) => {
@@ -186,7 +231,7 @@ export function registerPhotoCropper() {
                         return;
                     }
 
-                    this.ops.push({ color: [r, g, b] });
+                    this.ops.push(mode === 'replace' ? { replace: [r, g, b], to: this.hexToRgb(this.replaceTo) } : { color: [r, g, b] });
                     await this.applyOps();
                 };
 
@@ -200,7 +245,35 @@ export function registerPhotoCropper() {
             },
 
             colorOps() {
-                return this.ops.map((op, index) => ({ op, index })).filter(({ op }) => op.color);
+                return this.ops.map((op, index) => ({ op, index })).filter(({ op }) => op.color || op.replace);
+            },
+
+            /** Zmiana koloru docelowego w próbniku przelicza już dodane zamiany. */
+            setReplaceTo(hex) {
+                this.replaceTo = hex;
+                const to = this.hexToRgb(hex);
+                let changed = false;
+
+                this.ops.forEach((op) => {
+                    if (op.replace) {
+                        op.to = to;
+                        changed = true;
+                    }
+                });
+
+                if (changed) {
+                    this.applyOps();
+                }
+            },
+
+            hexToRgb(hex) {
+                const value = parseInt(String(hex).replace('#', ''), 16) || 0;
+
+                return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
+            },
+
+            rgb(color) {
+                return Array.isArray(color) ? `rgb(${color.join(',')})` : 'transparent';
             },
 
             loadImage(url) {
@@ -280,6 +353,29 @@ export function registerPhotoCropper() {
                             if (x < width - 1) push(index + 1);
                             if (index >= width) push(index - width);
                             if (index < width * (height - 1)) push(index + width);
+                        }
+                    } else if (op.replace) {
+                        // Przesuwamy kolor o różnicę (zachowując odcienie i przezroczystość krawędzi): granatowy staje się biały,
+                        // a piksele na granicy z innym kolorem zmieniają się częściowo, więc krawędź zostaje gładka.
+                        const distance = distanceTo(op.replace);
+                        const shift = [0, 1, 2].map((channel) => op.to[channel] - op.replace[channel]);
+
+                        for (let index = 0; index < width * height; index++) {
+                            if (data[index * 4 + 3] === 0) {
+                                continue;
+                            }
+
+                            const d = distance(index);
+
+                            if (d > tolerance * 2) {
+                                continue;
+                            }
+
+                            const weight = d <= tolerance ? 1 : 1 - (d - tolerance) / tolerance;
+
+                            for (let channel = 0; channel < 3; channel++) {
+                                data[index * 4 + channel] = Math.max(0, Math.min(255, Math.round(data[index * 4 + channel] + shift[channel] * weight)));
+                            }
                         }
                     } else if (op.color) {
                         const distance = distanceTo(op.color);

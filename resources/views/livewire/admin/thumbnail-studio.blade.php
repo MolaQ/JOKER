@@ -110,8 +110,14 @@
                         </label>
                     @endif
                     <div class="flex items-center gap-2">
-                        @if(filled($m[$side]['logo'] ?? null))
-                            <img src="{{ $m[$side]['logo'] }}" alt="" class="size-9 shrink-0 rounded bg-white object-contain p-0.5 ring-1 ring-gray-200">
+                        @php
+                            $currentLogo = (string) ($m[$side]['logo'] ?? '');
+                            // Para logo: zwykłe ↔ wariant na ciemne tło (np. białe logo rywala na ciemną miniaturę).
+                            $darkVariant = $currentLogo !== '' ? collect($logos)->first(fn ($logo) => $logo['dark'] && $logo['pair'] === $currentLogo) : null;
+                            $currentDark = $currentLogo !== '' ? collect($logos)->first(fn ($logo) => $logo['dark'] && $logo['url'] === $currentLogo) : null;
+                        @endphp
+                        @if($currentLogo !== '')
+                            <img src="{{ $currentLogo }}" alt="" @class(['size-9 shrink-0 rounded object-contain p-0.5 ring-1 ring-gray-200', 'bg-slate-900' => $currentDark, 'bg-white' => ! $currentDark])>
                         @endif
                         {{-- Logo z bazy z wyszukiwarką: po nazwie klubu albo drużyny (także dawnej nazwy), bez polskich znaków --}}
                         <div class="relative min-w-0 flex-1" x-data="{
@@ -128,7 +134,7 @@
                                 <template x-for="(logo, index) in matches" :key="logo.url">
                                     <li>
                                         <button type="button" x-on:click="choose(logo.url)" x-on:mouseenter="active = index" :class="active === index ? 'bg-sky-50 text-sky-800' : 'text-gray-800'" class="flex w-full items-center gap-2 px-3 py-1.5 text-left">
-                                            <img :src="logo.url" alt="" loading="lazy" class="size-7 shrink-0 rounded bg-white object-contain p-0.5 ring-1 ring-gray-200">
+                                            <img :src="logo.url" alt="" loading="lazy" :class="logo.dark ? 'bg-slate-900' : 'bg-white'" class="size-7 shrink-0 rounded object-contain p-0.5 ring-1 ring-gray-200">
                                             <span class="min-w-0"><span class="block truncate" x-text="logo.name"></span><span x-show="hit(logo)" class="block truncate text-[11px] text-gray-500" x-text="hit(logo)"></span></span>
                                         </button>
                                     </li>
@@ -141,6 +147,11 @@
                             <input type="file" accept="image/*" wire:model="{{ $side }}Logo" class="sr-only">
                         </label>
                     </div>
+                    @if($darkVariant)
+                        <button type="button" wire:click="useLogo(@js($side), @js($darkVariant['url']))" class="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 hover:underline"><span class="size-3 rounded-sm bg-slate-900 ring-1 ring-gray-300"></span>Użyj wariantu na ciemne tło</button>
+                    @elseif($currentDark && $currentDark['pair'])
+                        <button type="button" wire:click="useLogo(@js($side), @js($currentDark['pair']))" class="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-700 hover:underline"><span class="size-3 rounded-sm bg-white ring-1 ring-gray-300"></span>Wróć do zwykłego logo</button>
+                    @endif
                     @error($side.'Logo') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
                     @if(str_starts_with((string) ($m[$side]['key'] ?? ''), 'rival:'))
                         <p class="text-[11px] text-gray-500">Kolor rywala zapamięta się przy jego drużynie.</p>

@@ -27,6 +27,7 @@ class RivalTeam extends Model
         'short_name',
         'aliases',
         'logo_path',
+        'logo_light_path',
         'needs_review',
     ];
 
@@ -64,6 +65,19 @@ class RivalTeam extends Model
     public function logoPath(): ?string
     {
         return $this->logo_path ?: $this->club?->logo_path;
+    }
+
+    /**
+     * Logo na ciemne tło (np. białe zamiast granatowego): własne drużyny, a gdy go nie ma, klubu.
+     * Tylko gdy drużyna nie ma własnego zwykłego logo albo ma też własny wariant — inaczej wariant klubu nie pasowałby do logo drużyny.
+     */
+    public function logoLightPath(): ?string
+    {
+        if ($this->logo_light_path) {
+            return $this->logo_light_path;
+        }
+
+        return blank($this->logo_path) || $this->logo_path === $this->club?->logo_path ? $this->club?->logo_light_path : null;
     }
 
     /**
@@ -120,6 +134,7 @@ class RivalTeam extends Model
                     ->reject(fn (string $alias) => ScheduleImporter::key($alias) === ScheduleImporter::key($target->full_name))
                     ->unique(fn (string $alias) => ScheduleImporter::key($alias))->values()->all(),
                 'logo_path' => $target->logo_path ?: $this->logo_path,
+                'logo_light_path' => $target->logo_light_path ?: $this->logo_light_path,
                 'rival_club_id' => $target->rival_club_id ?: $this->rival_club_id,
             ]);
 

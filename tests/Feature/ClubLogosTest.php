@@ -70,3 +70,21 @@ test('a club logo is found by the names of its teams', function () {
     $this->actingAs(User::factory()->create(['role' => UserRole::Photographer]))
         ->get('/logotypy')->assertOk()->assertSee('MKS Pi', false)->assertSee('Szukaj klubu albo drużyny…');
 });
+
+test('a logo for dark backgrounds is listed next to the normal one and paired with it', function () {
+    Storage::fake('public');
+    Storage::disk('public')->put('rival-clubs/piatka.png', UploadedFile::fake()->image('p.png')->getContent());
+    Storage::disk('public')->put('rival-clubs/piatka-biala.png', UploadedFile::fake()->image('b.png')->getContent());
+    $club = RivalClub::create(['name' => 'UKS Piątka Turek', 'logo_path' => 'rival-clubs/piatka.png', 'logo_light_path' => 'rival-clubs/piatka-biala.png']);
+
+    $logos = ClubLogos::all()->keyBy('key');
+    $variant = $logos['klub-jasne-'.$club->id];
+
+    expect($variant['name'])->toBe('UKS Piątka Turek (na ciemne tło)')
+        ->and($variant['dark'])->toBeTrue()
+        ->and($variant['pair_url'])->toBe($logos['klub-'.$club->id]['url'])
+        ->and($logos['klub-'.$club->id]['dark'])->toBeFalse();
+
+    $this->actingAs(User::factory()->create(['role' => UserRole::Photographer]));
+    $this->get(route('logos.download', 'klub-jasne-'.$club->id))->assertOk()->assertDownload('uks-piatka-turek-na-ciemne-tlo.png');
+});

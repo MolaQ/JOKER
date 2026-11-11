@@ -443,7 +443,7 @@ class ThumbnailStudio extends Component
         return view('livewire.admin.thumbnail-studio', $this->choices() + [
             'templates' => ThumbnailTemplate::query()->with(['user:id,name', 'competition:id,name', 'tournament:id,name'])->orderBy('name')->get(),
             'canChange' => $template?->canBeChangedBy($user) ?? true,
-            'logos' => ClubLogos::all()->map(fn (array $logo) => ['name' => $logo['name'], 'teams' => $logo['teams'], 'url' => ThumbnailData::src($logo['url'])])->values(),
+            'logos' => ClubLogos::all()->map(fn (array $logo) => ['name' => $logo['name'], 'teams' => $logo['teams'], 'url' => ThumbnailData::src($logo['url']), 'dark' => $logo['dark'], 'pair' => $logo['pair_url'] ? ThumbnailData::src($logo['pair_url']) : null])->values(),
             'seasons' => Season::query()->orderByDesc('start_date')->get(['id', 'name']),
             'teams' => Team::query()->orderBy('display_order')->get(['id', 'name']),
             'sponsors' => ThumbnailData::sponsorLogos($this->m['tournament_id'] ?? null),
