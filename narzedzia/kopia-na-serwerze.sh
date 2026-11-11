@@ -110,21 +110,17 @@ else
         BLAD=1
     else
         DB_NAZWA="$(env_wartosc DB_DATABASE)"
-        # Hasło w pliku z prawami tylko dla właściciela, a nie w poleceniu (widocznym na liście procesów).
-        DANE_LOGOWANIA="$KOPIE/.tmp-mysql.cnf"
-        (umask 077; {
-            echo "[client]"
-            H="$(env_wartosc DB_HOST)"; echo "host=${H:-localhost}"
-            P="$(env_wartosc DB_PORT)"; echo "port=${P:-3306}"
-            echo "user=$(env_wartosc DB_USERNAME)"
-            echo "password=\"$(env_wartosc DB_PASSWORD | sed 's/\\/\\\\/g; s/"/\\"/g')\""
-        } >"$DANE_LOGOWANIA")
+        # Hasło w zmiennej MYSQL_PWD, a nie w poleceniu (widocznym na liście procesów). Plik --defaults-extra-file
+        # odpada: mysqldump na cyber_Folks to nakładka, która dokłada własne opcje przed nim (unknown variable).
+        H="$(env_wartosc DB_HOST)"
+        P="$(env_wartosc DB_PORT)"
+        export MYSQL_PWD="$(env_wartosc DB_PASSWORD)"
         # Sesje i pamięć podręczna zmieniają się co chwilę i nie są potrzebne do odtworzenia strony:
         # z tych tabel tylko struktura, bez danych. Bez daty w zrzucie, żeby te same dane dawały tę samą sumę.
         POMIJANE=(sessions cache cache_locks)
         POMIN=()
         for T in "${POMIJANE[@]}"; do POMIN+=("--ignore-table=$DB_NAZWA.$T"); done
-        OPCJE=(--defaults-extra-file="$DANE_LOGOWANIA" --single-transaction --skip-lock-tables --skip-dump-date
+        OPCJE=(--host="${H:-localhost}" --port="${P:-3306}" --user="$(env_wartosc DB_USERNAME)" --single-transaction --skip-lock-tables --skip-dump-date
             --default-character-set=utf8mb4 --no-tablespaces)
         if { "$ZRZUT" "${OPCJE[@]}" "${POMIN[@]}" "$DB_NAZWA" \
                 && "$ZRZUT" "${OPCJE[@]}" --no-data "$DB_NAZWA" "${POMIJANE[@]}"; } \
@@ -137,7 +133,8 @@ else
             log "BŁĄD zrzutu bazy $DB_NAZWA: $(tr '\n' ' ' <"$KOPIE/.tmp-bledy" | cut -c1-500)"
             BLAD=1
         fi
-        rm -f "$KOPIE/.tmp-baza.sql" "$KOPIE/.tmp-bledy" "$DANE_LOGOWANIA"
+        rm -f "$KOPIE/.tmp-baza.sql" "$KOPIE/.tmp-bledy"
+        unset MYSQL_PWD
     fi
 fi
 sprzataj baza "$TRZYMAJ_BAZY"
