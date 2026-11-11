@@ -48,3 +48,12 @@ composer dev                   # serwer deweloperski
 Administrator: `php artisan joker:admin marcin.molak@gmail.com` nadaje uprawnienia (lub tworzy konto i wypisuje hasło).
 
 Testy: `php artisan test --compact`.
+
+### Kopie zapasowe na serwerze
+
+`narzedzia/kopia-na-serwerze.sh` uruchamiany przez `instaluj-na-serwerze.sh` (cron co kilka minut) robi kopię
+bazy, pliku `.env` i wgranych zdjęć (`storage/app/public`) raz na dobę po 3:00 w nocy, a bazy i `.env` także przed
+każdą instalacją nowej paczki. Nowa kopia powstaje tylko, gdy coś się zmieniło. Kopie leżą w folderze `kopie-joker`
+obok folderu strony (np. `domains/jokerpila.pl/kopie-joker`), przebieg w `kopie-joker/kopie.log`. Zostaje 14 kopii
+bazy i `.env` oraz 3 kopie zdjęć. Bazę przywraca się importem `baza-*.sql.gz` w phpMyAdmin, zdjęcia rozpakowaniem
+`zdjecia-*.tar` w folderze `storage/app`.
