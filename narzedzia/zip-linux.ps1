@@ -42,7 +42,10 @@ try {
     $lines = New-Object System.Collections.Generic.List[string]
     $lines.Add('#mtree')
     $prefix = $Folder + '/'
-    if ($BezFolderu) { $prefix = '' } else { $lines.Add((Escape-Mtree $Folder) + '/ type=dir mode=0755') }
+    # Bez folderu wpisy dostaja przedrostek ./ - w formacie mtree nazwa bez ukosnika jest wzgledna wobec ostatniego
+    # folderu z listy, wiec pliki z glownego folderu (artisan, composer.json) trafialy w glab .ai/app/... Przedrostek
+    # ./ usuwa potem tar opcja -s.
+    if ($BezFolderu) { $prefix = './' } else { $lines.Add((Escape-Mtree $Folder) + '/ type=dir mode=0755') }
 
     foreach ($item in $items) {
         $relative = $prefix + $item.FullName.Substring($base.Length + 1).Replace('\', '/')
@@ -58,7 +61,11 @@ try {
     $spec = Join-Path $env:TEMP ('joker-paczka-' + [Guid]::NewGuid().ToString('N') + '.mtree')
     [IO.File]::WriteAllLines($spec, $lines, (New-Object System.Text.UTF8Encoding $false))
 
-    & tar -a -c -f $Out "@$spec"
+    if ($BezFolderu) {
+        & tar -a -c -f $Out -s '|^\./||' "@$spec"
+    } else {
+        & tar -a -c -f $Out "@$spec"
+    }
     $code = $LASTEXITCODE
     Remove-Item -LiteralPath $spec -ErrorAction SilentlyContinue
 
