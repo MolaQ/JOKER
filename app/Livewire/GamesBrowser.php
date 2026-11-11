@@ -52,6 +52,28 @@ class GamesBrowser extends Component
     #[Url(as: 'season', except: '')]
     public string $season = '';
 
+    /** Wybrany miesiąc kalendarza ('2026-11'), 'all' = wszystkie, '' = bieżący (albo najbliższy z wydarzeniami). */
+    #[Url(as: 'month', except: '')]
+    public string $month = '';
+
+    public function setMonth(string $month): void
+    {
+        $this->month = $month === 'all' || preg_match('/^\d{4}-\d{2}$/', $month) ? $month : '';
+    }
+
+    /** Szukanie przechodzi przez wszystkie miesiące, żeby wynik nie chował się w innym miesiącu. */
+    public function updatedSearch(): void
+    {
+        if ($this->search !== '') {
+            $this->month = 'all';
+        }
+    }
+
+    public function updatedSeason(): void
+    {
+        $this->month = '';
+    }
+
     public function setPeriod(string $period): void
     {
         $this->period = array_key_exists($period, self::PERIODS) ? $period : 'all';
@@ -280,8 +302,18 @@ class GamesBrowser extends Component
             default => ! $trip->isPast(),
         });
 
+        $monthCounts = $this->monthCounts($games, $tournaments, $miniTrips);
+        $selectedMonth = $this->resolveMonth($monthCounts);
+
+        if ($selectedMonth !== 'all' && ! $monthCounts->has($selectedMonth)) {
+            $monthCounts->put($selectedMonth, 0);
+            $monthCounts = $monthCounts->sortKeys();
+        }
+
         return view('livewire.games-browser', [
-            'months' => $this->calendarMonths($games, $tournaments, $miniTrips, $this->search === '' && $this->competition === '' && $this->place === '', $this->period === 'results'),
+            'months' => $this->calendarMonths($games, $tournaments, $miniTrips, $this->search === '' && $this->competition === '' && $this->place === '', $this->period === 'results', $selectedMonth === 'all' ? null : $selectedMonth),
+            'monthCounts' => $monthCounts,
+            'selectedMonth' => $selectedMonth,
             'total' => $games->count(),
             'periodCounts' => $periodCounts,
             'teams' => $this->seasonGames->pluck('team')->filter()->unique('id')->sortBy('display_order')->values(),
@@ -303,13 +335,56 @@ class GamesBrowser extends Component
      * @param  Collection<int, Tournament>  $tournaments
      * @return Collection<int, array{key: string, month: Carbon, games: Collection<int, Game>, tournaments: Collection<int, Tournament>, birthdays: Collection<int, array{name: string, age: int, ageLabel: string, role: string, date: Carbon, url: ?string, showAge: bool}>, weeks: array<int, array<int, array{date: Carbon, inMonth: bool, isToday: bool, games: Collection<int, Game>, tournaments: Collection<int, Tournament>, birthdays: Collection<int, array{name: string, age: int, ageLabel: string, role: string, date: Carbon, url: ?string, showAge: bool}>}>>}>
      */
-    private function calendarMonths(Collection $games, Collection $tournaments, Collection $miniTrips, bool $withBirthdays = true, bool $newestFirst = false): Collection
+    /**
+     * Liczba wydarzeń (mecze, turnieje, wyjazdy mini) w każdym miesiącu, do przycisków miesięcy.
+     *
+     * @return Collection<string, int>
+     */
+    private function monthCounts(Collection $games, Collection $tournaments, Collection $miniTrips): Collection
+    {
+        return $games->filter(fn (Game $game) => $game->game_date)->map(fn (Game $game) => $game->game_date->format('Y-m'))
+            ->concat($tournaments->map(fn (Tournament $tournament) => $tournament->start_date->format('Y-m')))
+            ->concat($miniTrips->map(fn (MiniTrip $trip) => $trip->starts_on->format('Y-m')))
+            ->countBy()
+            ->sortKeys();
+    }
+
+    /**
+     * Bez wyboru: bieżący miesiąc w bieżącym sezonie; w dawnym sezonie (albo gdy bieżący jest poza sezonem)
+     * najbliższy miesiąc z wydarzeniami.
+     *
+     * @param  Collection<string, int>  $monthCounts
+     */
+    private function resolveMonth(Collection $monthCounts): string
+    {
+        if ($this->month !== '') {
+            return $this->month;
+        }
+
+        $current = now()->format('Y-m');
+        $season = $this->selectedSeason();
+        $inSeason = $season === null || ($season->start_date && $season->end_date
+            ? now()->between($season->start_date->copy()->startOfMonth(), $season->end_date->copy()->endOfMonth())
+            : (bool) $season->is_current);
+
+        if ($inSeason || $monthCounts->isEmpty()) {
+            return $current;
+        }
+
+        return $monthCounts->keys()->first(fn (string $key) => $key >= $current) ?? $monthCounts->keys()->last();
+    }
+
+    private function calendarMonths(Collection $games, Collection $tournaments, Collection $miniTrips, bool $withBirthdays = true, bool $newestFirst = false, ?string $onlyMonth = null): Collection
     {
         $birthdays = $withBirthdays ? $this->birthdays() : collect();
         $gamesByMonth = $games->filter(fn (Game $game) => $game->game_date)->groupBy(fn (Game $game) => $game->game_date->format('Y-m'));
         $tournamentMonths = $tournaments->flatMap(fn (Tournament $tournament) => collect(Carbon::parse($tournament->start_date)->toPeriod($tournament->lastDay()))->map(fn (Carbon $day) => $day->format('Y-m')))->unique();
         $miniMonths = $miniTrips->map(fn (MiniTrip $trip) => $trip->starts_on->format('Y-m'));
         $keys = $gamesByMonth->keys()->concat($tournamentMonths)->concat($miniMonths)->unique()->sort()->values();
+
+        if ($onlyMonth !== null) {
+            $keys = collect([$onlyMonth]);
+        }
 
         return ($newestFirst ? $keys->reverse() : $keys)
             ->map(function (string $key) use ($birthdays, $gamesByMonth, $tournaments, $miniTrips) {

@@ -54,3 +54,19 @@ test('logos sort by downloads, then meetings, and by name both ways', function (
 
     $this->get('/logotypy')->assertSee('Nazwa klubu Z–A');
 });
+
+test('a club logo is found by the names of its teams', function () {
+    Storage::fake('public');
+    Storage::disk('public')->put('logos/turek.png', UploadedFile::fake()->image('t.png')->getContent());
+    Storage::disk('public')->put('logos/wlasne.png', UploadedFile::fake()->image('w.png', 20, 20)->getContent());
+    $club = RivalClub::create(['name' => 'TKS Turek', 'logo_path' => 'logos/turek.png']);
+    RivalTeam::create(['full_name' => 'Piątka Turek', 'short_name' => 'Piątka', 'aliases' => ['MKS Piątka'], 'rival_club_id' => $club->id]);
+    RivalTeam::create(['full_name' => 'TKS Turek II', 'rival_club_id' => $club->id, 'logo_path' => 'logos/wlasne.png']);
+
+    $logos = ClubLogos::all();
+    expect($logos->firstWhere('key', 'klub-'.$club->id)['teams'])->toContain('Piątka Turek', 'Piątka', 'MKS Piątka')->not->toContain('TKS Turek II')
+        ->and($logos->firstWhere('name', 'TKS Turek II')['teams'])->toContain('TKS Turek');
+
+    $this->actingAs(User::factory()->create(['role' => UserRole::Photographer]))
+        ->get('/logotypy')->assertOk()->assertSee('MKS Pi', false)->assertSee('Szukaj klubu albo drużyny…');
+});

@@ -66,7 +66,7 @@
                         <button type="button" wire:click="$set('fPeriod', '{{ $value }}')" @class(['flex-1 rounded px-1 py-1.5', 'bg-sky-600 text-white' => $fPeriod === $value, 'text-gray-600 hover:bg-gray-100' => $fPeriod !== $value])>{{ $periodLabel }}</button>
                     @endforeach
                 </div>
-                <input type="search" wire:model.live.debounce.400ms="fSearch" placeholder="Szukaj rywala…" class="{{ $input }} col-span-2">
+                <input type="search" wire:model.live.debounce.400ms="fSearch" placeholder="Szukaj: rywal, drużyna, data (np. 15.11)…" class="{{ $input }} col-span-2">
                 <p class="col-span-2 flex justify-between text-[11px] text-gray-500">
                     <span>{{ $games->count() + $matches->flatten()->count() }} meczów na liście</span>
                     <button type="button" wire:click="resetFilters" class="hover:text-sky-700">Wyczyść filtry</button>
@@ -113,13 +113,29 @@
                         @if(filled($m[$side]['logo'] ?? null))
                             <img src="{{ $m[$side]['logo'] }}" alt="" class="size-9 shrink-0 rounded bg-white object-contain p-0.5 ring-1 ring-gray-200">
                         @endif
-                        <select wire:change="useLogo('{{ $side }}', $event.target.value)" class="{{ $input }} min-w-0 flex-1" aria-label="Logo">
-                            <option value="">Logo z bazy…</option>
-                            <option value="">— bez logo (inicjały) —</option>
-                            @foreach($logos as $logo)
-                                <option value="{{ $logo['url'] }}">{{ $logo['name'] }}</option>
-                            @endforeach
-                        </select>
+                        {{-- Logo z bazy z wyszukiwarką: po nazwie klubu albo drużyny (także dawnej nazwy), bez polskich znaków --}}
+                        <div class="relative min-w-0 flex-1" x-data="{
+                                q: '', open: false, active: 0, logos: @js($logos),
+                                n(s) { return (s || '').toLocaleLowerCase('pl').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l'); },
+                                get matches() { const q = this.n(this.q).trim(); return (q ? this.logos.filter((l) => [l.name, ...l.teams].some((s) => this.n(s).includes(q))) : this.logos).slice(0, 80); },
+                                hit(l) { const q = this.n(this.q).trim(); return q && ! this.n(l.name).includes(q) ? l.teams.filter((s) => this.n(s).includes(q)).join(', ') : ''; },
+                                choose(url) { this.open = false; this.q = ''; $wire.useLogo(@js($side), url); },
+                            }" x-on:click.outside="open = false" x-on:keydown.escape.stop="open = false">
+                            <input type="search" x-model="q" x-on:focus="open = true" x-on:input="open = true; active = 0" x-on:keydown.down.prevent="active = Math.min(active + 1, matches.length - 1)" x-on:keydown.up.prevent="active = Math.max(active - 1, 0)" x-on:keydown.enter.prevent="matches[active] && choose(matches[active].url)"
+                                class="{{ $input }}" placeholder="Logo z bazy: wpisz klub lub drużynę…" aria-label="Logo" autocomplete="off">
+                            <ul x-show="open" x-cloak class="absolute z-30 mt-1 max-h-72 w-full overflow-y-auto overscroll-contain rounded-lg bg-white py-1 text-sm shadow-lg ring-1 ring-gray-200">
+                                <li><button type="button" x-on:click="choose('')" class="block w-full px-3 py-2 text-left text-gray-500 hover:bg-gray-50">— bez logo (inicjały) —</button></li>
+                                <template x-for="(logo, index) in matches" :key="logo.url">
+                                    <li>
+                                        <button type="button" x-on:click="choose(logo.url)" x-on:mouseenter="active = index" :class="active === index ? 'bg-sky-50 text-sky-800' : 'text-gray-800'" class="flex w-full items-center gap-2 px-3 py-1.5 text-left">
+                                            <img :src="logo.url" alt="" loading="lazy" class="size-7 shrink-0 rounded bg-white object-contain p-0.5 ring-1 ring-gray-200">
+                                            <span class="min-w-0"><span class="block truncate" x-text="logo.name"></span><span x-show="hit(logo)" class="block truncate text-[11px] text-gray-500" x-text="hit(logo)"></span></span>
+                                        </button>
+                                    </li>
+                                </template>
+                                <li x-show="! matches.length" class="px-3 py-2 text-gray-500">Nic nie pasuje.</li>
+                            </ul>
+                        </div>
                         <label class="shrink-0 cursor-pointer rounded-md px-2 py-1.5 text-xs font-semibold text-sky-700 ring-1 ring-sky-200 hover:bg-sky-50">
                             Wgraj
                             <input type="file" accept="image/*" wire:model="{{ $side }}Logo" class="sr-only">

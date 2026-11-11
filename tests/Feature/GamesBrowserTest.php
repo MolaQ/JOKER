@@ -13,6 +13,8 @@ use App\Support\SiteSettings;
 use Livewire\Livewire;
 
 beforeEach(function () {
+    // Środek miesiąca: kalendarz domyślnie pokazuje bieżący miesiąc, a mecze testowe są ±9 dni od dziś.
+    $this->travelTo(now()->startOfMonth()->addDays(14)->setTime(12, 0));
     $this->season = Season::create(['name' => '2026/2027', 'start_date' => now()->subMonth(), 'end_date' => now()->addMonths(8), 'is_current' => true]);
     $this->seniors = Team::create(['name' => 'Seniorzy', 'slug' => 'seniorzy', 'category' => 'senior']);
     $this->juniors = Team::create(['name' => 'Junior 2008', 'slug' => 'junior-2008', 'category' => 'junior']);
@@ -43,6 +45,27 @@ test('the matches page shows upcoming games and filters instantly', function () 
         ->call('setPeriod', 'results')
         ->assertSee('Gwardia Wrocław')
         ->assertSee('Wygrana');
+});
+
+test('the calendar shows the current month by default and switches months with buttons', function () {
+    $nextMonth = now()->addMonthNoOverflow()->startOfMonth()->addDays(3);
+    Game::create(['team_id' => $this->seniors->id, 'season_id' => $this->season->id, 'opponent' => 'Daleki Rywal', 'is_home' => false, 'game_date' => $nextMonth, 'status' => 'scheduled']);
+
+    Livewire::test(GamesBrowser::class)
+        ->assertSet('month', '')
+        ->assertSee('Warta Zawiercie')
+        ->assertDontSee('Daleki Rywal')
+        ->assertSeeHtml('wire:click="setMonth(\''.$nextMonth->format('Y-m').'\')"')
+        ->call('setMonth', $nextMonth->format('Y-m'))
+        ->assertSee('Daleki Rywal')
+        ->assertDontSee('Warta Zawiercie')
+        ->call('setMonth', 'all')
+        ->assertSee('Daleki Rywal')
+        ->assertSee('Warta Zawiercie')
+        ->call('setMonth', $nextMonth->format('Y-m'))
+        ->set('search', 'warta')
+        ->assertSet('month', 'all')
+        ->assertSee('Warta Zawiercie');
 });
 
 test('the countdown targets the next senior match by default', function () {

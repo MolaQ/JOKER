@@ -170,3 +170,22 @@ test('the bars layout keeps the day and time in the bottom bar', function () {
         ->set('m.place', 'Hala LOMS')
         ->assertSee('Środa, 28 października 2026 · godz. 18:45 | Hala LOMS');
 });
+
+test('the game search ignores Polish letters and finds games by date', function () {
+    $this->actingAs(User::factory()->create(['role' => UserRole::Photographer]));
+    $season = Season::factory()->create(['is_current' => true]);
+    $team = Team::factory()->create();
+    $rival = RivalTeam::create(['full_name' => 'Piątka Turek', 'short_name' => 'Piątka']);
+    Game::factory()->create(['season_id' => $season->id, 'team_id' => $team->id, 'opponent' => 'Piątka Turek', 'opponent_team_id' => $rival->id, 'game_date' => '2026-11-15 17:00']);
+    Game::factory()->create(['season_id' => $season->id, 'team_id' => $team->id, 'opponent' => 'Łódzki Klub', 'game_date' => '2026-11-05 18:00']);
+    Game::factory()->create(['season_id' => $season->id, 'team_id' => $team->id, 'opponent' => 'Stary Rywal', 'game_date' => '2015-11-11 18:00']);
+
+    $studio = Livewire::test(ThumbnailStudio::class)->set('fSeason', '');
+
+    $studio->set('fSearch', 'piatka')->assertSee('Piątka Turek')->assertDontSee('Łódzki Klub');
+    $studio->set('fSearch', 'lodzki')->assertSee('Łódzki Klub')->assertDontSee('Piątka Turek');
+    $studio->set('fSearch', '15.11')->assertSee('Piątka Turek')->assertDontSee('Łódzki Klub')->assertDontSee('Stary Rywal');
+    $studio->set('fSearch', '5.11.2026')->assertSee('Łódzki Klub')->assertDontSee('Piątka Turek');
+    $studio->set('fSearch', '2026-11-15')->assertSee('Piątka Turek')->assertDontSee('Łódzki Klub');
+    $studio->set('fSearch', '15 listopada')->assertSee('Piątka Turek')->assertDontSee('Łódzki Klub');
+});

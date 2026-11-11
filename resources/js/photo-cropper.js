@@ -73,26 +73,149 @@ export function registerPhotoCropper() {
                     zoomOnWheel: false,
                     background: false,
                     preview: this.$refs.preview || '',
-                    ready: () => { this.ready = true; },
+                    ready: () => {
+                        this.ready = true;
+                        this.fitToBox(true);
+                    },
                 });
+
+                // Pole kadrowania zmienia rozmiar (okno dialogowe się otwiera, obrót telefonu): Cropper liczy wymiary od nowa.
+                // Bez tego potrafił zostać w rozmiarze 200×100 px, gdy budował się, zanim pole było widoczne.
+                this.resizeObserver?.disconnect();
+                this.resizeObserver = new ResizeObserver(() => this.fitToBox());
+                this.resizeObserver.observe(this.$refs.image.parentElement);
             },
 
-            /**
-             * Usuwa jednolite tło logo (np. białe): zalewa od brzegów obrazka piksele podobne do koloru w rogach,
-             * więc białe napisy w środku logo zostają. Krawędź dostaje miękkie przejście zamiast „schodków”.
-             */
+            fitToBox(fresh = false) {
+                const box = this.$refs.image?.parentElement;
+                const container = this.cropper?.cropper;
+
+                if (! this.ready || ! box || ! container || ! box.offsetWidth) {
+                    return;
+                }
+
+                if (Math.abs(container.offsetWidth - box.offsetWidth) > 1 || Math.abs(container.offsetHeight - box.offsetHeight) > 1) {
+                    this.cropper.resize();
+
+                    // Zaraz po wczytaniu nie ma jeszcze kadru użytkownika: ustawiamy go od nowa na całe pole.
+                    if (fresh) {
+                        this.cropper.reset();
+                    }
+                }
+            },
+
+            /** Kolejne operacje na logo, liczone od oryginału: 'edge' (tło od brzegów) i {color: [r, g, b]} (kolor w całym logo). */
+            ops: [],
+            picking: false,
+            pickHandler: null,
+            resizeObserver: null,
+
+            /** Usuwa jednolite tło logo (np. białe) zalewając od brzegów, więc białe napisy w środku logo zostają. */
             async removeBackground() {
                 if (! this.cropper) {
                     return;
                 }
 
-                this.original ??= this.source;
-                const image = await new Promise((resolve, reject) => {
+                if (! this.ops.includes('edge')) {
+                    this.ops.push('edge');
+                }
+
+                await this.applyOps();
+            },
+
+            /** Tryb pipety: następne kliknięcie w logo wybiera kolor do usunięcia w całym obrazku (np. biały środek liter). */
+            startPicking() {
+                if (! this.cropper) {
+                    return;
+                }
+
+                const container = this.cropper.cropper;
+                const stop = () => {
+                    container.removeEventListener('pointerdown', this.pickHandler, true);
+                    container.classList.remove('cursor-crosshair', '[&_*]:!cursor-crosshair');
+                    this.pickHandler = null;
+                    this.picking = false;
+                };
+
+                if (this.picking) {
+                    stop();
+
+                    return;
+                }
+
+                this.picking = true;
+                container.classList.add('cursor-crosshair', '[&_*]:!cursor-crosshair');
+
+                const pick = async (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    stop();
+
+                    const canvas = container.querySelector('.cropper-canvas img');
+                    const rect = canvas?.getBoundingClientRect();
+
+                    if (! rect || ! rect.width) {
+                        return;
+                    }
+
+                    // Kolor bierzemy z tego, co widać (po wcześniejszych operacjach), z uwzględnieniem obrotu.
+                    const image = await this.loadImage(this.source);
+                    const probe = document.createElement('canvas');
+                    probe.width = 1;
+                    probe.height = 1;
+                    const context = probe.getContext('2d', { willReadFrequently: true });
+                    const centerX = rect.left + rect.width / 2;
+                    const centerY = rect.top + rect.height / 2;
+                    const angle = -((this.cropper.getImageData().rotate || 0) * Math.PI) / 180;
+                    const dx = event.clientX - centerX;
+                    const dy = event.clientY - centerY;
+                    const rx = dx * Math.cos(angle) - dy * Math.sin(angle);
+                    const ry = dx * Math.sin(angle) + dy * Math.cos(angle);
+                    const imageData = this.cropper.getImageData();
+                    const x = Math.floor(((rx + imageData.width / 2) / imageData.width) * image.naturalWidth);
+                    const y = Math.floor(((ry + imageData.height / 2) / imageData.height) * image.naturalHeight);
+
+                    if (x < 0 || y < 0 || x >= image.naturalWidth || y >= image.naturalHeight) {
+                        return;
+                    }
+
+                    context.drawImage(image, x, y, 1, 1, 0, 0, 1, 1);
+                    const [r, g, b, a] = context.getImageData(0, 0, 1, 1).data;
+
+                    if (a === 0) {
+                        return;
+                    }
+
+                    this.ops.push({ color: [r, g, b] });
+                    await this.applyOps();
+                };
+
+                this.pickHandler = pick;
+                container.addEventListener('pointerdown', pick, true);
+            },
+
+            removeColorOp(index) {
+                this.ops.splice(index, 1);
+                this.ops.length ? this.applyOps() : this.restoreBackground();
+            },
+
+            colorOps() {
+                return this.ops.map((op, index) => ({ op, index })).filter(({ op }) => op.color);
+            },
+
+            loadImage(url) {
+                return new Promise((resolve, reject) => {
                     const element = new Image();
                     element.onload = () => resolve(element);
                     element.onerror = reject;
-                    element.src = this.original;
+                    element.src = url;
                 });
+            },
+
+            /** Liczy logo od oryginału: każda operacja po kolei, z bieżącą czułością (suwak). */
+            async applyOps() {
+                this.original ??= this.source;
+                const image = await this.loadImage(this.original);
 
                 const canvas = document.createElement('canvas');
                 canvas.width = image.naturalWidth;
@@ -103,55 +226,76 @@ export function registerPhotoCropper() {
                 const { width, height } = canvas;
                 const pixels = context.getImageData(0, 0, width, height);
                 const data = pixels.data;
-                const corners = [0, width - 1, (height - 1) * width, height * width - 1];
-                const reference = [0, 1, 2].map((channel) => corners.reduce((sum, index) => sum + data[index * 4 + channel], 0) / corners.length);
                 const tolerance = Number(this.tolerance);
-                const distance = (index) => Math.max(
+                const distanceTo = (reference) => (index) => Math.max(
                     Math.abs(data[index * 4] - reference[0]),
                     Math.abs(data[index * 4 + 1] - reference[1]),
                     Math.abs(data[index * 4 + 2] - reference[2]),
                 );
-
-                const visited = new Uint8Array(width * height);
-                const queue = new Int32Array(width * height);
-                let head = 0;
-                let tail = 0;
-                const push = (index) => {
-                    if (! visited[index]) {
-                        visited[index] = 1;
-                        queue[tail++] = index;
-                    }
+                // Blisko koloru: przezroczyste; na granicy: częściowo, żeby krawędź była gładka.
+                const fade = (index, d) => {
+                    data[index * 4 + 3] = d <= tolerance ? 0 : Math.min(data[index * 4 + 3], Math.round(((d - tolerance) / tolerance) * 255));
                 };
 
-                for (let x = 0; x < width; x++) {
-                    push(x);
-                    push((height - 1) * width + x);
-                }
-                for (let y = 0; y < height; y++) {
-                    push(y * width);
-                    push(y * width + width - 1);
-                }
+                for (const op of this.ops) {
+                    if (op === 'edge') {
+                        const corners = [0, width - 1, (height - 1) * width, height * width - 1];
+                        const distance = distanceTo([0, 1, 2].map((channel) => corners.reduce((sum, index) => sum + data[index * 4 + channel], 0) / corners.length));
+                        const visited = new Uint8Array(width * height);
+                        const queue = new Int32Array(width * height);
+                        let head = 0;
+                        let tail = 0;
+                        const push = (index) => {
+                            if (! visited[index]) {
+                                visited[index] = 1;
+                                queue[tail++] = index;
+                            }
+                        };
 
-                while (head < tail) {
-                    const index = queue[head++];
-                    const d = distance(index);
+                        for (let x = 0; x < width; x++) {
+                            push(x);
+                            push((height - 1) * width + x);
+                        }
+                        for (let y = 0; y < height; y++) {
+                            push(y * width);
+                            push(y * width + width - 1);
+                        }
 
-                    if (d > tolerance * 2 || data[index * 4 + 3] === 0) {
-                        continue;
+                        while (head < tail) {
+                            const index = queue[head++];
+                            const d = distance(index);
+
+                            if (d > tolerance * 2 || data[index * 4 + 3] === 0) {
+                                continue;
+                            }
+
+                            fade(index, d);
+
+                            if (d > tolerance) {
+                                continue;
+                            }
+
+                            const x = index % width;
+                            if (x > 0) push(index - 1);
+                            if (x < width - 1) push(index + 1);
+                            if (index >= width) push(index - width);
+                            if (index < width * (height - 1)) push(index + width);
+                        }
+                    } else if (op.color) {
+                        const distance = distanceTo(op.color);
+
+                        for (let index = 0; index < width * height; index++) {
+                            if (data[index * 4 + 3] === 0) {
+                                continue;
+                            }
+
+                            const d = distance(index);
+
+                            if (d <= tolerance * 2) {
+                                fade(index, d);
+                            }
+                        }
                     }
-
-                    // Blisko koloru tła: przezroczyste; na granicy: częściowo, żeby krawędź była gładka.
-                    data[index * 4 + 3] = d <= tolerance ? 0 : Math.min(data[index * 4 + 3], Math.round(((d - tolerance) / tolerance) * 255));
-
-                    if (d > tolerance) {
-                        continue;
-                    }
-
-                    const x = index % width;
-                    if (x > 0) push(index - 1);
-                    if (x < width - 1) push(index + 1);
-                    if (index >= width) push(index - width);
-                    if (index < width * (height - 1)) push(index + width);
                 }
 
                 context.putImageData(pixels, 0, 0);
@@ -162,21 +306,24 @@ export function registerPhotoCropper() {
                 }
 
                 this.source = URL.createObjectURL(blob);
-                this.ready = false;
-                this.cropper.replace(this.source);
-                this.backgroundRemoved = true;
+                // Ten sam rozmiar: Cropper zostawia kadr na miejscu (i nie zgłasza ponownie „ready”).
+                this.cropper.replace(this.source, true);
+                this.backgroundRemoved = this.ops.length > 0;
             },
 
             restoreBackground() {
+                this.ops = [];
+
                 if (! this.original || ! this.cropper) {
+                    this.backgroundRemoved = false;
+
                     return;
                 }
 
                 URL.revokeObjectURL(this.source);
                 this.source = this.original;
                 this.original = null;
-                this.ready = false;
-                this.cropper.replace(this.source);
+                this.cropper.replace(this.source, true);
                 this.backgroundRemoved = false;
             },
 
@@ -262,6 +409,8 @@ export function registerPhotoCropper() {
             },
 
             destroy() {
+                this.resizeObserver?.disconnect();
+                this.resizeObserver = null;
                 this.cropper?.destroy();
                 this.cropper = null;
 
@@ -270,6 +419,8 @@ export function registerPhotoCropper() {
                 this.source = null;
                 this.original = null;
                 this.backgroundRemoved = false;
+                this.ops = [];
+                this.picking = false;
                 this.ready = false;
                 this.shape = 'free';
 

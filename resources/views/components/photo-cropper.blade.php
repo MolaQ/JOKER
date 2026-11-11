@@ -76,11 +76,21 @@
             @if($format === 'png')
                 <span class="flex flex-wrap items-center gap-2 rounded-md bg-zinc-50 px-2 py-1 ring-1 ring-zinc-200">
                     <button type="button" @click="removeBackground()" :disabled="! ready" class="rounded-md bg-white px-3 py-1 font-semibold text-zinc-800 ring-1 ring-zinc-300 hover:bg-zinc-100 disabled:opacity-50" title="{{ __('Usuwa jednolite tło (np. białe) od brzegów obrazka; napisy w środku logo zostają.') }}">{{ __('Usuń tło') }}</button>
+                    <button type="button" @click="startPicking()" :disabled="! ready" :aria-pressed="picking" :class="picking ? 'bg-blue-600 text-white ring-blue-600' : 'bg-white text-zinc-800 ring-zinc-300 hover:bg-zinc-100'" class="inline-flex items-center gap-1.5 rounded-md px-3 py-1 font-semibold ring-1 disabled:opacity-50" title="{{ __('Kliknij potem w logo: wybrany kolor zniknie w całym obrazku, także w środku liter.') }}">
+                        <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m14 6 4 4M4 20l1-4L15.5 5.5a2.1 2.1 0 0 1 3 3L8 19l-4 1Z"/></svg>
+                        {{ __('Usuń kolor') }}
+                    </button>
+                    <template x-for="item in colorOps()" :key="item.index">
+                        <button type="button" @click="removeColorOp(item.index)" class="inline-flex items-center gap-1 rounded-full bg-white py-0.5 pr-2 pl-0.5 text-xs text-zinc-600 ring-1 ring-zinc-300 hover:bg-zinc-100" :title="@js(__('Przywróć ten kolor'))">
+                            <span class="size-4 rounded-full ring-1 ring-zinc-300" :style="`background: rgb(${item.op.color.join(',')})`"></span>✕
+                        </button>
+                    </template>
                     <label class="flex items-center gap-1.5 text-xs text-zinc-600">{{ __('czułość') }}
-                        <input type="range" min="5" max="120" step="5" x-model="tolerance" @change="backgroundRemoved && removeBackground()" class="w-24 accent-blue-600">
+                        <input type="range" min="5" max="120" step="5" x-model="tolerance" @change="ops.length && applyOps()" class="w-24 accent-blue-600">
                     </label>
                     <button type="button" x-show="backgroundRemoved" @click="restoreBackground()" class="text-xs font-semibold text-zinc-500 underline hover:text-zinc-800">{{ __('przywróć') }}</button>
                 </span>
+                <p x-show="picking" x-cloak class="w-full text-xs font-semibold text-blue-700">{{ __('Kliknij w logo kolor, który ma zniknąć (np. białe wypełnienie).') }}</p>
             @endif
             <button type="button" @click="confirm()" :disabled="! ready || uploading" class="ml-auto rounded-md bg-blue-600 px-4 py-1.5 font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
                 <span x-show="! uploading">{{ __('Użyj tego kadru') }}</span><span x-show="uploading">{{ __('Wysyłanie…') }}</span>

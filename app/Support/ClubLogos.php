@@ -37,16 +37,24 @@ class ClubLogos
             $items->push(self::item('druzyna-'.$team->id, $team->name, __('Nasz klub'), $team->logo_path));
         }
 
-        foreach (RivalClub::whereNotNull('logo_path')->with('teams:id,rival_club_id')->orderBy('name')->get(['id', 'name', 'logo_path']) as $rival) {
-            $items->push(self::item('klub-'.$rival->id, $rival->name, __('Kluby'), $rival->logo_path, meetings: $rival->teams->sum(fn (RivalTeam $team) => $meetings($team->id))));
+        $teamNames = fn (RivalTeam $team) => array_filter([$team->full_name, $team->short_name, ...($team->aliases ?? [])]);
+
+        foreach (RivalClub::whereNotNull('logo_path')->with('teams:id,rival_club_id,full_name,short_name,aliases,logo_path')->orderBy('name')->get(['id', 'name', 'logo_path']) as $rival) {
+            // Szukanie po nazwie drużyny znajduje logo klubu (drużyny bez własnego logo używają logo klubu).
+            $items->push(self::item('klub-'.$rival->id, $rival->name, __('Kluby'), $rival->logo_path, meetings: $rival->teams->sum(fn (RivalTeam $team) => $meetings($team->id)),
+                teams: $rival->teams->filter(fn (RivalTeam $team) => blank($team->logo_path) || $team->logo_path === $rival->logo_path)->flatMap($teamNames)->all()));
         }
 
-        foreach (RivalTeam::whereNotNull('logo_path')->orderBy('full_name')->get(['id', 'full_name', 'short_name', 'logo_path']) as $rival) {
-            $items->push(self::item('rywal-'.$rival->id, $rival->full_name, __('Kluby'), $rival->logo_path, meetings: $meetings($rival->id)));
+        foreach (RivalTeam::whereNotNull('logo_path')->with('club:id,name')->orderBy('full_name')->get(['id', 'rival_club_id', 'full_name', 'short_name', 'aliases', 'logo_path']) as $rival) {
+            $items->push(self::item('rywal-'.$rival->id, $rival->full_name, __('Kluby'), $rival->logo_path, meetings: $meetings($rival->id),
+                teams: array_values(array_diff([...$teamNames($rival), $rival->club?->name], [$rival->full_name, null]))));
         }
 
-        // To samo logo (np. drużyna z logo klubu) pokazujemy raz.
-        return $items->filter()->unique('file')
+        // To samo logo (np. drużyna z logo klubu) pokazujemy raz, ale z nazwami wszystkich drużyn do szukania.
+        return $items->filter()->groupBy('file')
+            ->map(fn (Collection $same) => array_merge($same->first(), [
+                'teams' => $same->flatMap(fn (array $logo) => [...$logo['teams'], $logo['name']])->map(fn ($name) => trim((string) $name))->filter()->unique()->reject(fn (string $name) => $name === $same->first()['name'])->values()->all(),
+            ]))
             ->map(fn (array $logo) => $logo + ['downloads' => (int) ($downloads[$logo['key']] ?? 0)])
             ->values();
     }
@@ -90,9 +98,9 @@ class ClubLogos
     }
 
     /**
-     * @return array{key: string, name: string, group: string, url: string, file: string, extension: string}|null
+     * @return array{key: string, name: string, group: string, url: string, file: string, extension: string, meetings: int, teams: list<string>}|null
      */
-    private static function item(string $key, string $name, string $group, ?string $path, ?string $fallback = null, int $meetings = 0): ?array
+    private static function item(string $key, string $name, string $group, ?string $path, ?string $fallback = null, int $meetings = 0, array $teams = []): ?array
     {
         $local = $path && ! Str::startsWith($path, ['http://', 'https://']) ? Storage::disk('public')->path(ltrim($path, '/')) : null;
         $file = $local && is_file($local) ? $local : $fallback;
@@ -109,6 +117,7 @@ class ClubLogos
             'file' => $file,
             'extension' => strtolower(pathinfo($file, PATHINFO_EXTENSION)) ?: 'png',
             'meetings' => $meetings,
+            'teams' => $teams,
         ];
     }
 }

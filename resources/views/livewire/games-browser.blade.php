@@ -83,7 +83,7 @@
         </div>
     </div>
 
-    <section data-games-list class="container-site scroll-mt-32 py-10 transition-opacity" wire:loading.class="opacity-50" wire:target="search,team,competition,place,season,setPeriod,toggleTeam,resetFilters">
+    <section data-games-list class="container-site scroll-mt-32 py-10 transition-opacity" wire:loading.class="opacity-50" wire:target="search,team,competition,place,season,setPeriod,setMonth,toggleTeam,resetFilters">
         <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
             <p class="text-sm text-zinc-500" aria-live="polite">
                 {{ trans_choice(':count mecz|:count mecze|:count meczów', $total) }}
@@ -93,6 +93,31 @@
                 <button type="button" wire:click="resetFilters" class="text-sm font-semibold text-sky-club-dark hover:underline">{{ __('Wyczyść filtry') }} ✕</button>
             @endif
         </div>
+
+        {{-- Miesiące jako przyciski: domyślnie bieżący, „Wszystkie” pokazuje cały sezon jedną kartką pod drugą --}}
+        @if($monthCounts->count() > 1 || $selectedMonth === 'all')
+            @php $multiYear = $monthCounts->keys()->map(fn ($key) => substr($key, 0, 4))->unique()->count() > 1; @endphp
+            <nav data-scroll-fade class="scrollbar-none -mx-4 mb-2 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:flex-wrap sm:px-0" aria-label="{{ __('Miesiące') }}"
+                 x-init="$nextTick(() => $el.querySelector('[aria-current]')?.scrollIntoView({ inline: 'center', block: 'nearest' }))">
+                <button type="button" wire:click="setMonth('all')" @if($selectedMonth === 'all') aria-current="true" @endif @class([
+                    'shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition',
+                    'bg-club-navy text-white shadow' => $selectedMonth === 'all',
+                    'bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50' => $selectedMonth !== 'all',
+                ])>{{ __('Wszystkie') }}</button>
+                @foreach($monthCounts as $monthKey => $monthCount)
+                    @php $monthDate = \Illuminate\Support\Carbon::createFromFormat('Y-m-d', $monthKey.'-01'); $isCurrentMonth = $monthKey === now()->format('Y-m'); @endphp
+                    <button type="button" wire:key="month-btn-{{ $monthKey }}" wire:click="setMonth('{{ $monthKey }}')" @if($selectedMonth === $monthKey) aria-current="true" @endif title="{{ $monthDate->translatedFormat('F Y') }}" @class([
+                        'relative flex shrink-0 flex-col items-center rounded-2xl px-3.5 py-1.5 leading-tight transition',
+                        'bg-club-navy text-white shadow' => $selectedMonth === $monthKey,
+                        'bg-white text-zinc-700 ring-1 ring-zinc-200 hover:bg-zinc-50' => $selectedMonth !== $monthKey,
+                        'ring-2 ring-sky-club' => $isCurrentMonth && $selectedMonth !== $monthKey,
+                    ])>
+                        <span class="text-sm font-semibold capitalize">{{ $monthDate->translatedFormat('M') }}@if($multiYear) <span class="text-[11px] font-normal opacity-70">{{ $monthDate->format('y') }}</span>@endif</span>
+                        <span @class(['text-[11px] tabular-nums', 'text-white/75' => $selectedMonth === $monthKey, 'text-zinc-400' => $selectedMonth !== $monthKey])>{{ $monthCount ?: '–' }}</span>
+                    </button>
+                @endforeach
+            </nav>
+        @endif
 
         @forelse($months as $month)
             @php

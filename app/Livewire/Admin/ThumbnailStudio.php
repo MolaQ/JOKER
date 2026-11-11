@@ -13,8 +13,10 @@ use App\Models\Tournament;
 use App\Models\TournamentMatch;
 use App\Permission;
 use App\Support\ClubLogos;
+use App\Support\SearchIndex;
 use App\Support\ThumbnailData;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -358,9 +360,20 @@ class ThumbnailStudio extends Component
             ->when(ctype_digit($this->fCompetition), fn ($query) => $query->where('competition_id', (int) $this->fCompetition))
             ->when($this->fPeriod === 'upcoming', fn ($query) => $query->where('game_date', '>=', $today))
             ->when($this->fPeriod === 'results', fn ($query) => $query->where('game_date', '<', now()))
-            ->when($search !== '', fn ($query) => $query->where(fn ($inner) => $inner->where('opponent', 'like', "%{$search}%")
-                ->orWhereHas('opponentTeam', fn ($rival) => $rival->where('full_name', 'like', "%{$search}%"))))
-            ->orderByDesc('game_date')->limit(300)->get();
+            ->orderByDesc('game_date')
+            // Szukanie działa w pamięci (bez polskich znaków, po dacie), więc limit dopiero po nim.
+            ->when($search === '', fn ($query) => $query->limit(300))
+            ->get()
+            ->when($search !== '', fn (Collection $all) => $all->filter(fn (Game $game) => self::matchesSearch($search, [
+                $game->opponent,
+                $game->opponentTeam?->full_name,
+                $game->opponentTeam?->short_name,
+                implode(' ', $game->opponentTeam?->aliases ?? []),
+                $game->team?->name,
+                implode(' ', $game->sidesNames()),
+                $game->competition?->name,
+                $game->venue,
+            ], $game->game_date))->take(300));
 
         // Najpierw najbliższe (od dziś w przyszłość), potem rozegrane od najnowszego.
         $games = $games->filter(fn (Game $game) => $game->game_date >= $today)->sortBy('game_date')
@@ -375,11 +388,44 @@ class ThumbnailStudio extends Component
             ->get()
             ->filter(fn (TournamentMatch $match) => collect([$match->home, $match->away])->contains(fn ($side) => $side?->isOwnTeam()
                 && ($this->fTeam === '' || ($side->competitor_type !== 'rival_team' && (int) $side->competitor_id === (int) $this->fTeam))))
-            ->when($search !== '', fn ($all) => $all->filter(fn (TournamentMatch $match) => str_contains(mb_strtolower($match->homeName().' '.$match->awayName().' '.$match->category->tournament->name), mb_strtolower($search))))
+            ->when($search !== '', fn ($all) => $all->filter(fn (TournamentMatch $match) => self::matchesSearch($search, [
+                $match->homeName(), $match->awayName(), $match->category->name, $match->category->tournament->name,
+            ], $match->starts_at)))
             ->sortBy(fn (TournamentMatch $match) => [$match->starts_at && $match->starts_at < $today ? 1 : 0, $match->starts_at && $match->starts_at < $today ? -$match->starts_at->getTimestamp() : (int) $match->starts_at?->getTimestamp()])
             ->groupBy(fn (TournamentMatch $match) => $match->category->tournament->name);
 
         return compact('games', 'matches');
+    }
+
+    /**
+     * Szukanie bez polskich znaków i wielkości liter, także po dacie: „15.11”, „15.11.2026”, „2026-11-15”, „15 listopada”, „sobota”.
+     *
+     * @param  array<int, ?string>  $texts
+     */
+    private static function matchesSearch(string $search, array $texts, ?\DateTimeInterface $date): bool
+    {
+        $query = SearchIndex::normalize($search);
+
+        if ($query === '') {
+            return true;
+        }
+
+        $when = $date ? Carbon::instance($date) : null;
+        $haystack = SearchIndex::normalize(implode(' ', [
+            ...$texts,
+            $when?->format('d.m.Y'),
+            $when?->format('j.n.Y'),
+            $when?->format('Y-m-d'),
+            $when?->translatedFormat('j F Y l'),
+            $when?->translatedFormat('F'),
+        ]));
+
+        // Sama data („15.11”, „5.11.2026”): całe liczby, żeby „5.11” nie znalazło 15 listopada ani 11.11.2015.
+        if (preg_match('/^[0-9 ]+$/', $query)) {
+            return str_contains(' '.$haystack.' ', ' '.$query.' ');
+        }
+
+        return collect(explode(' ', $query))->every(fn (string $term) => str_contains($haystack, $term));
     }
 
     public function resetFilters(): void
@@ -397,7 +443,7 @@ class ThumbnailStudio extends Component
         return view('livewire.admin.thumbnail-studio', $this->choices() + [
             'templates' => ThumbnailTemplate::query()->with(['user:id,name', 'competition:id,name', 'tournament:id,name'])->orderBy('name')->get(),
             'canChange' => $template?->canBeChangedBy($user) ?? true,
-            'logos' => ClubLogos::all()->map(fn (array $logo) => ['name' => $logo['name'], 'url' => ThumbnailData::src($logo['url'])])->values(),
+            'logos' => ClubLogos::all()->map(fn (array $logo) => ['name' => $logo['name'], 'teams' => $logo['teams'], 'url' => ThumbnailData::src($logo['url'])])->values(),
             'seasons' => Season::query()->orderByDesc('start_date')->get(['id', 'name']),
             'teams' => Team::query()->orderBy('display_order')->get(['id', 'name']),
             'sponsors' => ThumbnailData::sponsorLogos($this->m['tournament_id'] ?? null),
