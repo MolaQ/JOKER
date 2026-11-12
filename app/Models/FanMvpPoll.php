@@ -15,6 +15,7 @@ class FanMvpPoll extends Model
         'disabled',
         'closed_at',
         'excluded',
+        'extra',
     ];
 
     protected function casts(): array
@@ -23,6 +24,7 @@ class FanMvpPoll extends Model
             'disabled' => 'boolean',
             'closed_at' => 'datetime',
             'excluded' => 'array',
+            'extra' => 'array',
         ];
     }
 
@@ -32,5 +34,13 @@ class FanMvpPoll extends Model
     public function excludedIds(): array
     {
         return array_values(array_map('intval', $this->excluded ?? []));
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    public function extraIds(): array
+    {
+        return array_values(array_map('intval', $this->extra ?? []));
     }
 }

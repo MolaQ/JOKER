@@ -26,6 +26,9 @@ class FanMvpPanel extends Component
     /** Zawodnik, na którego właśnie oddano głos (do animacji potwierdzenia). */
     public ?int $justVoted = null;
 
+    /** Zawodnik spoza składu wybrany do dopisania (panel prowadzącego). */
+    public string $extraPlayerId = '';
+
     public function mount(string $type, int $id): void
     {
         $this->type = $type;
@@ -62,6 +65,15 @@ class FanMvpPanel extends Component
         if (($match = $this->managed()) && ($player = Player::find($playerId))) {
             FanMvp::restore($match, $player);
         }
+    }
+
+    public function addPlayer(): void
+    {
+        if (($match = $this->managed()) && ($player = Player::where('is_active', true)->find((int) $this->extraPlayerId))) {
+            FanMvp::addPlayer($match, $player);
+        }
+
+        $this->extraPlayerId = '';
     }
 
     public function toggleDisabled(): void
@@ -129,6 +141,7 @@ class FanMvpPanel extends Component
             'canManage' => $canManage,
             'roster' => $canManage ? FanMvp::roster($match) : collect(),
             'excluded' => $poll?->excludedIds() ?? [],
+            'addable' => $canManage ? FanMvp::addable($match) : collect(),
             'disabled' => (bool) $poll?->disabled,
             'totalVotes' => $canManage ? (int) $results->sum('votes') : 0,
         ]);

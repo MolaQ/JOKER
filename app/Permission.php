@@ -20,6 +20,7 @@ enum Permission: string
     case Trainings = 'trainings.manage';
     case Games = 'games.manage';
     case Tournaments = 'tournaments.manage';
+    case FanMvp = 'fan_mvp.manage';
     case MiniVolleyball = 'mini.manage';
     case MiniSubmit = 'mini.submit';
     case Competitions = 'competitions.manage';
@@ -52,6 +53,7 @@ enum Permission: string
             self::Trainings => 'Plan treningów',
             self::Games => 'Mecze, wyniki i tabele',
             self::Tournaments => 'Turnieje',
+            self::FanMvp => 'Kibicowskie MVP: zarządzanie głosowaniem',
             self::MiniVolleyball => 'Minisiatkówka: dzieci, wyjazdy i wyniki',
             self::MiniSubmit => 'Minisiatkówka: zgłaszanie turniejów, wyników i relacji (do zatwierdzenia)',
             self::Competitions => 'Rozgrywki, rywale, sezony',
@@ -75,6 +77,7 @@ enum Permission: string
     {
         return match ($this) {
             self::AllTeams => 'Bez tego trener widzi tylko drużyny, które prowadzi, i ich zawodników.',
+            self::FanMvp => 'Na stronie meczu: zdjęcie albo dopisanie zawodnika, zakończenie i wyłączenie głosowania. Trener zarządza tylko meczami swoich drużyn. Kto ma „Mecze, wyniki i tabele” albo „Turnieje”, zarządza głosowaniem także bez tego uprawnienia.',
             self::ActivateAccounts => 'Trener aktywuje tylko konta związane ze swoimi drużynami.',
             self::Trainings => 'Trener i członek sztabu układają plan tylko swoich drużyn.',
             self::PhotoTags => 'Bez tego trener zatwierdza tylko oznaczenia zawodników swoich drużyn.',
@@ -100,7 +103,7 @@ enum Permission: string
     {
         return match ($this) {
             self::Articles, self::Media, self::Graphics, self::Homepage, self::Comments, self::ContentProposals, self::PhotoTags => 'Treści',
-            self::Teams, self::AllTeams, self::Trainings, self::Games, self::Tournaments, self::MiniVolleyball, self::MiniSubmit, self::Competitions, self::Proposals => 'Drużyny i rozgrywki',
+            self::Teams, self::AllTeams, self::Trainings, self::Games, self::Tournaments, self::FanMvp, self::MiniVolleyball, self::MiniSubmit, self::Competitions, self::Proposals => 'Drużyny i rozgrywki',
             self::Documents, self::Sponsors => 'Klub',
             self::WriteComments, self::WriteMessages => 'Korzystanie ze strony',
             default => 'Konta i strona',

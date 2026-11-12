@@ -154,12 +154,40 @@ class FanMvp
     public static function roster(Model $match): Collection
     {
         $seasonId = self::seasonId($match);
+        $extra = self::poll($match)?->extraIds() ?? [];
 
         return self::teams($match)
             ->flatMap(fn (Team $team) => Player::query()->inTeam($team->id, $seasonId)->where('is_active', true)->get())
+            ->concat($extra ? Player::whereKey($extra)->get() : [])
             ->unique('id')
             ->sortBy(fn (Player $player) => mb_strtolower($player->last_name.' '.$player->first_name))
             ->values();
+    }
+
+    /**
+     * Aktywni zawodnicy klubu spoza składu meczu, których prowadzący może dopisać do głosowania.
+     *
+     * @return Collection<int, Player>
+     */
+    public static function addable(Model $match): Collection
+    {
+        return Player::with('team')->where('is_active', true)->whereNotNull('team_id')
+            ->whereNotIn('id', self::roster($match)->pluck('id'))
+            ->orderBy('last_name')->orderBy('first_name')->get();
+    }
+
+    /**
+     * Dopisuje do głosowania zawodnika spoza składu drużyny (np. junior, który zagrał z seniorami).
+     */
+    public static function addPlayer(Model $match, Player $player): void
+    {
+        $poll = self::pollOrCreate($match);
+        $poll->update([
+            'extra' => collect($poll->extraIds())->push($player->id)->unique()->values()->all(),
+            'excluded' => collect($poll->excludedIds())->reject(fn (int $id) => $id === $player->id)->values()->all(),
+        ]);
+
+        AuditLog::record('fan_mvp.added', self::title().': '.$player->displayName().' dopisany do głosowania ('.self::label($match).')', $player, ['match_type' => self::type($match), 'match_id' => $match->getKey()]);
     }
 
     /**
@@ -268,10 +296,10 @@ class FanMvp
         }
 
         if ($match instanceof TournamentMatch) {
-            return $user->hasPermission(Permission::Tournaments);
+            return $user->hasPermission(Permission::Tournaments) || $user->hasPermission(Permission::FanMvp);
         }
 
-        return $user->hasPermission(Permission::Games) && $user->managesTeam($match->team_id);
+        return ($user->hasPermission(Permission::Games) || $user->hasPermission(Permission::FanMvp)) && $user->managesTeam($match->team_id);
     }
 
     /**
@@ -352,6 +380,26 @@ class FanMvp
                 return $win ? ['label' => self::label($match), 'url' => self::url($match), 'percent' => $win['percent'], 'at' => self::startsAt($match)] : null;
             })
             ->filter()->sortByDesc('at')->values();
+    }
+
+    /**
+     * Ranking sezonu drużyny: zawodnicy z liczbą tytułów w meczach tej drużyny, od największej.
+     *
+     * @return Collection<int, array{player: Player, wins: int}>
+     */
+    public static function ranking(Team $team, ?Season $season): Collection
+    {
+        if (! self::enabled() || ! $season) {
+            return collect();
+        }
+
+        $games = Game::where('team_id', $team->id)->where('season_id', $season->id)->where('game_date', '<', now())->get();
+        $wins = FanMvpVote::where('match_type', 'game')->whereIn('match_id', $games->pluck('id'))->distinct()->pluck('match_id')
+            ->flatMap(fn ($id) => self::winners($games->firstWhere('id', (int) $id))->pluck('player'));
+
+        return $wins->groupBy('id')
+            ->map(fn (Collection $rows) => ['player' => $rows->first(), 'wins' => $rows->count()])
+            ->sortBy(fn (array $row) => mb_strtolower($row['player']->last_name))->sortByDesc('wins')->values();
     }
 
     /**

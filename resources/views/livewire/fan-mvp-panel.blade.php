@@ -145,6 +145,17 @@
                                         </li>
                                     @endforeach
                                 </ul>
+                                <div class="flex flex-wrap items-end gap-2 border-t border-zinc-200 pt-3">
+                                    <label class="min-w-0 flex-1 text-xs font-semibold text-zinc-600">{{ __('Dopisz zawodnika spoza składu') }}
+                                        <select wire:model="extraPlayerId" class="mt-1 block w-full rounded-lg border-zinc-300 text-sm">
+                                            <option value="">{{ __('— wybierz zawodnika —') }}</option>
+                                            @foreach($addable as $player)
+                                                <option value="{{ $player->id }}">{{ $player->last_name }} {{ $player->first_name }} ({{ $player->team?->name }})</option>
+                                            @endforeach
+                                        </select>
+                                    </label>
+                                    <button type="button" wire:click="addPlayer" class="rounded-lg bg-ink px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800">{{ __('Dopisz') }}</button>
+                                </div>
                             </div>
                         </details>
                     @endif

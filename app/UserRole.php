@@ -70,7 +70,7 @@ enum UserRole: string
         return match ($this) {
             self::Admin, self::Boss => Permission::cases(),
             self::Editor => [Permission::Articles, Permission::Media, Permission::Graphics, Permission::Homepage, Permission::Documents, Permission::Comments, Permission::ContentProposals],
-            self::Trainer => [Permission::Teams, Permission::Trainings, Permission::Games, Permission::Tournaments, Permission::MiniVolleyball, Permission::Media, Permission::Proposals, Permission::ActivateAccounts],
+            self::Trainer => [Permission::Teams, Permission::Trainings, Permission::Games, Permission::Tournaments, Permission::FanMvp, Permission::MiniVolleyball, Permission::Media, Permission::Proposals, Permission::ActivateAccounts],
             self::Moderator => [Permission::WriteComments, Permission::WriteMessages, Permission::Comments, Permission::ContentProposals, Permission::Proposals, Permission::ActivateAccounts, Permission::AllTeams],
             self::Photographer => [Permission::WriteComments, Permission::WriteMessages, Permission::Media, Permission::Graphics, Permission::PhotoTags],
             self::Staff => [Permission::Trainings],

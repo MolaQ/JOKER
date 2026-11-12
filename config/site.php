@@ -323,6 +323,7 @@ return [
                 'fan_mvp_tournaments' => ['type' => 'toggle', 'label' => 'Głosowanie także w meczach turniejów prowadzonych na stronie', 'default' => true],
                 'fan_mvp_home' => ['type' => 'toggle', 'label' => 'Pasek na stronie głównej w czasie głosowania', 'help' => 'Widzą go tylko zalogowani.', 'default' => true],
                 'fan_mvp_player_badge' => ['type' => 'toggle', 'label' => 'Złoty napis na karcie zawodnika', 'help' => 'Zawodnik wybrany przez kibiców dostaje na swojej stronie napis z liczbą wyróżnień i listą meczów. Widzą go tylko zalogowani.', 'default' => true],
+                'fan_mvp_ranking' => ['type' => 'toggle', 'label' => 'Ranking sezonu na stronie drużyny', 'help' => 'Lista zawodników z liczbą tytułów w meczach drużyny w bieżącym sezonie. Widzą ją tylko zalogowani.', 'default' => true],
                 'fan_mvp_title' => ['type' => 'text', 'label' => 'Nazwa wyróżnienia', 'default' => 'Kibicowskie MVP'],
                 'fan_mvp_intro' => ['type' => 'text', 'label' => 'Zachęta nad listą zawodników', 'default' => 'Kto był dziś najlepszy? Wybierz swojego zawodnika meczu.'],
                 'fan_mvp_color' => ['type' => 'color', 'label' => 'Kolor wyróżnienia', 'default' => '#e0b030'],

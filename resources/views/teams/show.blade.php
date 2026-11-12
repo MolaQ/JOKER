@@ -112,6 +112,30 @@
     @endforelse
 </section>
 
+{{-- KIBICOWSKIE MVP: ranking sezonu, tylko dla zalogowanych --}}
+@auth
+    @if($site['fan_mvp_ranking'] && ($fanMvpRanking = \App\Support\FanMvp::ranking($team, $currentSeason))->isNotEmpty())
+        <section id="kibicowskie-mvp" class="fan-mvp container-site scroll-mt-32 pb-16 lg:pb-20" style="--mvp: {{ $site->color('fan_mvp_color') }}" data-reveal>
+            <div class="relative overflow-hidden rounded-3xl bg-ink p-5 text-white ring-1 ring-[color-mix(in_srgb,var(--mvp)_45%,transparent)] sm:p-8">
+                <div class="fan-mvp-glow" aria-hidden="true"></div>
+                <p class="relative text-[11px] font-semibold tracking-[0.2em] text-white/60 uppercase">{{ __('Sezon') }} {{ $currentSeason->name }}</p>
+                <h2 class="fan-mvp-title relative mt-1 font-display text-2xl font-bold break-words sm:text-3xl">★ {{ \App\Support\FanMvp::title() }}</h2>
+                <ol class="relative mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    @foreach($fanMvpRanking->take(9) as $row)
+                        <li>
+                            <a href="{{ route('players.show', $row['player']) }}" class="flex items-center gap-3 rounded-2xl bg-white/5 p-2 pr-4 ring-1 ring-white/10 transition hover:bg-white/10">
+                                <x-avatar :photo="$row['player']->publicPhotoPath()" :name="$row['player']->displayName()" :label="$row['player']->jersey_number" class="size-12 shrink-0 rounded-xl text-lg" />
+                                <span class="min-w-0 flex-1 text-sm leading-tight font-semibold break-words">{{ $row['player']->displayName() }}</span>
+                                <span class="shrink-0 font-display text-xl font-bold text-[var(--mvp)] tabular-nums">★ {{ $row['wins'] }}</span>
+                            </a>
+                        </li>
+                    @endforeach
+                </ol>
+            </div>
+        </section>
+    @endif
+@endauth
+
 {{-- SZTAB --}}
 <section id="sztab" class="scroll-mt-32 bg-white py-16 lg:py-20">
     <div class="container-site" data-reveal>

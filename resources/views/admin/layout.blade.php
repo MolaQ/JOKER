@@ -156,7 +156,7 @@
                         </a>
                     @endif
                     <x-messages-link :dark="false" class="h-9! w-9! rounded-md!" />
-                    <a href="{{ route('home') }}" target="_blank" class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-zinc-600 ring-1 ring-zinc-200 transition hover:bg-zinc-50 hover:text-zinc-900">
+                    <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-zinc-600 ring-1 ring-zinc-200 transition hover:bg-zinc-50 hover:text-zinc-900">
                         <x-admin-icon name="external" class="size-4" />
                         <span class="hidden sm:inline">Zobacz stronę</span>
                     </a>

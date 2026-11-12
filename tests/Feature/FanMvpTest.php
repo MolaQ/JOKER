@@ -7,6 +7,7 @@ use App\Models\Player;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\User;
+use App\Permission;
 use App\Support\FanMvp;
 use App\Support\SiteSettings;
 use App\UserRole;
@@ -138,4 +139,55 @@ test('the module can be switched off globally and for a single match', function 
 test('the home page shows the voting banner only to logged in users', function () {
     $this->get(route('home'))->assertOk()->assertDontSee('Zagłosuj');
     $this->actingAs($this->fan)->get(route('home'))->assertOk()->assertSee('Zagłosuj');
+});
+
+test('a manager adds a player from outside the roster and fans can vote for him', function () {
+    $admin = User::factory()->create(['role' => UserRole::Admin, 'is_active' => true]);
+    $juniors = Team::create(['name' => 'Juniorzy', 'slug' => 'juniorzy', 'category' => 'youth']);
+    $guest = Player::factory()->create(['team_id' => $juniors->id, 'first_name' => 'Gustaw', 'last_name' => 'Gościnny', 'is_active' => true]);
+
+    expect(FanMvp::vote($this->fan, $this->game, $guest->id))->not->toBeNull();
+
+    Livewire::actingAs($this->fan)->test(FanMvpPanel::class, ['type' => 'game', 'id' => $this->game->id])->set('extraPlayerId', (string) $guest->id)->call('addPlayer');
+    expect(FanMvp::candidates($this->game)->contains('id', $guest->id))->toBeFalse();
+
+    Livewire::actingAs($admin)->test(FanMvpPanel::class, ['type' => 'game', 'id' => $this->game->id])->assertSee('Gościnny Gustaw')->set('extraPlayerId', (string) $guest->id)->call('addPlayer');
+
+    expect(FanMvp::candidates($this->game)->contains('id', $guest->id))->toBeTrue()
+        ->and(FanMvp::vote($this->fan, $this->game, $guest->id))->toBeNull();
+});
+
+test('the separate permission lets a trainer manage voting only for own teams', function () {
+    $trainer = User::factory()->create(['role' => UserRole::Trainer, 'is_active' => true]);
+    $other = Team::create(['name' => 'Juniorzy', 'slug' => 'juniorzy', 'category' => 'youth']);
+    $otherGame = Game::factory()->create(['team_id' => $other->id, 'season_id' => $this->season->id, 'game_date' => now()->subHour(), 'status' => 'live']);
+    $this->team->update(['trainer_id' => $trainer->id]);
+
+    expect($trainer->hasPermission(Permission::FanMvp))->toBeTrue()
+        ->and(FanMvp::canManage($trainer, $this->game->fresh()))->toBeTrue()
+        ->and(FanMvp::canManage($trainer, $otherGame))->toBeFalse()
+        ->and(FanMvp::canManage($this->fan, $this->game))->toBeFalse();
+});
+
+test('the team page shows the season ranking only to logged in users', function () {
+    FanMvp::vote($this->fan, $this->game, $this->adam->id);
+    $this->travel(4)->hours();
+
+    expect(FanMvp::ranking($this->team, $this->season)->map(fn ($row) => [$row['player']->id, $row['wins']])->all())->toBe([[$this->adam->id, 1]]);
+
+    $this->actingAs($this->fan)->get(route('teams.show', $this->team))->assertOk()->assertSee('fan-mvp-title', false);
+    app(SiteSettings::class)->set(['fan_mvp_ranking' => false]);
+    $this->actingAs($this->fan)->get(route('teams.show', $this->team))->assertOk()->assertDontSee('fan-mvp-title', false);
+    app(SiteSettings::class)->set(['fan_mvp_ranking' => true]);
+    auth()->logout();
+    $this->get(route('teams.show', $this->team))->assertOk()->assertDontSee('fan-mvp-title', false);
+});
+
+test('switching the player badge off hides the count on the profile but keeps the result on the match page', function () {
+    FanMvp::vote($this->fan, $this->game, $this->adam->id);
+    $this->travel(4)->hours();
+    app(SiteSettings::class)->set(['fan_mvp_player_badge' => false]);
+
+    $this->actingAs($this->fan)->get(route('players.show', $this->adam))->assertOk()->assertDontSee('fan-mvp-badge', false);
+    $this->actingAs($this->fan)->get(route('games.show', $this->game))->assertOk()->assertSee('★ MVP');
 });

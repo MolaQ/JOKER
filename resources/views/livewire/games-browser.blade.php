@@ -6,10 +6,10 @@
             <div data-scroll-fade x-on:click="if ($event.target.closest('button')) setTimeout(() => document.querySelector('[data-games-list]')?.scrollIntoView({ behavior: 'smooth' }), 400)" class="scrollbar-none flex min-w-0 flex-1 gap-2 overflow-x-auto">
                 <button type="button" wire:click="allTeams" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $team === '' && $competition !== \App\Livewire\GamesBrowser::FILTER_MINI, 'bg-zinc-100 text-zinc-700' => $team !== '' || $competition === \App\Livewire\GamesBrowser::FILTER_MINI])>{{ __('Wszystkie') }}</button>
                 @foreach($teams as $teamOption)
-                    <button type="button" wire:click="toggleTeam('{{ $teamOption->slug }}')" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $team === $teamOption->slug, 'bg-zinc-100 text-zinc-700' => $team !== $teamOption->slug])>{{ $teamOption->name }}</button>
+                    <button type="button" wire:click="toggleTeam('{{ $teamOption->slug }}')" style="--tile: {{ \App\Support\AgeColors::forTeam($teamOption) }}" @class(['chip shrink-0 border-l-[5px] border-(--tile) transition', 'bg-[color-mix(in_srgb,var(--tile)_82%,black)] text-white' => $team === $teamOption->slug, 'bg-zinc-100 text-zinc-700' => $team !== $teamOption->slug])>{{ $teamOption->name }}</button>
                 @endforeach
                 @if($hasMini)
-                    <button type="button" wire:click="toggleMini" @class(['chip shrink-0 transition', 'bg-sky-club text-white' => $competition === \App\Livewire\GamesBrowser::FILTER_MINI, 'bg-zinc-100 text-zinc-700' => $competition !== \App\Livewire\GamesBrowser::FILTER_MINI])>{{ __('Minisiatkówka') }}</button>
+                    <button type="button" wire:click="toggleMini" style="--tile: {{ \App\Support\AgeColors::forMini(4) }}" @class(['chip shrink-0 border-l-[5px] border-(--tile) transition', 'bg-[color-mix(in_srgb,var(--tile)_82%,black)] text-white' => $competition === \App\Livewire\GamesBrowser::FILTER_MINI, 'bg-zinc-100 text-zinc-700' => $competition !== \App\Livewire\GamesBrowser::FILTER_MINI])>{{ __('Minisiatkówka') }}</button>
                 @endif
             </div>
             <button type="button" x-on:click="window.scrollTo({ top: 0, behavior: 'smooth' })" class="mr-3 flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-ink px-3 text-xs font-semibold text-white" aria-label="{{ __('Pokaż wszystkie filtry') }}">
@@ -47,7 +47,12 @@
                 $chip = 'chip shrink-0 transition';
                 $chipOn = 'bg-sky-club text-white shadow-sm';
                 $chipOff = 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200';
-                $rowLabel = 'hidden w-24 shrink-0 text-[10px] font-bold tracking-[0.16em] text-zinc-400 uppercase lg:block';
+                // Kafelek drużyny ma brzeg w kolorze kategorii, tak jak kafelki w kalendarzu; wybrany wypełnia się tym kolorem.
+                $chipEdge = 'border-l-[5px] border-(--tile)';
+                $chipTeamOn = 'bg-[color-mix(in_srgb,var(--tile)_82%,black)] text-white shadow-sm';
+                $rowLabel = 'hidden w-24 shrink-0 text-[11px] font-bold tracking-wider text-zinc-600 uppercase lg:block';
+                $sheetLabel = 'text-[11px] font-bold tracking-wider text-zinc-600 uppercase';
+                $anyFilter = $team !== '' || $competition !== '' || $place !== '' || $search !== '' || $miniGroup !== '';
                 $isMini = $competition === \App\Livewire\GamesBrowser::FILTER_MINI;
                 $moreActive = (int) ($competition !== '' && ! $isMini) + (int) ($place !== '') + (int) ($season !== '');
             @endphp
@@ -57,10 +62,10 @@
                 <div data-scroll-fade class="scrollbar-none -mx-4 flex min-w-0 flex-1 gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
                     <button type="button" wire:click="allTeams" @class([$chip, $chipOn => $team === '' && ! $isMini, $chipOff => $team !== '' || $isMini])>{{ __('Wszystkie drużyny') }}</button>
                     @foreach($teams as $teamOption)
-                        <button type="button" data-track="{{ __('Mecze') }}: {{ $teamOption->name }}" wire:click="toggleTeam('{{ $teamOption->slug }}')" @class([$chip, $chipOn => $team === $teamOption->slug, $chipOff => $team !== $teamOption->slug])>{{ $teamOption->name }}</button>
+                        <button type="button" data-track="{{ __('Mecze') }}: {{ $teamOption->name }}" wire:click="toggleTeam('{{ $teamOption->slug }}')" aria-pressed="{{ $team === $teamOption->slug ? 'true' : 'false' }}" style="--tile: {{ \App\Support\AgeColors::forTeam($teamOption) }}" @class([$chip, $chipEdge, $chipTeamOn => $team === $teamOption->slug, $chipOff => $team !== $teamOption->slug])>{{ $teamOption->name }}</button>
                     @endforeach
                     @if($hasMini)
-                        <button type="button" data-track="{{ __('Mecze') }}: {{ __('Minisiatkówka') }}" wire:click="toggleMini" aria-pressed="{{ $isMini ? 'true' : 'false' }}" @class([$chip, $chipOn => $isMini, $chipOff => ! $isMini])>{{ __('Minisiatkówka') }}</button>
+                        <button type="button" data-track="{{ __('Mecze') }}: {{ __('Minisiatkówka') }}" wire:click="toggleMini" aria-pressed="{{ $isMini ? 'true' : 'false' }}" style="--tile: {{ \App\Support\AgeColors::forMini(4) }}" @class([$chip, $chipEdge, $chipTeamOn => $isMini, $chipOff => ! $isMini])>{{ __('Minisiatkówka') }}</button>
                     @endif
                 </div>
             </div>
@@ -85,13 +90,13 @@
                     @if($moreActive)<span class="rounded-full bg-sky-club px-1.5 text-[11px] text-white tabular-nums">{{ $moreActive }}</span>@endif
                 </button>
                 <div x-show="sheet" x-cloak x-transition.opacity x-on:click="sheet = false" class="fixed inset-0 z-[60] bg-ink/40 backdrop-blur-sm lg:hidden"></div>
-                <div :class="sheet ? 'max-lg:translate-y-0' : 'max-lg:translate-y-full max-lg:invisible'" class="flex flex-col gap-4 transition-transform duration-300 ease-out max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-[61] max-lg:max-h-[85vh] max-lg:overflow-y-auto max-lg:rounded-t-3xl max-lg:bg-white max-lg:px-4 max-lg:pt-3 max-lg:pb-[max(1rem,env(safe-area-inset-bottom))] max-lg:shadow-2xl lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-6 lg:gap-y-2" role="group" aria-label="{{ __('Więcej filtrów') }}">
+                <div :class="sheet ? 'max-lg:translate-y-0' : 'max-lg:translate-y-full max-lg:invisible'" class="flex flex-col gap-4 transition-transform duration-300 ease-out max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-[61] max-lg:max-h-[85vh] max-lg:overflow-y-auto max-lg:rounded-t-3xl max-lg:bg-white max-lg:px-4 max-lg:pt-3 max-lg:pb-[max(1rem,env(safe-area-inset-bottom))] max-lg:shadow-2xl lg:grid lg:grid-cols-[1fr_auto] lg:items-center lg:gap-x-6 lg:gap-y-3" role="group" aria-label="{{ __('Więcej filtrów') }}">
                     <div class="mx-auto h-1 w-10 rounded-full bg-zinc-300 lg:hidden" aria-hidden="true"></div>
                     <p class="font-display text-xl font-semibold uppercase lg:hidden">{{ __('Filtry') }}</p>
 
                     @if($competitions->count() > 1 || $hasTournaments || $hasFriendlies)
-                        <div class="flex min-w-0 flex-col gap-2 lg:flex-1 lg:flex-row lg:items-center">
-                            <span class="text-[10px] font-bold tracking-[0.16em] text-zinc-400 uppercase lg:w-24 lg:shrink-0">{{ __('Rozgrywki') }}</span>
+                        <div class="flex min-w-0 flex-col gap-2 lg:col-span-2 lg:flex-row lg:items-center">
+                            <span class="{{ $sheetLabel }} lg:w-24 lg:shrink-0">{{ __('Rozgrywki') }}</span>
                             <div data-scroll-fade class="flex min-w-0 flex-1 flex-wrap gap-2">
                                 <button type="button" wire:click="setCompetition('')" @class([$chip, $chipOn => $competition === '' || $isMini, $chipOff => $competition !== '' && ! $isMini])>{{ __('Wszystkie') }}</button>
                                 @foreach($competitions as $competitionOption)
@@ -108,7 +113,7 @@
                     @endif
 
                     <div class="flex flex-col gap-2 lg:flex-row lg:items-center">
-                        <span class="text-[10px] font-bold tracking-[0.16em] text-zinc-400 uppercase lg:sr-only">{{ __('Gdzie') }}</span>
+                        <span class="{{ $sheetLabel }} lg:w-24 lg:shrink-0">{{ __('Miejsce') }}</span>
                         <div class="flex rounded-full bg-zinc-100 p-1 text-[13px] font-semibold" role="radiogroup" aria-label="{{ __('U siebie czy na wyjeździe') }}">
                             @foreach(['' => __('Wszędzie'), 'home' => __('U siebie'), 'away' => __('Na wyjeździe')] as $placeKey => $placeLabel)
                                 <button type="button" role="radio" aria-checked="{{ $place === $placeKey ? 'true' : 'false' }}" wire:click="setPlace('{{ $placeKey }}')" @class(['flex-1 rounded-full px-3 py-1.5 whitespace-nowrap transition', 'bg-ink text-white shadow' => $place === $placeKey, 'text-zinc-600 hover:text-zinc-900' => $place !== $placeKey])>{{ $placeLabel }}</button>
@@ -117,8 +122,8 @@
                     </div>
 
                     @if($seasons->count() > 1)
-                        <div class="flex flex-col gap-2 lg:ml-auto lg:flex-row lg:items-center">
-                            <span class="text-[10px] font-bold tracking-[0.16em] text-zinc-400 uppercase lg:sr-only">{{ __('Sezon') }}</span>
+                        <div class="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-self-end">
+                            <span class="{{ $sheetLabel }} lg:sr-only">{{ __('Sezon') }}</span>
                             <select wire:model.live="season" class="h-9 rounded-full border-0 bg-zinc-100 px-4 text-sm font-medium text-zinc-700" aria-label="{{ __('Sezon') }}">
                                 @foreach($seasons as $seasonOption)
                                     <option value="{{ $seasonOption->is_current ? '' : $seasonOption->id }}">{{ __('Sezon') }} {{ $seasonOption->name }}</option>
@@ -127,6 +132,9 @@
                         </div>
                     @endif
 
+                    @if($anyFilter)
+                        <button type="button" wire:click="resetFilters" class="h-10 shrink-0 rounded-full text-sm font-semibold text-zinc-700 ring-1 ring-zinc-200 lg:hidden">✕ {{ __('Wyczyść filtry') }}</button>
+                    @endif
                     <button type="button" x-on:click="sheet = false" class="h-12 shrink-0 rounded-full bg-ink text-sm font-bold text-white lg:hidden">{{ trans_choice('Pokaż :count mecz|Pokaż :count mecze|Pokaż :count meczów', $total) }}</button>
                 </div>
             </div>
