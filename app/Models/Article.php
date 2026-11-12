@@ -163,6 +163,28 @@ class Article extends Model
     }
 
     /**
+     * Tekst posta na Facebooka: tytuł, cała treść jako zwykły tekst z akapitami i link na końcu.
+     * Facebook nie pozwala wstawić tekstu przez link udostępniania, więc panel kopiuje go do schowka;
+     * obrazek i zajawkę Facebook dociąga sam z tagów og: strony artykułu.
+     */
+    public function facebookText(): string
+    {
+        $html = (string) $this->content;
+        // Filmy i ramki nie mają tekstu do przeniesienia.
+        $html = preg_replace('~<(script|style|iframe)\b[^>]*>.*?</\1>~is', '', $html);
+        $html = preg_replace('~<li\b[^>]*>~i', "\n• ", $html);
+        $html = preg_replace('~<br\s*/?>~i', "\n", $html);
+        $html = preg_replace('~</(p|div|h[1-6]|ul|ol|blockquote|figure|tr)>~i', "\n\n", $html);
+        $text = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = str_replace("\u{00A0}", ' ', $text);
+        $text = preg_replace('~[ \t]+~u', ' ', $text);
+        $text = preg_replace('~ *\n *~', "\n", $text);
+        $text = trim(preg_replace('~\n{3,}~', "\n\n", $text));
+
+        return trim($this->title."\n\n".$text."\n\n".'Cała relacja, zdjęcia i wideo: '.route('articles.show', $this));
+    }
+
+    /**
      * Punkt zdjęcia, który zostaje widoczny przy przycinaniu (CSS object-position).
      */
     public function imageFocus(): string

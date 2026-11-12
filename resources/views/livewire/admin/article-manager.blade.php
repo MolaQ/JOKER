@@ -20,6 +20,8 @@
         </button>
     </div>
 
+    {{-- Na laptopie tabela bywa szersza niż karta: przewija się w bok, zamiast ucinać przyciski. --}}
+    <div class="md:overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-300">
         <thead class="bg-gray-50">
             <tr>
@@ -34,7 +36,7 @@
         <tbody class="divide-y divide-gray-200 bg-white">
             @forelse($articles as $article)
                 <tr wire:key="article-{{ $article->id }}">
-                    <td class="max-w-xs py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                    <td class="max-w-48 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 2xl:max-w-xs">
                         {{-- Pinezka przed tytułem (długi tytuł się ucina, a ona zawsze widać): kliknięcie przypina albo odpina artykuł. --}}
                         <div class="flex min-w-0 items-center gap-2">
                             <button type="button" wire:click="toggleFeatured({{ $article->id }})" data-featured-toggle="{{ $article->id }}" title="{{ $article->is_featured ? 'Przypięty na górze aktualności i strony głównej. Kliknij, żeby odpiąć.' : 'Kliknij, żeby przypiąć na górze aktualności i strony głównej.' }}" aria-pressed="{{ $article->is_featured ? 'true' : 'false' }}" @class(['inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold ring-1 ring-inset transition', 'bg-blue-600 text-white ring-blue-600' => $article->is_featured, 'text-gray-300 ring-transparent hover:bg-gray-50 hover:text-gray-500' => ! $article->is_featured])>
@@ -99,6 +101,22 @@
                         </span>
                     </td>
                     <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                        @if($article->isPublished())
+                            {{-- Facebook nie przyjmuje tekstu w linku udostępniania: kopiujemy treść do schowka i otwieramy okno udostępniania; obrazek dociąga się sam. --}}
+                            <button type="button" data-facebook-share="{{ $article->id }}" title="Na Facebooka: kopiuje tytuł i całą treść z linkiem na końcu, potem otwiera udostępnianie na Facebooku. Wklej tekst w oknie (Ctrl+V), obrazek wyróżniający pojawi się sam."
+                                x-data="{ text: @js($article->facebookText()), url: @js(route('articles.show', $article)) }"
+                                x-on:click="
+                                    const share = window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url), 'facebook-share', 'width=640,height=720');
+                                    navigator.clipboard.writeText(text)
+                                        .then(() => window.toast('Tekst relacji skopiowany. Wklej go w oknie Facebooka (Ctrl+V albo przytrzymaj i Wklej).', 'success'))
+                                        .catch(() => window.toast('Nie udało się skopiować tekstu. Otwórz artykuł i skopiuj treść ręcznie.', 'error'));
+                                    if (! share) { window.location.href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url); }
+                                "
+                                class="mr-3 inline-flex items-center align-middle text-[#1877f2] hover:text-[#0b5fcc]">
+                                <svg class="size-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M24 12a12 12 0 1 0-13.88 11.85v-8.38H7.08V12h3.04V9.36c0-3 1.79-4.67 4.53-4.67 1.31 0 2.68.24 2.68.24v2.95h-1.51c-1.49 0-1.95.93-1.95 1.87V12h3.32l-.53 3.47h-2.79v8.38A12 12 0 0 0 24 12Z"/></svg>
+                                <span class="sr-only">Na Facebooka</span>
+                            </button>
+                        @endif
                         <button type="button" wire:click="openEditModal({{ $article->id }})" class="text-sky-700 hover:text-sky-900 mr-4">Edytuj</button>
                         <button type="button" wire:click="delete({{ $article->id }})" wire:confirm="Czy na pewno chcesz usunąć ten artykuł?" class="text-red-600 hover:text-red-900">Usuń</button>
                     </td>
@@ -110,6 +128,7 @@
             @endforelse
         </tbody>
     </table>
+    </div>
 
     <div class="mt-4 px-4 pb-4">
         {{ $articles->links() }}
