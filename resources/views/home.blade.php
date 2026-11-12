@@ -100,8 +100,8 @@
                 </div>
                 @if($site['home_show_stats'])
                     <div class="hidden items-center gap-6 bg-ink/70 p-5 sm:flex lg:p-6">
-                        <p><span class="block font-display text-4xl font-bold">{{ $stats['teams'] }}</span><span class="text-xs text-zinc-400 uppercase">{{ __('drużyn') }}</span></p>
-                        <p><span class="block font-display text-4xl font-bold">{{ $stats['players'] }}</span><span class="text-xs text-zinc-400 uppercase">{{ __('zawodników') }}</span></p>
+                        <p><span class="block font-display text-4xl font-bold tabular-nums" data-count-up>{{ $stats['teams'] }}</span><span class="text-xs text-zinc-400 uppercase">{{ __('drużyn') }}</span></p>
+                        <p><span class="block font-display text-4xl font-bold tabular-nums" data-count-up>{{ $stats['players'] }}</span><span class="text-xs text-zinc-400 uppercase">{{ __('zawodników') }}</span></p>
                     </div>
                 @endif
                 <a href="{{ $site->href((string) $site['home_tile_url']) }}" @class(['group flex items-center justify-between gap-4 bg-sky-club p-5 transition hover:bg-sky-club-dark lg:p-6', 'lg:col-span-2' => ! $site['home_show_stats']])>
@@ -235,11 +235,11 @@
             <p class="mt-3 line-clamp-2 max-w-xl text-zinc-300">{{ Str::limit(strip_tags((string) $lead->localizedExcerpt()), 160) }}</p>
         </a>
 
-        <div class="grid gap-4">
+        <div class="grid gap-4" data-reveal-stagger>
             @foreach($articles->skip(1) as $article)
                 <a href="{{ route('articles.show', $article) }}" class="card card-hover group flex gap-5 p-3">
                     <x-photo :src="Media::articleImage($article)" :focus="$article->imageFocus()" :alt="$article->localizedTitle()" sizes="160px" width="320" height="240" class="aspect-[4/3] w-32 shrink-0 rounded-2xl sm:w-40" />
-                    <div class="flex flex-col justify-center py-2 pr-2">
+                    <div class="flex min-w-0 flex-col justify-center py-2 pr-2">
                         <p class="text-xs font-semibold text-zinc-500">{{ $article->published_at?->translatedFormat('d F Y') }}</p>
                         <h3 class="mt-1 line-clamp-2 font-semibold text-zinc-900 group-hover:text-sky-club-dark">{{ $article->localizedTitle() }}@if($article->hasEnglish()) <x-english-badge class="ml-1" />@endif</h3>
                         <p class="mt-1 hidden line-clamp-2 text-sm text-zinc-500 sm:block">{{ Str::limit(strip_tags((string) $article->localizedExcerpt()), 110) }}</p>

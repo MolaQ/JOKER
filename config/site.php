@@ -146,6 +146,19 @@ return [
             ],
         ],
 
+        'efekty' => [
+            'label' => 'Efekty i animacje',
+            'icon' => 'light',
+            'fields' => [
+                'fx_reveal' => ['type' => 'toggle', 'label' => 'Sekcje i kafelki pojawiają się przy przewijaniu', 'help' => 'Delikatne wsunięcie od dołu; kafelki w listach (aktualności, drużyny) jeden po drugim.', 'default' => true],
+                'fx_page_transitions' => ['type' => 'toggle', 'label' => 'Płynne przejście między stronami', 'help' => 'Krótkie przenikanie po kliknięciu linku. Działa w Chrome, Edge i nowym Safari; inne przeglądarki otwierają stronę jak dotąd.', 'default' => true],
+                'fx_hover' => ['type' => 'toggle', 'label' => 'Kafelki unoszą się pod kursorem, przyciski lekko wciskają', 'default' => true],
+                'fx_images' => ['type' => 'toggle', 'label' => 'Zdjęcia łagodnie się pojawiają po wczytaniu', 'default' => true],
+                'fx_counters' => ['type' => 'toggle', 'label' => 'Liczby na stronie głównej odliczają się od zera', 'help' => 'Liczba drużyn i zawodników w górnej części strony głównej.', 'default' => true],
+                'fx_header' => ['type' => 'toggle', 'label' => 'Nagłówek zmniejsza się przy przewijaniu', 'help' => 'Na komputerze; zostaje więcej miejsca na treść.', 'default' => true],
+            ],
+        ],
+
         'kalendarz' => [
             'label' => 'Kalendarz meczów',
             'icon' => 'calendar',

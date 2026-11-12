@@ -1,5 +1,12 @@
 <!DOCTYPE html>
-<html lang="{{ app()->getLocale() }}">
+@php
+    // Efekty włączane w panelu (Ustawienia → Efekty i animacje); CSS i JS sprawdzają klasy fx-* na <html>.
+    $fxClasses = collect(['reveal', 'page_transitions', 'hover', 'images', 'counters', 'header'])
+        ->filter(fn (string $fx) => (bool) $site['fx_'.$fx])
+        ->map(fn (string $fx) => 'fx-'.str_replace('_', '-', $fx))
+        ->implode(' ');
+@endphp
+<html lang="{{ app()->getLocale() }}" class="fx-site {{ $fxClasses }}">
 <head>
     @php
         $pageTitle = trim($__env->yieldContent('title'));
@@ -114,7 +121,7 @@
     @endif
 
     <header data-header class="group/header sticky top-0 z-50 border-b border-white/5 bg-ink/85 text-white backdrop-blur-xl transition-colors [&.is-scrolled]:bg-ink/95">
-        <div class="container-site flex h-16 items-center justify-between gap-4 lg:h-20">
+        <div class="container-site flex h-16 items-center justify-between gap-4 transition-[height] duration-300 lg:h-20" data-header-bar>
             <a href="{{ route('home') }}" class="flex min-w-0 items-center gap-3 lg:shrink-0" aria-label="{{ $site['club_name'] }} - {{ __('strona główna') }}">
                 <img src="{{ $logoUrl }}" alt="" width="48" height="48" class="h-10 w-10 object-contain lg:h-12 lg:w-12">
                 <span class="min-w-0 leading-none">
@@ -123,10 +130,10 @@
                 </span>
             </a>
 
-            <nav class="hidden items-center gap-0.5 lg:flex xl:gap-1" aria-label="{{ __('Menu główne') }}">
+            <nav class="hidden items-center gap-0.5 xl:flex 2xl:gap-1" aria-label="{{ __('Menu główne') }}">
                 @foreach($navItems as $link)
                     <a href="{{ $site->href($link['url']) }}" @if($site->isExternal($link['url'])) target="_blank" rel="noopener" @endif @class([
-                        'rounded-full px-3 py-2 font-display text-[15px] font-medium tracking-wide uppercase transition xl:px-4',
+                        'rounded-full px-3 py-2 font-display text-[15px] font-medium tracking-wide uppercase transition 2xl:px-4',
                         'bg-white/10 text-white' => $site->isCurrent($link['url']),
                         'text-zinc-300 hover:text-white' => ! $site->isCurrent($link['url']),
                     ])>{{ __($link['label']) }}</a>
@@ -140,8 +147,8 @@
                 <x-language-switch class="hidden md:flex" />
                 <a href="{{ route('search') }}" data-search-open @class(['hidden h-10 items-center gap-3 rounded-full bg-white/10 pr-2 pl-4 text-sm text-zinc-300 transition hover:bg-white/15 hover:text-white sm:flex', 'lg:hidden' => $topbarSearch]) aria-label="{{ __('Szukaj na stronie') }}">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"/></svg>
-                    <span class="lg:w-28">{{ __('Szukaj…') }}</span>
-                    <kbd class="hidden rounded-md bg-white/10 px-1.5 py-0.5 font-sans text-[11px] lg:inline">/</kbd>
+                    <span class="xl:sr-only 2xl:not-sr-only 2xl:w-28">{{ __('Szukaj…') }}</span>
+                    <kbd class="hidden rounded-md bg-white/10 px-1.5 py-0.5 font-sans text-[11px] 2xl:inline">/</kbd>
                 </a>
                 <a href="{{ route('search') }}" data-search-open class="flex h-11 w-11 items-center justify-center rounded-full text-zinc-300 transition hover:bg-white/10 hover:text-white sm:hidden" aria-label="{{ __('Szukaj na stronie') }}">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"/></svg>
@@ -166,13 +173,13 @@
                     <a href="{{ route('login') }}" class="hidden rounded-full px-3 py-2 text-sm font-medium text-zinc-400 transition hover:text-white sm:inline-flex">{{ __('Zaloguj') }}</a>
                 @endauth
 
-                <button type="button" data-menu-toggle aria-expanded="false" aria-controls="menu-mobilne" class="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 lg:hidden" aria-label="{{ __('Menu') }}">
+                <button type="button" data-menu-toggle aria-expanded="false" aria-controls="menu-mobilne" class="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 xl:hidden" aria-label="{{ __('Menu') }}">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h10"/></svg>
                 </button>
             </div>
         </div>
 
-        <div id="menu-mobilne" data-menu class="hidden h-[calc(100dvh-4rem)] overflow-y-auto border-t border-white/10 bg-ink lg:hidden">
+        <div id="menu-mobilne" data-menu class="hidden h-[calc(100dvh-4rem)] overflow-y-auto border-t border-white/10 bg-ink xl:hidden">
             <nav class="container-site flex flex-col gap-1 pt-6 pb-[calc(7rem+env(safe-area-inset-bottom))]" aria-label="{{ __('Menu mobilne') }}">
                 @foreach($navItems as $link)
                     <a href="{{ $site->href($link['url']) }}" class="border-b border-white/5 py-4 font-display text-3xl font-semibold uppercase {{ $site->isCurrent($link['url']) ? 'text-sky-club' : 'text-white' }}">{{ __($link['label']) }}</a>

@@ -38,11 +38,21 @@ initShareCards();
 initTheme();
 initLiveBar();
 
-// Pojawianie się sekcji przy przewijaniu.
-const revealObserver = 'IntersectionObserver' in window
+// Efekty włączane w panelu: klasy fx-* na <html> (layouts/public).
+const fx = (name) => document.documentElement.classList.contains(`fx-${name}`);
+const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Pojawianie się sekcji przy przewijaniu; kafelki z jednej listy wchodzą jeden po drugim.
+document.querySelectorAll('[data-reveal-stagger]').forEach((list) => {
+    [...list.children].forEach((el) => el.setAttribute('data-reveal', ''));
+});
+
+const revealObserver = fx('reveal') && !calm && 'IntersectionObserver' in window
     ? new IntersectionObserver((entries) => {
+        let order = 0;
         entries.forEach((entry) => {
             if (entry.isIntersecting) {
+                entry.target.style.transitionDelay = `${Math.min(order++, 6) * 70}ms`;
                 entry.target.classList.add('is-visible');
                 revealObserver.unobserve(entry.target);
             }
@@ -57,6 +67,52 @@ document.querySelectorAll('[data-reveal]').forEach((el) => {
         el.classList.add('is-visible');
     }
 });
+
+// Zdjęcia: łagodne pojawienie się tych, które jeszcze się wczytują.
+if (fx('images') && !calm) {
+    document.querySelectorAll('img[loading="lazy"]').forEach((img) => {
+        if (img.complete) {
+            return;
+        }
+        img.setAttribute('data-fx-wait', '');
+        const show = () => img.removeAttribute('data-fx-wait');
+        img.addEventListener('load', show, { once: true });
+        img.addEventListener('error', show, { once: true });
+    });
+}
+
+// Liczby na stronie głównej odliczają się od zera, gdy pojawią się na ekranie.
+if (fx('counters') && !calm && 'IntersectionObserver' in window) {
+    const countObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (!entry.isIntersecting) {
+                return;
+            }
+            countObserver.unobserve(entry.target);
+            const el = entry.target;
+            const target = parseInt(el.dataset.countTarget, 10);
+            const start = performance.now();
+            const step = (now) => {
+                const t = Math.min((now - start) / 1200, 1);
+                el.textContent = String(Math.round(target * (1 - Math.pow(1 - t, 3))));
+                if (t < 1) {
+                    requestAnimationFrame(step);
+                }
+            };
+            requestAnimationFrame(step);
+        });
+    });
+
+    document.querySelectorAll('[data-count-up]').forEach((el) => {
+        const target = parseInt(el.textContent.trim(), 10);
+        if (Number.isFinite(target) && target > 0) {
+            el.dataset.countTarget = String(target);
+            el.style.minWidth = `${String(target).length}ch`;
+            el.textContent = '0';
+            countObserver.observe(el);
+        }
+    });
+}
 
 // Menu mobilne.
 const menuButton = document.querySelector('[data-menu-toggle]');

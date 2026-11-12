@@ -28,7 +28,7 @@ beforeEach(function () {
 test('the site is in Polish by default with both flags in the header', function () {
     $this->get('/')
         ->assertOk()
-        ->assertSee('<html lang="pl">', false)
+        ->assertSee('<html lang="pl" ', false)
         ->assertSee('Aktualności')
         ->assertSee(route('locale.switch', 'pl'), false)
         ->assertSee(route('locale.switch', 'en'), false)
@@ -43,7 +43,7 @@ test('switching to English translates the menu and the calendar', function () {
 
     $this->get(route('schedule.index'))
         ->assertOk()
-        ->assertSee('<html lang="en">', false)
+        ->assertSee('<html lang="en" ', false)
         ->assertSee('News')
         ->assertSee('Matches')
         ->assertSee('Teams')
@@ -60,7 +60,7 @@ test('switching back to Polish restores Polish texts', function () {
     $this->get(route('locale.switch', 'pl'))->assertSessionHas(SetLocale::SESSION_KEY, 'pl');
 
     $this->get(route('schedule.index'))
-        ->assertSee('<html lang="pl">', false)
+        ->assertSee('<html lang="pl" ', false)
         ->assertSee('Aktualności')
         ->assertSee('listopad')
         ->assertSee('1 mecz')

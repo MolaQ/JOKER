@@ -53,6 +53,14 @@
 
     body {
         @apply bg-zinc-50 font-sans text-zinc-900 antialiased;
+        /* Bardzo długie słowa (nazwiska z myślnikiem, nazwy plików) łamią się zamiast wypychać stronę w bok. */
+        overflow-wrap: break-word;
+    }
+
+    /* Nagłówki łamią się także w siatkach i flexach (anywhere zmniejsza minimalną szerokość), z dzieleniem wyrazów. */
+    :is(h1, h2, h3, h4) {
+        overflow-wrap: anywhere;
+        hyphens: auto;
     }
 
     ::selection {
@@ -203,9 +211,13 @@
     }
 }
 
-/* Delikatne pojawianie się sekcji przy przewijaniu (bez bibliotek). */
+/*
+ * Efekty włączane w panelu (Ustawienia → Efekty i animacje): layout dopisuje klasy fx-* do <html>.
+ * Wszystko tylko przy prefers-reduced-motion: no-preference; osoby z ograniczonym ruchem widzą stronę bez animacji.
+ */
 @media (prefers-reduced-motion: no-preference) {
-    [data-reveal] {
+    /* Sekcje i kafelki wsuwają się przy przewijaniu; opóźnienie dla kolejnych kafelków ustawia app.js. */
+    html.fx-reveal [data-reveal] {
         opacity: 0;
         transform: translateY(24px);
         transition:
@@ -213,10 +225,53 @@
             transform 0.7s var(--ease-snappy);
     }
 
-    [data-reveal].is-visible {
+    html.fx-reveal [data-reveal].is-visible {
         opacity: 1;
         transform: none;
     }
+
+    /*
+     * Przenikanie między stronami włącza @view-transition niżej (wspólne z panelem). Na stronie publicznej
+     * wyłącznik w panelu zdejmuje nazwę z <html>, więc strona podmienia się bez animacji.
+     */
+    html.fx-site:not(.fx-page-transitions) {
+        view-transition-name: none;
+    }
+
+    /* Nagłówek nie miga przy przejściu, przenika tylko treść. */
+    html.fx-page-transitions [data-header] {
+        view-transition-name: site-header;
+    }
+
+    ::view-transition-group(site-header) {
+        animation-duration: 0s;
+    }
+
+    /* Przyciski lekko się wciskają. */
+    html.fx-hover :is(.btn-primary, .btn-ghost, button[type='submit']):active {
+        transform: scale(0.97);
+    }
+
+    /* Zdjęcia pojawiają się po wczytaniu, zamiast wskakiwać kawałkami. */
+    html.fx-images img[loading='lazy'] {
+        transition: opacity 0.5s ease-out;
+    }
+
+    html.fx-images img[loading='lazy'][data-fx-wait] {
+        opacity: 0;
+    }
+
+    /* Nagłówek na komputerze zmniejsza się przy przewijaniu. */
+    @media (min-width: 64rem) {
+        html.fx-header [data-header].is-scrolled [data-header-bar] {
+            height: 4rem;
+        }
+    }
+}
+
+/* Bez efektu unoszenia kafelek zostaje na miejscu (cień i obwódka zostają). */
+html:not(.fx-hover) .card-hover:hover {
+    transform: none;
 }
 
 .net-pattern {
