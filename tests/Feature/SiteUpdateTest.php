@@ -146,3 +146,52 @@ test('no new package is accepted while an install is waiting or running', functi
     Livewire::actingAs($this->admin)->test(SiteUpdater::class)->assertSee('Trwa instalacja paczki')->call('cancel');
     expect(SiteUpdate::flag())->not->toBeNull();
 });
+
+test('the package is checked and unpacked without the php zip extension', function () {
+    require_once base_path('narzedzia/rozpakuj-paczke.php');
+    $zip = siteUpdateZip($this->valid + ['public/obrazek.bin' => random_bytes(5000), 'public/duzy.txt' => str_repeat('Joker Piła ', 2000)]);
+
+    expect(joker_sprawdz_paczke($zip))->toMatchArray(['wersja' => '2099-01-01 10:00:00', 'migracje' => ['2099_01_01_000000_nowa_tabela.php']]);
+
+    $reczny = SiteUpdate::dir().'/reczny';
+    $rozszerzenie = SiteUpdate::dir().'/rozszerzenie';
+    joker_rozpakuj_paczke($zip, $reczny, true);
+    joker_rozpakuj_paczke($zip, $rozszerzenie);
+
+    foreach (['artisan', 'public/index.php', 'public/obrazek.bin', 'public/duzy.txt', 'database/migrations/2099_01_01_000000_nowa_tabela.php'] as $file) {
+        expect(file_get_contents($reczny.'/'.$file))->toBe(file_get_contents($rozszerzenie.'/'.$file));
+    }
+
+    expect(file_exists($reczny.'/.env'))->toBeFalse()
+        ->and(file_exists($reczny.'/storage'))->toBeFalse()
+        ->and(file_exists($reczny.'/public/storage'))->toBeFalse();
+});
+
+test('entries starting with ./ are accepted but settings are still never unpacked', function () {
+    require_once base_path('narzedzia/rozpakuj-paczke.php');
+    $entries = [];
+
+    foreach ($this->valid as $name => $content) {
+        $entries['./'.$name] = $content;
+    }
+
+    $zip = siteUpdateZip($entries);
+    expect(joker_sprawdz_paczke($zip)['wersja'])->toBe('2099-01-01 10:00:00');
+
+    foreach ([true, false] as $bezRozszerzenia) {
+        $cel = SiteUpdate::dir().'/cel-'.(int) $bezRozszerzenia;
+        joker_rozpakuj_paczke($zip, $cel, $bezRozszerzenia);
+
+        expect(is_file($cel.'/artisan'))->toBeTrue()
+            ->and(file_exists($cel.'/.env'))->toBeFalse()
+            ->and(file_exists($cel.'/storage'))->toBeFalse();
+    }
+});
+
+test('a damaged package is rejected by the reader without the zip extension', function () {
+    require_once base_path('narzedzia/rozpakuj-paczke.php');
+    $path = SiteUpdate::dir().'/zepsuty.zip';
+    file_put_contents($path, substr(file_get_contents(siteUpdateZip($this->valid)), 0, 200));
+
+    expect(fn () => joker_sprawdz_paczke($path))->toThrow(RuntimeException::class);
+});
