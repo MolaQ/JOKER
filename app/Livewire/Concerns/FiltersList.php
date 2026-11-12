@@ -4,6 +4,7 @@ namespace App\Livewire\Concerns;
 
 use App\Models\Season;
 use App\Support\ListFilters;
+use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Livewire\Attributes\Url;
@@ -105,7 +106,7 @@ trait FiltersList
     /**
      * Zawęża zapytanie do wybranego zakresu dat (obie granice włącznie, cały dzień).
      */
-    protected function applyDateFilter(Builder $query, string $column): Builder
+    protected function applyDateFilter(Builder $query, string|Expression $column): Builder
     {
         $from = $this->parseDate($this->dateFrom);
         $to = $this->parseDate($this->dateTo);

@@ -506,14 +506,13 @@
     background-color: var(--color-sky-club);
 }
 
-/* Filtry list w panelu. */
+/* Filtry list w panelu: niewybrane przyciski jako ciemne pigułki (bg-white z komponentu zostaje tu białe). */
 :root.dark .filter-chip:not([aria-pressed='true']) {
     background-color: rgb(255 255 255 / 0.04);
-    color: var(--color-zinc-300);
-    --tw-ring-color: rgb(255 255 255 / 0.12);
+    color: oklch(87.1% 0.006 286.286);
 }
 
 :root.dark .filter-chip:not([aria-pressed='true']):hover {
-    background-color: rgb(255 255 255 / 0.08);
+    background-color: rgb(255 255 255 / 0.09);
     color: white;
 }

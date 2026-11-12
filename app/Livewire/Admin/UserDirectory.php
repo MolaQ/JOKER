@@ -2,7 +2,10 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\FiltersList;
+use App\Models\Team;
 use App\Models\User;
+use App\UserRole;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
@@ -16,10 +19,21 @@ use Livewire\WithPagination;
  */
 class UserDirectory extends Component
 {
-    use WithPagination;
+    use FiltersList, WithPagination;
 
     #[Url(as: 'szukaj', except: '')]
     public string $search = '';
+
+    #[Url(as: 'rola', except: '')]
+    public string $roleFilter = '';
+
+    #[Url(as: 'druzyna', except: '')]
+    public string $teamFilter = '';
+
+    protected function filterDefaults(): array
+    {
+        return ['search' => '', 'roleFilter' => '', 'teamFilter' => ''];
+    }
 
     public function mount(): void
     {
@@ -61,12 +75,18 @@ class UserDirectory extends Component
                 ->where('name', 'like', '%'.$term.'%')
                 ->orWhere('email', 'like', '%'.$term.'%')
                 ->orWhereHas('children', fn (Builder $child) => $child->where('first_name', 'like', '%'.$term.'%')->orWhere('last_name', 'like', '%'.$term.'%'))))
+            ->when(UserRole::tryFrom($this->roleFilter), fn (Builder $query, UserRole $role) => $query->withRole($role))
+            ->when(ctype_digit($this->teamFilter), fn (Builder $query) => $query->where(fn (Builder $inner) => $inner
+                ->whereHas('playerProfile', fn (Builder $player) => $player->where('team_id', $this->teamFilter))
+                ->orWhereHas('children', fn (Builder $child) => $child->where('team_id', $this->teamFilter))))
             ->with(['playerProfile.team', 'children.team'])
             ->orderBy('name')
             ->paginate(25);
 
         return view('livewire.admin.user-directory', [
             'users' => $users,
+            'teams' => Team::query()->when($teamIds !== null, fn (Builder $query) => $query->whereIn('id', $teamIds))->orderBy('display_order')->get(),
+            'roles' => collect([UserRole::Player, UserRole::Parent, UserRole::Fan, UserRole::Trainer, UserRole::Staff])->mapWithKeys(fn (UserRole $role) => [$role->value => $role->label()])->all(),
             'allTeams' => $teamIds === null,
             'teamIds' => $teamIds,
         ]);

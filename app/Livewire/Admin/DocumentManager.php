@@ -2,17 +2,20 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\FiltersList;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Livewire\Concerns\SortsTable;
 use App\Models\Document;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 class DocumentManager extends Component
 {
-    use ShowsToasts, SortsTable, WithFileUploads, WithPagination;
+    use FiltersList, ShowsToasts, SortsTable, WithFileUploads, WithPagination;
 
     public bool $showModal = false;
 
@@ -30,7 +33,17 @@ class DocumentManager extends Component
 
     public ?string $existingFile = null;
 
+    #[Url(as: 'q', except: '')]
     public string $search = '';
+
+    #[Url(as: 'kategoria', except: '')]
+    public string $categoryFilter = '';
+
+    #[Url(as: 'widocznosc', except: '')]
+    public string $visibilityFilter = '';
+
+    #[Url(as: 'typ', except: '')]
+    public string $typeFilter = '';
 
     protected function rules(): array
     {
@@ -135,15 +148,27 @@ class DocumentManager extends Component
         return ['rozmiar', 'pobrania'];
     }
 
+    protected function filterDefaults(): array
+    {
+        return ['search' => '', 'categoryFilter' => '', 'visibilityFilter' => '', 'typeFilter' => ''];
+    }
+
     public function render()
     {
+        $term = trim($this->search);
         $documents = $this->applySort(Document::with('uploader')
-            ->when($this->search, fn ($q) => $q->where('title', 'like', "%{$this->search}%"))
+            ->when($term !== '', fn (Builder $q) => $q->where(fn (Builder $w) => $w->where('title', 'like', "%{$term}%")->orWhere('description', 'like', "%{$term}%")))
+            ->when($this->categoryFilter, fn (Builder $q) => $q->where('category', $this->categoryFilter))
+            ->when($this->visibilityFilter === 'public', fn (Builder $q) => $q->where('is_public', true))
+            ->when($this->visibilityFilter === 'members', fn (Builder $q) => $q->where('is_public', false))
+            ->when($this->typeFilter, fn (Builder $q) => $q->where('file_type', $this->typeFilter))
+            ->tap(fn (Builder $q) => $this->applyDateFilter($q, 'created_at'))
             ->orderBy('created_at', 'desc')
-        )->paginate(10);
+        )->paginate(15);
 
         return view('livewire.admin.document-manager', [
             'documents' => $documents,
+            'fileTypes' => Document::query()->whereNotNull('file_type')->distinct()->orderBy('file_type')->pluck('file_type')->mapWithKeys(fn ($type) => [$type => strtoupper($type)])->all(),
         ]);
     }
 }

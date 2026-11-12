@@ -1,16 +1,18 @@
 <div>
-    <!-- Toolbar -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border-b border-gray-200">
-        <input
-            type="text"
-            wire:model.live.debounce.300ms="search"
-            placeholder="Szukaj dokumentu..."
-            class="w-full sm:w-64 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"
-        >
-        <button type="button" wire:click="openCreateModal" class="admin-fab inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
-            + Dodaj dokument
-        </button>
-    </div>
+    <x-filters.bar :total="$documents->total()" :nouns="['dokument', 'dokumenty', 'dokumentów']" :active="$this->activeFiltersCount()" placeholder="Szukaj: tytuł, opis…">
+        <x-slot:actions>
+            <button type="button" wire:click="openCreateModal" class="admin-fab inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
+                + Dodaj dokument
+            </button>
+        </x-slot:actions>
+
+        <x-filters.chips class="@4xl:col-span-2" label="Kategoria" field="categoryFilter" :current="$categoryFilter" :options="\App\Models\Document::CATEGORIES" />
+        <x-filters.chips label="Widoczność" field="visibilityFilter" :current="$visibilityFilter" :options="['public' => 'Publiczne', 'members' => 'Dla zalogowanych']" />
+        @if(count($fileTypes) > 1)
+            <x-filters.chips label="Plik" field="typeFilter" :current="$typeFilter" :options="$fileTypes" />
+        @endif
+        <x-filters.dates class="@4xl:col-span-2" label="Dodane" :preset="$this->activeDatePreset()" :presets="collect(\App\Support\ListFilters::DATE_PRESETS)->only(['today', 'week', 'month', 'season'])->all()" />
+    </x-filters.bar>
 
     <table class="min-w-full divide-y divide-gray-300">
         <thead class="bg-gray-50">

@@ -1,37 +1,22 @@
 <div>
-    <!-- Toolbar -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border-b border-gray-200">
-        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            <input
-                type="text"
-                wire:model.live.debounce.300ms="search"
-                placeholder="Szukaj użytkownika..."
-                class="w-full sm:w-64 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"
-            >
-            <select wire:model.live="roleFilter" class="w-full sm:w-48 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
-                <option value="">Wszystkie role</option>
-                <option value="none">Bez roli</option>
-                @foreach($roleOptions as $r)
-                    <option value="{{ $r->value }}">{{ $r->label() }}</option>
-                @endforeach
-            </select>
-            <select wire:model.live="statusFilter" class="w-full sm:w-52 text-sm" aria-label="Stan konta">
-                <option value="">Każdy stan konta</option>
-                @foreach($statusOptions as $statusOption)
-                    <option value="{{ $statusOption->value }}">{{ $statusOption->label() }}</option>
-                @endforeach
-            </select>
-        </div>
-        <button type="button" wire:click="openCreateModal" class="admin-fab inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
-            + Dodaj użytkownika
-        </button>
-    </div>
+    <x-filters.bar :total="$users->total()" :nouns="['konto', 'konta', 'kont']" :active="$this->activeFiltersCount()" placeholder="Szukaj: imię, nazwisko, e-mail, zawodnik…">
+        <x-slot:actions>
+            <button type="button" wire:click="openCreateModal" class="admin-fab inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
+                + Dodaj użytkownika
+            </button>
+        </x-slot:actions>
 
+        <x-filters.chips class="@4xl:col-span-2" label="Rola" field="roleFilter" :current="$roleFilter" :options="collect($roleOptions)->mapWithKeys(fn ($role) => [$role->value => $role->label()])->put('none', 'Bez roli')->all()" />
+        <x-filters.chips class="@4xl:col-span-2" label="Stan konta" field="statusFilter" :current="$statusFilter" :options="collect($statusOptions)->mapWithKeys(fn ($status) => [$status->value => $status->label()])->all()" />
+        <x-filters.chips class="@4xl:col-span-2" label="Logowanie" field="loginFilter" :current="$loginFilter" :options="\App\Livewire\Admin\UserManager::LOGIN_FILTERS" />
+        <x-filters.dates class="@4xl:col-span-2" label="Założone" :preset="$this->activeDatePreset()" :presets="collect(\App\Support\ListFilters::DATE_PRESETS)->except(['upcoming', 'past', 'season'])->all()" />
+    </x-filters.bar>
+
+    <div class="md:overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-300">
         <thead class="bg-gray-50">
             <tr>
-                <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"><x-sort-button field="nazwa" :current="$sortField" :direction="$sortDirection">Imię i nazwisko</x-sort-button></th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="email" :current="$sortField" :direction="$sortDirection">Email</x-sort-button></th>
+                <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"><span class="inline-flex items-center gap-3"><x-sort-button field="nazwa" :current="$sortField" :direction="$sortDirection">Imię i nazwisko</x-sort-button><x-sort-button field="email" :current="$sortField" :direction="$sortDirection">E-mail</x-sort-button></span></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Role</th>
                 <th data-label="Wyświetlenia i polubienia" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="wyswietlenia" hint="Wyświetlenia" :current="$sortField" :direction="$sortDirection"><svg class="size-4 text-zinc-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.04 12.32a1 1 0 0 1 0-.64C3.42 7.51 7.36 4.5 12 4.5s8.57 3 9.96 7.18a1 1 0 0 1 0 .64C20.58 16.49 16.64 19.5 12 19.5s-8.57-3-9.96-7.18Z"/><circle cx="12" cy="12" r="3"/></svg><span class="sr-only">Wyświetlenia</span></x-sort-button> <x-sort-button field="polubienia" hint="Polubienia" :current="$sortField" :direction="$sortDirection"><x-heart :filled="false" class="text-zinc-400" /><span class="sr-only">Polubienia</span></x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="logowanie" :current="$sortField" :direction="$sortDirection">Ostatnie logowanie</x-sort-button></th>
@@ -43,12 +28,10 @@
                 <tr wire:key="user-{{ $user->id }}">
                     <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                         {{ $user->name }}
+                        <span class="block text-xs font-normal text-zinc-500">{{ $user->email }}</span>
                         @if($user->activatedBy)
                             <span class="block text-xs font-normal text-gray-400">aktywował(a): {{ $user->activatedBy->name }}</span>
                         @endif
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ $user->email }}
                     </td>
                     <td class="px-3 py-4 text-sm">
                         <div class="flex flex-wrap gap-1">
@@ -84,11 +67,12 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="px-3 py-4 text-sm text-gray-500 text-center">Brak użytkowników do wyświetlenia</td>
+                    <td colspan="5" class="px-3 py-4 text-sm text-gray-500 text-center">Brak użytkowników do wyświetlenia</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
+    </div>
 
     <div class="mt-4 px-4 pb-4">
         {{ $users->links() }}

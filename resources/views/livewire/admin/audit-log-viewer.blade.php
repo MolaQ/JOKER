@@ -25,14 +25,31 @@
                 @endforeach
             </select>
         </div>
-        <div>
-            <label class="block text-xs font-medium text-gray-600" for="audit-action">Rodzaj zmiany</label>
-            <select id="audit-action" wire:model.live="action" class="mt-1 block w-full rounded-lg border-zinc-300 text-sm shadow-xs">
-                <option value="">— każda —</option>
+        <div class="sm:col-span-2 lg:col-span-3" role="group" aria-label="Rodzaj zmiany">
+            <span class="block text-xs font-medium text-gray-600">Rodzaj zmiany</span>
+            <div class="mt-1 flex flex-wrap gap-1.5">
+                <button type="button" wire:click="$set('action', '')" aria-pressed="{{ $action === '' ? 'true' : 'false' }}" class="filter-chip filter-chip-all">Każda</button>
                 @foreach($actionOptions as $value => $label)
-                    <option value="{{ $value }}">{{ $label }}</option>
+                    <button type="button" wire:click="$set('action', @js($action === $value ? '' : $value))" aria-pressed="{{ $action === $value ? 'true' : 'false' }}" class="filter-chip">{{ \Illuminate\Support\Str::ucfirst($label) }}</button>
                 @endforeach
-            </select>
+            </div>
+        </div>
+        @php
+            $today = now()->format('Y-m-d');
+            $presets = [
+                'Dziś' => [$today, $today],
+                'Ostatnie 7 dni' => [now()->subDays(6)->format('Y-m-d'), $today],
+                'Ten miesiąc' => [now()->startOfMonth()->format('Y-m-d'), $today],
+            ];
+        @endphp
+        <div class="sm:col-span-2" role="group" aria-label="Okres">
+            <span class="block text-xs font-medium text-gray-600">Okres</span>
+            <div class="mt-1 flex flex-wrap gap-1.5">
+                @foreach($presets as $label => [$presetFrom, $presetTo])
+                    @php $presetOn = $from === $presetFrom && $to === $presetTo; @endphp
+                    <button type="button" wire:click="$set('from', @js($presetOn ? '' : $presetFrom)); $set('to', @js($presetOn ? '' : $presetTo))" aria-pressed="{{ $presetOn ? 'true' : 'false' }}" class="filter-chip">{{ $label }}</button>
+                @endforeach
+            </div>
         </div>
         <div class="grid grid-cols-2 gap-2">
             <div>

@@ -105,21 +105,38 @@
         @endif
     @else
         <div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-zinc-200">
-            <div class="flex flex-wrap items-center justify-between gap-3 border-b p-4">
-                <input type="search" wire:model.live.debounce.300ms="search" placeholder="Szukaj galerii..." class="w-full rounded-md border-gray-300 text-sm sm:w-64">
-                <button type="button" wire:click="create" class="admin-fab rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700">+ Nowa galeria</button>
-            </div>
-            <ul class="divide-y divide-gray-200">
+            <x-filters.bar :total="$galleries->total()" :nouns="['galeria', 'galerie', 'galerii']" :active="$this->activeFiltersCount()" placeholder="Szukaj: tytuł, opis…">
+                <x-slot:actions>
+                    <button type="button" wire:click="create" class="admin-fab rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700">+ Nowa galeria</button>
+                </x-slot:actions>
+
+                <x-filters.chips class="@4xl:col-span-2" label="Drużyna" field="teamFilter" :current="$teamFilter" :options="$teams->pluck('name', 'id')->put('club', 'Cały klub')->all()" :colors="$teams->mapWithKeys(fn ($team) => [$team->id => \App\Support\AgeColors::forTeam($team)])->all()" />
+                <x-filters.dates class="@4xl:col-span-2" label="Data" :preset="$this->activeDatePreset()" :presets="collect(\App\Support\ListFilters::DATE_PRESETS)->except('upcoming')->all()" />
+                <x-filters.chips label="Rodzaj" field="typeFilter" :current="$typeFilter" :options="['match' => 'Z meczu', 'event' => 'Z wydarzenia']" />
+                <x-filters.chips label="Widoczność" field="visibilityFilter" :current="$visibilityFilter" :options="['published' => 'Na stronie', 'hidden' => 'Ukryte']" />
+                <x-filters.chips class="@4xl:col-span-2" label="Kolejność" field="order" :current="$order" :options="\App\Livewire\Admin\GalleryManager::ORDERS" :all-label="false" />
+            </x-filters.bar>
+            <ul class="divide-y divide-zinc-100">
                 @forelse($galleries as $item)
-                    <li class="flex flex-wrap items-center justify-between gap-3 p-4 text-sm" wire:key="gallery-{{ $item->id }}">
-                        <div>
-                            <p class="font-semibold text-gray-900">{{ $item->title }} @unless($item->is_published)<span class="ml-1 rounded bg-gray-100 px-1.5 py-0.5 text-xs font-normal text-gray-600">ukryta</span>@endunless</p>
-                            <p class="text-gray-500">{{ $item->displayDate()?->format('d.m.Y') }} · {{ $item->photos_count }} zdj.@if($item->team) · {{ $item->team->name }}@endif @if($item->match) · mecz @endif</p>
+                    <li class="flex items-center gap-4 px-4 py-3 text-sm transition hover:bg-zinc-50/70" wire:key="gallery-{{ $item->id }}">
+                        <span class="relative size-14 shrink-0 overflow-hidden rounded-lg bg-zinc-100 ring-1 ring-zinc-200">
+                            @if($thumb = $item->photos->first()?->thumbUrl())
+                                <img src="{{ $thumb }}" alt="" loading="lazy" class="size-full object-cover">
+                            @endif
+                        </span>
+                        <div class="min-w-0 flex-1">
+                            <p class="font-semibold text-zinc-900">{{ $item->title }} @unless($item->is_published)<span class="ml-1 rounded bg-zinc-100 px-1.5 py-0.5 text-xs font-normal text-zinc-600">ukryta</span>@endunless</p>
+                            <p class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-zinc-500">
+                                <span class="tabular-nums">{{ $item->displayDate()?->format('d.m.Y') }}</span>
+                                <span>· {{ $item->photos_count }} zdj.</span>
+                                @if($item->team)<span class="inline-flex items-center gap-1">· <span class="size-2 rounded-full" style="background: {{ \App\Support\AgeColors::forTeam($item->team) }}"></span>{{ $item->team->name }}</span>@endif
+                                <span class="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-zinc-600 uppercase">{{ $item->match ? 'mecz' : 'wydarzenie' }}</span>
+                            </p>
                         </div>
                         <button type="button" wire:click="edit({{ $item->id }})" class="admin-action">Edytuj</button>
                     </li>
                 @empty
-                    <li class="p-6 text-center text-gray-500">Brak galerii.</li>
+                    <li class="p-6 text-center text-zinc-500">Brak galerii dla wybranych filtrów.</li>
                 @endforelse
             </ul>
             @if(method_exists($galleries, 'links'))<div class="px-4 py-3">{{ $galleries->links() }}</div>@endif

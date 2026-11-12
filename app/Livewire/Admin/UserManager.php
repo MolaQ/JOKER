@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\AccountStatus;
 use App\Livewire\Concerns\EditsPermissionOverrides;
+use App\Livewire\Concerns\FiltersList;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Livewire\Concerns\SortsTable;
 use App\Models\AccessSnapshot;
@@ -14,18 +15,20 @@ use App\Models\User;
 use App\Support\AccessHistory;
 use App\Support\Trash;
 use App\UserRole;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 class UserManager extends Component
 {
-    use EditsPermissionOverrides, ShowsToasts, SortsTable, WithFileUploads, WithPagination;
+    use EditsPermissionOverrides, FiltersList, ShowsToasts, SortsTable, WithFileUploads, WithPagination;
 
     public bool $showModal = false;
 
@@ -77,11 +80,23 @@ class UserManager extends Component
 
     public bool $removePhoto = false;
 
+    #[Url(as: 'q', except: '')]
     public string $search = '';
 
+    #[Url(as: 'rola', except: '')]
     public string $roleFilter = '';
 
+    #[Url(as: 'stan', except: '')]
     public string $statusFilter = '';
+
+    #[Url(as: 'logowanie', except: '')]
+    public string $loginFilter = '';
+
+    public const LOGIN_FILTERS = [
+        'recent' => 'W ostatnim miesiącu',
+        'stale' => 'Ponad pół roku temu',
+        'never' => 'Nigdy',
+    ];
 
     protected function rules(): array
     {
@@ -364,6 +379,11 @@ class UserManager extends Component
         $this->resetErrorBag();
     }
 
+    protected function filterDefaults(): array
+    {
+        return ['search' => '', 'roleFilter' => '', 'statusFilter' => '', 'loginFilter' => ''];
+    }
+
     protected function sortableColumns(): array
     {
         return [
@@ -384,13 +404,19 @@ class UserManager extends Component
 
     public function render()
     {
-        $users = $this->applySort(User::when($this->search, fn ($q) => $q->where(fn ($q2) => $q2
-            ->where('name', 'like', "%{$this->search}%")
-            ->orWhere('email', 'like', "%{$this->search}%")
+        $term = trim($this->search);
+        $users = $this->applySort(User::when($term !== '', fn ($q) => $q->where(fn ($q2) => $q2
+            ->where('name', 'like', "%{$term}%")
+            ->orWhere('email', 'like', "%{$term}%")
+            ->orWhereHas('playerProfile', fn (Builder $player) => $player->where('last_name', 'like', "%{$term}%")->orWhere('first_name', 'like', "%{$term}%"))
         ))
             ->when($this->roleFilter === 'none', fn ($q) => $q->doesntHave('roleAssignments'))
             ->when(UserRole::tryFrom($this->roleFilter), fn ($q, UserRole $role) => $q->withRole($role))
             ->when(AccountStatus::tryFrom($this->statusFilter), fn ($q, AccountStatus $status) => $q->withAccountStatus($status))
+            ->when($this->loginFilter === 'recent', fn (Builder $q) => $q->where('last_login_at', '>=', now()->subMonth()))
+            ->when($this->loginFilter === 'stale', fn (Builder $q) => $q->where('last_login_at', '<', now()->subMonths(6)))
+            ->when($this->loginFilter === 'never', fn (Builder $q) => $q->whereNull('last_login_at'))
+            ->tap(fn (Builder $q) => $this->applyDateFilter($q, 'created_at'))
             ->with(['roleAssignments', 'activatedBy:id,name', 'playerProfile' => fn ($q) => $q->select(['id', 'user_id', 'views_count'])->withCount('likes')])->withCount('receivedLikes')
             ->orderBy('name')
         )->paginate(15);

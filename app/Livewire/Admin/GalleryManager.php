@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\FiltersList;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Gallery;
 use App\Models\GalleryPhoto;
@@ -13,9 +14,12 @@ use App\Support\MatchPicker;
 use App\Support\Trash;
 use App\UserRole;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -26,9 +30,24 @@ use Livewire\WithPagination;
  */
 class GalleryManager extends Component
 {
-    use ShowsToasts, WithFileUploads, WithPagination;
+    use FiltersList, ShowsToasts, WithFileUploads, WithPagination;
 
+    #[Url(as: 'q', except: '')]
     public string $search = '';
+
+    #[Url(as: 'druzyna', except: '')]
+    public string $teamFilter = '';
+
+    #[Url(as: 'rodzaj', except: '')]
+    public string $typeFilter = '';
+
+    #[Url(as: 'widocznosc', except: '')]
+    public string $visibilityFilter = '';
+
+    #[Url(as: 'sort', except: 'new')]
+    public string $order = 'new';
+
+    public const ORDERS = ['new' => 'Najnowsze', 'old' => 'Najstarsze', 'photos' => 'Najwięcej zdjęć', 'title' => 'Tytuł A–Z'];
 
     public ?int $editingId = null;
 
@@ -55,6 +74,11 @@ class GalleryManager extends Component
     public ?int $taggingPhotoId = null;
 
     public string $tagSearch = '';
+
+    protected function filterDefaults(): array
+    {
+        return ['search' => '', 'teamFilter' => '', 'typeFilter' => '', 'visibilityFilter' => '', 'order' => 'new'];
+    }
 
     public function updatingSearch(): void
     {
@@ -253,13 +277,32 @@ class GalleryManager extends Component
         $gallery = $this->editingId ? Gallery::with(['photos.tags.taggable', 'match'])->find($this->editingId) : null;
 
         return view('livewire.admin.gallery-manager', [
-            'galleries' => $gallery || $this->creating ? collect() : Gallery::with(['match', 'team'])->withCount('photos')
-                ->when($this->search, fn ($query) => $query->where('title', 'like', "%{$this->search}%"))
-                ->orderByDesc('event_date')->orderByDesc('id')
-                ->paginate(15),
+            'galleries' => $gallery || $this->creating ? collect() : $this->galleryList(),
             'gallery' => $gallery,
             'teams' => Team::orderBy('display_order')->get(['id', 'name']),
             'tagOptions' => $this->taggingPhotoId ? $this->tagOptions() : [],
         ]);
+    }
+
+    private function galleryList()
+    {
+        $term = trim($this->search);
+
+        return Gallery::with(['match', 'team', 'photos' => fn ($photos) => $photos->limit(1)])->withCount('photos')
+            ->when($term !== '', fn (Builder $q) => $q->where(fn (Builder $w) => $w->where('title', 'like', "%{$term}%")->orWhere('description', 'like', "%{$term}%")))
+            ->when($this->teamFilter === 'club', fn (Builder $q) => $q->whereNull('team_id'))
+            ->when(ctype_digit($this->teamFilter), fn (Builder $q) => $q->where('team_id', $this->teamFilter))
+            ->when($this->typeFilter === 'match', fn (Builder $q) => $q->whereNotNull('match_id'))
+            ->when($this->typeFilter === 'event', fn (Builder $q) => $q->whereNull('match_id'))
+            ->when($this->visibilityFilter === 'published', fn (Builder $q) => $q->where('is_published', true))
+            ->when($this->visibilityFilter === 'hidden', fn (Builder $q) => $q->where('is_published', false))
+            ->tap(fn (Builder $q) => $this->applyDateFilter($q, DB::raw('coalesce(event_date, created_at)')))
+            ->tap(fn (Builder $q) => match ($this->order) {
+                'old' => $q->orderBy('event_date')->orderBy('id'),
+                'photos' => $q->orderByDesc('photos_count')->orderByDesc('id'),
+                'title' => $q->orderBy('title'),
+                default => $q->orderByDesc('event_date')->orderByDesc('id'),
+            })
+            ->paginate(15);
     }
 }

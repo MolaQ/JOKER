@@ -2,27 +2,33 @@
     <!-- Toolbar -->
     <div class="space-y-3 border-b border-gray-200 bg-white p-4">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <input
-                type="search"
-                wire:model.live.debounce.300ms="search"
-                placeholder="Szukaj: nazwisko, imię albo numer (np. 7)"
-                class="w-full sm:w-80 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"
-            >
-            <button type="button" wire:click="openCreateModal" class="admin-fab inline-flex items-center justify-center gap-1.5 rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
+            <label class="relative min-w-0 flex-1">
+                <span class="sr-only">Szukaj zawodnika</span>
+                <svg class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"/></svg>
+                <input
+                    type="search"
+                    wire:model.live.debounce.300ms="search"
+                    placeholder="Szukaj: nazwisko, imię albo numer (np. 7)"
+                    class="w-full rounded-xl border-zinc-200 bg-zinc-50 py-2.5 pl-9 text-sm focus:bg-white"
+                >
+            </label>
+            <button type="button" wire:click="openCreateModal" class="admin-fab inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
                 <x-admin-icon name="plus" class="h-4 w-4" /> Dodaj zawodnika
             </button>
         </div>
         @php
-            $chip = 'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ring-1 ring-inset transition';
+            // Ten sam wygląd co wspólne filtry list (components/filters): spokojne „Wszystkie”, niebieskie działające filtry.
+            $chip = 'inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium whitespace-nowrap ring-1 ring-inset transition active:scale-[0.97]';
             $on = 'bg-sky-600 text-white ring-sky-600';
-            $off = 'bg-white text-gray-700 ring-gray-300 hover:bg-gray-50';
-            $count = fn ($n) => '<span class="rounded-full bg-black/10 px-1.5 text-xs tabular-nums">'.(int) $n.'</span>';
+            $off = 'bg-white text-zinc-600 ring-zinc-200 hover:bg-zinc-50 hover:text-zinc-900';
+            $calm = 'bg-zinc-100 font-semibold text-zinc-900 ring-zinc-200';
+            $count = fn ($n) => '<span class="rounded-full bg-black/[0.07] px-1.5 text-[11px] tabular-nums">'.(int) $n.'</span>';
         @endphp
         <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Drużyna">
-            <span class="w-16 text-xs font-semibold uppercase tracking-wide text-gray-500">Drużyna</span>
-            <button type="button" wire:click="$set('teamFilter', '')" class="{{ $chip }} {{ $teamFilter === '' ? $on : $off }}">Wszystkie {!! $count($totalCount) !!}</button>
+            <span class="w-20 text-[11px] font-bold tracking-wider text-zinc-500 uppercase">Drużyna</span>
+            <button type="button" wire:click="$set('teamFilter', '')" class="{{ $chip }} {{ $teamFilter === '' ? $calm : $off }}">Wszystkie {!! $count($totalCount) !!}</button>
             @foreach($teams as $team)
-                <button type="button" wire:key="team-chip-{{ $team->id }}" wire:click="$set('teamFilter', '{{ $team->id }}')" class="{{ $chip }} {{ $teamFilter === (string) $team->id ? $on : $off }}">{{ $team->name }} {!! $count($teamCounts[$team->id] ?? 0) !!}</button>
+                <button type="button" wire:key="team-chip-{{ $team->id }}" wire:click="$set('teamFilter', '{{ $team->id }}')" class="{{ $chip }} {{ $teamFilter === (string) $team->id ? $on : $off }}"><span class="size-2.5 rounded-full" style="background: {{ \App\Support\AgeColors::forTeam($team) }}" aria-hidden="true"></span>{{ $team->name }} {!! $count($teamCounts[$team->id] ?? 0) !!}</button>
             @endforeach
             @if(($teamCounts['mini'] ?? 0) > 0)
                 <button type="button" wire:click="$set('teamFilter', 'mini')" class="{{ $chip }} {{ $teamFilter === 'mini' ? $on : $off }}">Minisiatkówka {!! $count($teamCounts['mini']) !!}</button>
@@ -32,8 +38,8 @@
             @endif
         </div>
         <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Pozycja">
-            <span class="w-16 text-xs font-semibold uppercase tracking-wide text-gray-500">Pozycja</span>
-            <button type="button" wire:click="$set('positionFilter', '')" class="{{ $chip }} {{ $positionFilter === '' ? $on : $off }}">Wszystkie</button>
+            <span class="w-20 text-[11px] font-bold tracking-wider text-zinc-500 uppercase">Pozycja</span>
+            <button type="button" wire:click="$set('positionFilter', '')" class="{{ $chip }} {{ $positionFilter === '' ? $calm : $off }}">Wszystkie</button>
             @foreach($positions as $pos)
                 <button type="button" wire:key="pos-chip-{{ $pos->value }}" wire:click="$set('positionFilter', '{{ $pos->value }}')" class="{{ $chip }} {{ $positionFilter === $pos->value ? $on : $off }}">{{ $pos->label() }} {!! $count($positionCounts[$pos->value] ?? 0) !!}</button>
             @endforeach
@@ -111,12 +117,12 @@
         @endif
     </div>
 
+    <div class="md:overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-300">
         <thead class="bg-gray-50">
             <tr>
                 <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"><x-sort-button field="numer" :current="$sortField" :direction="$sortDirection">#</x-sort-button></th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="nazwisko" :current="$sortField" :direction="$sortDirection">Imię i nazwisko</x-sort-button></th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="pozycja" :current="$sortField" :direction="$sortDirection">Pozycja</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><span class="inline-flex items-center gap-3"><x-sort-button field="nazwisko" :current="$sortField" :direction="$sortDirection">Imię i nazwisko</x-sort-button><x-sort-button field="pozycja" :current="$sortField" :direction="$sortDirection">Pozycja</x-sort-button></span></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="druzyna" :current="$sortField" :direction="$sortDirection">Drużyna</x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="status" :current="$sortField" :direction="$sortDirection">Status</x-sort-button></th>
                 <th data-label="Wyświetlenia i polubienia" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="wyswietlenia" hint="Wyświetlenia" :current="$sortField" :direction="$sortDirection"><svg class="size-4 text-zinc-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.04 12.32a1 1 0 0 1 0-.64C3.42 7.51 7.36 4.5 12 4.5s8.57 3 9.96 7.18a1 1 0 0 1 0 .64C20.58 16.49 16.64 19.5 12 19.5s-8.57-3-9.96-7.18Z"/><circle cx="12" cy="12" r="3"/></svg><span class="sr-only">Wyświetlenia</span></x-sort-button> <x-sort-button field="polubienia" hint="Polubienia" :current="$sortField" :direction="$sortDirection"><x-heart :filled="false" class="text-zinc-400" /><span class="sr-only">Polubienia</span></x-sort-button></th>
@@ -139,12 +145,10 @@
                             <span class="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800" title="Ta sama osoba jest wpisana drugi raz. Otwórz Edytuj i scal profile.">duplikat?</span>
                         @endif
                         @if($player->user_id)<span class="ml-1 inline-flex align-middle text-sky-600" title="Ma konto na stronie"><x-admin-icon name="user" class="h-4 w-4" /></span>@endif
+                        <span class="block text-xs font-normal text-zinc-500">{{ $player->position?->label() ?? 'bez pozycji' }}</span>
                         @if($birthMonth !== '' || $yearFrom !== '' || $yearTo !== '' || isset($filters['urodzenie']) || isset($filters['rocznik']))
                             <span class="block text-xs font-normal text-gray-500">{{ $player->birth_date?->format('d.m.Y') ?? ($player->birth_year ? 'rocznik '.$player->birth_year : 'brak daty urodzenia') }}</span>
                         @endif
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ $player->position?->label() ?? '—' }}
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         @if($player->team){{ $player->team->name }}@foreach($player->teams->reject(fn ($extra) => $extra->id === $player->team_id) as $extra)<span class="text-gray-400"> + {{ $extra->name }}</span>@endforeach@elseif($player->isMini() && $player->miniGroup)<span class="rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-semibold text-emerald-700">mini: {{ $player->miniGroup->name }}</span>@else<span class="rounded bg-amber-50 px-1.5 py-0.5 text-xs font-semibold text-amber-700">bez drużyny</span>@endif
@@ -180,11 +184,12 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" class="px-3 py-4 text-sm text-gray-500 text-center">Brak zawodników do wyświetlenia</td>
+                    <td colspan="6" class="px-3 py-4 text-sm text-gray-500 text-center">Brak zawodników do wyświetlenia</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
+    </div>
 
     <div class="mt-4 px-4 pb-4">
         {{ $players->links() }}

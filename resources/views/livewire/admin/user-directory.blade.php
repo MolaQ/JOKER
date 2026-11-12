@@ -8,9 +8,12 @@
             @endif
             {{ __('Tylko do odczytu: role i hasła zmienia szef klubu lub administrator.') }}
         </p>
-        <input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('Szukaj po nazwisku lub e-mailu') }}"
-            aria-label="{{ __('Szukaj osób') }}" class="block w-full rounded-lg border border-zinc-300 text-sm sm:w-72">
     </div>
+
+    <x-filters.bar class="overflow-hidden rounded-xl border border-zinc-200" :total="$users->total()" :nouns="['osoba', 'osoby', 'osób']" :active="$this->activeFiltersCount()" placeholder="Szukaj: nazwisko, e-mail, dziecko…">
+        <x-filters.chips class="@4xl:col-span-2" label="Drużyna" field="teamFilter" :current="$teamFilter" :options="$teams->pluck('name', 'id')->all()" :colors="$teams->mapWithKeys(fn ($team) => [$team->id => \App\Support\AgeColors::forTeam($team)])->all()" />
+        <x-filters.chips class="@4xl:col-span-2" label="Rola" field="roleFilter" :current="$roleFilter" :options="$roles" />
+    </x-filters.bar>
 
     <ul class="divide-y divide-zinc-200 rounded-lg border border-zinc-200 bg-white">
         @forelse ($users as $user)
