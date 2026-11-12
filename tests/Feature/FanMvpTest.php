@@ -191,3 +191,30 @@ test('switching the player badge off hides the count on the profile but keeps th
     $this->actingAs($this->fan)->get(route('players.show', $this->adam))->assertOk()->assertDontSee('fan-mvp-badge', false);
     $this->actingAs($this->fan)->get(route('games.show', $this->game))->assertOk()->assertSee('★ MVP');
 });
+
+test('voting by players can be switched off so only fans and parents vote', function () {
+    $playerUser = User::factory()->create(['role' => UserRole::Fan, 'is_active' => true]);
+    $this->adam->update(['user_id' => $playerUser->id]);
+    $roleOnly = User::factory()->create(['role' => UserRole::Player, 'is_active' => true]);
+    $parent = User::factory()->create(['role' => UserRole::Parent, 'is_active' => true]);
+
+    expect(FanMvp::vote($playerUser, $this->game, $this->bartek->id))->toBeNull();
+
+    app(SiteSettings::class)->set(['fan_mvp_players_vote' => false]);
+
+    expect(FanMvp::vote($playerUser, $this->game, $this->bartek->id))->toContain('Zawodnicy nie głosują')
+        ->and(FanMvp::vote($roleOnly, $this->game, $this->bartek->id))->toContain('Zawodnicy nie głosują')
+        ->and(FanMvp::vote($parent, $this->game, $this->bartek->id))->toBeNull()
+        ->and(FanMvp::vote($this->fan, $this->game, $this->adam->id))->toBeNull()
+        ->and(FanMvpVote::where('user_id', $roleOnly->id)->exists())->toBeFalse();
+
+    Livewire::actingAs($roleOnly)->test(FanMvpPanel::class, ['type' => 'game', 'id' => $this->game->id])
+        ->assertSee('Zawodnicy nie głosują')->assertSee('Blokujący')->call('vote', $this->bartek->id);
+
+    expect(FanMvpVote::where('user_id', $roleOnly->id)->exists())->toBeFalse();
+
+    // Głos zawodnika oddany przed wyłączeniem nie liczy się do wyniku.
+    $this->travel(5)->hours();
+    $results = FanMvp::results($this->game)->keyBy(fn ($row) => $row['player']->id);
+    expect($results[$this->bartek->id]['votes'])->toBe(1)->and($results[$this->adam->id]['votes'])->toBe(1);
+});

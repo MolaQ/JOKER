@@ -41,8 +41,8 @@
                     @if($state === 'open')
                         @if($intro)<p class="text-sm text-white/75">{{ $intro }}</p>@endif
 
-                        @if(! $active)
-                            <p class="mt-3 rounded-xl bg-white/10 px-3 py-2 text-sm">{{ __('Głosować możesz po aktywacji konta przez klub.') }}</p>
+                        @if($voteBlock)
+                            <p class="mt-3 rounded-xl bg-white/10 px-3 py-2 text-sm">{{ $voteBlock }}</p>
                         @elseif($votedFor && ($mine = $candidates->firstWhere('id', $votedFor)))
                             <p class="mt-3 rounded-xl bg-[color-mix(in_srgb,var(--mvp)_18%,transparent)] px-3 py-2 text-sm ring-1 ring-[color-mix(in_srgb,var(--mvp)_45%,transparent)]" wire:key="mine-{{ $votedFor }}">
                                 <strong>★ {{ __('Twój głos') }}: {{ $mine->displayName() }}.</strong>
@@ -53,7 +53,7 @@
                         <ul class="mt-4 grid grid-cols-3 gap-2.5 sm:grid-cols-4 md:grid-cols-5">
                             @foreach($candidates as $player)
                                 <li wire:key="candidate-{{ $player->id }}" class="relative">
-                                    <button type="button" @disabled(! $active)
+                                    <button type="button" @disabled($voteBlock)
                                             x-on:click="picked = {{ $player->id }}; pickedName = @js($player->displayName())"
                                             :class="picked === {{ $player->id }} && 'is-picked'"
                                             :aria-pressed="picked === {{ $player->id }}"

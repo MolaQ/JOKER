@@ -135,7 +135,7 @@ class FanMvpPanel extends Component
             'candidates' => $candidates->reject(fn (Player $player) => isset($blocked[$player->id]))->values(),
             'blockedNotes' => $candidates->map(fn (Player $player) => $blocked[$player->id] ?? null)->filter()->unique()->values(),
             'votedFor' => $state === 'open' ? FanMvp::votedFor($user, $match) : null,
-            'active' => (bool) $user->is_active,
+            'voteBlock' => FanMvp::voterBlock($user),
             'results' => $results,
             'winners' => $state === 'closed' ? $results->where('winner', true)->values() : collect(),
             'canManage' => $canManage,

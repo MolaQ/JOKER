@@ -7,11 +7,13 @@ use App\Models\FanMvpPoll;
 use App\Models\FanMvpVote;
 use App\Models\Game;
 use App\Models\Player;
+use App\Models\RoleAssignment;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\TournamentMatch;
 use App\Models\User;
 use App\Permission;
+use App\UserRole;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -19,6 +21,7 @@ use Illuminate\Support\Collection;
 /**
  * Kibicowskie MVP: zalogowani kibice przez kilka godzin od rozpoczęcia meczu wybierają najlepszego zawodnika klubu.
  * Wynik widać dopiero po zakończeniu głosowania; zawodnik nie głosuje na siebie, a rodzic na swoje dziecko.
+ * Głosowanie zawodników można wyłączyć w ustawieniach (wtedy głosują tylko kibice i rodzice).
  */
 class FanMvp
 {
@@ -215,6 +218,47 @@ class FanMvp
         return $own->all() + $children->all();
     }
 
+    /**
+     * Zawodnik: konto połączone z profilem zawodnika albo z rolą Zawodnik.
+     */
+    public static function isPlayerAccount(User $user): bool
+    {
+        return $user->hasRole(UserRole::Player) || Player::where('user_id', $user->id)->exists();
+    }
+
+    /**
+     * Konta zawodników (do pominięcia głosów oddanych, zanim wyłączono głosowanie zawodników).
+     *
+     * @return Collection<int, int>
+     */
+    public static function playerAccountIds(): Collection
+    {
+        return Player::whereNotNull('user_id')->pluck('user_id')
+            ->concat(RoleAssignment::active()->where('role', UserRole::Player->value)->pluck('user_id'))
+            ->map(fn ($id) => (int) $id)->unique()->values();
+    }
+
+    public static function playersVote(): bool
+    {
+        return (bool) app(SiteSettings::class)['fan_mvp_players_vote'];
+    }
+
+    /**
+     * Powód, dla którego ta osoba w ogóle nie głosuje (nieaktywne konto, zawodnik przy wyłączonym głosowaniu zawodników), albo null.
+     */
+    public static function voterBlock(User $user): ?string
+    {
+        if (! $user->is_active) {
+            return __('Głosować możesz po aktywacji konta przez klub.');
+        }
+
+        if (! self::playersVote() && self::isPlayerAccount($user)) {
+            return __('W tym głosowaniu wybierają kibice i rodzice. Zawodnicy nie głosują.');
+        }
+
+        return null;
+    }
+
     public static function votedFor(User $user, Model $match): ?int
     {
         $id = FanMvpVote::where('match_type', self::type($match))->where('match_id', $match->getKey())->where('user_id', $user->id)->value('player_id');
@@ -227,8 +271,8 @@ class FanMvp
      */
     public static function vote(User $user, Model $match, int $playerId): ?string
     {
-        if (! $user->is_active) {
-            return __('Głosować możesz po aktywacji konta.');
+        if ($block = self::voterBlock($user)) {
+            return $block;
         }
 
         if (self::state($match) !== 'open') {
@@ -261,6 +305,7 @@ class FanMvp
         $candidates = self::candidates($match)->keyBy('id');
         $votes = FanMvpVote::where('match_type', self::type($match))->where('match_id', $match->getKey())
             ->whereIn('player_id', $candidates->keys())
+            ->when(! self::playersVote(), fn ($query) => $query->whereNotIn('user_id', self::playerAccountIds()))
             ->selectRaw('player_id, count(*) as total')->groupBy('player_id')->pluck('total', 'player_id');
         $all = (int) $votes->sum();
         $top = (int) $votes->max();
