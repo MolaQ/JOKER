@@ -96,6 +96,25 @@ class LeagueStanding extends Model
         return ['name' => $this->competitorName(), 'badge' => null];
     }
 
+    /**
+     * Nazwa naszej drużyny tak, jak podają ją rozgrywki (np. „LOMS Joker Piła”), a nie nazwa drużyny w klubie (np. „Seniorzy”).
+     */
+    public function competitionName(): string
+    {
+        if (! $this->isOwnTeam()) {
+            return $this->competitorShortName();
+        }
+
+        if (filled($this->source_name)) {
+            return $this->source_name;
+        }
+
+        // Tabela wpisana ręcznie: nazwa z ustawień rozgrywek, a bez niej nazwa klubu.
+        return $this->competition && $this->competitor instanceof Team
+            ? $this->competition->teamLabel($this->competitor)['name']
+            : $this->competitorName();
+    }
+
     public function competitorShortName(): string
     {
         if ($this->competitor instanceof RivalTeam) {

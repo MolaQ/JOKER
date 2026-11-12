@@ -471,7 +471,7 @@
                                     @php $isOurs = $tableRow->isOwnTeam(); @endphp
                                     <tr wire:key="tt-{{ $tableRow->id }}" @class(['bg-sky-club/10 font-semibold' => $isOurs])>
                                         <td class="py-2 pr-1 pl-4 text-zinc-500">{{ $tableRow->position }}</td>
-                                        <td class="max-w-0 truncate px-1 py-2 text-zinc-800" title="{{ $tableRow->competitorName() }}">{{ $isOurs && $tableRow->competitor ? $tableRow->competitor->name : $tableRow->competitorShortName() }}</td>
+                                        <td class="max-w-0 truncate px-1 py-2 text-zinc-800" title="{{ $isOurs ? $tableRow->competitionName().' ('.$tableRow->competitor?->name.')' : $tableRow->competitorName() }}">{{ $tableRow->competitionName() }}</td>
                                         <td class="px-1 py-2 text-center text-zinc-500">{{ $tableRow->played }}</td>
                                         <td class="py-2 pr-4 pl-1 text-center font-bold text-sky-club-dark">{{ $tableRow->points }}</td>
                                     </tr>
