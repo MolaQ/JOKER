@@ -59,6 +59,7 @@
                 ['label' => 'Dziennik zmian', 'route' => 'admin.audit.index', 'icon' => 'list', 'can' => 'audit.view'],
                 ['label' => 'Kosz', 'route' => 'admin.trash.index', 'icon' => 'trash', 'can' => 'trash'],
                 ['label' => 'Import z plików', 'route' => 'admin.import.index', 'icon' => 'upload', 'can' => 'import.run'],
+                ['label' => 'Aktualizacja strony', 'route' => 'admin.site-update.index', 'icon' => 'refresh', 'can' => 'deploy'],
             ],
             'Ustawienia rozgrywek (rzadko)' => [
                 ['label' => 'Tabele', 'route' => 'admin.standings.index', 'icon' => 'table', 'can' => 'games.manage'],

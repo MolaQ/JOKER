@@ -74,6 +74,8 @@ class AppServiceProvider extends ServiceProvider
         // Lista osób do odczytu: każdy, kto aktywuje konta lub zatwierdza propozycje swojej drużyny.
         Gate::define('people.view', fn (User $user) => $user->hasPermission(Permission::Users) || $user->hasPermission(Permission::Proposals) || $user->hasPermission(Permission::ActivateAccounts));
         Gate::define('system', fn (User $user) => $user->hasRole(UserRole::Admin, UserRole::Boss));
+        // Aktualizacja strony paczką z panelu podmienia kod: tylko administrator.
+        Gate::define('deploy', fn (User $user) => $user->hasRole(UserRole::Admin));
 
         // Powiadomienia push o nowych aktualnościach, wynikach i galeriach.
         PushTriggers::register();

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ApprovalsController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\SiteUpdateChunkController;
 use App\Http\Controllers\Admin\TournamentDaySheetController;
 use App\Http\Controllers\Admin\TournamentScheduleSheetController;
 use App\Models\Tournament;
@@ -73,6 +74,12 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     Route::view('/statistics', 'admin.statistics.index')->middleware('can:statistics.view')->name('statistics.index');
     Route::view('/audit-log', 'admin.audit.index')->middleware('can:audit.view')->name('audit.index');
     Route::view('/trash', 'admin.trash.index')->middleware('can:trash')->name('trash.index');
+
+    // Aktualizacja strony paczką z panelu: tylko administrator.
+    Route::middleware('can:deploy')->group(function () {
+        Route::view('/site-update', 'admin.site-update.index')->name('site-update.index');
+        Route::post('/site-update/chunk', SiteUpdateChunkController::class)->name('site-update.chunk');
+    });
 
     Route::middleware('can:import.run')->group(function () {
         Route::view('/import', 'admin.import.index')->name('import.index');
