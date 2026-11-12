@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\AccountStatus;
+use App\Livewire\Concerns\FiltersList;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Livewire\Concerns\SortsTable;
 use App\Models\Article;
@@ -12,15 +13,17 @@ use App\Models\User;
 use App\Support\SearchIndex;
 use App\Support\Slug;
 use App\Support\Trash;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 class ArticleManager extends Component
 {
-    use ShowsToasts, SortsTable, WithFileUploads, WithPagination;
+    use FiltersList, ShowsToasts, SortsTable, WithFileUploads, WithPagination;
 
     public bool $showModal = false;
 
@@ -74,9 +77,36 @@ class ArticleManager extends Component
     /** Turniej, z którego jest relacja (link na stronie artykułu i lista relacji na stronie turnieju). */
     public string $tournamentId = '';
 
+    #[Url(as: 'q', except: '')]
     public string $search = '';
 
+    #[Url(as: 'status', except: '')]
     public string $statusFilter = '';
+
+    #[Url(as: 'o', except: '')]
+    public string $linkFilter = '';
+
+    #[Url(as: 'cechy', except: '')]
+    public string $extraFilter = '';
+
+    #[Url(as: 'autor', except: '')]
+    public string $authorFilter = '';
+
+    /** O czym jest artykuł. */
+    public const LINK_FILTERS = [
+        'game' => 'O meczu',
+        'tournament' => 'O turnieju',
+        'mini' => 'Minisiatkówka',
+        'none' => 'Bez powiązania',
+    ];
+
+    public const EXTRA_FILTERS = [
+        'featured' => 'Przypięte',
+        'english' => 'Z wersją angielską',
+        'pending' => 'Komentarze do akceptacji',
+        'no_image' => 'Bez zdjęcia',
+        'scheduled' => 'Zaplanowana publikacja',
+    ];
 
     protected function rules(): array
     {
@@ -284,9 +314,40 @@ class ArticleManager extends Component
         $this->resetErrorBag();
     }
 
+    protected function filterDefaults(): array
+    {
+        return ['search' => '', 'statusFilter' => '', 'linkFilter' => '', 'extraFilter' => '', 'authorFilter' => ''];
+    }
+
+    private function applyListFilters(Builder $articles): Builder
+    {
+        $term = trim($this->search);
+
+        return $articles
+            ->when($term !== '', fn (Builder $q) => $q->where(fn (Builder $w) => $w->where('title', 'like', "%{$term}%")
+                ->orWhere('excerpt', 'like', "%{$term}%")
+                ->orWhere('content', 'like', "%{$term}%")
+                ->orWhere('title_en', 'like', "%{$term}%")
+                ->orWhere('author_name', 'like', "%{$term}%")
+                ->orWhereHas('author', fn (Builder $author) => $author->where('name', 'like', "%{$term}%"))))
+            ->when($this->statusFilter, fn (Builder $q) => $q->where('status', $this->statusFilter))
+            ->when($this->authorFilter, fn (Builder $q) => $q->where('author_id', $this->authorFilter))
+            ->when($this->linkFilter === 'game', fn (Builder $q) => $q->whereHas('games'))
+            ->when($this->linkFilter === 'tournament', fn (Builder $q) => $q->whereNotNull('tournament_id'))
+            ->when($this->linkFilter === 'mini', fn (Builder $q) => $q->whereNotNull('mini_trip_id'))
+            ->when($this->linkFilter === 'none', fn (Builder $q) => $q->whereDoesntHave('games')->whereNull('tournament_id')->whereNull('mini_trip_id'))
+            ->when($this->extraFilter === 'featured', fn (Builder $q) => $q->where('is_featured', true))
+            ->when($this->extraFilter === 'english', fn (Builder $q) => $q->whereNotNull('title_en')->where('title_en', '!=', ''))
+            ->when($this->extraFilter === 'pending', fn (Builder $q) => $q->whereHas('comments', fn (Builder $c) => $c->where('is_approved', false)))
+            ->when($this->extraFilter === 'no_image', fn (Builder $q) => $q->where(fn (Builder $w) => $w->whereNull('featured_image')->orWhere('featured_image', '')))
+            ->when($this->extraFilter === 'scheduled', fn (Builder $q) => $q->where('status', 'published')->where('published_at', '>', now()))
+            ->tap(fn (Builder $q) => $this->applyDateFilter($q, 'published_at'));
+    }
+
     protected function sortableColumns(): array
     {
         return [
+            'data' => fn ($q, $d) => $q->orderByRaw('published_at IS NULL')->orderBy('published_at', $d),
             'tytul' => 'title',
             'autor' => fn ($q, $d) => $q->orderByRaw('coalesce(articles.author_name, (select name from users where users.id = articles.author_id)) '.($d === 'desc' ? 'desc' : 'asc')),
             'status' => 'status',
@@ -298,7 +359,7 @@ class ArticleManager extends Component
 
     protected function sortDescendingFirst(): array
     {
-        return ['wyswietlenia', 'polubienia', 'komentarze'];
+        return ['data', 'wyswietlenia', 'polubienia', 'komentarze'];
     }
 
     public function render()
@@ -306,13 +367,14 @@ class ArticleManager extends Component
         // Liczby do kolumny „Odbiór” i znaczniki transmisji/galerii z meczów, o których jest artykuł.
         $articles = $this->applySort(Article::with(['author', 'games' => fn ($query) => $query->withCount(['galleries' => fn ($galleries) => $galleries->where('is_published', true)])])
             ->withCount(['likes', 'approvedComments', 'comments as pending_comments_count' => fn ($query) => $query->where('is_approved', false)])
-            ->when($this->search, fn ($q) => $q->where('title', 'like', "%{$this->search}%"))
-            ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
+            ->tap(fn (Builder $q) => $this->applyListFilters($q))
             ->orderBy('created_at', 'desc')
-        )->paginate(10);
+        )->paginate(15);
 
         return view('livewire.admin.article-manager', [
             'articles' => $articles,
+            // Autorzy, którzy mają artykuły (przyciski filtra).
+            'authors' => User::whereIn('id', Article::query()->whereNotNull('author_id')->select('author_id'))->orderBy('name')->pluck('name', 'id')->all(),
             'linkedGames' => $this->showModal ? Game::with(['team', 'opponentTeam'])->whereIn('id', $this->gameIds)->orderBy('game_date')->get() : collect(),
             'gameSuggestions' => $this->showModal ? $this->gameSuggestions() : collect(),
             'tournamentOptions' => $this->showModal ? Tournament::query()->orderByDesc('start_date')->limit(30)->get(['id', 'name', 'edition', 'start_date']) : collect(),

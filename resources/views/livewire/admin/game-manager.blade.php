@@ -1,45 +1,34 @@
 <div>
-    <!-- Toolbar -->
-    <div class="flex flex-col gap-3 border-b border-gray-200 bg-white p-4 lg:flex-row lg:items-center lg:justify-between">
-        <div class="grid w-full gap-2 sm:grid-cols-2 lg:flex lg:w-auto lg:flex-wrap">
-            <input
-                type="search"
-                wire:model.live.debounce.300ms="search"
-                placeholder="Szukaj przeciwnika..."
-                class="w-full lg:w-56 text-sm"
-            >
-            <select wire:model.live="teamFilter" class="w-full lg:w-44 text-sm" aria-label="Drużyna">
-                <option value="">Wszystkie drużyny</option>
-                @foreach($teams as $team)
-                    <option value="{{ $team->id }}">{{ $team->name }}</option>
-                @endforeach
-            </select>
-            <select wire:model.live="statusFilter" class="w-full lg:w-40 text-sm" aria-label="Status">
-                <option value="">Wszystkie statusy</option>
-                <option value="scheduled">Zaplanowany</option>
-                <option value="live">Na żywo</option>
-                <option value="finished">Zakończony</option>
-                <option value="cancelled">Odwołany</option>
-            </select>
-            <select wire:model.live="mediaFilter" class="w-full lg:w-48 text-sm" aria-label="Materiały">
-                <option value="">Wszystkie materiały</option>
-                @foreach(\App\Livewire\Admin\GameManager::MEDIA_FILTERS as $key => $label)
-                    <option value="{{ $key }}">{{ $label }}</option>
-                @endforeach
-            </select>
-        </div>
-        <button type="button" wire:click="openCreateModal" class="admin-fab inline-flex shrink-0 items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
-            + Dodaj mecz
-        </button>
-    </div>
+    @php
+        $teamColors = $teams->mapWithKeys(fn ($team) => [$team->id => \App\Support\AgeColors::forTeam($team)])->all();
+    @endphp
+    <x-filters.bar :total="$games->total()" :nouns="['mecz', 'mecze', 'meczów']" :active="$this->activeFiltersCount()" placeholder="Szukaj: przeciwnik, hala, liga, kolejka, drużyna…">
+        <x-slot:actions>
+            <button type="button" wire:click="openCreateModal" class="admin-fab inline-flex shrink-0 items-center justify-center rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
+                + Dodaj mecz
+            </button>
+        </x-slot:actions>
 
+        <x-filters.chips class="@4xl:col-span-2" label="Drużyna" field="teamFilter" :current="$teamFilter" :options="$teams->pluck('name', 'id')->all()" :colors="$teamColors" />
+        <x-filters.dates class="@4xl:col-span-2" label="Data" :preset="$this->activeDatePreset()" />
+        <x-filters.chips label="Rodzaj" field="kindFilter" :current="$kindFilter" :options="\App\Models\Game::KINDS" />
+        <x-filters.chips label="Miejsce" field="placeFilter" :current="$placeFilter" :options="['home' => 'U siebie', 'away' => 'Na wyjeździe']" />
+        <x-filters.chips label="Status" field="statusFilter" :current="$statusFilter" :options="['scheduled' => 'Zaplanowany', 'live' => 'Na żywo', 'finished' => 'Zakończony', 'cancelled' => 'Odwołany']" />
+        <x-filters.chips label="Wynik" field="resultFilter" :current="$resultFilter" :options="\App\Livewire\Admin\GameManager::RESULT_FILTERS" />
+        <x-filters.chips label="Materiały" field="mediaFilter" :current="$mediaFilter" :options="\App\Livewire\Admin\GameManager::MEDIA_FILTERS" />
+        @if($seasons->count() > 1)
+            <x-filters.chips label="Sezon" field="seasonFilter" :current="$seasonFilter" :options="$seasons->pluck('name', 'id')->all()" />
+        @endif
+    </x-filters.bar>
+
+    <div class="md:overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-300">
         <thead class="bg-gray-50">
             <tr>
                 <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"><x-sort-button field="data" :current="$sortField" :direction="$sortDirection">Data</x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="druzyna" :current="$sortField" :direction="$sortDirection">Drużyna</x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="przeciwnik" :current="$sortField" :direction="$sortDirection">Przeciwnik</x-sort-button></th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Wynik</th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="wynik" hint="Wynik (różnica setów naszej drużyny)" :current="$sortField" :direction="$sortDirection">Wynik</x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="status" :current="$sortField" :direction="$sortDirection">Status</x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="materialy" :current="$sortField" :direction="$sortDirection">Materiały</x-sort-button></th>
                 <th class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Akcje</span></th>
@@ -49,21 +38,37 @@
             @forelse($games as $game)
                 <tr wire:key="game-{{ $game->id }}">
                     <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
-                        {{ $game->game_date?->format('d.m.Y H:i') }}
+                        @if($game->game_date)
+                            <span class="block font-semibold tabular-nums text-zinc-900">{{ $game->game_date->format('d.m.Y') }}</span>
+                            <span class="block text-xs text-zinc-500">{{ $game->game_date->translatedFormat('l') }}@if($game->game_date->format('H:i') !== '00:00') · {{ $game->game_date->format('H:i') }}@else · <span class="text-amber-700">bez godziny</span>@endif</span>
+                        @endif
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
-                        {{ $game->team->name }}
+                        <span class="inline-flex items-center gap-2 font-medium">
+                            <span class="h-5 w-1 rounded-full" style="background: {{ $teamColors[$game->team_id] ?? \App\Support\AgeColors::forTeam($game->team) }}" aria-hidden="true"></span>
+                            {{ $game->team->name }}
+                        </span>
                     </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ $game->is_home ? 'vs ' : '@ ' }}{{ $game->opponentDisplayName() }}
+                    <td class="max-w-72 px-3 py-4 text-sm text-gray-700">
+                        <span class="flex flex-wrap items-center gap-1.5">
+                            <span @class(['rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wide uppercase', 'bg-emerald-50 text-emerald-700' => $game->is_home, 'bg-zinc-100 text-zinc-600' => ! $game->is_home]) title="{{ $game->is_home ? 'U siebie' : 'Na wyjeździe' }}">{{ $game->is_home ? 'Dom' : 'Wyjazd' }}</span>
+                            @if($game->kind !== \App\Models\Game::KIND_LEAGUE)
+                                <span class="rounded bg-violet-50 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-violet-700 uppercase">{{ \App\Models\Game::KINDS[$game->kind] ?? $game->kind }}</span>
+                            @endif
+                        </span>
+                        <span class="mt-1 block font-medium text-zinc-900">{{ $game->opponentDisplayName() }}</span>
                         @isset($duplicateIds[$game->id])
                             <a href="{{ route('admin.duplicate-games.index') }}" class="ml-1 inline-flex items-center rounded-md bg-amber-50 px-1.5 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-600/30 ring-inset hover:bg-amber-100" title="Ta drużyna ma tego dnia drugi mecz z tym rywalem. Sprawdź w: Do zatwierdzenia → Możliwe duble meczów">⚠ możliwy dubel</a>
                         @endisset
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         @if(!is_null($game->home_score) && !is_null($game->away_score))
-                            <div>
-                                {{ $game->home_score }} : {{ $game->away_score }}
+                            @php $outcome = $game->outcome(); @endphp
+                            <div class="flex items-center gap-1.5">
+                                @if($outcome)
+                                    <span @class(['inline-flex size-5 items-center justify-center rounded text-[11px] font-bold text-white', 'bg-emerald-600' => $outcome === 'win', 'bg-red-500' => $outcome === 'loss', 'bg-zinc-400' => ! in_array($outcome, ['win', 'loss'])]) title="{{ $outcome === 'win' ? 'Wygrana' : ($outcome === 'loss' ? 'Porażka' : '') }}">{{ $outcome === 'win' ? 'W' : ($outcome === 'loss' ? 'P' : '–') }}</span>
+                                @endif
+                                <span class="font-display text-base font-semibold tabular-nums text-zinc-900">{{ $game->home_score }}:{{ $game->away_score }}</span>
                                 @if($game->result_source === \App\Models\Game::RESULT_MANUAL)
                                     <span class="ml-1 rounded bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800" title="Wpisany ręcznie, import ze związku go nie zmienia">ręcznie</span>
                                 @elseif($game->result_source)
@@ -123,6 +128,7 @@
             @endforelse
         </tbody>
     </table>
+    </div>
 
     <div class="mt-4 px-4 pb-4">
         {{ $games->links() }}

@@ -578,6 +578,43 @@ html:not(.fx-hover) .card-hover:hover {
     }
 }
 
+/*
+ * Filtry list w panelu (components/filters): przyciski w grupach zamiast list rozwijanych,
+ * kolorowy pasek z lewej dla drużyn (kolor kategorii), wybrany przycisk wypełniony.
+ */
+.filter-chip {
+    @apply inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[13px] font-medium whitespace-nowrap text-zinc-600 ring-1 ring-zinc-200 transition ring-inset hover:bg-zinc-50 hover:text-zinc-900 active:scale-[0.97];
+
+    &[aria-pressed='true'] {
+        @apply bg-sky-600 text-white ring-sky-600 hover:bg-sky-700 hover:text-white;
+    }
+}
+
+/* „Wszystkie” wybrane to brak filtra: spokojne wyróżnienie, żeby niebieskie były tylko działające filtry. */
+.filter-chip-all[aria-pressed='true'] {
+    @apply bg-zinc-100 font-semibold text-zinc-900 ring-zinc-200 hover:bg-zinc-100 hover:text-zinc-900;
+}
+
+/* Kolor drużyny (kategorii) jako kropka; wybrana drużyna wypełnia się swoim kolorem. */
+.filter-chip-colored::before {
+    content: '';
+    @apply size-2.5 shrink-0 rounded-full;
+    background: var(--chip);
+}
+
+.filter-chip-colored[aria-pressed='true'] {
+    background-color: color-mix(in srgb, var(--chip) 85%, black);
+    @apply ring-transparent;
+
+    &::before {
+        background: white;
+    }
+}
+
+.filter-date {
+    @apply w-36 rounded-lg! border-zinc-200! px-2.5! py-1.5! text-[13px]! text-zinc-700;
+}
+
 .admin-panel main {
     & h1.text-3xl {
         @apply text-2xl font-semibold tracking-tight text-zinc-900;

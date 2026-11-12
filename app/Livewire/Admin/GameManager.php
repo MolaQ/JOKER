@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\FiltersList;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Livewire\Concerns\SortsTable;
 use App\Models\AuditLog;
@@ -19,13 +20,14 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Throwable;
 
 class GameManager extends Component
 {
-    use ShowsToasts, SortsTable, WithPagination;
+    use FiltersList, ShowsToasts, SortsTable, WithPagination;
 
     public bool $showModal = false;
 
@@ -74,13 +76,36 @@ class GameManager extends Component
 
     public string $mvp = '';
 
+    #[Url(as: 'q', except: '')]
     public string $search = '';
 
+    #[Url(as: 'status', except: '')]
     public string $statusFilter = '';
 
+    #[Url(as: 'materialy', except: '')]
     public string $mediaFilter = '';
 
+    #[Url(as: 'druzyna', except: '')]
     public string $teamFilter = '';
+
+    #[Url(as: 'rodzaj', except: '')]
+    public string $kindFilter = '';
+
+    #[Url(as: 'miejsce', except: '')]
+    public string $placeFilter = '';
+
+    #[Url(as: 'wynik', except: '')]
+    public string $resultFilter = '';
+
+    #[Url(as: 'sezon', except: '')]
+    public string $seasonFilter = '';
+
+    /** Filtr wyniku z perspektywy naszej drużyny. */
+    public const RESULT_FILTERS = [
+        'win' => 'Wygrane',
+        'loss' => 'Przegrane',
+        'none' => 'Bez wyniku',
+    ];
 
     /** Filtr materiałów meczu: wiadomość, wideo, galeria, relacja albo brak czegokolwiek. */
     public const MEDIA_FILTERS = [
@@ -410,10 +435,44 @@ class GameManager extends Component
         return Game::query()->when($teamIds !== null, fn ($games) => $games->whereIn('team_id', $teamIds));
     }
 
+    protected function filterDefaults(): array
+    {
+        return [
+            'search' => '',
+            'statusFilter' => '',
+            'mediaFilter' => '',
+            'teamFilter' => '',
+            'kindFilter' => '',
+            'placeFilter' => '',
+            'resultFilter' => '',
+            'seasonFilter' => '',
+        ];
+    }
+
+    /**
+     * Wynik z perspektywy naszej drużyny: wygrane, przegrane albo mecze bez wpisanego wyniku.
+     */
+    private function applyResultFilter(Builder $games): Builder
+    {
+        $ours = 'CASE WHEN is_home THEN home_score ELSE away_score END';
+        $theirs = 'CASE WHEN is_home THEN away_score ELSE home_score END';
+
+        return match ($this->resultFilter) {
+            'win' => $games->whereNotNull('home_score')->whereNotNull('away_score')->whereRaw("{$ours} > {$theirs}"),
+            'loss' => $games->whereNotNull('home_score')->whereNotNull('away_score')->whereRaw("{$ours} < {$theirs}"),
+            'none' => $games->where(fn (Builder $q) => $q->whereNull('home_score')->orWhereNull('away_score')),
+            default => $games,
+        };
+    }
+
     protected function sortableColumns(): array
     {
         return [
             'data' => 'game_date',
+            'rodzaj' => 'kind',
+            // Różnica setów z perspektywy naszej drużyny; mecze bez wyniku na końcu.
+            'wynik' => fn ($q, $d) => $q->orderByRaw('home_score IS NULL')
+                ->orderByRaw('(CASE WHEN is_home THEN home_score - away_score ELSE away_score - home_score END) '.$d),
             'druzyna' => fn ($q, $d) => $q->orderBy(Team::select('display_order')->whereColumn('teams.id', 'games.team_id'), $d),
             'przeciwnik' => 'opponent',
             'status' => 'status',
@@ -423,7 +482,7 @@ class GameManager extends Component
 
     protected function sortDescendingFirst(): array
     {
-        return ['data', 'materialy'];
+        return ['data', 'materialy', 'wynik'];
     }
 
     public function render()
@@ -431,11 +490,25 @@ class GameManager extends Component
         $games = $this->applySort($this->applyMediaFilter($this->managedGames())
             ->with(['team', 'opponentTeam'])
             ->withCount(['articles', 'galleries'])
-            ->when($this->search, fn ($q) => $q->where('opponent', 'like', "%{$this->search}%"))
+            ->when(trim($this->search) !== '', function (Builder $q) {
+                $term = '%'.trim($this->search).'%';
+                // Przeciwnik, hala, liga, kolejka albo nazwa naszej drużyny.
+                $q->where(fn (Builder $w) => $w->where('opponent', 'like', $term)
+                    ->orWhere('venue', 'like', $term)
+                    ->orWhere('league', 'like', $term)
+                    ->orWhere('round_label', 'like', $term)
+                    ->orWhereHas('team', fn (Builder $team) => $team->where('name', 'like', $term))
+                    ->orWhereHas('competition', fn (Builder $competition) => $competition->where('name', 'like', $term)));
+            })
             ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
             ->when($this->teamFilter, fn ($q) => $q->where('team_id', $this->teamFilter))
+            ->when($this->kindFilter, fn ($q) => $q->where('kind', $this->kindFilter))
+            ->when($this->placeFilter, fn ($q) => $q->where('is_home', $this->placeFilter === 'home'))
+            ->when($this->seasonFilter, fn ($q) => $q->where('season_id', $this->seasonFilter))
+            ->tap(fn (Builder $q) => $this->applyResultFilter($q))
+            ->tap(fn (Builder $q) => $this->applyDateFilter($q, 'game_date'))
             ->orderBy('game_date', 'desc')
-        )->paginate(12);
+        )->paginate(15);
 
         $teams = Team::managedBy(Auth::user())->orderBy('display_order')->get();
         $seasons = Season::orderBy('start_date', 'desc')->get();

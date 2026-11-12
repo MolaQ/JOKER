@@ -505,3 +505,15 @@
 :root.dark :is(button, a, [type='submit'])[class~='bg-ink']:not([data-theme-keep] *):hover {
     background-color: var(--color-sky-club);
 }
+
+/* Filtry list w panelu. */
+:root.dark .filter-chip:not([aria-pressed='true']) {
+    background-color: rgb(255 255 255 / 0.04);
+    color: var(--color-zinc-300);
+    --tw-ring-color: rgb(255 255 255 / 0.12);
+}
+
+:root.dark .filter-chip:not([aria-pressed='true']):hover {
+    background-color: rgb(255 255 255 / 0.08);
+    color: white;
+}

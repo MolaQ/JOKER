@@ -1,32 +1,27 @@
 <div>
-    <!-- Toolbar -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-white border-b border-gray-200">
-        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            <input
-                type="text"
-                wire:model.live.debounce.300ms="search"
-                placeholder="Szukaj artykułu..."
-                class="w-full sm:w-64 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm"
-            >
-            <select wire:model.live="statusFilter" class="w-full sm:w-48 rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm">
-                <option value="">Wszystkie statusy</option>
-                <option value="draft">Szkic</option>
-                <option value="published">Opublikowany</option>
-                <option value="archived">Zarchiwizowany</option>
-            </select>
-        </div>
-        <button type="button" wire:click="openCreateModal" class="admin-fab inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
-            + Dodaj artykuł
-        </button>
-    </div>
+    <x-filters.bar :total="$articles->total()" :nouns="['artykuł', 'artykuły', 'artykułów']" :active="$this->activeFiltersCount()" placeholder="Szukaj: tytuł, treść, autor…">
+        <x-slot:actions>
+            <button type="button" wire:click="openCreateModal" class="admin-fab inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700">
+                + Dodaj artykuł
+            </button>
+        </x-slot:actions>
+
+        <x-filters.dates class="@4xl:col-span-2" label="Publikacja" :preset="$this->activeDatePreset()" :presets="collect(\App\Support\ListFilters::DATE_PRESETS)->except('upcoming')->all()" />
+        <x-filters.chips label="Status" field="statusFilter" :current="$statusFilter" :options="['draft' => 'Szkic', 'published' => 'Opublikowany', 'archived' => 'Zarchiwizowany']" />
+        <x-filters.chips label="O czym" field="linkFilter" :current="$linkFilter" :options="\App\Livewire\Admin\ArticleManager::LINK_FILTERS" />
+        <x-filters.chips class="@4xl:col-span-2" label="Cechy" field="extraFilter" :current="$extraFilter" :options="\App\Livewire\Admin\ArticleManager::EXTRA_FILTERS" />
+        @if(count($authors) > 1)
+            <x-filters.chips class="@4xl:col-span-2" label="Autor" field="authorFilter" :current="$authorFilter" :options="$authors" />
+        @endif
+    </x-filters.bar>
 
     {{-- Na laptopie tabela bywa szersza niż karta: przewija się w bok, zamiast ucinać przyciski. --}}
     <div class="md:overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-300">
         <thead class="bg-gray-50">
             <tr>
-                <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"><x-sort-button field="tytul" :current="$sortField" :direction="$sortDirection">Tytuł</x-sort-button></th>
-                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="autor" :current="$sortField" :direction="$sortDirection">Autor</x-sort-button></th>
+                <th class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"><x-sort-button field="data" hint="Data publikacji" :current="$sortField" :direction="$sortDirection">Data</x-sort-button></th>
+                <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><span class="inline-flex items-center gap-3"><x-sort-button field="tytul" :current="$sortField" :direction="$sortDirection">Tytuł</x-sort-button><x-sort-button field="autor" :current="$sortField" :direction="$sortDirection">Autor</x-sort-button></span></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="status" :current="$sortField" :direction="$sortDirection">Status</x-sort-button></th>
                 <th data-label="Wyświetlenia, polubienia i komentarze" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"><x-sort-button field="wyswietlenia" hint="Wyświetlenia" :current="$sortField" :direction="$sortDirection"><svg class="size-4 text-zinc-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.04 12.32a1 1 0 0 1 0-.64C3.42 7.51 7.36 4.5 12 4.5s8.57 3 9.96 7.18a1 1 0 0 1 0 .64C20.58 16.49 16.64 19.5 12 19.5s-8.57-3-9.96-7.18Z"/><circle cx="12" cy="12" r="3"/></svg><span class="sr-only">Wyświetlenia</span></x-sort-button> <x-sort-button field="polubienia" hint="Polubienia" :current="$sortField" :direction="$sortDirection"><x-heart :filled="false" class="text-zinc-400" /><span class="sr-only">Polubienia</span></x-sort-button> <x-sort-button field="komentarze" hint="Komentarze" :current="$sortField" :direction="$sortDirection"><svg class="size-4 text-zinc-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12M2.25 12.76c0 1.6 1.12 2.99 2.7 3.23 1.09.16 2.19.29 3.3.37v4.39l4.16-4.16a1.15 1.15 0 0 1 .78-.33 48.3 48.3 0 0 0 5.83-.5c1.58-.23 2.7-1.62 2.7-3.22V6.74c0-1.6-1.12-2.99-2.7-3.23A48.4 48.4 0 0 0 12 3c-2.4 0-4.76.18-7.05.51-1.58.23-2.7 1.62-2.7 3.22v6.02Z"/></svg><span class="sr-only">Komentarze</span></x-sort-button></th>
                 <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Multimedia</th>
@@ -36,21 +31,27 @@
         <tbody class="divide-y divide-gray-200 bg-white">
             @forelse($articles as $article)
                 <tr wire:key="article-{{ $article->id }}">
-                    <td class="max-w-48 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 2xl:max-w-xs">
+                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
+                        @if($article->published_at)
+                            <span class="block font-semibold tabular-nums text-zinc-900">{{ $article->published_at->format('d.m.Y') }}</span>
+                            <span class="block text-xs text-zinc-500">{{ $article->published_at->format('H:i') }}@if($article->published_at->isFuture()) · <span class="text-amber-700">zaplanowany</span>@endif</span>
+                        @else
+                            <span class="text-xs text-zinc-400">bez daty</span>
+                        @endif
+                    </td>
+                    <td class="max-w-56 px-3 py-4 text-sm font-medium text-gray-900 2xl:max-w-md">
                         {{-- Pinezka przed tytułem (długi tytuł się ucina, a ona zawsze widać): kliknięcie przypina albo odpina artykuł. --}}
                         <div class="flex min-w-0 items-center gap-2">
                             <button type="button" wire:click="toggleFeatured({{ $article->id }})" data-featured-toggle="{{ $article->id }}" title="{{ $article->is_featured ? 'Przypięty na górze aktualności i strony głównej. Kliknij, żeby odpiąć.' : 'Kliknij, żeby przypiąć na górze aktualności i strony głównej.' }}" aria-pressed="{{ $article->is_featured ? 'true' : 'false' }}" @class(['inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold ring-1 ring-inset transition', 'bg-blue-600 text-white ring-blue-600' => $article->is_featured, 'text-gray-300 ring-transparent hover:bg-gray-50 hover:text-gray-500' => ! $article->is_featured])>
                                 <svg class="size-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M7.5 2h5a1 1 0 0 1 .8 1.6L12 5.33V9l2.6 2.6A1 1 0 0 1 13.9 13H10.75v4.25a.75.75 0 0 1-1.5 0V13H6.1a1 1 0 0 1-.7-1.7L8 9V5.33L6.7 3.6A1 1 0 0 1 7.5 2Z"/></svg>
                                 {{ $article->is_featured ? 'Przypięty' : '' }}
                             </button>
-                            <span class="min-w-0 truncate">{{ $article->title }}</span>
+                            <span class="line-clamp-2 min-w-0">{{ $article->title }}</span>
                             @if($article->hasEnglish())
                                 <x-english-badge class="shrink-0" />
                             @endif
                         </div>
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {{ $article->authorName() }}
+                        <span class="mt-0.5 block truncate text-xs font-normal text-zinc-500">{{ $article->authorName() ?: 'bez autora' }}</span>
                     </td>
                     <td class="whitespace-nowrap px-3 py-4 text-sm">
                         @php [$statusLabel, $statusClass] = $article->statusBadge(); @endphp
