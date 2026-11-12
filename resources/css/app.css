@@ -1528,3 +1528,149 @@ table[data-sortable] > thead th:not([data-nosort]) {
         animation: none;
     }
 }
+
+/*
+ * Kibicowskie MVP: złoty napis, karty zawodników i karta zwycięzcy.
+ * Kolor (--mvp) ustawia się w panelu: Wygląd i ustawienia → Kibicowskie MVP.
+ */
+.fan-mvp,
+.fan-mvp-badge {
+    --mvp: #e0b030;
+}
+
+.fan-mvp-title,
+.fan-mvp-badge-text {
+    background-image: linear-gradient(100deg, var(--mvp) 20%, #fff8dc 45%, var(--mvp) 70%);
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.fan-mvp-glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at top right, color-mix(in srgb, var(--mvp) 28%, transparent), transparent 60%);
+}
+
+.fan-mvp-card.is-picked,
+.fan-mvp-card.is-voted {
+    box-shadow:
+        0 0 0 3px var(--mvp),
+        0 18px 40px -12px color-mix(in srgb, var(--mvp) 60%, transparent);
+}
+
+.fan-mvp-burst {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    pointer-events: none;
+}
+
+.fan-mvp-burst span {
+    position: absolute;
+    width: 8px;
+    height: 14px;
+    margin: -7px 0 0 -4px;
+    border-radius: 2px;
+    background: var(--mvp);
+    opacity: 0;
+}
+
+.fan-mvp-burst span:nth-child(3n) {
+    background: #fff;
+}
+
+.fan-mvp-burst span:nth-child(3n + 1) {
+    background: var(--color-sky-club, #45a0e0);
+}
+
+.fan-mvp-shine::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.45) 50%, transparent 65%);
+    transform: translateX(-120%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .fan-mvp-title,
+    .fan-mvp-badge-text {
+        animation: fan-mvp-shimmer 3.6s linear infinite;
+    }
+
+    .fan-mvp-card {
+        transition:
+            transform 0.25s var(--ease-snappy),
+            box-shadow 0.25s ease;
+    }
+
+    .fan-mvp-card:not(:disabled):hover {
+        transform: translateY(-3px);
+    }
+
+    .fan-mvp-card.is-picked {
+        transform: translateY(-6px) scale(1.03);
+    }
+
+    .fan-mvp-burst span {
+        animation: fan-mvp-burst 0.9s var(--ease-snappy) forwards;
+    }
+
+    .fan-mvp-winner {
+        animation: fan-mvp-rise 0.8s var(--ease-snappy) both;
+    }
+
+    .fan-mvp-shine::after {
+        animation: fan-mvp-shine 2.8s ease-in-out 0.6s infinite;
+    }
+
+    .fan-mvp-bar {
+        animation: fan-mvp-grow 1s var(--ease-snappy) both;
+        transform-origin: left;
+    }
+}
+
+@keyframes fan-mvp-shimmer {
+    to {
+        background-position: -220% 0;
+    }
+}
+
+@keyframes fan-mvp-burst {
+    0% {
+        opacity: 1;
+        transform: rotate(var(--a)) translateY(0) scale(0.4);
+    }
+
+    100% {
+        opacity: 0;
+        transform: rotate(var(--a)) translateY(-120px) scale(1);
+    }
+}
+
+@keyframes fan-mvp-rise {
+    from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.92);
+    }
+}
+
+@keyframes fan-mvp-shine {
+    0%,
+    55% {
+        transform: translateX(-120%);
+    }
+
+    100% {
+        transform: translateX(120%);
+    }
+}
+
+@keyframes fan-mvp-grow {
+    from {
+        transform: scaleX(0);
+    }
+}

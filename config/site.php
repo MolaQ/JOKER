@@ -313,6 +313,22 @@ return [
             ],
         ],
 
+        'kibicowskie_mvp' => [
+            'label' => 'Kibicowskie MVP',
+            'icon' => 'star',
+            'fields' => [
+                'fan_mvp_enabled' => ['type' => 'toggle', 'label' => 'Kibicowskie MVP włączone', 'help' => 'Zalogowani kibice po rozpoczęciu meczu wybierają najlepszego zawodnika klubu. Goście nie widzą ani głosowania, ani wyniku. Zawodnik nie głosuje na siebie, a rodzic na swoje dziecko. Wyłączenie ukrywa wszystko, głosy zostają w bazie.', 'default' => true],
+                'fan_mvp_hours' => ['type' => 'select', 'label' => 'Ile trwa głosowanie od rozpoczęcia meczu', 'help' => 'Liczone od daty i godziny meczu. Mecz bez godziny nie ma głosowania. Wynik pojawia się dopiero po zakończeniu.', 'default' => '4', 'options' => ['1' => '1 godzina', '2' => '2 godziny', '3' => '3 godziny', '4' => '4 godziny', '6' => '6 godzin', '8' => '8 godzin', '12' => '12 godzin', '24' => '24 godziny', '48' => '48 godzin']],
+                'fan_mvp_friendlies' => ['type' => 'toggle', 'label' => 'Głosowanie także w sparingach', 'default' => true],
+                'fan_mvp_tournaments' => ['type' => 'toggle', 'label' => 'Głosowanie także w meczach turniejów prowadzonych na stronie', 'default' => true],
+                'fan_mvp_home' => ['type' => 'toggle', 'label' => 'Pasek na stronie głównej w czasie głosowania', 'help' => 'Widzą go tylko zalogowani.', 'default' => true],
+                'fan_mvp_player_badge' => ['type' => 'toggle', 'label' => 'Złoty napis na karcie zawodnika', 'help' => 'Zawodnik wybrany przez kibiców dostaje na swojej stronie napis z liczbą wyróżnień i listą meczów. Widzą go tylko zalogowani.', 'default' => true],
+                'fan_mvp_title' => ['type' => 'text', 'label' => 'Nazwa wyróżnienia', 'default' => 'Kibicowskie MVP'],
+                'fan_mvp_intro' => ['type' => 'text', 'label' => 'Zachęta nad listą zawodników', 'default' => 'Kto był dziś najlepszy? Wybierz swojego zawodnika meczu.'],
+                'fan_mvp_color' => ['type' => 'color', 'label' => 'Kolor wyróżnienia', 'default' => '#e0b030'],
+            ],
+        ],
+
         'pasek' => [
             'label' => 'Górny pasek',
             'icon' => 'window',

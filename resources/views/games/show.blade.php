@@ -96,6 +96,10 @@
 @endif
 
 <div class="container-site max-w-5xl space-y-16 py-14 lg:py-20">
+    @auth
+        @livewire('fan-mvp-panel', ['type' => 'game', 'id' => $game->id], key('fan-mvp-game-'.$game->id))
+    @endauth
+
     @if(count($streams))
         <section id="transmisja" class="scroll-mt-32">
             <p class="eyebrow">{{ __('Wideo') }}</p>

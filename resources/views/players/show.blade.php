@@ -39,6 +39,21 @@
             @if($player->isCaptain())
                 <p class="mt-4 inline-flex items-center gap-2 rounded-full bg-sky-club px-3 py-1 text-sm font-bold text-white"><span class="flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs text-sky-club-dark">C</span> {{ __('Kapitan drużyny') }}</p>
             @endif
+            @auth
+                @if($site['fan_mvp_player_badge'] && ($fanMvpWins = \App\Support\FanMvp::winsFor($player))->isNotEmpty())
+                    <details class="fan-mvp-badge group mt-4 max-w-xl" style="--mvp: {{ $site->color('fan_mvp_color') }}">
+                        <summary class="inline-flex cursor-pointer list-none items-center gap-2 rounded-full bg-white/5 px-4 py-1.5 ring-1 ring-[color-mix(in_srgb,var(--mvp)_55%,transparent)] [&::-webkit-details-marker]:hidden">
+                            <span class="fan-mvp-badge-text font-display text-lg font-bold sm:text-xl">★ {{ \App\Support\FanMvp::title() }}@if($fanMvpWins->count() > 1) ×{{ $fanMvpWins->count() }}@endif</span>
+                            <span class="text-xs text-white/60 transition group-open:rotate-180" aria-hidden="true">▾</span>
+                        </summary>
+                        <ul class="mt-3 space-y-1.5 text-sm text-white/80">
+                            @foreach($fanMvpWins as $win)
+                                <li class="break-words">★ @if($win['url'])<a href="{{ $win['url'] }}" class="underline decoration-white/30 underline-offset-2 hover:text-white">{{ $win['label'] }}</a>@else{{ $win['label'] }}@endif <span class="text-white/50">· {{ $win['percent'] }}%</span></li>
+                            @endforeach
+                        </ul>
+                    </details>
+                @endif
+            @endauth
             @if($socialProfiles = $player->socialProfiles())
                 <div class="mt-5 flex flex-wrap gap-2">
                     @foreach($socialProfiles as $profile)

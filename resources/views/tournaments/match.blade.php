@@ -57,6 +57,10 @@
 </section>
 
 <div class="container-site max-w-5xl space-y-16 py-14 lg:py-20">
+    @auth
+        @livewire('fan-mvp-panel', ['type' => 'tournament_match', 'id' => $match->id], key('fan-mvp-match-'.$match->id))
+    @endauth
+
     @if(count($streams))
         <section id="transmisja" class="scroll-mt-32">
             <p class="eyebrow">{{ __('Wideo') }}</p>

@@ -113,6 +113,24 @@
     </div>
 </section>
 
+{{-- KIBICOWSKIE MVP: pasek dla zalogowanych, gdy trwa głosowanie --}}
+@auth
+    @if($site['fan_mvp_home'])
+        @foreach(\App\Support\FanMvp::openNow() as $fanMvpPoll)
+            <div class="fan-mvp container-site pt-8" style="--mvp: {{ $site->color('fan_mvp_color') }}">
+                <a href="{{ $fanMvpPoll['url'] }}" class="relative flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-2xl bg-ink px-5 py-4 text-white ring-1 ring-[color-mix(in_srgb,var(--mvp)_45%,transparent)] transition hover:brightness-110">
+                    <span class="fan-mvp-glow" aria-hidden="true"></span>
+                    <span class="relative min-w-0">
+                        <span class="fan-mvp-title block font-display text-xl font-bold">★ {{ \App\Support\FanMvp::title() }}</span>
+                        <span class="block text-sm break-words text-white/75">{{ $fanMvpPoll['label'] }} · {{ __('głosowanie do :time', ['time' => $fanMvpPoll['ends']->format('H:i')]) }}</span>
+                    </span>
+                    <span class="relative rounded-full bg-[var(--mvp)] px-4 py-2 text-sm font-bold text-ink">{{ __('Zagłosuj') }} →</span>
+                </a>
+            </div>
+        @endforeach
+    @endif
+@endauth
+
 {{-- DRUŻYNY --}}
 @if($site['home_teams_enabled'])
 <section class="container-site py-12 sm:py-20 lg:py-28" data-reveal>
