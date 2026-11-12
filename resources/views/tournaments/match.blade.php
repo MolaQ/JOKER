@@ -51,16 +51,15 @@
 
         <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
             @livewire('like-button', ['type' => 'tournament_match', 'id' => $match->id, 'dark' => true], key('tournament-match-like-'.$match->id))
+            @auth
+                @livewire('fan-mvp-panel', ['type' => 'tournament_match', 'id' => $match->id], key('fan-mvp-match-'.$match->id))
+            @endauth
             <x-share-card :card="\App\Support\ShareCards::tournamentMatch($match)" dark class="py-1! text-sm" />
         </div>
     </div>
 </section>
 
 <div class="container-site max-w-5xl space-y-16 py-14 lg:py-20">
-    @auth
-        @livewire('fan-mvp-panel', ['type' => 'tournament_match', 'id' => $match->id], key('fan-mvp-match-'.$match->id))
-    @endauth
-
     @if(count($streams))
         <section id="transmisja" class="scroll-mt-32">
             <p class="eyebrow">{{ __('Wideo') }}</p>

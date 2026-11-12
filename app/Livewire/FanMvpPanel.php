@@ -108,6 +108,8 @@ class FanMvpPanel extends Component
         }
 
         $site = app(SiteSettings::class);
+        $blocked = FanMvp::blocked($user);
+        $candidates = $state === 'open' ? FanMvp::candidates($match) : collect();
         $results = $state === 'closed' || $canManage ? FanMvp::results($match) : collect();
 
         return view('livewire.fan-mvp-panel', [
@@ -117,8 +119,9 @@ class FanMvpPanel extends Component
             'color' => $site->color('fan_mvp_color'),
             'ends' => FanMvp::endsAt($match),
             'starts' => FanMvp::startsAt($match),
-            'candidates' => $state === 'open' ? FanMvp::candidates($match) : collect(),
-            'blocked' => FanMvp::blocked($user),
+            // Własnej karty (zawodnik) i kart swoich dzieci (rodzic) nie pokazujemy; pod listą zostaje wyjaśnienie.
+            'candidates' => $candidates->reject(fn (Player $player) => isset($blocked[$player->id]))->values(),
+            'blockedNotes' => $candidates->map(fn (Player $player) => $blocked[$player->id] ?? null)->filter()->unique()->values(),
             'votedFor' => $state === 'open' ? FanMvp::votedFor($user, $match) : null,
             'active' => (bool) $user->is_active,
             'results' => $results,

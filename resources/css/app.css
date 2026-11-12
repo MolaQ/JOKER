@@ -1619,6 +1619,14 @@ table[data-sortable] > thead th:not([data-nosort]) {
         animation: fan-mvp-burst 0.9s var(--ease-snappy) forwards;
     }
 
+    .fan-mvp-pulse {
+        animation: fan-mvp-pulse 2.2s ease-in-out infinite;
+    }
+
+    .fan-mvp-sheet {
+        animation: fan-mvp-rise 0.35s var(--ease-snappy) both;
+    }
+
     .fan-mvp-winner {
         animation: fan-mvp-rise 0.8s var(--ease-snappy) both;
     }
@@ -1630,6 +1638,17 @@ table[data-sortable] > thead th:not([data-nosort]) {
     .fan-mvp-bar {
         animation: fan-mvp-grow 1s var(--ease-snappy) both;
         transform-origin: left;
+    }
+}
+
+@keyframes fan-mvp-pulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--mvp) 55%, transparent);
+    }
+
+    60% {
+        box-shadow: 0 0 0 10px transparent;
     }
 }
 

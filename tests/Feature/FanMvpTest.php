@@ -45,13 +45,15 @@ test('a player cannot vote for himself and a parent cannot vote for their child'
     $parent = User::factory()->create(['role' => UserRole::Parent, 'is_active' => true]);
     $this->adam->guardians()->attach($parent->id);
 
-    expect(FanMvp::vote($playerUser, $this->game, $this->adam->id))->toContain('Na siebie')
-        ->and(FanMvp::vote($parent, $this->game, $this->adam->id))->toContain('Na swoje dziecko')
+    expect(FanMvp::vote($playerUser, $this->game, $this->adam->id))->toContain('Nie można oddać głosu na samego siebie')
+        ->and(FanMvp::vote($parent, $this->game, $this->adam->id))->toContain('Nie można głosować na swoje dziecko')
         ->and(FanMvp::vote($parent, $this->game, $this->bartek->id))->toBeNull()
         ->and(FanMvp::vote($playerUser, $this->game, $this->bartek->id))->toBeNull()
         ->and(FanMvpVote::where('player_id', $this->adam->id)->count())->toBe(0);
 
-    Livewire::actingAs($parent)->test(FanMvpPanel::class, ['type' => 'game', 'id' => $this->game->id])->assertSee('Na swoje dziecko nie głosujemy');
+    Livewire::actingAs($parent)->test(FanMvpPanel::class, ['type' => 'game', 'id' => $this->game->id])->assertSee('Nie można głosować na swoje dziecko')->assertDontSee('Atakujący')->assertSee('Blokujący');
+    Livewire::actingAs($playerUser)->test(FanMvpPanel::class, ['type' => 'game', 'id' => $this->game->id])->assertSee('Nie można oddać głosu na samego siebie')->assertDontSee('Atakujący');
+    Livewire::actingAs($this->fan)->test(FanMvpPanel::class, ['type' => 'game', 'id' => $this->game->id])->assertDontSee('Nie można')->assertSee('Atakujący');
 });
 
 test('voting is closed before the match starts, after the configured window and for matches without a time', function () {

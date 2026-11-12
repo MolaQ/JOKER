@@ -181,8 +181,8 @@ class FanMvp
      */
     public static function blocked(User $user): array
     {
-        $own = Player::where('user_id', $user->id)->pluck('id')->mapWithKeys(fn ($id) => [(int) $id => __('Na siebie nie głosujemy')]);
-        $children = $user->children()->pluck('players.id')->mapWithKeys(fn ($id) => [(int) $id => __('Na swoje dziecko nie głosujemy')]);
+        $own = Player::where('user_id', $user->id)->pluck('id')->mapWithKeys(fn ($id) => [(int) $id => __('Nie można oddać głosu na samego siebie')]);
+        $children = $user->children()->pluck('players.id')->mapWithKeys(fn ($id) => [(int) $id => __('Nie można głosować na swoje dziecko')]);
 
         return $own->all() + $children->all();
     }

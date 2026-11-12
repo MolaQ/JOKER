@@ -73,6 +73,9 @@
 
         <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
             @livewire('like-button', ['type' => 'game', 'id' => $game->id, 'dark' => true], key('game-like-'.$game->id))
+            @auth
+                @livewire('fan-mvp-panel', ['type' => 'game', 'id' => $game->id], key('fan-mvp-game-'.$game->id))
+            @endauth
             <a href="#komentarze" class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white ring-1 ring-white/20 hover:bg-white/20" title="{{ __('Komentarze') }}">
                 <span aria-hidden="true">💬</span> <span class="tabular-nums">{{ $game->approvedComments->count() }}</span>
             </a>
@@ -96,10 +99,6 @@
 @endif
 
 <div class="container-site max-w-5xl space-y-16 py-14 lg:py-20">
-    @auth
-        @livewire('fan-mvp-panel', ['type' => 'game', 'id' => $game->id], key('fan-mvp-game-'.$game->id))
-    @endauth
-
     @if(count($streams))
         <section id="transmisja" class="scroll-mt-32">
             <p class="eyebrow">{{ __('Wideo') }}</p>
