@@ -172,7 +172,7 @@ class ParentAssignment extends Component
         }
 
         $this->assignedIds = array_values(array_unique([...$this->assignedIds, $parent->id]));
-        unset($this->otherChild[$userId]);
+        $this->otherChild[$userId] = '';
         $this->toast($parent->name.' jest teraz rodzicem: '.$label.'.');
     }
 
@@ -253,6 +253,13 @@ class ParentAssignment extends Component
         $childless = self::childlessFor($me)->with($relations)->orderBy('name')->get();
         $assigned = User::whereKey($this->assignedIds)->with($relations)->get()
             ->reject(fn (User $user) => $pending->contains($user) || $childless->contains($user));
+
+        // Wyszukiwarka „Inne dziecko” łączy się z otherChild.{id}. Pusta tablica trafia do przeglądarki jako [] i taki
+        // klucz się nie zapisuje (przycisk „Przypisz wybrane” zgłaszał „Wybierz zawodnika”), dlatego każde konto ma
+        // swój klucz od razu: tablica z kluczami id kont trafia do przeglądarki jako obiekt.
+        foreach ($pending->concat($childless)->concat($assigned) as $account) {
+            $this->otherChild[$account->id] ??= '';
+        }
 
         return view('livewire.admin.parent-assignment', [
             'groups' => collect([

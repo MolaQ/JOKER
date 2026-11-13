@@ -88,6 +88,18 @@ test('a trainer activates a parent of own team and links the child', function ()
     expect(fn () => Livewire::test(ParentAssignment::class)->call('assign', $stranger->id, $child->id))->toThrow(Exception::class);
 });
 
+test('a child picked in the search box is assigned with the button next to it', function () {
+    $child = Player::factory()->create(['team_id' => $this->team->id]);
+    $parent = User::factory()->inactive()->create(['requested_role' => UserRole::Parent, 'requested_team_id' => $this->team->id]);
+    $this->actingAs(User::factory()->admin()->create());
+
+    // Każde konto ma od razu klucz w otherChild, żeby wyszukiwarka w przeglądarce mogła zapisać wybór (pusta tablica tego nie umożliwiała).
+    Livewire::test(ParentAssignment::class)->assertSet('otherChild.'.$parent->id, '')
+        ->set('otherChild.'.$parent->id, (string) $child->id)->call('assign', $parent->id);
+
+    expect($parent->fresh()->children->pluck('id')->all())->toBe([$child->id]);
+});
+
 test('an administrator activates a player and links the player profile', function () {
     $player = Player::factory()->create(['team_id' => $this->team->id]);
     $account = User::factory()->inactive()->create(['requested_role' => UserRole::Player, 'requested_team_id' => $this->team->id]);
