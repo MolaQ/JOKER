@@ -12,7 +12,9 @@ use App\Models\AuditLog;
 use App\Models\Player;
 use App\Models\Team;
 use App\Models\User;
+use App\Notifications\AccountActivated;
 use App\Support\AccessHistory;
+use App\Support\SafeMail;
 use App\Support\Trash;
 use App\UserRole;
 use Illuminate\Database\Eloquent\Builder;
@@ -149,6 +151,48 @@ class UserManager extends Component
         $this->resetPage();
     }
 
+    /** Dziecko wybrane w edycji konta do przypisania (rodzic). */
+    public string $childToAdd = '';
+
+    /**
+     * Przypisuje dziecko do edytowanego konta od razu (bez „Zapisz”). Czekające konto zaczyna działać jako rodzic.
+     */
+    public function addChild(): void
+    {
+        $user = User::findOrFail($this->editingId);
+        $player = Player::managedBy(Auth::user())->find((int) $this->childToAdd);
+
+        if (! $player || ! $this->mayEdit($user)) {
+            $this->toast('Wybierz dziecko z listy.', 'error');
+
+            return;
+        }
+
+        $user->children()->syncWithoutDetaching([$player->id]);
+
+        if (! $user->is_active && ! $user->activated_at && ! $user->rejected_at && ! $user->disabled_at && ! $user->anonymized_at) {
+            $user->activate(UserRole::Parent);
+            SafeMail::notify($user, new AccountActivated);
+            $this->is_active = true;
+        }
+
+        $user->assignRole(UserRole::Parent);
+        $this->selectedRoles = $user->roles()->map->value->all();
+        AuditLog::record('account.linked', 'Rodzica '.$user->name.' przypisano do: '.$player->full_name, $user);
+        $this->childToAdd = '';
+        $this->toast($user->name.' jest teraz rodzicem: '.$player->full_name.'.');
+    }
+
+    public function removeChild(int $playerId): void
+    {
+        $user = User::findOrFail($this->editingId);
+        abort_unless($this->mayEdit($user), 403);
+
+        $user->children()->detach($playerId);
+        AuditLog::record('account.unlinked', 'Odpięto dziecko od rodzica '.$user->name, $user);
+        $this->toast('Dziecko odpięte od konta.');
+    }
+
     public function openCreateModal(): void
     {
         $this->resetForm();
@@ -180,6 +224,7 @@ class UserManager extends Component
         $this->existingPhoto = $user->avatar_path;
         $this->photo = null;
         $this->removePhoto = false;
+        $this->childToAdd = '';
 
         $this->showModal = true;
     }
@@ -409,6 +454,7 @@ class UserManager extends Component
             ->where('name', 'like', "%{$term}%")
             ->orWhere('email', 'like', "%{$term}%")
             ->orWhereHas('playerProfile', fn (Builder $player) => $player->where('last_name', 'like', "%{$term}%")->orWhere('first_name', 'like', "%{$term}%"))
+            ->orWhereHas('children', fn (Builder $child) => $child->where('last_name', 'like', "%{$term}%")->orWhere('first_name', 'like', "%{$term}%"))
         ))
             ->when($this->roleFilter === 'none', fn ($q) => $q->doesntHave('roleAssignments'))
             ->when(UserRole::tryFrom($this->roleFilter), fn ($q, UserRole $role) => $q->withRole($role))
@@ -417,14 +463,20 @@ class UserManager extends Component
             ->when($this->loginFilter === 'stale', fn (Builder $q) => $q->where('last_login_at', '<', now()->subMonths(6)))
             ->when($this->loginFilter === 'never', fn (Builder $q) => $q->whereNull('last_login_at'))
             ->tap(fn (Builder $q) => $this->applyDateFilter($q, 'created_at'))
-            ->with(['roleAssignments', 'activatedBy:id,name', 'playerProfile' => fn ($q) => $q->select(['id', 'user_id', 'views_count'])->withCount('likes')])->withCount('receivedLikes')
+            ->with(['roleAssignments', 'activatedBy:id,name', 'children' => fn ($q) => $q->with(['team:id,name', 'miniGroup:id,name']), 'playerProfile' => fn ($q) => $q->select(['id', 'user_id', 'views_count'])->withCount('likes')])->withCount('receivedLikes')
             ->orderBy('name')
         )->paginate(15);
 
-        $editing = $this->showModal && $this->editingId ? User::find($this->editingId) : null;
+        $editing = $this->showModal && $this->editingId ? User::with(['children.team', 'children.miniGroup'])->find($this->editingId) : null;
+        $showChildren = $editing && ($editing->children->isNotEmpty() || in_array(UserRole::Parent->value, $this->selectedRoles, true));
 
         return view('livewire.admin.user-manager', $this->overrideViewData($editing) + [
             'editingUser' => $editing,
+            'childOptions' => $showChildren ? Player::managedBy(Auth::user())->where('is_active', true)->whereNotIn('id', $editing->children->pluck('id'))
+                ->with(['team', 'miniGroup'])->orderBy('last_name')->orderBy('first_name')->get()
+                ->map(fn (Player $player) => ['value' => (string) $player->id, 'label' => $player->full_name.($player->jersey_number ? ' #'.$player->jersey_number : ''), 'group' => ParentAssignment::groupLabel($player) ?? 'Bez drużyny'])
+                ->sortBy('group')->values()->all() : [],
+            'showChildren' => $showChildren,
             'users' => $users,
             'roleOptions' => UserRole::cases(),
             'statusOptions' => AccountStatus::cases(),

@@ -29,6 +29,9 @@
                     <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                         {{ $user->name }}
                         <span class="block text-xs font-normal text-zinc-500">{{ $user->email }}</span>
+                        @if($user->children->isNotEmpty())
+                            <span class="mt-0.5 block max-w-64 truncate text-xs font-normal text-emerald-700" title="{{ $user->children->map(fn ($child) => $child->full_name.(($group = \App\Livewire\Admin\ParentAssignment::groupLabel($child)) ? ' ('.$group.')' : ''))->implode(', ') }}">👪 {{ $user->children->pluck('full_name')->implode(', ') }}</span>
+                        @endif
                         @if($user->activatedBy)
                             <span class="block text-xs font-normal text-gray-400">aktywował(a): {{ $user->activatedBy->name }}</span>
                         @endif
@@ -198,6 +201,28 @@
                                 @error('selectedRoles') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                 @error('selectedRoles.*') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </fieldset>
+
+                            @if($showChildren)
+                                {{-- Dzieci rodzica: podgląd, odpięcie i przypisanie kolejnego (zapisuje się od razu) --}}
+                                <div class="rounded-md border border-emerald-200 bg-emerald-50/40 p-3">
+                                    <p class="text-sm font-medium text-gray-700">Dzieci przypisane do konta</p>
+                                    <ul class="mt-2 space-y-1">
+                                        @forelse($editingUser->children as $child)
+                                            <li class="flex items-center justify-between gap-2 rounded-md bg-white px-2 py-1.5 text-sm ring-1 ring-gray-200" wire:key="user-child-{{ $child->id }}">
+                                                <a href="{{ route('admin.players.index', ['edytuj' => $child->id]) }}" class="min-w-0 truncate font-medium text-gray-900 hover:text-sky-700 hover:underline">{{ $child->full_name }}@if($group = \App\Livewire\Admin\ParentAssignment::groupLabel($child))<span class="font-normal text-gray-500"> · {{ $group }}</span>@endif</a>
+                                                <button type="button" wire:click="removeChild({{ $child->id }})" wire:confirm="Odpiąć {{ $child->full_name }} od tego konta?" class="shrink-0 rounded px-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600" title="Odepnij" aria-label="Odepnij {{ $child->full_name }}">✕</button>
+                                            </li>
+                                        @empty
+                                            <li class="text-xs text-gray-500">Nie ma jeszcze przypisanego dziecka.</li>
+                                        @endforelse
+                                    </ul>
+                                    <div class="mt-2 flex flex-wrap gap-2">
+                                        <x-search-select model="childToAdd" class="min-w-0 flex-1" empty="— wybierz dziecko —" placeholder="Szukaj zawodnika lub dziecka z mini…" :options="$childOptions" />
+                                        <button type="button" wire:click="addChild" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-gray-300 hover:bg-gray-50">Przypisz</button>
+                                    </div>
+                                    <p class="mt-1 text-xs text-gray-500">Przypisanie i odpięcie zapisują się od razu. Konto czekające na aktywację zacznie działać jako rodzic.</p>
+                                </div>
+                            @endif
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>

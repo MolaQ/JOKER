@@ -364,3 +364,36 @@ test('adding a waiting account as a guardian in the child profile activates it a
         ->and($rejected->fresh()->is_active)->toBeFalse();
     Notification::assertSentTo($mother, AccountActivated::class);
 });
+
+test('the account editor shows the parent children and assigns another child at once', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $first = Player::factory()->create(['team_id' => $this->team->id, 'first_name' => 'Tymon', 'last_name' => 'Malinowski']);
+    $second = Player::factory()->create(['team_id' => $this->team->id, 'first_name' => 'Hanna', 'last_name' => 'Malinowska']);
+    $mother = User::factory()->inactive()->create(['name' => 'Marta Malinowska']);
+    $mother->children()->attach($first->id);
+
+    Livewire::test(UserManager::class)->set('search', 'Tymon')->assertSee('Marta Malinowska')->assertSee('👪 Tymon Malinowski');
+
+    Livewire::test(UserManager::class)->call('openEditModal', $mother->id)
+        ->assertSee('Dzieci przypisane do konta')->assertSee(route('admin.players.index', ['edytuj' => $first->id]), false)
+        ->set('childToAdd', (string) $second->id)->call('addChild')
+        ->assertSee('Hanna Malinowska')->assertSet('is_active', true)
+        ->call('removeChild', $first->id);
+
+    expect($mother->fresh()->children->pluck('id')->all())->toBe([$second->id])
+        ->and($mother->fresh()->is_active)->toBeTrue()
+        ->and($mother->fresh()->hasRole(UserRole::Parent))->toBeTrue();
+});
+
+test('the player editor lists waiting parents with their children and finds players by parent', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $player = Player::factory()->create(['team_id' => $this->team->id, 'last_name' => 'Nowicki']);
+    $waiting = User::factory()->inactive()->create(['name' => 'Marcin Nowicki', 'requested_role' => UserRole::Parent]);
+    $parent = User::factory()->create(['name' => 'Ewa Kowal', 'role' => UserRole::Parent]);
+    $parent->children()->attach($player->id);
+
+    Livewire::test(PlayerManager::class)->set('search', 'Ewa Kowal')->assertSee('Nowicki');
+    Livewire::withQueryParams(['edytuj' => $player->id])->test(PlayerManager::class)
+        ->assertSet('editingId', $player->id)
+        ->assertSee('Marcin Nowicki')->assertSee('czeka na aktywację')->assertSee('Szukaj rodzica');
+});

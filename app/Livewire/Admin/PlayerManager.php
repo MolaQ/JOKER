@@ -354,6 +354,16 @@ class PlayerManager extends Component
         $this->showModal = true;
     }
 
+    /**
+     * Link „?edytuj=ID” (np. z listy dzieci w edycji konta rodzica) otwiera od razu edycję zawodnika.
+     */
+    public function mount(): void
+    {
+        if (ctype_digit((string) request()->query('edytuj')) && Player::managedBy(Auth::user())->whereKey((int) request()->query('edytuj'))->exists()) {
+            $this->openEditModal((int) request()->query('edytuj'));
+        }
+    }
+
     public function openEditModal(int $id): void
     {
         $player = Player::managedBy(Auth::user())->findOrFail($id);
@@ -675,6 +685,8 @@ class PlayerManager extends Component
                 ->orWhere('last_name', 'like', "%{$search}%")
                 ->orWhereRaw((DB::getDriverName() === 'sqlite' ? "first_name || ' ' || last_name" : "CONCAT(first_name, ' ', last_name)").' like ?', ["%{$search}%"])
                 ->when(preg_match('/^#?(\d{1,2})$/', $search, $number), fn ($q3) => $q3->orWhere('jersey_number', (int) $number[1]))
+                // także po rodzicu: imię, nazwisko albo e-mail
+                ->orWhereHas('guardians', fn ($guardian) => $guardian->where('users.name', 'like', "%{$search}%")->orWhere('users.email', 'like', "%{$search}%"))
             ));
         $this->applyFilters($base);
 
@@ -715,7 +727,13 @@ class PlayerManager extends Component
             'playerAccounts' => $this->showModal ? User::withRole(UserRole::Player)->orderBy('name')->get(['id', 'name', 'email']) : collect(),
             'socialPlatforms' => app(SiteSettings::class)->playerSocialPlatforms(),
             'linkedAccount' => $this->showModal && $this->user_id ? User::find($this->user_id) : null,
-            'parentAccounts' => $this->showModal ? User::withRole(UserRole::Parent)->orderBy('name')->get(['id', 'name', 'email']) : collect(),
+            // Rodzice do wyboru: konta z rolą Rodzic i konta czekające na aktywację jako rodzic; zaznaczeni na górze.
+            'parentAccounts' => $this->showModal ? User::query()
+                ->where(fn ($query) => $query->withRole(UserRole::Parent)
+                    ->orWhere(fn ($waiting) => $waiting->where('requested_role', UserRole::Parent->value)->where('is_active', false)->whereNull('rejected_at')->whereNull('disabled_at')->whereNull('anonymized_at'))
+                    ->orWhereIn('id', $this->guardian_ids))
+                ->with('children:id,first_name,last_name')->orderBy('name')->get(['id', 'name', 'email', 'is_active'])
+                ->sortBy(fn (User $account) => in_array((string) $account->id, array_map('strval', $this->guardian_ids), true) ? 0 : 1)->values() : collect(),
         ]);
     }
 }

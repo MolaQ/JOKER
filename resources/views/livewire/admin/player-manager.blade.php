@@ -8,7 +8,7 @@
                 <input
                     type="search"
                     wire:model.live.debounce.300ms="search"
-                    placeholder="Szukaj: nazwisko, imię albo numer (np. 7)"
+                    placeholder="Szukaj: nazwisko, imię, numer (np. 7) albo rodzic"
                     class="w-full rounded-xl border-zinc-200 bg-zinc-50 py-2.5 pl-9 text-sm focus:bg-white"
                 >
             </label>
@@ -368,16 +368,28 @@
                                         @endif
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700">Rodzice (może być kilku)</label>
-                                        <div class="mt-1 max-h-28 space-y-1 overflow-y-auto rounded-md border border-gray-200 p-2">
-                                            @forelse($parentAccounts as $account)
-                                                <label class="flex items-center text-sm text-gray-700" wire:key="guardian-{{ $account->id }}">
-                                                    <input type="checkbox" wire:model="guardian_ids" value="{{ $account->id }}" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500 mr-2">
-                                                    {{ $account->name }}
-                                                </label>
-                                            @empty
-                                                <p class="text-xs text-gray-500">Brak kont z rolą „Rodzic”.</p>
-                                            @endforelse
+                                        <label class="block text-sm font-medium text-gray-700" for="guardian-search">Rodzice (może być kilku)</label>
+                                        @php($guardianSearch = $parentAccounts->mapWithKeys(fn ($account) => [$account->id => \Illuminate\Support\Str::lower(\Illuminate\Support\Str::ascii($account->name.' '.$account->email.' '.$account->children->map(fn ($child) => $child->first_name.' '.$child->last_name)->implode(' ')))]))
+                                        <div x-data="{ q: '', m(text) { return this.q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ł/g, 'l').split(/\s+/).filter(Boolean).every((word) => text.includes(word)) } }">
+                                            @if($parentAccounts->isNotEmpty())
+                                                <input id="guardian-search" type="search" x-model="q" placeholder="Szukaj rodzica: imię, e-mail albo dziecko…" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500" autocomplete="off">
+                                            @endif
+                                            <div class="mt-1 max-h-56 space-y-0.5 overflow-y-auto rounded-md border border-gray-200 p-1.5">
+                                                @forelse($parentAccounts as $account)
+                                                    <label class="flex cursor-pointer items-start gap-2 rounded px-1.5 py-1 text-sm text-gray-700 hover:bg-gray-50" wire:key="guardian-{{ $account->id }}"
+                                                           x-show="m(@js($guardianSearch[$account->id]))">
+                                                        <input type="checkbox" wire:model="guardian_ids" value="{{ $account->id }}" class="mt-0.5 rounded border-gray-300 text-sky-700 focus:ring-sky-500">
+                                                        <span class="min-w-0">
+                                                            <span class="font-medium text-gray-900">{{ $account->name }}</span>
+                                                            @unless($account->is_active)<span class="ml-1 rounded bg-amber-50 px-1.5 text-[11px] font-semibold text-amber-800 ring-1 ring-amber-200">czeka na aktywację</span>@endunless
+                                                            <span class="block truncate text-xs text-gray-500">{{ $account->email }}@if($account->children->isNotEmpty()) · 👪 {{ $account->children->map(fn ($child) => $child->first_name.' '.$child->last_name)->implode(', ') }}@endif</span>
+                                                        </span>
+                                                    </label>
+                                                @empty
+                                                    <p class="text-xs text-gray-500">Brak kont z rolą „Rodzic”.</p>
+                                                @endforelse
+                                                <p x-cloak x-show="q && ! @js($guardianSearch->values()).some((text) => m(text))" class="px-1.5 py-1 text-xs text-gray-500">Nikt nie pasuje. Dodaj rodzica po e-mailu poniżej.</p>
+                                            </div>
                                         </div>
                                         <div class="mt-2 space-y-2">
                                             @foreach($new_guardians as $index => $guardian)
