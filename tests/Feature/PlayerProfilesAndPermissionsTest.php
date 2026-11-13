@@ -15,6 +15,7 @@ use App\Models\Season;
 use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\User;
+use App\Notifications\AccountActivated;
 use App\Notifications\ClubAccountCreated;
 use App\Permission;
 use App\Support\Approvals;
@@ -342,4 +343,24 @@ test('individual awards from club tournaments and from other events show on the 
     // Usunięte wyróżnienie w turnieju znika też z profilu.
     $tournamentAward->delete();
     expect($player->awards()->pluck('name')->all())->toBe(['MVP turnieju']);
+});
+
+test('adding a waiting account as a guardian in the child profile activates it as a parent', function () {
+    Notification::fake();
+    $this->actingAs(User::factory()->admin()->create());
+    $player = Player::factory()->create(['team_id' => $this->team->id]);
+    $mother = User::factory()->inactive()->create(['name' => 'Jolanta Testowa']);
+    $rejected = User::factory()->inactive()->create(['rejected_at' => now()]);
+
+    Livewire::test(UserManager::class)->call('openEditModal', $mother->id)->assertSee('Nadanie roli go nie włącza');
+
+    Livewire::test(PlayerManager::class)
+        ->call('openEditModal', $player->id)
+        ->set('guardian_ids', [(string) $mother->id, (string) $rejected->id])
+        ->call('save')->assertHasNoErrors()->assertDispatched('toast');
+
+    expect($mother->fresh()->is_active)->toBeTrue()
+        ->and($mother->fresh()->hasRole(UserRole::Parent))->toBeTrue()
+        ->and($rejected->fresh()->is_active)->toBeFalse();
+    Notification::assertSentTo($mother, AccountActivated::class);
 });

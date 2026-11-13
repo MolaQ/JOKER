@@ -11,9 +11,11 @@ use App\Models\PlayerAward;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\User;
+use App\Notifications\AccountActivated;
 use App\PlayerPosition;
 use App\Support\ClubAccounts;
 use App\Support\PlayerMerge;
+use App\Support\SafeMail;
 use App\Support\SiteSettings;
 use App\Support\Trash;
 use App\UserRole;
@@ -431,7 +433,20 @@ class PlayerManager extends Component
             $this->toast('Zawodnik został dodany.');
         }
 
-        $player->guardians()->sync($guardianIds);
+        $attached = $player->guardians()->sync($guardianIds)['attached'];
+
+        // Dopisanie rodzica w profilu dziecka to potwierdzenie przez klub: konto czekające na aktywację zaczyna działać.
+        $waiting = User::whereKey($attached)->where('is_active', false)->whereNull('activated_at')
+            ->whereNull('rejected_at')->whereNull('disabled_at')->whereNull('anonymized_at')->get();
+
+        foreach ($waiting as $guardian) {
+            $guardian->activate(UserRole::Parent);
+            SafeMail::notify($guardian, new AccountActivated);
+        }
+
+        if ($waiting->isNotEmpty()) {
+            $this->toast('Aktywowano konto rodzica: '.$waiting->pluck('name')->implode(', ').'. Dostał(a) e-mail, że konto działa.');
+        }
 
         if ($accountEmail !== '' && ! $player->user_id) {
             ClubAccounts::connectPlayer($player, $accountEmail);

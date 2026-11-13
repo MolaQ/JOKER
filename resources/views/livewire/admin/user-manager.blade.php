@@ -153,6 +153,9 @@
                                 <input type="checkbox" wire:model="is_active" class="rounded border-gray-300 text-sky-700">
                                 Konto aktywne (może się logować i korzystać z uprawnień)
                             </label>
+                            @if($editingId && ! $is_active)
+                                <p class="-mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-200">Konto jest nieaktywne. Nadanie roli go nie włącza: zaznacz „Konto aktywne” i zapisz. Rodzica najszybciej aktywujesz w „Do zatwierdzenia → Rodzice do przypisania”.</p>
+                            @endif
                             @error('is_active') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
 
                             <fieldset>
