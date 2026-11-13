@@ -45,7 +45,35 @@
         <div class="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-zinc-200 pt-6">
             <p class="text-sm text-zinc-500">{{ app()->getLocale() === 'en' ? number_format($article->views_count).' '.($article->views_count === 1 ? 'view' : 'views') : number_format($article->views_count, 0, ',', ' ').' wyświetleń' }}</p>
             <div class="flex items-center gap-2">
-                @if($article->allow_comments)
+                {{-- Relacja z turnieju minisiatkówki: film z YouTube i zatwierdzone zdjęcia z turnieju --}}
+@if($miniTrip = $article->miniTrip)
+    @php
+        $miniStreams = $miniTrip->normalizedStreams();
+        $miniGalleries = $miniTrip->publishedGalleries()->with('photos')->get()->filter(fn ($gallery) => $gallery->photos->isNotEmpty());
+    @endphp
+    @if(count($miniStreams) || $miniGalleries->isNotEmpty())
+        <section class="container-site max-w-3xl space-y-10 pb-14" aria-label="{{ __('Film i zdjęcia z turnieju') }}">
+            <div class="flex flex-wrap items-end justify-between gap-3 border-t border-zinc-200 pt-10">
+                <div>
+                    <p class="eyebrow">{{ __('Minisiatkówka') }} · {{ $miniTrip->dateLabel() }}</p>
+                    <h2 class="heading-md mt-2">{{ $miniTrip->title }}</h2>
+                </div>
+                <a href="{{ $miniTrip->url() }}" class="text-sm font-semibold text-sky-club-dark hover:underline">{{ __('Turniej na stronie grupy') }} →</a>
+            </div>
+            @if(count($miniStreams))
+                <div>
+                    <h3 class="mb-4 text-sm font-semibold tracking-widest text-zinc-500 uppercase">▶ {{ __('Film') }}</h3>
+                    <x-match-streams :streams="$miniStreams" :report="\App\Support\LinkReports::keyFor($miniTrip)" />
+                </div>
+            @endif
+            @foreach($miniGalleries as $gallery)
+                <x-match-gallery :gallery="$gallery" :limit="8" id="galeria-{{ $gallery->id }}" />
+            @endforeach
+        </section>
+    @endif
+@endif
+
+@if($article->allow_comments)
                     <a href="#komentarze"><x-comment-count :count="$article->approvedComments->count()" /></a>
                 @endif
                 @livewire('like-button', ['type' => 'article', 'id' => $article->id], key('article-like-'.$article->id))
@@ -86,7 +114,7 @@
             @if(count($gameStreams))
                 <div>
                     <h3 class="mb-4 text-sm font-semibold tracking-widest text-zinc-500 uppercase">▶ {{ __('Transmisja') }}</h3>
-                    <x-match-streams :streams="$gameStreams" />
+                    <x-match-streams :streams="$gameStreams" :report="\App\Support\LinkReports::keyFor($game)" />
                 </div>
             @endif
             @foreach($gameGalleries as $gallery)

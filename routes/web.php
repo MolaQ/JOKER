@@ -34,6 +34,7 @@ use App\Http\Controllers\TrainerController;
 use App\Livewire\MiniSubmissions;
 use App\Models\Tournament;
 use App\Support\LegacyUrls;
+use App\Support\LinkReports;
 use App\Support\Mentions;
 use App\Support\Slug;
 use Illuminate\Http\Request;
@@ -63,7 +64,7 @@ Route::get('/galleries', [GalleryController::class, 'index'])->name('galleries.i
 Route::get('/galleries/{gallery}', [GalleryController::class, 'show'])->where('gallery', Slug::ROUTE_PATTERN)->name('galleries.show');
 Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');
 Route::get('/minisiatkowka', [MiniVolleyballController::class, 'index'])->name('mini.index');
-Route::get('/minisiatkowka/oznaczenia.json', fn () => MiniSubmissions::canSubmit() ? response()->json(Mentions::miniSuggestions()) : abort(403))->middleware('auth')->name('mini.mentions');
+Route::get('/minisiatkowka/oznaczenia.json', fn () => MiniSubmissions::canReport() ? response()->json(Mentions::miniSuggestions()) : abort(403))->middleware('auth')->name('mini.mentions');
 Route::get('/minisiatkowka/{miniGroup}', [MiniVolleyballController::class, 'show'])->name('mini.show');
 Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');
 
@@ -97,6 +98,10 @@ Route::post('/matches/{game}/comments', [GameController::class, 'storeComment'])
 Route::get('/search', [SearchController::class, 'index'])->name('search');
 
 // Ekran wpisywania wyników co kilka minut odświeża sesję, żeby wpisujący nie został wylogowany między meczami.
+// Dyskretna ikonka przy filmie lub transmisji: zalogowana osoba zgłasza, że link nie działa.
+Route::post('/zglos-link', fn (Request $request) => LinkReports::report($request->user(), (string) $request->input('key'), (string) $request->input('url'))
+    ? response()->json(['message' => __('Dziękujemy! Administrator sprawdzi ten link.')])
+    : response()->json(['message' => __('Tego linku już tu nie ma.')], 422))->middleware(['auth', 'throttle:10,1'])->name('links.report');
 Route::get('/keepalive', fn () => response()->noContent())->middleware('auth')->name('keepalive');
 Route::get('/search/index.json', [SearchController::class, 'data'])->name('search.data');
 

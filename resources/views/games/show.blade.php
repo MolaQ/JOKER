@@ -103,7 +103,7 @@
         <section id="transmisja" class="scroll-mt-32">
             <p class="eyebrow">{{ __('Wideo') }}</p>
             <h2 class="heading-lg mt-3">{{ __('Transmisja') }}</h2>
-            <x-match-streams :streams="$streams" class="mt-6" />
+            <x-match-streams :streams="$streams" :report="\App\Support\LinkReports::keyFor($game)" class="mt-6" />
         </section>
     @endif
 

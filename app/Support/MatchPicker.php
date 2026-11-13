@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Game;
+use App\Models\MiniTrip;
 use App\Models\TournamentMatch;
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class MatchPicker
 {
-    public const TYPES = ['game' => Game::class, 'tournament_match' => TournamentMatch::class];
+    public const TYPES = ['game' => Game::class, 'tournament_match' => TournamentMatch::class, 'mini_trip' => MiniTrip::class];
 
     /**
      * Mecze z ostatnich tygodni i najbliższych dni, pogrupowane na ligowe i turniejowe.

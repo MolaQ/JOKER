@@ -20,18 +20,35 @@
 
                 <div class="min-w-0 text-sm">
                     @if($proposal->match)
-                        <p class="text-gray-600">Mecz: <span class="font-medium text-gray-900">{{ $proposal->match->mediaLabel() }}</span></p>
+                        <p class="text-gray-600">{{ $proposal->match instanceof \App\Models\MiniTrip ? 'Turniej' : 'Mecz' }}: <span class="font-medium text-gray-900">{{ $proposal->match->mediaLabel() }}</span></p>
                     @endif
                     @if($proposal->title)<p class="mt-1 text-base font-semibold text-gray-900">{{ $proposal->title }}</p>@endif
                     @if($proposal->excerpt)<div class="mt-1 font-medium text-gray-800 [&_p]:mb-1">{!! \App\Support\MessageHtml::render($proposal->excerpt) !!}</div>@endif
                     @if($proposal->content)<div class="mt-1 max-h-48 overflow-y-auto text-gray-700 [&_p]:mb-2 {{ \App\Support\MessageHtml::isHtml($proposal->content) ? '' : 'whitespace-pre-line' }}">{!! \App\Support\MessageHtml::render($proposal->content) !!}</div>@endif
                     @if($proposal->url)<a href="{{ $proposal->url }}" target="_blank" rel="noopener" class="mt-1 block break-all text-sky-700 underline">{{ $proposal->url }}</a>@endif
                     @if($proposal->files)
+                        @php($selectable = $proposal->status === 'pending' && $proposal->type === 'photos' && count($proposal->files) > 1)
+                        @php($skip = $skipped[$proposal->id] ?? [])
+                        @if($selectable)
+                            <p class="mt-2 flex flex-wrap items-center gap-x-3 text-xs text-gray-500">
+                                <span>Kliknij zdjęcie, żeby je pominąć. Do galerii trafią zaznaczone: <strong class="text-gray-800">{{ count($proposal->files) - count($skip) }} z {{ count($proposal->files) }}</strong>.</span>
+                                <button type="button" wire:click="setAllPhotos({{ $proposal->id }}, true)" class="font-semibold text-sky-700 hover:underline">Zaznacz wszystkie</button>
+                                <button type="button" wire:click="setAllPhotos({{ $proposal->id }}, false)" class="font-semibold text-sky-700 hover:underline">Odznacz wszystkie</button>
+                            </p>
+                        @endif
                         <div class="mt-2 flex flex-wrap gap-2">
-                            @foreach($proposal->files as $path)
-                                <a href="{{ \App\Support\Media::url($path) }}" target="_blank" class="block h-20 w-20 overflow-hidden rounded-md bg-gray-100">
-                                    <img src="{{ \App\Support\Media::url($path) }}" alt="" class="h-full w-full object-cover" loading="lazy">
-                                </a>
+                            @foreach($proposal->files as $index => $path)
+                                @if($selectable)
+                                    <button type="button" wire:click="toggleSkip({{ $proposal->id }}, {{ $index }})" aria-pressed="{{ in_array($index, $skip, true) ? 'false' : 'true' }}" title="{{ in_array($index, $skip, true) ? 'Pominięte: kliknij, żeby dodać' : 'Zaznaczone: kliknij, żeby pominąć' }}"
+                                            @class(['relative block h-24 w-24 overflow-hidden rounded-md bg-gray-100 ring-2 transition', 'ring-green-500' => ! in_array($index, $skip, true), 'opacity-40 ring-transparent grayscale' => in_array($index, $skip, true)])>
+                                        <img src="{{ \App\Support\Media::url($path) }}" alt="" class="h-full w-full object-cover" loading="lazy">
+                                        <span @class(['absolute top-1 right-1 flex size-5 items-center justify-center rounded-full text-[11px] font-bold', 'bg-green-500 text-white' => ! in_array($index, $skip, true), 'bg-white/90 text-gray-500 ring-1 ring-gray-300' => in_array($index, $skip, true)])>{{ in_array($index, $skip, true) ? '' : '✓' }}</span>
+                                    </button>
+                                @else
+                                    <a href="{{ \App\Support\Media::url($path) }}" target="_blank" class="block h-20 w-20 overflow-hidden rounded-md bg-gray-100">
+                                        <img src="{{ \App\Support\Media::url($path) }}" alt="" class="h-full w-full object-cover" loading="lazy">
+                                    </a>
+                                @endif
                             @endforeach
                         </div>
                     @endif
@@ -45,7 +62,7 @@
                             <button type="button" wire:click="approveWithArticle({{ $proposal->id }})" class="mt-2 w-full rounded-md bg-green-600 px-3 py-1.5 font-semibold text-white hover:bg-green-700">Zatwierdź: zdjęcia i artykuł</button>
                         @endif
                         <div class="mt-2 flex flex-wrap gap-2">
-                            <button type="button" wire:click="approve({{ $proposal->id }})" @class(['rounded-md px-3 py-1.5 font-semibold', 'bg-green-600 text-white hover:bg-green-700' => ! $this->canBecomeArticle($proposal), 'text-green-700 ring-1 ring-green-200 hover:bg-green-50' => $this->canBecomeArticle($proposal)])>{{ $this->canBecomeArticle($proposal) ? 'Tylko zdjęcia' : 'Zatwierdź i opublikuj' }}</button>
+                            <button type="button" wire:click="approve({{ $proposal->id }})" @class(['rounded-md px-3 py-1.5 font-semibold', 'bg-green-600 text-white hover:bg-green-700' => ! $this->canBecomeArticle($proposal), 'text-green-700 ring-1 ring-green-200 hover:bg-green-50' => $this->canBecomeArticle($proposal)])>{{ $this->canBecomeArticle($proposal) ? 'Tylko zdjęcia' : ($proposal->type === 'photos' && count($proposal->files ?? []) > 1 ? (empty($skipped[$proposal->id]) ? 'Zatwierdź wszystkie ('.count($proposal->files).')' : 'Zatwierdź wybrane ('.(count($proposal->files) - count($skipped[$proposal->id])).')') : 'Zatwierdź i opublikuj') }}</button>
                             <button type="button" wire:click="reject({{ $proposal->id }})" wire:confirm="Odrzucić tę propozycję?" class="rounded-md px-3 py-1.5 font-semibold text-red-600 ring-1 ring-red-200 hover:bg-red-50">Odrzuć</button>
                         </div>
                     @else

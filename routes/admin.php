@@ -99,6 +99,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     Route::get('/duplicate-players', ApprovalsController::class)->defaults('section', 'duble-zawodnikow')->name('duplicate-players.index');
     Route::get('/comments', ApprovalsController::class)->defaults('section', 'komentarze')->name('comments.index');
     Route::get('/reported-messages', ApprovalsController::class)->defaults('section', 'wiadomosci')->name('reported-messages.index');
+    Route::get('/link-reports', ApprovalsController::class)->defaults('section', 'linki')->name('link-reports.index');
     Route::get('/photo-tags', ApprovalsController::class)->defaults('section', 'oznaczenia')->name('photo-tags.index');
     Route::get('/player-change-requests', ApprovalsController::class)->defaults('section', 'zawodnicy')->name('player-change-requests.index');
     Route::get('/profile-change-requests', ApprovalsController::class)->defaults('section', 'profile')->name('profile-change-requests.index');

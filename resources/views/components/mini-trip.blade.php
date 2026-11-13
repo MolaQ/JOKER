@@ -25,6 +25,15 @@
         @foreach($trip->articles as $article)
             <a href="{{ route('articles.show', $article) }}" class="mt-2 mr-4 inline-block text-sm font-semibold text-sky-club-dark hover:underline">📰 {{ __('Relacja') }}: {{ $article->title }} →</a>
         @endforeach
+        @foreach($trip->publishedGalleries->where('photos_count', '>', 0) as $gallery)
+            <a href="{{ route('galleries.show', $gallery) }}" class="mt-2 mr-4 inline-block text-sm font-semibold text-sky-club-dark hover:underline">📷 {{ __('Zdjęcia') }} ({{ $gallery->photos_count }}) →</a>
+        @endforeach
+        @foreach($trip->normalizedStreams() as $stream)
+            <span class="mt-2 mr-4 inline-flex items-center gap-1 text-sm">
+                <a href="{{ $stream['url'] }}" target="_blank" rel="noopener" class="font-semibold text-sky-club-dark hover:underline">▶ {{ __('Film') }} · {{ $stream['platform_name'] }} ↗</a>
+                <x-link-report :target="\App\Support\LinkReports::keyFor($trip)" :url="$stream['url']" />
+            </span>
+        @endforeach
         @if($share = \App\Support\ShareCards::miniTrip($trip))
             <x-share-card :card="$share" class="mt-3 mr-2" />
         @endif

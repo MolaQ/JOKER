@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasMatchMedia;
 use App\Support\SearchIndex;
 use App\Support\SiteSettings;
 use App\UserRole;
@@ -16,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class MiniTrip extends Model
 {
+    use HasMatchMedia;
+
     protected $fillable = [
         'title',
         'starts_on',

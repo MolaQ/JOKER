@@ -11,6 +11,8 @@ use App\Support\Media;
 use App\Support\MessageHtml;
 use App\Support\MiniResults;
 use App\Support\SiteSettings;
+use App\Support\StreamLink;
+use App\UserRole;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -68,10 +70,23 @@ class MiniSubmissions extends Component
     /** @var TemporaryUploadedFile|null */
     public $reportPhoto = null;
 
+    /** Link do filmu z turnieju (tylko YouTube). */
+    public string $reportVideo = '';
+
+    public string $photosTrip = '';
+
+    /** @var array<int, TemporaryUploadedFile> zdjęcia do galerii turnieju (do zatwierdzenia) */
+    public array $photos = [];
+
     public function mount(?int $groupId = null): void
     {
-        abort_unless(self::canSubmit(), 403);
+        abort_unless(self::canReport(), 403);
         $this->groupId = $groupId;
+
+        if (! self::canSubmit()) {
+            $this->section = 'relacja';
+        }
+
         $this->tripGroups = $groupId ? [(string) $groupId] : [];
         $this->child['group'] = (string) ($groupId ?? '');
     }
@@ -82,6 +97,7 @@ class MiniSubmissions extends Component
      */
     public function saveChild(): void
     {
+        $this->requireFull();
         $data = $this->validate([
             'child.first_name' => 'required|string|max:60',
             'child.last_name' => 'required|string|max:60',
@@ -131,6 +147,7 @@ class MiniSubmissions extends Component
 
     public function editChild(int $id): void
     {
+        $this->requireFull();
         $kid = Player::mini()->where('is_active', true)->findOrFail($id);
         $this->editingChildId = $kid->id;
         $this->childPhoto = null;
@@ -157,6 +174,7 @@ class MiniSubmissions extends Component
 
     public function moveChild(int $id, string $groupId): void
     {
+        $this->requireFull();
         abort_unless(MiniGroup::whereKey($groupId)->exists(), 422);
         Player::mini()->where('is_active', true)->findOrFail($id)->update(['mini_group_id' => (int) $groupId]);
         $this->toast(__('Dziecko przeniesione.'));
@@ -167,6 +185,7 @@ class MiniSubmissions extends Component
      */
     public function retireChild(int $id): void
     {
+        $this->requireFull();
         Player::mini()->where('is_active', true)->findOrFail($id)->update(['is_active' => false]);
         $this->toast(__('Dziecko usunięte z listy grupy. W wynikach dawnych turniejów zostaje.'));
     }
@@ -196,6 +215,36 @@ class MiniSubmissions extends Component
         return (bool) $user?->is_active && ($user->can('mini.submit') || $user->can('mini.manage'));
     }
 
+    /**
+     * Relację i zdjęcia z turnieju mogą zgłosić także rodzice dzieci z minisiatkówki (bez osobnego uprawnienia).
+     */
+    public static function canReport(): bool
+    {
+        return self::canSubmit() || self::isMiniParent();
+    }
+
+    public static function isMiniParent(): bool
+    {
+        $user = Auth::user();
+
+        if (! $user?->is_active || ! $user->hasRole(UserRole::Parent)) {
+            return false;
+        }
+
+        return $user->children()->whereNull('players.team_id')->where('players.is_active', true)
+            ->where(fn ($query) => $query->whereNotNull('players.mini_group_id')
+                ->orWhereExists(fn ($extra) => $extra->selectRaw('1')->from('mini_group_player')->whereColumn('mini_group_player.player_id', 'players.id')))
+            ->exists();
+    }
+
+    /**
+     * Turnieje, składy, wyniki i dzieci: tylko trenerzy i koordynatorzy mini (rodzic zgłasza relację i zdjęcia).
+     */
+    private function requireFull(): void
+    {
+        abort_unless(self::canSubmit(), 403);
+    }
+
     private static function canPublish(): bool
     {
         return (bool) Auth::user()?->can('mini.manage');
@@ -203,6 +252,7 @@ class MiniSubmissions extends Component
 
     public function saveTrip(): void
     {
+        $this->requireFull();
         $data = $this->validate([
             'trip.title' => 'required|string|max:255',
             'trip.starts_on' => 'required|date',
@@ -229,6 +279,7 @@ class MiniSubmissions extends Component
 
     public function updatedResultsTrip(): void
     {
+        $this->requireFull();
         $trip = $this->tripQuery()->find((int) $this->resultsTrip);
         $this->rows = $trip ? MiniResults::rows($trip) : [];
 
@@ -257,6 +308,7 @@ class MiniSubmissions extends Component
 
     public function saveResults(): void
     {
+        $this->requireFull();
         $this->validate([
             'resultsTrip' => 'required',
             'rows' => 'required|array|min:1|max:30',
@@ -294,7 +346,12 @@ class MiniSubmissions extends Component
                 }
             }],
             'reportPhoto' => 'nullable|image|max:10240',
-        ], ['reportTrip.required' => __('Wybierz turniej.')], ['reportTitle' => __('tytuł'), 'reportLead' => __('lead'), 'reportContent' => __('treść')]);
+            'reportVideo' => ['nullable', 'url:http,https', 'max:500', function (string $attribute, mixed $value, \Closure $fail) {
+                if (! StreamLink::youtubeId((string) $value)) {
+                    $fail(__('Wklej link do filmu z YouTube.'));
+                }
+            }],
+        ], ['reportTrip.required' => __('Wybierz turniej.')], ['reportTitle' => __('tytuł'), 'reportLead' => __('lead'), 'reportContent' => __('treść'), 'reportVideo' => __('link do filmu')]);
 
         $trip = $this->tripQuery()->findOrFail((int) $this->reportTrip);
         $lead = MessageHtml::sanitize($this->reportLead);
@@ -307,12 +364,51 @@ class MiniSubmissions extends Component
             'title' => trim($this->reportTitle),
             'excerpt' => trim(strip_tags($lead)) !== '' ? $lead : null,
             'content' => MessageHtml::sanitize($this->reportContent),
+            'url' => trim($this->reportVideo) ?: null,
             'files' => $this->reportPhoto ? [$this->reportPhoto->store('content-proposals', 'public')] : null,
         ]);
 
-        $this->reset('reportTrip', 'reportTitle', 'reportLead', 'reportContent', 'reportPhoto');
-        $this->section = 'przeglad';
+        $this->reset('reportTrip', 'reportTitle', 'reportLead', 'reportContent', 'reportPhoto', 'reportVideo');
+        $this->section = self::canSubmit() ? 'przeglad' : 'relacja';
         $this->toast(__('Dziękujemy! Relacja pojawi się w aktualnościach po zatwierdzeniu.'));
+    }
+
+    /**
+     * Zdjęcia z turnieju do galerii: czekają w „Propozycjach treści”, gdzie można zatwierdzić wszystkie albo wybrane.
+     */
+    public function sendPhotos(): void
+    {
+        $this->validate([
+            'photosTrip' => 'required',
+            'photos' => 'required|array|min:1|max:30',
+            'photos.*' => 'image|max:10240',
+        ], [
+            'photosTrip.required' => __('Wybierz turniej.'),
+            'photos.required' => __('Dodaj co najmniej jedno zdjęcie.'),
+            'photos.max' => __('Naraz można wysłać najwyżej 30 zdjęć.'),
+            'photos.*.image' => __('Każdy plik musi być zdjęciem.'),
+            'photos.*.max' => __('Zdjęcie może mieć najwyżej 10 MB.'),
+        ]);
+
+        $trip = $this->tripQuery()->findOrFail((int) $this->photosTrip);
+
+        ContentProposal::create([
+            'user_id' => Auth::id(),
+            'type' => ContentProposal::TYPE_PHOTOS,
+            'match_type' => $trip->getMorphClass(),
+            'match_id' => $trip->id,
+            'files' => collect($this->photos)->map(fn (TemporaryUploadedFile $photo) => $photo->store('content-proposals', 'public'))->values()->all(),
+        ]);
+
+        $count = count($this->photos);
+        $this->reset('photosTrip', 'photos');
+        $this->toast(trans_choice('Dziękujemy! :count zdjęcie czeka na zatwierdzenie.|Dziękujemy! :count zdjęcia czekają na zatwierdzenie.|Dziękujemy! :count zdjęć czeka na zatwierdzenie.', $count, ['count' => $count]));
+    }
+
+    public function removePhoto(int $index): void
+    {
+        unset($this->photos[$index]);
+        $this->photos = array_values($this->photos);
     }
 
     /**
@@ -352,6 +448,10 @@ class MiniSubmissions extends Component
 
     public function render(): View
     {
+        if (! self::canSubmit() && ! in_array($this->section, ['relacja', 'zdjecia'], true)) {
+            $this->section = 'relacja';
+        }
+
         $groups = MiniGroup::where('is_active', true)->ordered()->with(['players' => fn ($query) => $query->where('is_active', true)])->get()
             // do składu na turniej: dzieci z grupy razem z grającymi w niej dodatkowo
             ->each(fn (MiniGroup $group) => $group->setRelation('squad', $group->members()->where('is_active', true)->get()));
@@ -365,6 +465,7 @@ class MiniSubmissions extends Component
             'selectedTrip' => $this->resultsTrip !== '' ? $trips->firstWhere('id', (int) $this->resultsTrip) : null,
             'overview' => $this->section === 'przeglad' ? $this->overview() : null,
             'publishes' => self::canPublish(),
+            'full' => self::canSubmit(),
         ]);
     }
 }

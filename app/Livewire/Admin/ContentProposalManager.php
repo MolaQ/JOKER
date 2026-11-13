@@ -35,6 +35,46 @@ class ContentProposalManager extends Component
     /** @var array<int, string> Notatki do decyzji, klucz = id propozycji */
     public array $notes = [];
 
+    /** @var array<int, list<int>> Zdjęcia odznaczone przy zatwierdzaniu: id propozycji => numery zdjęć, które nie trafią do galerii */
+    public array $skipped = [];
+
+    public function toggleSkip(int $id, int $index): void
+    {
+        $current = $this->skipped[$id] ?? [];
+        $this->skipped[$id] = in_array($index, $current, true) ? array_values(array_diff($current, [$index])) : [...$current, $index];
+    }
+
+    public function setAllPhotos(int $id, bool $selected): void
+    {
+        $proposal = ContentProposal::pending()->findOrFail($id);
+        $this->skipped[$id] = $selected ? [] : array_keys($proposal->files ?? []);
+    }
+
+    /**
+     * Zostawia w propozycji zdjęć tylko zaznaczone pliki (odznaczone usuwa). False, gdy nie zaznaczono żadnego.
+     */
+    private function applySelection(ContentProposal $proposal): bool
+    {
+        $skipped = $this->skipped[$proposal->id] ?? [];
+
+        if ($proposal->type !== ContentProposal::TYPE_PHOTOS || $skipped === []) {
+            return true;
+        }
+
+        $files = collect($proposal->files ?? []);
+        $kept = $files->reject(fn (string $path, int $index) => in_array($index, $skipped, true))->values();
+
+        if ($kept->isEmpty()) {
+            return false;
+        }
+
+        $files->diff($kept)->each(fn (string $path) => Storage::disk('public')->delete($path));
+        $proposal->files = $kept->all();
+        unset($this->skipped[$proposal->id]);
+
+        return true;
+    }
+
     public function updatingStatusFilter(): void
     {
         $this->resetPage();
@@ -43,6 +83,12 @@ class ContentProposalManager extends Component
     public function approve(int $id): void
     {
         $proposal = ContentProposal::pending()->with(['match', 'user'])->findOrFail($id);
+
+        if (! $this->applySelection($proposal)) {
+            $this->toast('Zaznacz co najmniej jedno zdjęcie albo odrzuć propozycję.', 'error');
+
+            return;
+        }
 
         DB::transaction(function () use ($proposal) {
             $result = match ($proposal->type) {
@@ -68,6 +114,12 @@ class ContentProposalManager extends Component
     {
         $proposal = ContentProposal::pending()->with(['match', 'user'])->findOrFail($id);
         abort_unless($this->canBecomeArticle($proposal), 422);
+
+        if (! $this->applySelection($proposal)) {
+            $this->toast('Zaznacz co najmniej jedno zdjęcie albo odrzuć propozycję.', 'error');
+
+            return;
+        }
 
         DB::transaction(function () use ($proposal) {
             $paths = [];
@@ -145,6 +197,11 @@ class ContentProposalManager extends Component
         $image = collect($proposal->files ?? [])->first();
         $article = $this->createArticle($proposal, $image ? $this->move($image, 'articles') : null, copy: false);
 
+        // Film z relacji (np. turnieju minisiatkówki) trafia do transmisji turnieju i pokazuje się pod artykułem.
+        if (filled($proposal->url) && $proposal->match && method_exists($proposal->match, 'normalizedStreams')) {
+            $this->addStream($proposal);
+        }
+
         return 'artykuł „'.$article->title.'”';
     }
 
@@ -212,7 +269,8 @@ class ContentProposalManager extends Component
 
         /** @var Gallery $gallery */
         $gallery = $match->galleries()->oldest('id')->first() ?? $match->galleries()->create([
-            'title' => 'Zdjęcia: '.$this->matchName($match),
+            'title' => $match instanceof MiniTrip ? 'Zdjęcia: '.$match->title : 'Zdjęcia: '.$this->matchName($match),
+            'event_date' => $match instanceof MiniTrip ? $match->starts_on : null,
             'is_published' => true,
         ]);
 

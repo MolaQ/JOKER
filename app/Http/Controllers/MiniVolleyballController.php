@@ -24,7 +24,7 @@ class MiniVolleyballController extends Controller
 
         return view('mini.index', [
             'groups' => $groups,
-            'upcoming' => MiniTrip::upcoming()->with('teams.group')->limit(6)->get(),
+            'upcoming' => MiniTrip::upcoming()->with(['teams.group', 'publishedGalleries' => fn ($query) => $query->withCount('photos')])->limit(6)->get(),
             'results' => MiniTripTeam::with(['trip', 'group'])->whereHas('trip', fn ($query) => $query->published())->whereNotNull('place')->get()
                 ->sortByDesc(fn (MiniTripTeam $team) => [$team->trip->starts_on, -$team->place])->take(8)->values(),
             'showParentInfo' => MiniTrip::canSeeParentInfo(Auth::user()),
@@ -36,7 +36,7 @@ class MiniVolleyballController extends Controller
         abort_unless(app(SiteSettings::class)['module_mini'] && $miniGroup->is_active, 404);
 
         $trips = MiniTrip::published()->whereHas('teams', fn ($query) => $query->where('mini_group_id', $miniGroup->id))
-            ->with(['teams' => fn ($query) => $query->where('mini_group_id', $miniGroup->id)->with('players'), 'tournament', 'articles'])
+            ->with(['teams' => fn ($query) => $query->where('mini_group_id', $miniGroup->id)->with('players'), 'tournament', 'articles', 'publishedGalleries' => fn ($query) => $query->withCount('photos')])
             ->orderByDesc('starts_on')
             ->get();
 

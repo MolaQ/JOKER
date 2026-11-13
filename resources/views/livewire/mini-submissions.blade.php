@@ -4,7 +4,9 @@
 @endphp
 <div class="mx-auto max-w-3xl">
     <p class="rounded-2xl bg-sky-50 px-4 py-3 text-sm text-sky-950 ring-1 ring-sky-100">
-        @if($publishes)
+        @if(! $full)
+            {{ __('Napisz relację z turnieju albo wyślij zdjęcia do galerii turnieju. Zgłoszenie trafia do zatwierdzenia, a po akceptacji pojawi się w aktualnościach i przy turnieju.') }}
+        @elseif($publishes)
             {{ __('Masz uprawnienie do minisiatkówki: turnieje i wyniki zapisują się od razu. Relacje czekają w „Propozycjach treści”.') }}
         @else
             {{ __('Zgłoszenia trafiają do zatwierdzenia. Na stronie pojawią się, gdy administrator je przejrzy.') }}
@@ -12,7 +14,7 @@
     </p>
 
     <nav class="scrollbar-none mt-6 flex gap-1 overflow-x-auto rounded-2xl bg-zinc-100 p-1" role="tablist">
-        @foreach(['przeglad' => __('Przegląd'), 'turniej' => '＋ '.__('Nowy turniej'), 'wyniki' => __('Skład i wyniki'), 'relacja' => __('Relacja'), 'dzieci' => __('Dzieci')] as $key => $name)
+        @foreach($full ? ['przeglad' => __('Przegląd'), 'turniej' => '＋ '.__('Nowy turniej'), 'wyniki' => __('Skład i wyniki'), 'relacja' => __('Relacja'), 'zdjecia' => __('Zdjęcia'), 'dzieci' => __('Dzieci')] : ['relacja' => __('Relacja'), 'zdjecia' => __('Zdjęcia')] as $key => $name)
             <button type="button" role="tab" aria-selected="{{ $section === $key ? 'true' : 'false' }}" wire:click="$set('section', '{{ $key }}')" @class(['flex-1 shrink-0 rounded-xl px-3 py-2.5 text-sm font-semibold whitespace-nowrap transition', 'bg-white text-zinc-900 shadow' => $section === $key, 'text-zinc-600 hover:text-zinc-900' => $section !== $key])>{{ $name }}</button>
         @endforeach
     </nav>
@@ -251,8 +253,54 @@
                 <x-photo-cropper model="reportPhoto" class="mt-2" aspect="16/10" :width="2000" :pending="$reportPhoto && ! $errors->has('reportPhoto') ? $reportPhoto->temporaryUrl() : null" :label="$reportPhoto ? __('Zmień zdjęcie') : __('Wybierz zdjęcie')" :hint="__('Kadr 16:10 jak w aktualnościach. Przesuń i powiększ zdjęcie, a potem kliknij „Użyj tego kadru”.')" />
                 @error('reportPhoto') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
             </div>
+            <div>
+                <label class="{{ $labelClass }}" for="mini-report-video">{{ __('Film z YouTube (nieobowiązkowy)') }}</label>
+                <input id="mini-report-video" type="url" wire:model="reportVideo" inputmode="url" class="{{ $field }}" placeholder="https://www.youtube.com/watch?v=…">
+                <p class="mt-1 text-xs text-zinc-500">{{ __('Film pokaże się pod relacją i przy turnieju. Więcej zdjęć wyślesz w zakładce „Zdjęcia”.') }}</p>
+                @error('reportVideo') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+            </div>
             <p class="text-xs text-zinc-500">{{ __('Po zatwierdzeniu relacja trafi do aktualności, a przy turnieju na stronie grupy pojawi się link do niej. Dzieci oznaczone przez @ widać tak jak na stronie grupy, bez profilu.') }}</p>
-            <button type="submit" class="btn-primary w-full sm:w-auto">{{ __('Wyślij do zatwierdzenia') }}</button>
+            <button type="submit" class="btn-primary w-full sm:w-auto" wire:loading.attr="disabled">{{ __('Wyślij do zatwierdzenia') }}</button>
+        </form>
+    @endif
+
+    @if($section === 'zdjecia')
+        {{-- Zdjęcia do galerii turnieju: administrator zatwierdza wszystkie albo wybrane --}}
+        <form wire:submit="sendPhotos" class="card mt-6 space-y-5 p-5 sm:p-6">
+            <div>
+                <label class="{{ $labelClass }}" for="mini-photos-trip">{{ __('Turniej') }}</label>
+                <select id="mini-photos-trip" wire:model="photosTrip" class="{{ $field }}">
+                    <option value="">{{ __('wybierz turniej') }}</option>
+                    @foreach($trips as $tripOption)
+                        <option value="{{ $tripOption->id }}">{{ $tripOption->starts_on->format('d.m') }} · {{ $tripOption->title }}{{ $tripOption->city ? ' · '.$tripOption->city : '' }}</option>
+                    @endforeach
+                </select>
+                @error('photosTrip') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <p class="{{ $labelClass }}">{{ __('Zdjęcia (do 30 naraz)') }}</p>
+                <label class="mt-2 flex cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-zinc-300 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-600 transition hover:border-sky-club hover:bg-sky-50">
+                    <span class="text-2xl" aria-hidden="true">📷</span>
+                    <span class="font-semibold text-zinc-800">{{ $photos ? __('Wybierz inne zdjęcia') : __('Wybierz zdjęcia z telefonu lub komputera') }}</span>
+                    <span class="text-xs">{{ __('JPG lub PNG, każde do 10 MB') }}</span>
+                    <input type="file" wire:model="photos" multiple accept="image/*" class="sr-only">
+                </label>
+                <p wire:loading wire:target="photos" class="mt-2 text-sm text-zinc-500">{{ __('Wysyłanie zdjęć...') }}</p>
+                @error('photos') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                @error('photos.*') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                @if($photos && ! $errors->has('photos.*'))
+                    <ul class="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
+                        @foreach($photos as $index => $photo)
+                            <li class="relative" wire:key="mini-photo-{{ $index }}-{{ $photo->getFilename() }}">
+                                <img src="{{ $photo->temporaryUrl() }}" alt="" class="aspect-square w-full rounded-xl object-cover ring-1 ring-zinc-200">
+                                <button type="button" wire:click="removePhoto({{ $index }})" class="absolute top-1 right-1 flex size-7 items-center justify-center rounded-full bg-black/60 text-xs text-white hover:bg-black/80" aria-label="{{ __('Usuń zdjęcie') }}">✕</button>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+            <p class="text-xs text-zinc-500">{{ __('Wysyłaj tylko zdjęcia dzieci, które mają zgodę rodziców na publikację wizerunku. Administrator może zatwierdzić wszystkie zdjęcia albo tylko wybrane; trafią do galerii turnieju.') }}</p>
+            <button type="submit" class="btn-primary w-full sm:w-auto" wire:loading.attr="disabled">{{ __('Wyślij do zatwierdzenia') }}</button>
         </form>
     @endif
     @if($section === 'dzieci')

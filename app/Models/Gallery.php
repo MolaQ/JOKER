@@ -113,6 +113,7 @@ class Gallery extends Model
         return match (true) {
             $this->match instanceof Game => $this->match->game_date,
             $this->match instanceof TournamentMatch => $this->match->starts_at ?? $this->event_date,
+            $this->match instanceof MiniTrip => $this->match->starts_on,
             default => $this->event_date,
         };
     }
@@ -124,6 +125,10 @@ class Gallery extends Model
     {
         if ($this->match instanceof Game) {
             return route('games.show', $this->match);
+        }
+
+        if ($this->match instanceof MiniTrip) {
+            return $this->match->url();
         }
 
         $tournament = $this->match instanceof TournamentMatch ? $this->match->tournament() : null;

@@ -57,7 +57,7 @@
         'wyniki' => [__('Wyniki'), $site['mini_show_results'] && $past->isNotEmpty()],
         'historia' => [__('Historia i sukcesy'), $site['mini_show_history'] && ($medals->isNotEmpty() || filled($group->history))],
         'zasady' => [__('Zasady'), $site['mini_show_rules'] && filled($group->rules)],
-        'zglos' => ['＋ '.__('Turnieje, wyniki, dzieci'), \App\Livewire\MiniSubmissions::canSubmit()],
+        'zglos' => ['＋ '.(\App\Livewire\MiniSubmissions::canSubmit() ? __('Turnieje, wyniki, dzieci') : __('Zgłoś relację')), \App\Livewire\MiniSubmissions::canReport()],
     ])->filter(fn ($tab) => $tab[1]);
 @endphp
 {{-- Grupy jako zakładki: kliknięcie przechodzi do składu, dzieci i zasad danej grupy --}}

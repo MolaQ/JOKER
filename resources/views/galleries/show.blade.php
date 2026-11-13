@@ -14,7 +14,7 @@
     <a href="{{ route('galleries.index') }}" class="text-sm font-semibold text-sky-club-dark hover:underline">← {{ __('Wszystkie galerie') }}</a>
     <p class="eyebrow mt-6">{{ $gallery->displayDate()?->translatedFormat('j F Y') }}@if($gallery->team) · {{ $gallery->team->name }}@endif</p>
     @if($gallery->matchUrl())
-        <p class="mt-3"><a href="{{ $gallery->matchUrl() }}" class="inline-flex items-center gap-2 rounded-full bg-sky-club/10 px-4 py-2 text-sm font-semibold text-sky-club-dark hover:bg-sky-club/20">🏐 {{ __('Mecz') }}: {{ $gallery->match->mediaLabel() }} →</a></p>
+        <p class="mt-3"><a href="{{ $gallery->matchUrl() }}" class="inline-flex items-center gap-2 rounded-full bg-sky-club/10 px-4 py-2 text-sm font-semibold text-sky-club-dark hover:bg-sky-club/20">🏐 {{ $gallery->match instanceof \App\Models\MiniTrip ? __('Turniej') : __('Mecz') }}: {{ $gallery->match->mediaLabel() }} →</a></p>
     @endif
 </section>
 

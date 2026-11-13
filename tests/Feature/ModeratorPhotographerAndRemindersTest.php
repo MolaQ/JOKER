@@ -39,7 +39,7 @@ test('moderator akceptuje konta i komentarze w całym klubie, fotograf zarządza
         ->and($photographer->hasPermission(Permission::Media))->toBeTrue()
         ->and($photographer->hasPermission(Permission::PhotoTags))->toBeTrue()
         ->and($photographer->hasPermission(Permission::Articles))->toBeFalse()
-        ->and(Approvals::sectionsFor($photographer)->keys()->all())->toBe(['oznaczenia']);
+        ->and(Approvals::sectionsFor($photographer)->keys()->all())->toBe(['linki', 'oznaczenia']);
 
     $this->actingAs($photographer)->get('/panel/galleries')->assertOk();
     $this->actingAs($photographer)->get('/panel/articles')->assertForbidden();

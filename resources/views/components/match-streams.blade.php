@@ -1,4 +1,4 @@
-@props(['streams' => []])
+@props(['streams' => [], 'report' => null])
 {{-- Transmisje meczu: YouTube osadzony po kliknięciu (lekka zaślepka), Facebook i inne jako przyciski --}}
 @if(count($streams))
     <div {{ $attributes->merge(['class' => 'space-y-4']) }}>
@@ -18,8 +18,9 @@
                             <span class="absolute bottom-4 left-5 right-5 text-left font-semibold text-white">{{ $stream['label'] }}</span>
                         </button>
                     </div>
-                    <figcaption class="mt-2 text-sm text-zinc-500">
+                    <figcaption class="mt-2 flex items-center gap-1 text-sm text-zinc-500">
                         <a href="{{ $stream['url'] }}" target="_blank" rel="noopener" class="font-semibold text-sky-club-dark hover:underline">{{ __('Otwórz w serwisie :platform', ['platform' => $stream['platform_name']]) }} ↗</a>
+                        @if($report)<x-link-report :target="$report" :url="$stream['url']" />@endif
                     </figcaption>
                 </figure>
             @endif
@@ -27,8 +28,9 @@
 
         @php $links = collect($streams)->whereNull('embed_url'); @endphp
         @if($links->isNotEmpty())
-            <div class="flex flex-wrap gap-3">
+            <div class="flex flex-wrap items-center gap-3">
                 @foreach($links as $stream)
+                    <span class="inline-flex items-center gap-1">
                     <a href="{{ $stream['url'] }}" target="_blank" rel="noopener"
                        @class([
                            'inline-flex min-h-11 items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5',
@@ -40,6 +42,8 @@
                         {{ $stream['label'] }}
                         @if($stream['label'] !== $stream['platform_name'])<span class="font-normal opacity-80">· {{ $stream['platform_name'] }}</span>@endif
                     </a>
+                    @if($report)<x-link-report :target="$report" :url="$stream['url']" />@endif
+                    </span>
                 @endforeach
             </div>
         @endif
