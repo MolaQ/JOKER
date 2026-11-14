@@ -10,8 +10,10 @@ use App\Models\Team;
 use App\Models\User;
 use App\Notifications\AccountActivated;
 use App\UserRole;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
@@ -20,6 +22,18 @@ use Livewire\Livewire;
 beforeEach(function () {
     Notification::fake();
     $this->team = Team::create(['name' => 'Kadeci', 'slug' => 'kadeci', 'category' => 'cadet']);
+});
+
+test('registration still works when the mail server fails, so parents do not register twice', function () {
+    Event::listen(Registered::class, fn () => throw new RuntimeException('Expected response code "235" but got code "535"'));
+
+    $this->post('/register', [
+        'name' => 'Marcin Nowicki', 'email' => 'marcin@example.com', 'password' => 'tajnehaslo1', 'password_confirmation' => 'tajnehaslo1',
+        'kind' => 'parent', 'team_id' => $this->team->id, 'note' => 'Daniel Nowicki', 'privacy' => '1', 'policy' => '1',
+    ])->assertRedirect(route('profile.edit'))->assertSessionHas('success', fn ($message) => str_contains($message, 'nie musisz zakładać konta drugi raz'));
+
+    expect(User::where('email', 'marcin@example.com')->exists())->toBeTrue();
+    $this->assertAuthenticated();
 });
 
 test('a parent registers and waits for activation', function () {

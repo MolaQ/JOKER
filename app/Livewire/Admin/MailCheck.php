@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Support\MailDiagnosis;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
@@ -51,7 +52,7 @@ class MailCheck extends Component
                 : 'Wysłano na '.$user->email.'. Sprawdź skrzynkę, także folder spam.';
         } catch (Throwable $exception) {
             $this->ok = false;
-            $this->result = 'Nie udało się wysłać: '.Str::limit($exception->getMessage(), 300);
+            $this->result = 'Nie udało się wysłać: '.MailDiagnosis::summary($exception->getMessage());
         }
     }
 
@@ -78,7 +79,14 @@ class MailCheck extends Component
 
         return collect($matches)
             ->filter(fn (array $match) => Str::contains($match[2], ['e-mail', 'Mailer', 'mail', 'SMTP', 'Transport'], ignoreCase: true))
-            ->map(fn (array $match) => ['time' => $match[1], 'message' => Str::limit(preg_replace('/\s*\{.*$/', '', $match[2]), 240)])
+            // Właściwy błąd serwera poczty jest w kontekście wpisu („error” w JSON), nie w samym komunikacie.
+            ->map(function (array $match) {
+                $context = json_decode((string) Str::after($match[2], ' {'), true);
+                $context = is_array($context) ? $context : json_decode('{'.Str::after($match[2], ' {'), true);
+                $error = is_array($context) ? (string) ($context['error'] ?? '') : '';
+
+                return ['time' => $match[1], 'message' => Str::limit(preg_replace('/\s*\{.*$/', '', $match[2]), 120).($error !== '' ? ': '.MailDiagnosis::summary($error) : '')];
+            })
             ->reverse()
             ->take($limit)
             ->values()

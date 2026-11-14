@@ -7,6 +7,8 @@ use App\UserRole;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class EmailVerificationController extends Controller
 {
@@ -32,7 +34,13 @@ class EmailVerificationController extends Controller
     public function send(Request $request): RedirectResponse
     {
         if (! $request->user()->hasVerifiedEmail()) {
-            $request->user()->sendEmailVerificationNotification();
+            try {
+                $request->user()->sendEmailVerificationNotification();
+            } catch (Throwable $exception) {
+                Log::error('Nie udało się wysłać e-maila: VerifyEmail', ['to' => $request->user()->email, 'error' => $exception->getMessage()]);
+
+                return back()->with('error', __('Nie udało się teraz wysłać e-maila. Spróbuj później; konto i tak aktywuje klub.'));
+            }
         }
 
         return back()->with('success', __('Wysłaliśmy nowy link potwierdzający.'));

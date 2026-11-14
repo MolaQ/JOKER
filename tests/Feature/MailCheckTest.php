@@ -19,7 +19,17 @@ test('błąd poczty pokazuje się zamiast strony błędu', function () {
 
     Livewire::actingAs($admin)->test(MailCheck::class)->call('sendTest')
         ->assertSet('ok', false)
-        ->assertSee('Connection refused');
+        ->assertSee('Connection refused')->assertSee('MAIL_HOST');
+});
+
+test('wpis z logu pokazuje właściwy błąd serwera poczty i wskazówkę', function () {
+    $log = storage_path('logs/laravel-test-mailcheck2.log');
+    file_put_contents($log, '[2026-11-14 08:00:00] production.ERROR: Nie udało się wysłać e-maila: ContactReply {"to":"x@example.test","error":"Failed to authenticate on SMTP server with username \\"klub@joker.pl\\" using 2 possible authenticators. Authenticator LOGIN returned Expected response code \\"235\\" but got code \\"535\\"."} '."\n");
+    touch($log, time() + 60);
+
+    expect(MailCheck::recentErrors()[0]['message'])->toContain('ContactReply: Failed to authenticate')->toContain('MAIL_PASSWORD');
+
+    unlink($log);
 });
 
 test('ostatnie błędy poczty są czytane z logu', function () {

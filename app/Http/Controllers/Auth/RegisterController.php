@@ -10,9 +10,11 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
+use Throwable;
 
 /**
  * Zakładanie konta. Konto kibica działa po potwierdzeniu e-maila, a konto rodzica,
@@ -67,10 +69,21 @@ class RegisterController extends Controller
             'privacy_consent_at' => now(),
         ]);
 
-        event(new Registered($user));
+        // Gdy poczta na serwerze nie działa, konto i tak zostaje założone: bez tego rodzic widział stronę błędu
+        // i zakładał drugie konto. Błąd trafia do logu (Ustawienia systemu → Poczta).
+        try {
+            event(new Registered($user));
+            $mailed = true;
+        } catch (Throwable $exception) {
+            Log::error('Nie udało się wysłać e-maila: VerifyEmail', ['to' => $user->email, 'error' => $exception->getMessage()]);
+            $mailed = false;
+        }
+
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('profile.edit')->with('success', __('Konto założone. Kliknij link, który wysłaliśmy na Twój e-mail, aby potwierdzić adres.'));
+        return redirect()->route('profile.edit')->with('success', $mailed
+            ? __('Konto założone. Kliknij link, który wysłaliśmy na Twój e-mail, aby potwierdzić adres.')
+            : __('Konto założone. Nie udało się teraz wysłać e-maila z potwierdzeniem, ale nie musisz zakładać konta drugi raz: klub aktywuje je ręcznie.'));
     }
 }

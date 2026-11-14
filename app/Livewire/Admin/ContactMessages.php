@@ -8,6 +8,7 @@ use App\Models\ContactMessage;
 use App\Models\User;
 use App\Notifications\ContactReply;
 use App\Permission;
+use App\Support\MailDiagnosis;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -79,7 +80,7 @@ class ContactMessages extends Component
             Notification::route('mail', [$contact->email => $contact->name])->notify(new ContactReply($contact, $this->replyBody, $me->name));
         } catch (Throwable $exception) {
             Log::error('Nie udało się wysłać e-maila: ContactReply', ['to' => $contact->email, 'error' => $exception->getMessage()]);
-            $this->toast('Nie udało się wysłać odpowiedzi (poczta na serwerze). Sprawdź pocztę w Ustawieniach systemu albo odpowiedz ze swojej skrzynki.', 'error');
+            $this->toast('Nie udało się wysłać odpowiedzi. Błąd poczty: '.MailDiagnosis::summary($exception->getMessage()).' Twoja odpowiedź została w polu: możesz ją skopiować i wysłać „Z mojej poczty”.', 'error');
 
             return;
         }
