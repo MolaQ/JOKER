@@ -285,3 +285,9 @@ test('standings rows with a dotted position and extra columns are still read', f
     expect($tables)->toHaveCount(1)
         ->and($tables[0]['rows'][0])->toMatchArray(['position' => 4, 'name' => 'LOMS Joker Piła', 'played' => 6, 'points' => 8, 'sets_lost' => 14]);
 });
+
+test('source addresses pasted with &amp; still work', function () {
+    $this->competition->update(['source_url' => 'https://sedziowie.pzps.pl/system/index.php?mode=12&amp;type=9']);
+
+    expect($this->competition->sourceUrls())->toBe(['https://sedziowie.pzps.pl/system/index.php?mode=12&type=9']);
+});

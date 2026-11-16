@@ -151,7 +151,8 @@ class Competition extends Model
      */
     public function sourceUrls(): array
     {
-        return collect(preg_split('/\s+/', (string) $this->source_url))
+        // Adres wklejony z kodu strony bywa z „&amp;” zamiast „&”.
+        return collect(preg_split('/\s+/', html_entity_decode((string) $this->source_url)))
             ->filter(fn (string $url) => str_starts_with($url, 'http'))
             ->values()
             ->all();
