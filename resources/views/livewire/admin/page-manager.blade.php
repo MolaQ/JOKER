@@ -65,7 +65,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Treść</label>
-                                <x-rich-text-editor model="content" placeholder="Treść podstrony..." height="min-h-[240px]" />
+                                <x-rich-text-editor mentions model="content" placeholder="Treść podstrony..." height="min-h-[240px]" />
                             </div>
 
                             {{-- Wersja angielska: pokazywana odwiedzającym, którzy wybrali flagę brytyjską --}}
@@ -88,7 +88,7 @@
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700">Treść (EN)</label>
-                                        <x-rich-text-editor model="content_en" placeholder="Page content..." height="min-h-[240px]" />
+                                        <x-rich-text-editor mentions model="content_en" placeholder="Page content..." height="min-h-[240px]" />
                                     </div>
                                 </div>
                             </div>

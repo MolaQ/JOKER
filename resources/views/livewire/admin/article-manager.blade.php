@@ -158,7 +158,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Zajawka (excerpt)</label>
-                                <x-rich-text-editor model="excerpt" placeholder="Krótka zajawka artykułu..." height="min-h-[110px]" />
+                                <x-rich-text-editor mentions model="excerpt" placeholder="Krótka zajawka artykułu..." height="min-h-[110px]" />
                                 @error('excerpt') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
@@ -183,7 +183,7 @@
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700">Zajawka (EN)</label>
-                                        <x-rich-text-editor model="excerpt_en" placeholder="Short article excerpt..." height="min-h-[110px]" />
+                                        <x-rich-text-editor mentions model="excerpt_en" placeholder="Short article excerpt..." height="min-h-[110px]" />
                                         @error('excerpt_en') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                     </div>
                                     <div>

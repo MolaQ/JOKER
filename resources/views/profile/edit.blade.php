@@ -236,7 +236,7 @@
 
             <div>
                 <label class="block text-sm font-medium text-zinc-700">{{ __('Sylwetka (opis na Twoim profilu)') }}</label>
-                <x-rich-text-editor name="additional_info" :value="old('additional_info', (string) $user->additional_info)" placeholder="{{ __('Kilka słów o sobie, widocznych na Twoim profilu w klubie...') }}" height="min-h-[180px]" />
+                <x-rich-text-editor mentions name="additional_info" :value="old('additional_info', (string) $user->additional_info)" placeholder="{{ __('Kilka słów o sobie, widocznych na Twoim profilu w klubie...') }}" height="min-h-[180px]" />
             </div>
 
             <button type="submit" class="rounded-lg bg-ink px-5 py-2 text-white hover:bg-graphite">{{ __('Wyślij propozycję zmian') }}</button>

@@ -160,17 +160,17 @@
             <div>
                 <label class="{{ $label }}">O turnieju</label>
                 <p class="mb-1 text-xs text-gray-500">Pierwsza zakładka na stronie turnieju: historia, idea, patron, organizatorzy. Puste = zakładki nie ma.</p>
-                <x-rich-text-editor model="about" save-on-blur placeholder="Kilka słów o turnieju: historia, patron, organizatorzy..." height="min-h-[180px]" />
+                <x-rich-text-editor mentions model="about" save-on-blur placeholder="Kilka słów o turnieju: historia, patron, organizatorzy..." height="min-h-[180px]" />
             </div>
 
             <div>
                 <label class="{{ $label }}">Zasady i regulamin</label>
-                <x-rich-text-editor model="rules" save-on-blur placeholder="System rozgrywek, punktacja, czas rozgrzewki, piłki..." height="min-h-[180px]" />
+                <x-rich-text-editor mentions model="rules" save-on-blur placeholder="System rozgrywek, punktacja, czas rozgrzewki, piłki..." height="min-h-[180px]" />
             </div>
 
             <div>
                 <label class="{{ $label }}">Informator dla drużyn przyjezdnych i kibiców</label>
-                <x-rich-text-editor model="guest_info" save-on-blur placeholder="Hale i adresy, dojazd i parking, noclegi, wyżywienie, kontakt do organizatora, plan dnia..." height="min-h-[220px]" />
+                <x-rich-text-editor mentions model="guest_info" save-on-blur placeholder="Hale i adresy, dojazd i parking, noclegi, wyżywienie, kontakt do organizatora, plan dnia..." height="min-h-[220px]" />
             </div>
 
             {{-- Dla gości z zagranicy: strona po angielsku pokazuje te teksty; puste pole = tekst polski --}}
@@ -184,15 +184,15 @@
                     </div>
                     <div>
                         <label class="{{ $label }}">About the tournament</label>
-                        <x-rich-text-editor model="about_en" save-on-blur placeholder="History, patron, organisers..." height="min-h-[140px]" />
+                        <x-rich-text-editor mentions model="about_en" save-on-blur placeholder="History, patron, organisers..." height="min-h-[140px]" />
                     </div>
                     <div>
                         <label class="{{ $label }}">Rules</label>
-                        <x-rich-text-editor model="rules_en" save-on-blur placeholder="Format, scoring, warm-up time, balls..." height="min-h-[140px]" />
+                        <x-rich-text-editor mentions model="rules_en" save-on-blur placeholder="Format, scoring, warm-up time, balls..." height="min-h-[140px]" />
                     </div>
                     <div>
                         <label class="{{ $label }}">Guide for visiting teams and fans</label>
-                        <x-rich-text-editor model="guest_info_en" save-on-blur placeholder="Halls and addresses, getting there and parking, accommodation, meals, organiser contact, day plan..." height="min-h-[160px]" />
+                        <x-rich-text-editor mentions model="guest_info_en" save-on-blur placeholder="Halls and addresses, getting there and parking, accommodation, meals, organiser contact, day plan..." height="min-h-[160px]" />
                     </div>
                 </div>
             </details>

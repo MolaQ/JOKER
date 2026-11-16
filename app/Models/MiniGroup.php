@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Support\AgeColors;
 use App\Support\DeadLinks;
 use App\Support\Media;
+use App\Support\Mentions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -93,7 +94,7 @@ class MiniGroup extends Model
         // Linki tylko http(s), mailto i względne; bez atrybutów zdarzeń.
         $clean = preg_replace('/\s+on[a-z]+\s*=\s*("[^"]*"|\'[^\']*\'|[^\s>]+)/i', '', $clean);
 
-        return DeadLinks::strip(preg_replace('/href\s*=\s*(["\'])\s*(?!https?:|mailto:|\/|#)[^"\']*\1/i', 'href="#"', $clean));
+        return Mentions::link(DeadLinks::strip(preg_replace('/href\s*=\s*(["\'])\s*(?!https?:|mailto:|\/|#)[^"\']*\1/i', 'href="#"', $clean)));
     }
 
     /**

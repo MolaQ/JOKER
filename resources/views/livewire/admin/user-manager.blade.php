@@ -287,7 +287,7 @@
                                 @endif
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Sylwetka (opis na stronie)</label>
-                                    <x-rich-text-editor model="additional_info" :live="false" placeholder="Doświadczenie, uprawnienia, osiągnięcia…" height="min-h-[140px]" />
+                                    <x-rich-text-editor mentions model="additional_info" :live="false" placeholder="Doświadczenie, uprawnienia, osiągnięcia…" height="min-h-[140px]" />
                                     @error('additional_info') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                                     @if($editingId && ($profileUser = \App\Models\User::find($editingId))?->isStaffMember())
                                         <a href="{{ route('trainers.show', $profileUser) }}" target="_blank" class="mt-1 inline-block text-xs font-semibold text-sky-700 hover:underline">Zobacz profil na stronie ↗</a>

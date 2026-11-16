@@ -471,7 +471,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Kilka słów o zawodniku</label>
-                                <x-rich-text-editor model="bio" placeholder="Biografia zawodnika..." height="min-h-[170px]" />
+                                <x-rich-text-editor mentions model="bio" placeholder="Biografia zawodnika..." height="min-h-[170px]" />
                                 @error('bio') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 

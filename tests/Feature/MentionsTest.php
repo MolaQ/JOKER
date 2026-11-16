@@ -1,7 +1,9 @@
 <?php
 
 use App\Livewire\Admin\ArticleManager;
+use App\Livewire\Admin\MiniVolleyballManager;
 use App\Models\Article;
+use App\Models\MiniGroup;
 use App\Models\Player;
 use App\Models\Team;
 use App\Models\User;
@@ -75,4 +77,39 @@ it('lets the editor choose the article author or type an outside author', functi
 
     expect($article->fresh()->authorName())->toBe('Jan Gość');
     $this->get(route('articles.show', $article))->assertSee('Jan Gość');
+});
+
+it('gives every logged-in active account the list of people to mention, including mini children', function () {
+    $group = MiniGroup::create(['name' => 'Dwójki testowe', 'players_on_court' => 2]);
+    Player::factory()->create(['first_name' => 'Ania', 'last_name' => 'Majsz', 'team_id' => null, 'mini_group_id' => $group->id]);
+
+    $this->actingAs(User::factory()->create())
+        ->getJson(route('mentions'))
+        ->assertOk()
+        ->assertJsonFragment(['name' => 'Marcel Molak', 'team' => 'Kadeci'])
+        ->assertJsonFragment(['name' => 'Ania Majsz', 'team' => 'Dwójki testowe']);
+
+    $this->actingAs(User::factory()->inactive()->create())->getJson(route('mentions'))->assertForbidden();
+    auth()->logout();
+    $this->getJson(route('mentions'))->assertUnauthorized();
+});
+
+it('turns on mentions in the mini group editors and links them on the group page', function () {
+    $group = MiniGroup::create(['name' => 'Dwójki testowe', 'players_on_court' => 2, 'about' => '<p>Trener @Marcel Molak zaprasza.</p>', 'rules' => '<p>Sędziuje @Marcel Molak.</p>']);
+
+    $this->actingAs(User::factory()->admin()->create());
+    Livewire\Livewire::withQueryParams(['section' => 'grupa', 'group' => $group->id])
+        ->test(MiniVolleyballManager::class)
+        ->assertSee('oznaczenia.json', false)->assertSee('Zasady gry');
+
+    $this->get(route('mini.show', $group))->assertOk()
+        ->assertSee('<a href="'.route('players.show', $this->player, false).'" class="mention">Marcel Molak</a> zaprasza.', false);
+});
+
+it('links mentions in team descriptions and player bios', function () {
+    $this->team->update(['description' => '<p>Trenuje nas @Marcel Molak.</p>']);
+    $this->player->update(['bio' => '<p>Kapitan, kolega @Marcel Molak.</p>']);
+
+    $this->get(route('teams.show', $this->team))->assertOk()->assertSee('class="mention"', false);
+    $this->get(route('players.show', $this->player))->assertOk()->assertSee('class="mention"', false);
 });

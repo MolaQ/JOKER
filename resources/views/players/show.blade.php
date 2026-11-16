@@ -284,7 +284,7 @@
             <div class="card p-8">
                 <h2 class="heading-md">{{ __('O zawodniku') }}</h2>
                 @if($player->bio)
-                    <div class="prose-club mt-5">{!! strip_tags($player->bio, '<p><br><strong><em><b><i><u><s><mark><blockquote><hr><ul><ol><li>') !!}</div>
+                    <div class="prose-club mt-5">{!! \App\Support\Mentions::link(strip_tags($player->bio, '<p><br><strong><em><b><i><u><s><mark><blockquote><hr><ul><ol><li>')) !!}</div>
                 @endif
                 @if($player->interests)
                     <h3 class="mt-6 text-xs font-semibold tracking-widest text-zinc-500 uppercase">{{ __('Zainteresowania') }}</h3>

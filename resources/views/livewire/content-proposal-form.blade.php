@@ -41,14 +41,14 @@
                     <label class="block text-sm font-medium text-zinc-700">{{ __('Wprowadzenie') }} <span class="text-zinc-400">({{ __('opcjonalnie') }})</span></label>
                     <p class="text-xs text-zinc-500">{{ __('Dwa, trzy zdania pod tytułem i na liście aktualności. Puste = początek relacji.') }}</p>
                     <div class="mt-1">
-                        <x-rich-text-editor model="excerpt" :live="false" compact :placeholder="__('Krótko: o co chodzi, jaki wynik, co najważniejsze...')" height="min-h-[90px]" />
+                        <x-rich-text-editor mentions model="excerpt" :live="false" compact :placeholder="__('Krótko: o co chodzi, jaki wynik, co najważniejsze...')" height="min-h-[90px]" />
                     </div>
                     @error('excerpt')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-zinc-700">{{ __('Relacja') }}</label>
                     <div class="mt-1">
-                        <x-rich-text-editor model="content" :live="false" :placeholder="__('Napisz relację, zapowiedź albo ciekawostkę...')" height="min-h-[260px]" />
+                        <x-rich-text-editor mentions model="content" :live="false" :placeholder="__('Napisz relację, zapowiedź albo ciekawostkę...')" height="min-h-[260px]" />
                     </div>
                     @error('content')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>

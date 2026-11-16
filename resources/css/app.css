@@ -177,6 +177,11 @@
         @apply font-semibold text-sky-club-dark underline;
     }
 
+    /* Wzmianka poza treścią artykułu (np. opis drużyny na ciemnym tle) */
+    a.mention {
+        @apply font-semibold underline decoration-sky-club decoration-2 underline-offset-2;
+    }
+
     /* Wzmianka „@Imię Nazwisko” zamieniona w link do profilu zawodnika */
     .prose-club a.mention {
         @apply rounded-md bg-sky-club/10 px-1 no-underline transition hover:bg-sky-club hover:text-white;

@@ -304,7 +304,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Relacja z meczu</label>
-                                <x-rich-text-editor model="match_report" placeholder="Relacja meczowa..." height="min-h-[180px]" />
+                                <x-rich-text-editor mentions model="match_report" placeholder="Relacja meczowa..." height="min-h-[180px]" />
                             </div>
 
                             <div>

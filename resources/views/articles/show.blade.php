@@ -34,7 +34,7 @@
 
         @if($article->localizedExcerpt())
             <div class="mb-10 border-l-4 border-sky-club pl-6 text-xl leading-relaxed font-medium text-zinc-800">
-                {!! strip_tags($article->localizedExcerpt(), '<strong><em><b><i><br>') !!}
+                {!! \App\Support\Mentions::link(strip_tags($article->localizedExcerpt(), '<strong><em><b><i><br>')) !!}
             </div>
         @endif
 

@@ -101,7 +101,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Opis</label>
-                                <x-rich-text-editor model="description" placeholder="Opis drużyny..." height="min-h-[150px]" />
+                                <x-rich-text-editor mentions model="description" placeholder="Opis drużyny..." height="min-h-[150px]" />
                                 @error('description') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 

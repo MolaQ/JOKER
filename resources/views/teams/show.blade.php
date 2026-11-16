@@ -33,7 +33,7 @@
                 @livewire('like-button', ['type' => 'team', 'id' => $team->id, 'dark' => true], key('team-like-'.$team->id))
             </div>
             @if($team->description)
-                <div class="mt-5 max-w-2xl text-lg text-zinc-300">{!! strip_tags($team->description, '<p><br><strong><em><b><i>') !!}</div>
+                <div class="mt-5 max-w-2xl text-lg text-zinc-300">{!! \App\Support\Mentions::link(strip_tags($team->description, '<p><br><strong><em><b><i>')) !!}</div>
             @endif
 
             <dl class="mt-10 flex flex-wrap gap-x-10 gap-y-4">

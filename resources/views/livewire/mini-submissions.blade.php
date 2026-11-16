@@ -240,7 +240,7 @@
                 @error('reportTitle') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
 
                 <p class="mt-5 text-xs font-semibold tracking-wider text-zinc-500 uppercase">{{ __('Lead') }} <span class="font-normal normal-case">· {{ __('2–3 zdania na kafelek w aktualnościach i wstęp artykułu') }}</span></p>
-                <div class="mt-1"><x-rich-text-editor model="reportLead" compact :live="false" placeholder="{{ __('Najważniejsze w skrócie: kto grał, gdzie i z jakim wynikiem.') }}" height="min-h-[80px]" /></div>
+                <div class="mt-1"><x-rich-text-editor model="reportLead" :mentions="route('mini.mentions')" compact :live="false" placeholder="{{ __('Najważniejsze w skrócie: kto grał, gdzie i z jakim wynikiem.') }}" height="min-h-[80px]" /></div>
                 @error('reportLead') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
 
                 <p class="mt-5 text-xs font-semibold tracking-wider text-zinc-500 uppercase">{{ __('Rozwinięcie') }} <span class="font-normal normal-case">· {{ __('wpisz @ i początek imienia, żeby oznaczyć dziecko, rodzica albo trenera') }}</span></p>

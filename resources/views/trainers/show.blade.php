@@ -67,7 +67,7 @@
             <h2 class="heading-md">{{ __('Sylwetka') }}</h2>
             <div class="prose-club mt-5">
                 @if($trainer->additional_info)
-                    {!! strip_tags($trainer->additional_info, '<p><br><strong><em><b><i><ul><ol><li>') !!}
+                    {!! \App\Support\Mentions::link(strip_tags($trainer->additional_info, '<p><br><strong><em><b><i><ul><ol><li>')) !!}
                 @else
                     <p class="text-zinc-500">{{ __('Opis zostanie wkrótce uzupełniony.') }}</p>
                 @endif

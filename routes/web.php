@@ -1,5 +1,6 @@
 <?php
 
+use App\AccountStatus;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\Auth\EmailVerificationController;
@@ -64,6 +65,7 @@ Route::get('/galleries', [GalleryController::class, 'index'])->name('galleries.i
 Route::get('/galleries/{gallery}', [GalleryController::class, 'show'])->where('gallery', Slug::ROUTE_PATTERN)->name('galleries.show');
 Route::get('/teams', [TeamController::class, 'index'])->name('teams.index');
 Route::get('/minisiatkowka', [MiniVolleyballController::class, 'index'])->name('mini.index');
+Route::get('/oznaczenia.json', fn () => auth()->user()->accountStatus() === AccountStatus::Active ? response()->json(Mentions::suggestions()) : abort(403))->middleware('auth')->name('mentions');
 Route::get('/minisiatkowka/oznaczenia.json', fn () => MiniSubmissions::canReport() ? response()->json(Mentions::miniSuggestions()) : abort(403))->middleware('auth')->name('mini.mentions');
 Route::get('/minisiatkowka/{miniGroup}', [MiniVolleyballController::class, 'show'])->name('mini.show');
 Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');

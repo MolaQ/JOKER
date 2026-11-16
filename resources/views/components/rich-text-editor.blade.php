@@ -6,7 +6,7 @@
     'height' => 'min-h-[180px]',
     // Autozapis: treść trafia do Livewire dopiero po wyjściu z edytora, a nie przy każdym znaku.
     'saveOnBlur' => false,
-    // Podpowiedzi „@Imię Nazwisko” (wzmianki zawodników w artykułach); true = lista z panelu, tekst = własny adres listy.
+    // Podpowiedzi „@Imię Nazwisko” (wzmianki zawodników w artykułach); true = zawodnicy, dzieci z minisiatkówki i konta, tekst = własny adres listy.
     'mentions' => false,
     // Krótki pasek (wiadomości): tylko pogrubienie, kursywa, listy, cytat i link.
     'compact' => false,
@@ -58,7 +58,7 @@
 
 <div
     @if($model) wire:ignore @endif
-    x-data="richEditor({ content: {!! $content !!}, placeholder: @js(__($placeholder)), mentions: @js($mentions ? (is_string($mentions) ? $mentions : route('admin.mentions')) : null) })"
+    x-data="richEditor({ content: {!! $content !!}, placeholder: @js(__($placeholder)), mentions: @js($mentions ? (is_string($mentions) ? $mentions : route('mentions')) : null) })"
     @if($model && $saveOnBlur) x-on:focusout="if (! $el.contains($event.relatedTarget)) $nextTick(() => $wire.$commit())" @endif
     class="rich-editor relative rounded-md border border-gray-300 bg-white shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500"
 >

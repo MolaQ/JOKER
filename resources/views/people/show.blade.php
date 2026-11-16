@@ -77,7 +77,7 @@
                 <div class="card p-8">
                     <h2 class="heading-md">{{ __('Sylwetka') }}</h2>
                     <div class="prose-club mt-5">
-                        {!! strip_tags($person->additional_info, '<p><br><strong><em><b><i><ul><ol><li>') !!}
+                        {!! \App\Support\Mentions::link(strip_tags($person->additional_info, '<p><br><strong><em><b><i><ul><ol><li>')) !!}
                     </div>
                 </div>
             @endif

@@ -101,7 +101,7 @@
             @endif
 
             <div class="prose-club" @if(app()->getLocale() === 'en' && blank($page->content_en)) lang="pl" @endif>
-                {!! \App\Support\DeadLinks::strip($page->localizedContent()) !!}
+                {!! \App\Support\Mentions::link(\App\Support\DeadLinks::strip($page->localizedContent())) !!}
             </div>
 
             @if($page->children->isNotEmpty())

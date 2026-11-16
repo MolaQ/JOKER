@@ -29,8 +29,8 @@ class Mentions
      */
     public static function suggestions(): array
     {
-        $players = Player::query()->with('team:id,name')->get(['id', 'first_name', 'last_name', 'team_id', 'is_active'])
-            ->toBase()->map(fn (Player $player) => ['name' => $player->full_name, 'team' => $player->is_active ? $player->team?->name : null]);
+        $players = Player::query()->with(['team:id,name', 'miniGroup:id,name'])->get(['id', 'first_name', 'last_name', 'team_id', 'mini_group_id', 'is_active'])
+            ->toBase()->map(fn (Player $player) => ['name' => $player->full_name, 'team' => $player->is_active ? ($player->team?->name ?? $player->miniGroup?->name) : null]);
 
         $people = User::withAccountStatus(AccountStatus::Active)->with('roleAssignments')->get(['id', 'name'])
             ->toBase()->map(fn (User $user) => ['name' => $user->name, 'team' => $user->rolesLabel() ?: null]);
