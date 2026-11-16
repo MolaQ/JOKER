@@ -133,7 +133,7 @@ if [ -f .env ] && [ -f narzedzia/kopia-na-serwerze.sh ] && [ "$(date +%H)" -ge 3
     bash narzedzia/kopia-na-serwerze.sh
 fi
 
-# Strona zainstalowana i nic nowego nie wgrano: tylko zadania okresowe (terminarze co godzinę 11–21, sprzątanie statystyk).
+# Strona zainstalowana i nic nowego nie wgrano: tylko zadania okresowe (terminarze o 22:30, sprzątanie statystyk).
 if [ -f "$ZNACZNIK" ] && [ "$ZNACZNIK" -nt vendor/autoload.php ] && [ "$ZNACZNIK" -nt .env ] \
     && { [ ! -f "$WERSJA" ] || cmp -s "$WERSJA" "$ZNACZNIK"; }; then
     "$PHPBIN" artisan schedule:run --no-interaction >/dev/null 2>&1

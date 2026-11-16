@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\Schedule;
 
 /*
  * Komendy klubu są w app/Console/Commands (joker:admin, joker:sync-schedules).
- * Terminarz i wyniki odświeżają się co godzinę od 11:00 do 21:00, jeśli na serwerze działa `php artisan schedule:run` z crona (co 2 minuty).
+ * Terminarz i wyniki odświeżają się raz dziennie o 22:30 (wcześniej: przycisk „Pobierz terminarz” w panelu), jeśli na serwerze działa `php artisan schedule:run` z crona (co 2 minuty).
  */
-Schedule::command(SyncSchedules::class)->hourly()->between('11:00', '21:00')->withoutOverlapping();
+Schedule::command(SyncSchedules::class)->dailyAt('22:30')->timezone('Europe/Warsaw')->withoutOverlapping();
 
 // Usuwanie statystyk odwiedzin starszych niż ok. 13 miesięcy.
 Schedule::command('model:prune', ['--model' => [PageView::class]])->daily();

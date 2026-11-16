@@ -35,7 +35,7 @@ z Unsplash (lista i autorzy: `config/media.php`, strona `/zdjecia`). Wgranie wł
 
 ## Uruchomienie (dla informatyka)
 
-Terminarze z rozgrywek z wpisanym adresem odświeżają się same co godzinę od 11:00 do 21:00, jeśli na serwerze działa
+Terminarze z rozgrywek z wpisanym adresem odświeżają się same raz dziennie o 22:30, jeśli na serwerze działa
 cron: `* * * * * cd /sciezka/do/projektu && php artisan schedule:run >> /dev/null 2>&1`.
 Ręcznie: `php artisan joker:sync-schedules` albo przycisk „Pobierz terminarz” w panelu (Rozgrywki). Wyniki i tabele (wszystkie etapy i grupy) pochodzą z wielkopolskasiatkowka.com.pl, a gdy jej brak - z WZPS; godziny, hale i numery meczów z WZPS. Wynik wpisany ręcznie w panelu nie jest nadpisywany. `php artisan migrate:fresh --seed` zakłada prawdziwe drużyny i rozgrywki WZPS i od razu pobiera dane.
 
