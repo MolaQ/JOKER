@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Admin\FanMvpVotes;
 use App\Livewire\FanMvpPanel;
 use App\Models\FanMvpVote;
 use App\Models\Game;
@@ -230,4 +231,18 @@ test('only an admin sees who voted for whom', function () {
 
     Livewire::actingAs($trainer->fresh())->test(FanMvpPanel::class, ['type' => 'game', 'id' => $this->game->id])
         ->assertSee('Zarządzanie')->assertDontSee('Kto na kogo głosował')->assertDontSee('Kibic Kowalski');
+});
+
+test('the admin panel lists who voted for whom in every match', function () {
+    $this->fan->update(['name' => 'Kibic Nowak']);
+    FanMvp::vote($this->fan, $this->game, $this->bartek->id);
+
+    $this->actingAs(User::factory()->admin()->create())->get(route('admin.fan-mvp.index'))->assertOk()->assertSee('Głosy MVP kibiców');
+    Livewire::test(FanMvpVotes::class)
+        ->assertSee('Głosy: 1')->assertSee('prowadzi Bartek Blokujący')->assertDontSee('Kibic Nowak')
+        ->call('toggle', 'game-'.$this->game->id)
+        ->assertSee('Kibic Nowak');
+
+    $trainer = User::factory()->create(['role' => UserRole::Trainer, 'is_active' => true]);
+    $this->actingAs($trainer)->get(route('admin.fan-mvp.index'))->assertForbidden();
 });

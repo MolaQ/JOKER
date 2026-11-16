@@ -30,6 +30,7 @@
                 ['label' => 'Plan treningów', 'route' => 'admin.trainings.index', 'icon' => 'clock', 'can' => 'trainings.manage'],
                 ['label' => 'Mecze i wyniki', 'route' => 'admin.games.index', 'icon' => 'ball', 'can' => 'games.manage'],
                 ['label' => 'Turnieje', 'route' => 'admin.tournaments.index', 'icon' => 'flag', 'can' => 'tournaments.manage'],
+                ['label' => 'Głosy MVP kibiców', 'route' => 'admin.fan-mvp.index', 'icon' => 'star', 'can' => fn () => auth()->user()->isAdmin() && \App\Support\FanMvp::enabled()],
                 ['label' => 'Minisiatkówka', 'route' => 'admin.mini.index', 'icon' => 'star', 'can' => fn () => app(\App\Support\SiteSettings::class)['module_mini'] && auth()->user()->can('mini.manage')],
                 ['label' => 'Transmisje i zdjęcia meczów', 'route' => 'admin.media.index', 'icon' => 'video', 'can' => 'media.manage'],
                 ['label' => 'Galerie', 'route' => 'admin.galleries.index', 'icon' => 'photo', 'can' => 'media.manage'],

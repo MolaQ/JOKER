@@ -24,6 +24,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     });
 
     Route::view('/training-schedule', 'admin.trainings.index')->middleware('can:trainings.manage')->name('trainings.index');
+    Route::get('/kibicowskie-mvp', fn () => auth()->user()->isAdmin() ? view('admin.fan-mvp.index') : abort(403))->name('fan-mvp.index');
     Route::view('/alumni', 'admin.alumni.index')->middleware('can:articles.manage')->name('alumni.index');
     Route::view('/support', 'admin.support.index')->middleware('can:sponsors.manage')->name('support.index');
 
