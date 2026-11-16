@@ -3,12 +3,15 @@
 namespace App\Services;
 
 use App\Models\Competition;
+use App\Models\FanMvpVote;
+use App\Models\Gallery;
 use App\Models\Game;
 use App\Models\LeagueStanding;
 use App\Models\RivalTeam;
 use App\Models\Team;
 use App\Support\SearchIndex;
 use App\Support\SiteSettings;
+use App\Support\Trash;
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
@@ -247,6 +250,7 @@ class ScheduleImporter
             $opponentIsOurs = $homeTeam && $awayTeam;
 
             $game = $this->findGame($competition, $row, $ourTeam->id, $siteKey);
+            $game = $this->adoptTwinFromOtherSource($competition, $row, $game, $ourTeam->id, $opponentName);
             $wasNew = ! $game->exists;
 
             // Rywal wycofał się z rozgrywek: nie dodajemy jego meczów (istniejące odwoła applyWithdrawals).
@@ -899,6 +903,58 @@ class ScheduleImporter
         }
 
         return $merged;
+    }
+
+    /**
+     * PZPS numeruje mecze inaczej niż WZPS i wielkopolskasiatkowka. Gdy ten sam mecz (drużyna, dzień, rywal)
+     * jest już w rozgrywkach pod numerem z innego źródła, aktualizujemy go zamiast dodawać drugi raz.
+     * Dubel dodany wcześniej z PZPS trafia do kosza, jeśli nikt nic do niego nie dopisał.
+     *
+     * @param  array<string, mixed>  $row
+     */
+    private function adoptTwinFromOtherSource(Competition $competition, array $row, Game $game, int $teamId, string $opponentName): Game
+    {
+        if (! str_starts_with((string) ($row['external_id'] ?? ''), 'pzps-')) {
+            return $game;
+        }
+
+        $opponentKey = self::key($opponentName);
+        $twin = Game::with('opponentTeam')
+            ->where('competition_id', $competition->id)
+            ->where('team_id', $teamId)
+            ->whereDate('game_date', $row['date'])
+            ->when($game->exists, fn ($query) => $query->whereKeyNot($game->id))
+            ->where(fn ($query) => $query->whereNull('external_id')->orWhere('external_id', 'not like', 'pzps-%'))
+            ->orderBy('id')
+            ->get()
+            ->first(fn (Game $candidate) => collect([$candidate->opponent, $candidate->opponentTeam?->full_name])
+                ->filter()->contains(fn (string $name) => self::key($name) === $opponentKey));
+
+        if (! $twin) {
+            return $game;
+        }
+
+        if ($game->exists) {
+            if (! $this->isUntouched($game)) {
+                return $game;
+            }
+
+            Trash::delete($game, 'Dubel z importu PZPS: '.$game->opponent.' '.$game->game_date?->format('d.m.Y'));
+        }
+
+        return $twin;
+    }
+
+    /**
+     * Mecz tylko z importu: bez relacji, zdjęć, komentarzy, wiadomości, filmu, głosów i ręcznego wyniku.
+     */
+    private function isUntouched(Game $game): bool
+    {
+        return $game->result_source !== Game::RESULT_MANUAL
+            && blank($game->match_report) && blank($game->video_url)
+            && ! $game->articles()->exists() && ! $game->comments()->exists() && ! $game->photos()->exists()
+            && ! FanMvpVote::where('match_type', 'game')->where('match_id', $game->id)->exists()
+            && ! Gallery::where('match_type', $game->getMorphClass())->where('match_id', $game->id)->exists();
     }
 
     /**

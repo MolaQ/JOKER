@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Competition;
 use App\Models\LeagueStanding;
+use App\Models\RivalTeam;
 use App\Models\Season;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
@@ -65,7 +66,7 @@ class StandingsBrowser extends Component
     public function render(): View
     {
         $standings = $this->selected
-            ? LeagueStanding::with(['competitor', 'competition.teams'])->where('competition_id', $this->selected->id)->orderBy('position')->get()
+            ? LeagueStanding::with(['competitor' => fn ($competitor) => $competitor->morphWith([RivalTeam::class => ['club']]), 'competition.teams'])->where('competition_id', $this->selected->id)->orderBy('position')->get()
             : collect();
 
         // Najnowszy etap pierwszy („Etap 2” przed „Etap 1”).

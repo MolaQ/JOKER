@@ -26,7 +26,7 @@
                 </div>
                 <p class="text-sm text-zinc-500">
                     @if($this->selected->synced_at)
-                        {{ __('Wyniki z wielkopolskasiatkowka.com.pl i WZPS, aktualizacja') }} {{ $this->selected->synced_at->diffForHumans() }}
+                        {{ __('Tabela ze stron związku (wielkopolskasiatkowka.com.pl, WZPS, PZPS), aktualizacja') }} {{ $this->selected->synced_at->diffForHumans() }}
                     @endif
                 </p>
             </div>
@@ -84,6 +84,9 @@
                                                 <span @class(['inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold', 'bg-ink text-white' => $standing->position <= 3, 'bg-zinc-100 text-zinc-600' => $standing->position > 3])>{{ $standing->position }}</span>
                                             </td>
                                             <td @class(['px-2 py-3 leading-snug sm:sticky sm:left-10 sm:whitespace-nowrap', 'bg-[color-mix(in_oklab,var(--color-sky-club)_10%,var(--tint-base,white))]' => $isOurs, 'bg-white' => ! $isOurs])>
+                                                <div class="flex items-center gap-2.5">
+                                                <x-avatar logo :photo="$standing->competitor?->logoPath()" :name="$standing->competitorName()" class="h-7 w-7 shrink-0 rounded-full text-[10px]" />
+                                                <div class="min-w-0">
                                                 @if($isOurs && $standing->competitor)
                                                     <a href="{{ route('teams.show', $standing->competitor) }}" class="text-zinc-900 hover:text-sky-club-dark"><x-team-label :label="$standing->competitorLabel($ownTeams > 1)" /></a>
                                                     @if($standing->source_name && ! $standing->competition?->teams->firstWhere('id', $standing->competitor_id)?->pivot?->display_name)
@@ -92,6 +95,8 @@
                                                 @else
                                                     <span class="text-zinc-800">{{ $standing->competitorName() }}</span>
                                                 @endif
+                                                </div>
+                                                </div>
                                             </td>
                                             <td class="px-1.5 py-3 text-center text-zinc-600 sm:px-3">{{ $standing->played }}</td>
                                             <td class="px-1.5 py-3 text-center text-emerald-700 sm:px-3">{{ $standing->won }}</td>

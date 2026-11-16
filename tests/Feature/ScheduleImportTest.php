@@ -9,6 +9,7 @@ use App\Models\LeagueStanding;
 use App\Models\RivalTeam;
 use App\Models\Season;
 use App\Models\Team;
+use App\Models\TrashItem;
 use App\Models\User;
 use App\Services\ScheduleImporter;
 use App\UserRole;
@@ -253,4 +254,25 @@ test('reads II liga results from the PZPS referee system', function () {
         ->and($won->ourSetsResult())->toBe([3, 2])
         ->and($league->games()->firstWhere('external_id', 'pzps-588')->status)->toBe('scheduled')
         ->and(LeagueStanding::where('competition_id', $league->id)->count())->toBe(2);
+});
+
+test('PZPS updates a match already imported from another source and cleans up its own duplicate', function () {
+    $league = Competition::create([
+        'points_win_3_0' => 3, 'points_win_3_1' => 3, 'points_win_3_2' => 2,
+        'points_loss_2_3' => 1, 'points_loss_1_3' => 0, 'points_loss_0_3' => 0,
+        'name' => 'II Liga Mężczyzn', 'season_id' => $this->competition->season_id,
+        'source_url' => 'https://sedziowie.pzps.pl/system/index.php?mode=12&type=9',
+    ]);
+    $league->teams()->attach($this->seniors->id, ['external_name' => 'LOMS Joker Piła']);
+    $base = ['team_id' => $this->seniors->id, 'season_id' => $league->season_id, 'competition_id' => $league->id, 'opponent' => 'Enea Energetyk Poznań', 'is_home' => false, 'game_date' => '2026-10-03 18:00', 'status' => 'scheduled', 'home_score' => null, 'away_score' => null, 'sets_score' => null];
+    $original = Game::factory()->create($base + ['external_id' => '4410', 'match_report' => '<p>Relacja</p>']);
+    $duplicate = Game::factory()->create($base + ['external_id' => 'pzps-555']);
+
+    app(ScheduleImporter::class)->sync($league);
+
+    expect(Game::find($duplicate->id))->toBeNull()
+        ->and($original->fresh()->external_id)->toBe('pzps-555')
+        ->and($original->fresh()->ourSetsResult())->toBe([3, 2])
+        ->and($league->games()->whereDate('game_date', '2026-10-03')->count())->toBe(1)
+        ->and(TrashItem::count())->toBe(1);
 });
