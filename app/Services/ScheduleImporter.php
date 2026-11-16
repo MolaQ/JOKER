@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Competition;
 use App\Models\FanMvpVote;
-use App\Models\Gallery;
 use App\Models\Game;
 use App\Models\LeagueStanding;
 use App\Models\RivalTeam;
@@ -951,10 +950,10 @@ class ScheduleImporter
     private function isUntouched(Game $game): bool
     {
         return $game->result_source !== Game::RESULT_MANUAL
-            && blank($game->match_report) && blank($game->video_url)
+            && blank($game->match_report) && blank($game->video_url) && blank($game->streams)
             && ! $game->articles()->exists() && ! $game->comments()->exists() && ! $game->photos()->exists()
             && ! FanMvpVote::where('match_type', 'game')->where('match_id', $game->id)->exists()
-            && ! Gallery::where('match_type', $game->getMorphClass())->where('match_id', $game->id)->exists();
+            && ! $game->galleries()->exists();
     }
 
     /**

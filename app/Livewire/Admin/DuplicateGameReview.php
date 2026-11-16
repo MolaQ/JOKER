@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Competition;
+use App\Models\FanMvpVote;
 use App\Models\Game;
 use App\Permission;
 use App\Services\StandingsCalculator;
@@ -53,8 +54,24 @@ class DuplicateGameReview extends Component
 
     public function render(): View
     {
+        $groups = DuplicateGames::groups(Auth::user());
+
+        // Co jest dopisane do każdego meczu, żeby było widać, którego nie usuwać.
+        $games = Game::whereKey($groups->flatten()->pluck('id'))->withCount(['articles', 'galleries', 'photos', 'comments'])->get()->keyBy('id');
+        $votes = FanMvpVote::where('match_type', 'game')->whereIn('match_id', $games->keys())->selectRaw('match_id, count(*) as total')->groupBy('match_id')->pluck('total', 'match_id');
+        $extras = $games->map(fn (Game $game) => array_filter([
+            'relacja' => filled($game->match_report),
+            'transmisja' => filled($game->video_url) || filled($game->streams),
+            'zdjęcia' => $game->galleries_count + $game->photos_count > 0,
+            'wiadomości' => $game->articles_count > 0,
+            'komentarze' => $game->comments_count > 0,
+            'głosy MVP' => ($votes[$game->id] ?? 0) > 0,
+            'wynik wpisany ręcznie' => $game->result_source === Game::RESULT_MANUAL,
+        ]));
+
         return view('livewire.admin.duplicate-game-review', [
-            'groups' => DuplicateGames::groups(Auth::user()),
+            'groups' => $groups,
+            'extras' => $extras,
         ]);
     }
 }

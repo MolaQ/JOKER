@@ -87,3 +87,13 @@ test('a coach sees only duplicates of own teams', function () {
     Game::factory()->count(2)->create(['team_id' => $own->id, 'season_id' => $this->season->id, 'opponent' => 'X', 'opponent_team_id' => null, 'status' => 'scheduled', 'game_date' => '2026-11-02 10:00']);
     expect(DuplicateGames::count($coach))->toBe(1);
 });
+
+test('the duplicate review shows what was added to each match', function () {
+    dubelGame(['game_date' => '2026-11-07 17:00', 'external_id' => '4410', 'match_report' => '<p>Relacja</p>', 'video_url' => 'https://youtu.be/abc']);
+    dubelGame(['game_date' => '2026-11-07 17:00', 'external_id' => 'pzps-555', 'match_report' => null, 'video_url' => null]);
+
+    Livewire::test(DuplicateGameReview::class)
+        ->assertSee('✓ relacja')
+        ->assertSee('✓ transmisja')
+        ->assertSee('nic nie dopisano: można bezpiecznie usunąć');
+});

@@ -27,6 +27,13 @@
                                 · {{ $game->external_id ? 'z importu ze związku (nr '.$game->external_id.')' : 'dodany ręcznie' }}
                                 · dodany {{ $game->created_at?->format('d.m.Y H:i') }}
                             </p>
+                            <p class="mt-1 flex flex-wrap gap-1">
+                                @forelse(array_keys($extras[$game->id] ?? []) as $extra)
+                                    <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200">✓ {{ $extra }}</span>
+                                @empty
+                                    <span class="text-xs text-gray-400">nic nie dopisano: można bezpiecznie usunąć</span>
+                                @endforelse
+                            </p>
                         </div>
                         <button type="button" wire:click="delete({{ $game->id }})" wire:confirm="Usunąć ten mecz? Trafi do kosza i będzie można go przywrócić." class="rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700">Usuń ten</button>
                     </li>
