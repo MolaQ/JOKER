@@ -23,7 +23,7 @@ use Throwable;
 /**
  * Import terminarza i wyników ze stron związku (np. https://wzps.poznan.pl/obsady/).
  *
- * Czyta każdy wiersz tabeli z linkiem do meczu (match_id=…): datę, opcjonalnie godzinę,
+ * Czyta każdy wiersz tabeli z linkiem do meczu (match_id=… albo PZPS /mecz/…): datę, opcjonalnie godzinę,
  * gospodarza, gościa i wynik z setami. Mecze z udziałem naszych drużyn trafiają do
  * zakładki Mecze. Nasza drużyna może w różnych rozgrywkach występować pod inną nazwą
  * (np. „LOMS Joker Piła II”), dlatego nazwę z danych rozgrywek ustawia się przy drużynie.
@@ -254,6 +254,7 @@ class ScheduleImporter
 
             $game->fill([
                 'team_id' => $ourTeam->id,
+                'guest_team_id' => $opponentIsOurs && $awayTeam->id !== $ourTeam->id ? $awayTeam->id : null,
                 'season_id' => $competition->season_id,
                 'competition_id' => $competition->id,
                 'external_id' => $row['external_id'],
@@ -482,15 +483,17 @@ class ScheduleImporter
                 $cells[] = trim(preg_replace('/\s+/u', ' ', str_replace("\u{00A0}", ' ', $cell->textContent)));
             }
 
-            $link = $xpath->query('.//a[contains(@href, "match_id=")]', $node)->item(0);
+            // WZPS: „index.php?mode=4&match_id=405”; PZPS (sedziowie.pzps.pl, II liga): „/system//mecz/555/”.
+            $link = $xpath->query('.//a[contains(@href, "match_id=") or contains(@href, "/mecz/")]', $node)->item(0);
 
             if ($link instanceof DOMElement) {
                 $href = $link->getAttribute('href');
-                $row = preg_match('/match_id=(\d+)/', $href, $idMatch) ? $this->parseCells($cells) : null;
+                $pzps = ! str_contains($href, 'match_id=');
+                $row = preg_match($pzps ? '#/mecz/(\d+)#' : '/match_id=(\d+)/', $href, $idMatch) ? $this->parseCells($cells) : null;
 
                 if ($row) {
-                    $matches->push(['external_id' => $idMatch[1]] + $row + [
-                        'detail_url' => $this->detailUrl($idMatch[1], $url),
+                    $matches->push(['external_id' => ($pzps ? 'pzps-' : '').$idMatch[1]] + $row + [
+                        'detail_url' => $pzps ? $this->absoluteUrl($href, $url) : $this->detailUrl($idMatch[1], $url),
                         'stage' => $stage ? 'Etap '.$stage : null,
                         'group' => $group,
                     ]);
@@ -540,6 +543,26 @@ class ScheduleImporter
             'points_for' => (int) $pointsFor,
             'points_against' => (int) $pointsAgainst,
         ];
+    }
+
+    /**
+     * Link ze strony PZPS jako pełny adres (bywa względny wobec strony źródłowej).
+     */
+    private function absoluteUrl(string $href, string $source): ?string
+    {
+        if (preg_match('#^https?://#i', $href)) {
+            return $href;
+        }
+
+        $parts = parse_url($source);
+
+        if (! isset($parts['scheme'], $parts['host'])) {
+            return null;
+        }
+
+        $path = str_starts_with($href, '/') ? $href : preg_replace('#[^/]*$#', '', $parts['path'] ?? '/').$href;
+
+        return $parts['scheme'].'://'.$parts['host'].$path;
     }
 
     /**

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Instalacja i aktualizacja strony na hostingu bez SSH (cyber_Folks, DirectAdmin).
-# Uruchamia go jedno zadanie cron w panelu, co 5 minut (*/5 * * * *):
+# Uruchamia go jedno zadanie cron w panelu, co 2 minuty (*/2 * * * *):
 #   bash /home/UZYTKOWNIK/domains/DOMENA/joker/narzedzia/instaluj-na-serwerze.sh
 # Instaluje tylko wtedy, gdy wgrano nową paczkę albo zmieniono .env (nowsze niż ostatnia instalacja);
 # w pozostałych uruchomieniach wykonuje tylko zadania okresowe Laravela (schedule:run).
@@ -133,7 +133,7 @@ if [ -f .env ] && [ -f narzedzia/kopia-na-serwerze.sh ] && [ "$(date +%H)" -ge 3
     bash narzedzia/kopia-na-serwerze.sh
 fi
 
-# Strona zainstalowana i nic nowego nie wgrano: tylko zadania okresowe (terminarze co 3 godziny, sprzątanie statystyk).
+# Strona zainstalowana i nic nowego nie wgrano: tylko zadania okresowe (terminarze co godzinę 11–21, sprzątanie statystyk).
 if [ -f "$ZNACZNIK" ] && [ "$ZNACZNIK" -nt vendor/autoload.php ] && [ "$ZNACZNIK" -nt .env ] \
     && { [ ! -f "$WERSJA" ] || cmp -s "$WERSJA" "$ZNACZNIK"; }; then
     "$PHPBIN" artisan schedule:run --no-interaction >/dev/null 2>&1

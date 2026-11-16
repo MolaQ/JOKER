@@ -218,3 +218,16 @@ test('voting by players can be switched off so only fans and parents vote', func
     $results = FanMvp::results($this->game)->keyBy(fn ($row) => $row['player']->id);
     expect($results[$this->bartek->id]['votes'])->toBe(1)->and($results[$this->adam->id]['votes'])->toBe(1);
 });
+
+test('only an admin sees who voted for whom', function () {
+    $this->fan->update(['name' => 'Kibic Kowalski']);
+    FanMvp::vote($this->fan, $this->game, $this->adam->id);
+    $trainer = User::factory()->create(['role' => UserRole::Trainer, 'is_active' => true]);
+    $this->team->update(['trainer_id' => $trainer->id]);
+
+    Livewire::actingAs(User::factory()->admin()->create())->test(FanMvpPanel::class, ['type' => 'game', 'id' => $this->game->id])
+        ->assertSee('Kto na kogo głosował')->assertSee('Kibic Kowalski')->assertSee('Adam Atakujący');
+
+    Livewire::actingAs($trainer->fresh())->test(FanMvpPanel::class, ['type' => 'game', 'id' => $this->game->id])
+        ->assertSee('Zarządzanie')->assertDontSee('Kto na kogo głosował')->assertDontSee('Kibic Kowalski');
+});

@@ -16,6 +16,7 @@ use App\Permission;
 use App\UserRole;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -293,6 +294,27 @@ class FanMvp
         );
 
         return null;
+    }
+
+    /**
+     * Kto na kogo zagłosował (podgląd tylko dla administratora). „counted” = głos liczy się do wyniku.
+     *
+     * @return Collection<int, array{voter: string, player: string, at: Carbon, counted: bool}>
+     */
+    public static function ballots(Model $match): Collection
+    {
+        $candidates = self::candidates($match)->pluck('id')->flip();
+        $playerAccounts = self::playersVote() ? collect() : self::playerAccountIds()->flip();
+
+        return FanMvpVote::with(['user:id,name', 'player:id,first_name,last_name,team_id,mini_group_id'])
+            ->where('match_type', self::type($match))->where('match_id', $match->getKey())
+            ->latest()->get()
+            ->map(fn (FanMvpVote $vote) => [
+                'voter' => $vote->user?->name ?? __('Konto usunięte'),
+                'player' => $vote->player?->full_name ?? __('Zawodnik usunięty'),
+                'at' => $vote->created_at,
+                'counted' => isset($candidates[$vote->player_id]) && ! isset($playerAccounts[$vote->user_id]),
+            ]);
     }
 
     /**

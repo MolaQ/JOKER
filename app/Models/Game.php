@@ -38,6 +38,7 @@ class Game extends Model
 
     protected $fillable = [
         'team_id',
+        'guest_team_id',
         'season_id',
         'competition_id',
         'external_id',
@@ -85,6 +86,27 @@ class Game extends Model
     public function competition(): BelongsTo
     {
         return $this->belongsTo(Competition::class);
+    }
+
+    /**
+     * Druga nasza drużyna w meczu (rywal też jest od nas, np. kadeci jako gość w III lidze).
+     */
+    public function guestTeam(): BelongsTo
+    {
+        return $this->belongsTo(Team::class, 'guest_team_id');
+    }
+
+    /**
+     * Mecze drużyny: jej własne i te, w których gra jako nasz rywal.
+     */
+    public function scopeForTeam($query, int $teamId)
+    {
+        return $query->where(fn ($games) => $games->where('games.team_id', $teamId)->orWhere('games.guest_team_id', $teamId));
+    }
+
+    public function involvesTeam(?Team $team): bool
+    {
+        return $team !== null && in_array($team->id, [$this->team_id, $this->guest_team_id], true);
     }
 
     public function opponentTeam(): BelongsTo

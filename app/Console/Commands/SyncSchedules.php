@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 
 /**
  * Pobiera terminarze, wyniki i tabele (wielkopolskasiatkowka.com.pl i WZPS) dla rozgrywek z wpisanymi adresami.
- * Działa samo co 3 godziny, jeśli na serwerze jest ustawiony cron z `php artisan schedule:run`.
+ * Działa samo co godzinę od 11:00 do 21:00, jeśli na serwerze jest ustawiony cron z `php artisan schedule:run`.
  */
 class SyncSchedules extends Command
 {

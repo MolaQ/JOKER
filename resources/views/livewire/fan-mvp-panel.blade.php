@@ -156,6 +156,19 @@
                                     </label>
                                     <button type="button" wire:click="addPlayer" class="rounded-lg bg-ink px-3 py-2 text-sm font-semibold text-white hover:bg-zinc-800">{{ __('Dopisz') }}</button>
                                 </div>
+                                @if($ballots->isNotEmpty())
+                                    <details class="border-t border-zinc-200 pt-3">
+                                        <summary class="cursor-pointer font-semibold">{{ __('Kto na kogo głosował') }} ({{ $ballots->count() }}) <span class="text-xs font-normal text-zinc-500">· {{ __('widzi tylko administrator') }}</span></summary>
+                                        <ul class="mt-2 divide-y divide-zinc-200">
+                                            @foreach($ballots as $ballot)
+                                                <li class="flex flex-wrap items-baseline justify-between gap-x-3 py-1.5">
+                                                    <span class="min-w-0 break-words">{{ $ballot['voter'] }} → <strong>{{ $ballot['player'] }}</strong>@unless($ballot['counted']) <span class="text-xs text-zinc-500">({{ __('nie liczy się') }})</span>@endunless</span>
+                                                    <span class="text-xs text-zinc-500 tabular-nums">{{ $ballot['at']?->format('d.m H:i') }}</span>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </details>
+                                @endif
                             </div>
                         </details>
                     @endif

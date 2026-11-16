@@ -161,7 +161,7 @@ class GamesBrowser extends Component
     #[Computed]
     public function seasonGames(): Collection
     {
-        return Game::with(['team', 'competition.teams', 'opponentTeam.club', 'articles', 'tournament'])
+        return Game::with(['team', 'guestTeam', 'competition.teams', 'opponentTeam.club', 'articles', 'tournament'])
             ->when($this->selectedSeason, fn ($query, Season $season) => $query->where('season_id', $season->id))
             // Odwołane mecze (np. rywal wycofał się z rozgrywek) nie trafiają do kalendarza.
             ->where('status', '!=', 'cancelled')
@@ -339,7 +339,7 @@ class GamesBrowser extends Component
         $terms = array_filter(explode(' ', SearchIndex::normalize($this->search)));
 
         return $this->seasonGames
-            ->when($this->team !== '', fn (Collection $games) => $games->filter(fn (Game $game) => $game->team?->slug === $this->team))
+            ->when($this->team !== '', fn (Collection $games) => $games->filter(fn (Game $game) => in_array($this->team, [$game->team?->slug, $game->guestTeam?->slug], true)))
             ->when($this->competition !== '', fn (Collection $games) => match ($this->competition) {
                 self::FILTER_MINI => collect(),
                 self::FILTER_TOURNAMENTS => $games->whereNotNull('tournament_id'),
@@ -431,7 +431,7 @@ class GamesBrowser extends Component
             'total' => $games->count(),
             'miniTotal' => $miniTrips->count(),
             'periodCounts' => $periodCounts,
-            'teams' => $this->seasonGames->pluck('team')->filter()->unique('id')->sortBy('display_order')->values(),
+            'teams' => $this->seasonGames->pluck('team')->concat($this->seasonGames->pluck('guestTeam'))->filter()->unique('id')->sortBy('display_order')->values(),
             'competitions' => $this->seasonGames->pluck('competition')->filter()->unique('id')->sortBy('name')->values(),
             'hasTournaments' => $this->seasonTournaments->isNotEmpty() || $this->seasonGames->whereNotNull('tournament_id')->isNotEmpty(),
             'hasMini' => $this->seasonMiniTrips->isNotEmpty(),

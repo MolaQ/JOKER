@@ -1,6 +1,8 @@
 <?php
 
 use App\Livewire\Admin\CompetitionManager;
+use App\Livewire\Admin\GameManager;
+use App\Livewire\GamesBrowser;
 use App\Models\Competition;
 use App\Models\Game;
 use App\Models\LeagueStanding;
@@ -33,6 +35,7 @@ beforeEach(function () {
     ]);
 
     Http::fake([
+        'sedziowie.pzps.pl/*' => Http::response(file_get_contents(base_path('tests/Fixtures/pzps-liga.html'))),
         '*type=11' => Http::response(file_get_contents(base_path('tests/Fixtures/wzps-liga.html'))),
         '*team_id=701' => Http::response(file_get_contents(base_path('tests/Fixtures/wzps-druzyna.html'))),
         '*type=3' => Http::response(file_get_contents(base_path('tests/Fixtures/wzps-mlodzicy.html'))),
@@ -75,7 +78,27 @@ test('a team entered under another name is recognised as ours', function () {
     expect($derby->team_id)->toBe($this->seniors->id)
         ->and($derby->opponent)->toBe('LOMS Joker Piła II')
         ->and($derby->opponent_team_id)->toBeNull()
+        ->and($derby->guest_team_id)->toBe($this->cadets->id)
         ->and($derby->kickoffLabel())->toContain('godz. do ustalenia');
+
+    // Mecz pokazuje się w kalendarzu i na stronie obu naszych drużyn.
+    expect(Game::forTeam($this->cadets->id)->pluck('external_id')->all())->toContain('416')
+        ->and(Game::forTeam($this->seniors->id)->pluck('external_id')->all())->toContain('416');
+    Livewire::test(GamesBrowser::class)->set('team', 'kadeci')->assertSee('LOMS Joker Piła II');
+});
+
+test('a game can name a second team of ours by hand', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $game = Game::factory()->create(['team_id' => $this->seniors->id, 'season_id' => $this->competition->season_id, 'opponent' => 'LOMS Joker Piła II', 'game_date' => now()->addDays(3), 'status' => 'scheduled']);
+
+    Livewire::test(GameManager::class)
+        ->call('openEditModal', $game->id)
+        ->set('guest_team_id', $this->cadets->id)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($game->fresh()->guest_team_id)->toBe($this->cadets->id);
+    $this->get(route('teams.show', $this->cadets))->assertOk()->assertSee('LOMS Joker Piła II');
 });
 
 test('running the import again updates matches instead of duplicating them', function () {
@@ -209,4 +232,25 @@ test('a renamed rival is matched by its former name and new names wait for revie
         ->and(RivalTeam::where('full_name', 'Fort Tarnowo Podgórne')->exists())->toBeFalse()
         ->and($fort->fresh()->needs_review)->toBeFalse()
         ->and(RivalTeam::where('needs_review', true)->count())->toBeGreaterThan(0);
+});
+
+test('reads II liga results from the PZPS referee system', function () {
+    $league = Competition::create([
+        'points_win_3_0' => 3, 'points_win_3_1' => 3, 'points_win_3_2' => 2,
+        'points_loss_2_3' => 1, 'points_loss_1_3' => 0, 'points_loss_0_3' => 0,
+        'name' => 'II Liga Mężczyzn', 'season_id' => $this->competition->season_id,
+        'source_url' => 'https://sedziowie.pzps.pl/system/index.php?mode=12&type=9',
+    ]);
+    $league->teams()->attach($this->seniors->id, ['external_name' => 'LOMS Joker Piła']);
+
+    app(ScheduleImporter::class)->sync($league);
+
+    expect($league->games()->count())->toBe(3);
+    $won = $league->games()->firstWhere('external_id', 'pzps-555');
+    expect($won->is_home)->toBeFalse()
+        ->and($won->opponent)->toBe('Enea Energetyk Poznań')
+        ->and($won->status)->toBe('finished')
+        ->and($won->ourSetsResult())->toBe([3, 2])
+        ->and($league->games()->firstWhere('external_id', 'pzps-588')->status)->toBe('scheduled')
+        ->and(LeagueStanding::where('competition_id', $league->id)->count())->toBe(2);
 });

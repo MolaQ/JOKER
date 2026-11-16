@@ -144,6 +144,8 @@ class FanMvpPanel extends Component
             'addable' => $canManage ? FanMvp::addable($match) : collect(),
             'disabled' => (bool) $poll?->disabled,
             'totalVotes' => $canManage ? (int) $results->sum('votes') : 0,
+            // Kto na kogo głosował: tylko administrator.
+            'ballots' => $user->isAdmin() ? FanMvp::ballots($match) : collect(),
         ]);
     }
 }

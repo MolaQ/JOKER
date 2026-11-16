@@ -35,6 +35,9 @@ class GameManager extends Component
 
     public ?int $team_id = null;
 
+    /** Druga nasza drużyna, gdy rywal też jest od nas (mecz pokaże się w obu kalendarzach). */
+    public ?int $guest_team_id = null;
+
     public ?int $season_id = null;
 
     public ?int $competition_id = null;
@@ -120,6 +123,7 @@ class GameManager extends Component
     {
         return [
             'team_id' => ['required', Rule::in(Team::managedBy(Auth::user())->pluck('id'))],
+            'guest_team_id' => 'nullable|different:team_id|exists:teams,id',
             'season_id' => 'required|exists:seasons,id',
             'competition_id' => 'nullable|exists:competitions,id',
             'kind' => 'required|in:league,friendly,tournament',
@@ -206,6 +210,7 @@ class GameManager extends Component
 
         $this->editingId = $game->id;
         $this->team_id = $game->team_id;
+        $this->guest_team_id = $game->guest_team_id;
         $this->season_id = $game->season_id;
         $this->competition_id = $game->competition_id;
         $this->resultSource = $game->result_source;
@@ -300,6 +305,7 @@ class GameManager extends Component
         $this->editingId = null;
         $this->resultSource = null;
         $this->team_id = null;
+        $this->guest_team_id = null;
         $this->season_id = null;
         $this->competition_id = null;
         $this->kind = Game::KIND_LEAGUE;
@@ -523,6 +529,7 @@ class GameManager extends Component
             'competitions' => $competitions,
             'tournaments' => $tournaments,
             'rivalTeams' => $rivalTeams,
+            'allTeams' => Team::orderBy('display_order')->get(['id', 'name']),
             'duplicateIds' => array_flip(DuplicateGames::gameIds(Auth::user())),
         ]);
     }

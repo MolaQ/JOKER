@@ -184,6 +184,18 @@
                             </div>
 
                             <div>
+                                <label class="block text-sm font-medium text-gray-700">Rywal to też nasza drużyna</label>
+                                <select wire:model="guest_team_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
+                                    <option value="">Nie</option>
+                                    @foreach($allTeams as $team)
+                                        <option value="{{ $team->id }}">{{ $team->name }}</option>
+                                    @endforeach
+                                </select>
+                                <p class="mt-1 text-xs text-gray-500">Np. kadeci jako gość w III lidze: mecz pokaże się też w kalendarzu i na stronie tej drużyny.</p>
+                                @error('guest_team_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
                                 <label class="block text-sm font-medium text-gray-700">Przeciwnik (nazwa)</label>
                                 <input type="text" wire:model="opponent" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500">
                                 @error('opponent') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror

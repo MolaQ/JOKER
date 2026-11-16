@@ -48,13 +48,13 @@ class TeamController extends Controller
 
         $staff = $team->staff();
 
-        $upcoming_games = Game::where('team_id', $team->id)
+        $upcoming_games = Game::forTeam($team->id)
             ->with(['team', 'competition.teams', 'opponentTeam'])
             ->upcoming()
             ->limit(5)
             ->get();
 
-        $recent_games = Game::where('team_id', $team->id)
+        $recent_games = Game::forTeam($team->id)
             ->with(['team', 'competition.teams', 'opponentTeam'])
             ->finished()
             ->limit(5)

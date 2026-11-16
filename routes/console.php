@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\Schedule;
 
 /*
  * Komendy klubu są w app/Console/Commands (joker:admin, joker:sync-schedules).
- * Terminarz i wyniki odświeżają się co 3 godziny, jeśli na serwerze działa `php artisan schedule:run` z crona.
+ * Terminarz i wyniki odświeżają się co godzinę od 11:00 do 21:00, jeśli na serwerze działa `php artisan schedule:run` z crona (co 2 minuty).
  */
-Schedule::command(SyncSchedules::class)->everyThreeHours()->withoutOverlapping();
+Schedule::command(SyncSchedules::class)->hourly()->between('11:00', '21:00')->withoutOverlapping();
 
 // Usuwanie statystyk odwiedzin starszych niż ok. 13 miesięcy.
 Schedule::command('model:prune', ['--model' => [PageView::class]])->daily();
@@ -31,8 +31,8 @@ Schedule::command('model:prune', ['--model' => [AuditLog::class]])->daily();
 // Kosz: rekordy usunięte w panelu dawniej niż „Kosz: ile dni” znikają na stałe (razem z plikami).
 Schedule::command('model:prune', ['--model' => [TrashItem::class]])->daily();
 
-// Zbiorczy e-mail o wiadomościach nieprzeczytanych od kwadransa (cron na serwerze uruchamia harmonogram co 5 minut).
-Schedule::command(SendMessageEmails::class)->everyFiveMinutes()->withoutOverlapping();
+// Zbiorczy e-mail o wiadomościach nieprzeczytanych od kwadransa (cron na serwerze uruchamia harmonogram co 2 minuty).
+Schedule::command(SendMessageEmails::class)->everyTenMinutes()->withoutOverlapping();
 
 // Powiadomienia push „mecz za chwilę”: przy każdym uruchomieniu harmonogramu (cron co kilka minut).
 Schedule::command(SendUpcomingReminders::class)->everyMinute()->withoutOverlapping();
