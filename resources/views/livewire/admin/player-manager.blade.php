@@ -294,6 +294,17 @@
                                 @if($mini_group_id)
                                     <p class="mt-1 text-xs text-emerald-700">Dziecko z minisiatkówki: jest na stronie grupy, a zdjęcie pokaże się tylko za zgodą rodzica. Gdy przejdzie do drużyny, wybierz ją tutaj.</p>
                                 @endif
+@if($team_id && $miniGroups->isNotEmpty())
+                                <div class="mt-2 rounded-md bg-gray-50 px-3 py-2">
+                                    <p class="text-xs font-medium text-gray-700">Gra też w minisiatkówce</p>
+                                    <div class="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                                        @foreach($miniGroups as $miniGroup)
+                                            <label class="flex items-center gap-1.5 text-sm text-gray-700"><input type="checkbox" wire:model="extra_mini_group_ids" value="{{ $miniGroup->id }}" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500"> {{ $miniGroup->name }}</label>
+                                        @endforeach
+                                    </div>
+                                    <p class="mt-1 text-xs text-gray-500">Zawodnik zostaje w drużynie i pojawi się też na stronie grupy oraz w składach na turnieje mini.</p>
+                                </div>
+@endif
 @unless($mini_group_id)
                                 <label class="mt-2 flex items-center gap-2 text-sm text-gray-700">
                                     <input type="checkbox" wire:model="is_captain" class="rounded border-gray-300 text-sky-700 focus:ring-sky-500">

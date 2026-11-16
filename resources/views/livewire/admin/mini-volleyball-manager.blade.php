@@ -73,7 +73,7 @@
                                 <div class="mt-2 flex flex-wrap gap-1.5">
                                     @foreach($allPlayers->sortBy(fn ($p) => [$p->mini_group_id === $team->mini_group_id ? 0 : 1, $p->last_name]) as $child)
                                         <button type="button" wire:click="togglePlayer({{ $team->id }}, {{ $child->id }})" @class(['rounded-full px-2.5 py-1 text-xs font-semibold ring-1', 'bg-sky-600 text-white ring-sky-600' => $chosen->contains($child->id), 'bg-white text-gray-700 ring-gray-200 hover:bg-gray-50' => ! $chosen->contains($child->id)])>
-                                            {{ $child->full_name }}@if($child->group && $child->mini_group_id !== $team->mini_group_id)<span class="opacity-60"> · {{ $child->group->name }}</span>@endif
+                                            {{ $child->full_name }}@if($child->group && $child->mini_group_id !== $team->mini_group_id)<span class="opacity-60"> · {{ $child->group->name }}</span>@endif@if($child->team_id)<span class="opacity-60"> · {{ $child->team?->name }}</span>@endif
                                         </button>
                                     @endforeach
                                     @if($allPlayers->isEmpty())<p class="text-xs text-gray-500">Najpierw dodaj dzieci w zakładce „Dzieci”.</p>@endif

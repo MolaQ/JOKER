@@ -94,6 +94,9 @@ class PlayerManager extends Component
     /** Grupa minisiatkówki (dziecko bez drużyny); wybierana na tej samej liście co drużyna. */
     public ?int $mini_group_id = null;
 
+    /** Zawodnik drużyny, który gra też w minisiatkówce (np. młodzik): grupy mini, w których jest dodatkowo. */
+    public array $extra_mini_group_ids = [];
+
     /** Wybór z listy „Drużyna”: identyfikator drużyny albo „mini-ID” grupy minisiatkówki. */
     public string $group = '';
 
@@ -399,6 +402,7 @@ class PlayerManager extends Component
         $this->bio = (string) $player->bio;
         $this->team_id = $player->team_id;
         $this->mini_group_id = $player->team_id ? null : $player->mini_group_id;
+        $this->extra_mini_group_ids = $player->extraMiniGroups()->pluck('mini_groups.id')->map(fn ($id) => (string) $id)->all();
         $this->group = $this->team_id ? (string) $this->team_id : ($this->mini_group_id ? self::MINI_PREFIX.$this->mini_group_id : '');
         $this->is_active = $player->is_active;
         $this->image_consent = $player->image_consent;
@@ -441,6 +445,13 @@ class PlayerManager extends Component
         } else {
             $player = Player::create($validated);
             $this->toast('Zawodnik został dodany.');
+        }
+
+        // Zawodnik drużyny grający też w minisiatkówce. Grupy, których ten użytkownik nie prowadzi, zostają bez zmian.
+        if ($player->team_id) {
+            $allowed = $this->miniGroupOptions()->pluck('id');
+            $chosen = collect($this->extra_mini_group_ids)->map(fn ($id) => (int) $id)->intersect($allowed);
+            $player->extraMiniGroups()->sync($player->extraMiniGroups()->pluck('mini_groups.id')->diff($allowed)->merge($chosen)->unique()->values()->all());
         }
 
         $attached = $player->guardians()->sync($guardianIds)['attached'];
@@ -612,6 +623,7 @@ class PlayerManager extends Component
         $this->bio = '';
         $this->team_id = null;
         $this->mini_group_id = null;
+        $this->extra_mini_group_ids = [];
         $this->group = '';
         $this->extra_team_ids = [];
         $this->extra_team_numbers = [];

@@ -252,7 +252,7 @@ class MiniVolleyballManager extends Component
      */
     public function togglePlayer(int $teamId, int $playerId): void
     {
-        $this->tripTeam($teamId)->players()->toggle([self::children()->findOrFail($playerId)->id]);
+        $this->tripTeam($teamId)->players()->toggle([self::squadCandidates()->findOrFail($playerId)->id]);
     }
 
     /**
@@ -321,6 +321,17 @@ class MiniVolleyballManager extends Component
     {
         return Player::query()->whereNull('players.team_id')
             ->where(fn (Builder $query) => $query->whereNotNull('players.mini_group_id')->orWhereNotNull('players.mini_player_id'));
+    }
+
+    /**
+     * Do składu na wyjazd: dzieci z minisiatkówki oraz zawodnicy drużyn dopisani też do grupy mini (np. młodzik).
+     */
+    public static function squadCandidates(): Builder
+    {
+        return Player::query()->where(fn (Builder $query) => $query
+            ->where(fn (Builder $mini) => $mini->whereNull('players.team_id')
+                ->where(fn (Builder $any) => $any->whereNotNull('players.mini_group_id')->orWhereNotNull('players.mini_player_id')))
+            ->orWhereHas('extraMiniGroups'));
     }
 
     public function editPlayer(int $id): void
@@ -482,7 +493,7 @@ class MiniVolleyballManager extends Component
             'groups' => $groups,
             'trips' => MiniTrip::with('teams')->orderByDesc('starts_on')->get(),
             'openTrip' => $this->tripId ? MiniTrip::with(['teams.players', 'teams.group'])->find($this->tripId) : null,
-            'allPlayers' => self::children()->with('miniGroup')->where('is_active', true)->orderBy('last_name')->orderBy('first_name')->get(),
+            'allPlayers' => self::squadCandidates()->with(['miniGroup', 'team:id,name'])->where('is_active', true)->orderBy('last_name')->orderBy('first_name')->get(),
             'players' => self::children()->with(['miniGroup', 'extraMiniGroups:id,name', 'guardians:id,name'])
                 ->when($this->playerGroup !== '', fn ($query) => $this->playerGroup === 'none' ? $query->whereNull('mini_group_id') : $query->where(fn ($inGroup) => $inGroup
                     ->where('mini_group_id', (int) $this->playerGroup)

@@ -1,10 +1,12 @@
 <?php
 
 use App\Livewire\Admin\MiniVolleyballManager;
+use App\Livewire\Admin\PlayerManager;
 use App\Models\MiniGroup;
 use App\Models\MiniTrip;
 use App\Models\MiniTripTeam;
 use App\Models\Player;
+use App\Models\Team;
 use App\Models\User;
 use App\Support\AgeColors;
 use App\Support\SiteSettings;
@@ -130,4 +132,28 @@ test('children show their number instead of initials and trips take the light co
 
     app(SiteSettings::class)->set(['mini_tint' => '0']);
     expect($trip->fresh()->tintStyle())->toBeNull();
+});
+
+test('a team player can also play in a mini group without leaving the team', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $team = Team::create(['name' => 'Młodzicy', 'slug' => 'mlodzicy-test', 'category' => 'youth']);
+    $group = MiniGroup::create(['name' => 'Czwórki testowe', 'players_on_court' => 4, 'is_active' => true]);
+    $player = Player::factory()->create(['first_name' => 'Olek', 'last_name' => 'Dwutorowy', 'team_id' => $team->id]);
+
+    Livewire::test(PlayerManager::class)
+        ->call('openEditModal', $player->id)
+        ->assertSee('Gra też w minisiatkówce')
+        ->set('extra_mini_group_ids', [(string) $group->id])
+        ->call('save')->assertHasNoErrors();
+
+    $player->refresh();
+    expect($player->team_id)->toBe($team->id)
+        ->and($player->extraMiniGroups()->pluck('mini_groups.id')->all())->toBe([$group->id])
+        ->and($group->members()->pluck('players.id')->all())->toContain($player->id);
+    $this->get(route('mini.show', $group))->assertOk()->assertSee('Dwutorowy');
+
+    $trip = MiniTrip::create(['title' => 'Turniej', 'starts_on' => now()->addDay()->toDateString(), 'city' => 'Piła']);
+    $tripTeam = $trip->teams()->create(['mini_group_id' => $group->id, 'name' => 'Joker 1']);
+    Livewire::test(MiniVolleyballManager::class)->set('tripId', $trip->id)->assertSee('Młodzicy')->call('togglePlayer', $tripTeam->id, $player->id);
+    expect($tripTeam->players()->pluck('players.id')->all())->toBe([$player->id]);
 });

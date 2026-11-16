@@ -98,14 +98,15 @@ class MiniGroup extends Model
     }
 
     /**
-     * Dzieci z tej grupy razem z tymi, które grają w niej dodatkowo (główną grupę mają inną).
+     * Dzieci z tej grupy razem z tymi, które grają w niej dodatkowo (główną grupę mają inną albo grają w drużynie).
      *
      * @return Builder<Player>
      */
     public function members(): Builder
     {
-        return Player::query()->whereNull('players.team_id')
-            ->where(fn (Builder $query) => $query->where('players.mini_group_id', $this->id)
+        // Dopisani dodatkowo mogą też grać w drużynie (np. młodzik, który chodzi na minisiatkówkę).
+        return Player::query()
+            ->where(fn (Builder $query) => $query->where(fn (Builder $own) => $own->whereNull('players.team_id')->where('players.mini_group_id', $this->id))
                 ->orWhereExists(fn ($extra) => $extra->selectRaw('1')->from('mini_group_player')
                     ->whereColumn('mini_group_player.player_id', 'players.id')
                     ->where('mini_group_player.mini_group_id', $this->id)))
