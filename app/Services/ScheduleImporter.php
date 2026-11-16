@@ -85,8 +85,11 @@ class ScheduleImporter
             default => $this->withoutMatchesOfOtherCompetitions($competition, $listRows),
         };
 
-        $standingsImported = $this->importStandings($competition, $siteTables)
-            || $this->importStandings($competition, $wzpsTables);
+        // Zwykle pierwszeństwo ma tabela z wielkopolskasiatkowka, ale gdy WZPS/PZPS ma u nas więcej rozegranych
+        // meczów (strona przestała być aktualizowana, np. II liga), bierzemy świeższą.
+        $standingsImported = $this->playedByUs($competition, $wzpsTables) > $this->playedByUs($competition, $siteTables)
+            ? ($this->importStandings($competition, $wzpsTables) || $this->importStandings($competition, $siteTables))
+            : ($this->importStandings($competition, $siteTables) || $this->importStandings($competition, $wzpsTables));
 
         $result = $this->import($competition, $rows, $siteRows, $listRows, recalculateStandings: ! $standingsImported);
         $this->importDetails($competition, $rows->merge($listRows), $errors);
@@ -580,6 +583,20 @@ class ScheduleImporter
         $directory = preg_replace('#/+#', '/', preg_replace('#[^/]*$#', '', $parts['path'] ?? '/'));
 
         return $parts['scheme'].'://'.$parts['host'].$directory.'index.php?mode=4&stage=2&match_id='.$matchId;
+    }
+
+    /**
+     * Ile meczów rozegrały nasze drużyny według tabel z danego źródła (do wyboru świeższego źródła).
+     *
+     * @param  Collection<int, array{stage: ?string, group: ?string, rows: array<int, array<string, mixed>>}>  $tables
+     */
+    private function playedByUs(Competition $competition, Collection $tables): int
+    {
+        $ourTeams = $this->ourTeamsByName($competition);
+
+        return (int) $tables->sum(fn (array $table) => collect($table['rows'])
+            ->filter(fn (array $row) => isset($ourTeams[self::key($row['name'])]))
+            ->sum('played'));
     }
 
     /**

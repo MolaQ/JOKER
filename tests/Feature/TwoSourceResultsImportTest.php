@@ -20,6 +20,7 @@ beforeEach(function () {
         'wielkopolskasiatkowka.com.pl/wp-json/*slug=liga-juniorow-26-27*' => Http::response(json_encode([['content' => ['rendered' => file_get_contents(base_path('tests/Fixtures/ws-liga-juniorow.html'))]]]), 200, ['Content-Type' => 'application/json']),
         '*team_id=701' => Http::response(file_get_contents(base_path('tests/Fixtures/wzps-druzyna.html'))),
         '*match_id=522' => Http::response(file_get_contents(base_path('tests/Fixtures/wzps-mecz.html'))),
+        'sedziowie.pzps.pl/*' => Http::response(file_get_contents(base_path('tests/Fixtures/pzps-liga.html'))),
         '*' => Http::response(''),
     ]);
 });
@@ -163,4 +164,18 @@ test('the team page shows the road through stages and the standings page switche
         ->call('selectStage', 'Etap 1')
         ->assertSee('Grupa B')
         ->assertDontSee('Grupa D');
+});
+
+test('the fresher table wins when wielkopolskasiatkowka falls behind PZPS', function () {
+    $league = Competition::create([
+        'points_win_3_0' => 3, 'points_win_3_1' => 3, 'points_win_3_2' => 2,
+        'points_loss_2_3' => 1, 'points_loss_1_3' => 0, 'points_loss_0_3' => 0,
+        'name' => 'II Liga Mężczyzn PZPS', 'season_id' => $this->season->id,
+        'source_url' => "https://wielkopolskasiatkowka.com.pl/ii-liga-mezczyzn-5/\nhttps://sedziowie.pzps.pl/system/index.php?mode=12&type=9",
+    ]);
+    $league->teams()->attach($this->seniors->id, ['external_name' => 'LOMS Joker Piła']);
+
+    app(ScheduleImporter::class)->sync($league);
+
+    expect(LeagueStanding::where('competition_id', $league->id)->where('team_id', $this->seniors->id)->value('played'))->toBe(6);
 });
