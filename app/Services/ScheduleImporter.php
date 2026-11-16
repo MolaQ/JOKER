@@ -46,6 +46,7 @@ class ScheduleImporter
         $wzpsTables = collect();
         $siteTables = collect();
         $errors = [];
+        $notes = [];
 
         foreach ($competition->sourceUrls() as $url) {
             // wielkopolskasiatkowka.com.pl: wyniki i tabele (pierwszeństwo przed WZPS), bez godzin i hal.
@@ -71,6 +72,10 @@ class ScheduleImporter
             $page = $this->parsePage($html, $url);
             $wzpsTables = $wzpsTables->merge($page['tables']);
 
+            if ($page['tables']->isEmpty() && $page['matches']->contains('score_known', true)) {
+                $notes[] = 'Na stronie '.parse_url($url, PHP_URL_HOST).' są wyniki, ale nie udało się odczytać tabeli.';
+            }
+
             // Strona z wynikami (tabele rozgrywek) wyznacza, które mecze należą do rozgrywek.
             // Strony drużyn i listy meczów tylko uzupełniają godziny i hale.
             $page['matches']->contains('score_known', true)
@@ -89,9 +94,18 @@ class ScheduleImporter
 
         // Zwykle pierwszeństwo ma tabela z wielkopolskasiatkowka, ale gdy WZPS/PZPS ma u nas więcej rozegranych
         // meczów (strona przestała być aktualizowana, np. II liga), bierzemy świeższą.
-        $standingsImported = $this->playedByUs($competition, $wzpsTables) > $this->playedByUs($competition, $siteTables)
-            ? ($this->importStandings($competition, $wzpsTables) || $this->importStandings($competition, $siteTables))
-            : ($this->importStandings($competition, $siteTables) || $this->importStandings($competition, $wzpsTables));
+        $sources = $this->playedByUs($competition, $wzpsTables) > $this->playedByUs($competition, $siteTables)
+            ? ['WZPS/PZPS' => $wzpsTables, 'wielkopolskasiatkowka' => $siteTables]
+            : ['wielkopolskasiatkowka' => $siteTables, 'WZPS/PZPS' => $wzpsTables];
+        $standingsImported = false;
+        $tablesFrom = null;
+
+        foreach ($sources as $name => $tables) {
+            if ($this->importStandings($competition, $tables)) {
+                [$standingsImported, $tablesFrom] = [true, $name];
+                break;
+            }
+        }
 
         $result = $this->import($competition, $rows, $siteRows, $listRows, recalculateStandings: ! $standingsImported);
         $this->importDetails($competition, $rows->merge($listRows), $errors);
@@ -99,6 +113,8 @@ class ScheduleImporter
 
         $result['errors'] = $errors;
         $result['tables'] = $standingsImported;
+        $result['notes'] = $notes;
+        $result['tables_from'] = $standingsImported ? $tablesFrom : null;
 
         $competition->forceFill([
             'synced_at' => now(),
@@ -525,9 +541,15 @@ class ScheduleImporter
      */
     private function parseStandingCells(array $cells): ?array
     {
-        if (count($cells) !== 9 || ! ctype_digit($cells[0]) || $cells[1] === '') {
+        // Lp. bywa z kropką („1.”), a strona PZPS może mieć dodatkowe kolumny na końcu: liczą się pierwsze 9.
+        $cells = array_map(fn (string $cell) => str_replace(' ', '', $cell) === $cell ? $cell : (preg_match('/^-?[\d ]+$/u', $cell) ? str_replace(' ', '', $cell) : $cell), $cells);
+
+        if (count($cells) < 9 || ! preg_match('/^\d+\.?$/', $cells[0]) || $cells[1] === '' || preg_match('/^-?\d+$/', $cells[1])) {
             return null;
         }
+
+        $cells = array_slice($cells, 0, 9);
+        $cells[0] = rtrim($cells[0], '.');
 
         foreach (array_slice($cells, 2) as $value) {
             if (! preg_match('/^-?\d+$/', $value)) {
@@ -1019,7 +1041,11 @@ class ScheduleImporter
         }
 
         if ($result['tables'] ?? false) {
-            $parts[] = 'Tabela pobrana ze związku.';
+            $parts[] = 'Tabela pobrana ze związku ('.($result['tables_from'] ?? '').').';
+        }
+
+        foreach ($result['notes'] ?? [] as $note) {
+            $parts[] = $note;
         }
 
         if ($result['errors']) {

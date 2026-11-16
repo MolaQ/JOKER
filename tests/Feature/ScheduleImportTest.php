@@ -276,3 +276,12 @@ test('PZPS updates a match already imported from another source and cleans up it
         ->and($league->games()->whereDate('game_date', '2026-10-03')->count())->toBe(1)
         ->and(TrashItem::count())->toBe(1);
 });
+
+test('standings rows with a dotted position and extra columns are still read', function () {
+    $html = '<h2>Etap 1</h2><b>Grupa 1</b><table><tr><td>4.</td><td><img src="x.png"> LOMS Joker Piła</td><td>6</td><td>8</td><td>3</td><td>11</td><td>14</td><td>563</td><td>568</td><td>0,786</td><td>0,991</td></tr></table>';
+
+    $tables = app(ScheduleImporter::class)->parsePage($html, 'https://sedziowie.pzps.pl/system/index.php?mode=12&type=9')['tables'];
+
+    expect($tables)->toHaveCount(1)
+        ->and($tables[0]['rows'][0])->toMatchArray(['position' => 4, 'name' => 'LOMS Joker Piła', 'played' => 6, 'points' => 8, 'sets_lost' => 14]);
+});
