@@ -149,6 +149,24 @@ class Competition extends Model
      *
      * @return array<int, string>
      */
+    /**
+     * Mecze dwóch naszych drużyn: rywal rozpoznany po nazwie z drużyn rozgrywek trafia do guest_team_id,
+     * żeby mecz był też w kalendarzu i na stronie tej drużyny.
+     */
+    public function linkGuestTeams(): int
+    {
+        $linked = 0;
+
+        foreach ($this->games()->whereNull('guest_team_id')->with('competition.teams')->get() as $game) {
+            if ($team = $game->ownOpponentTeam()) {
+                $game->forceFill(['guest_team_id' => $team->id])->save();
+                $linked++;
+            }
+        }
+
+        return $linked;
+    }
+
     public function sourceUrls(): array
     {
         // Adres wklejony z kodu strony bywa z „&amp;” zamiast „&”.

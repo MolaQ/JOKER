@@ -6,12 +6,14 @@ use App\Livewire\GamesBrowser;
 use App\Models\Competition;
 use App\Models\Game;
 use App\Models\LeagueStanding;
+use App\Models\Player;
 use App\Models\RivalTeam;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\TrashItem;
 use App\Models\User;
 use App\Services\ScheduleImporter;
+use App\Support\FanMvp;
 use App\UserRole;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
@@ -290,4 +292,23 @@ test('source addresses pasted with &amp; still work', function () {
     $this->competition->update(['source_url' => 'https://sedziowie.pzps.pl/system/index.php?mode=12&amp;type=9']);
 
     expect($this->competition->sourceUrls())->toBe(['https://sedziowie.pzps.pl/system/index.php?mode=12&type=9']);
+});
+
+test('a team named in the competition is recognised as our opponent: calendar, logo and fan MVP', function () {
+    $juniors = Team::create(['name' => 'Juniorzy II', 'slug' => 'juniorzy-ii-x', 'category' => 'junior']);
+    $this->competition->update(['source_url' => null]);
+    $this->competition->teams()->sync([$juniors->id => ['external_name' => 'LOMS Joker Piła']]);
+    $game = Game::factory()->create(['team_id' => $juniors->id, 'season_id' => $this->competition->season_id, 'competition_id' => $this->competition->id, 'opponent' => 'LOMS Joker Piła II', 'opponent_team_id' => null, 'game_date' => now()->addDay()->setTime(17, 0), 'status' => 'scheduled']);
+    $cadet = Player::factory()->create(['team_id' => $this->cadets->id, 'first_name' => 'Kuba', 'last_name' => 'Kadet', 'is_active' => true]);
+
+    // Kadeci dopisani do rozgrywek pod nazwą z terminarza.
+    $this->competition->teams()->attach($this->cadets->id, ['external_name' => 'LOMS Joker Piła II']);
+    $this->competition->unsetRelation('teams');
+    expect($this->competition->linkGuestTeams())->toBe(1);
+
+    $game = $game->fresh();
+    expect($game->guest_team_id)->toBe($this->cadets->id)
+        ->and($game->opponentLogoPath())->not->toBeNull()
+        ->and(FanMvp::teams($game)->pluck('id')->all())->toBe([$juniors->id, $this->cadets->id])
+        ->and(FanMvp::candidates($game)->pluck('id')->all())->toContain($cadet->id);
 });

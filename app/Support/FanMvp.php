@@ -134,7 +134,8 @@ class FanMvp
     public static function teams(Model $match): Collection
     {
         if ($match instanceof Game) {
-            return collect([$match->team])->filter()->values();
+            // Derby dwóch naszych drużyn (np. juniorzy z kadetami w III lidze): głosuje się na zawodników obu.
+            return collect([$match->team, $match->ownOpponentTeam()])->filter()->unique('id')->values();
         }
 
         return collect([$match->home, $match->away])

@@ -87,7 +87,7 @@ class CalendarTiles
     {
         $ourLabel = $game->ourLabel();
         $ours = ['name' => trim($ourLabel['name'].' '.($ourLabel['badge'] ?? '')), 'logo' => Media::url($game->team?->logoPath())];
-        $rival = ['name' => $game->opponentShortName(), 'logo' => Media::url($game->opponentTeam?->logoPath())];
+        $rival = ['name' => $game->opponentShortName(), 'logo' => Media::url($game->opponentLogoPath())];
         $result = $game->ourSetsResult();
         $outcome = $game->outcome();
         $hasTime = $game->game_date->format('H:i') !== '00:00';

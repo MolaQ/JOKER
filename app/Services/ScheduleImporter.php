@@ -110,6 +110,8 @@ class ScheduleImporter
         $result = $this->import($competition, $rows, $siteRows, $listRows, recalculateStandings: ! $standingsImported);
         $this->importDetails($competition, $rows->merge($listRows), $errors);
         $result['cancelled'] = $competition->applyWithdrawals();
+        $competition->unsetRelation('teams');
+        $competition->linkGuestTeams();
 
         $result['errors'] = $errors;
         $result['tables'] = $standingsImported;

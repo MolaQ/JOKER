@@ -30,7 +30,7 @@ class ShareCards
 
         [$homeName, $awayName] = $game->sidesNames();
         $ourLogo = Media::url($game->team?->logoPath());
-        $opponentLogo = Media::url($game->opponentTeam?->logoPath());
+        $opponentLogo = Media::url($game->opponentLogoPath());
         $outcome = $game->outcome();
 
         return [

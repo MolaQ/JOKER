@@ -104,6 +104,40 @@ class Game extends Model
         return $query->where(fn ($games) => $games->where('games.team_id', $teamId)->orWhere('games.guest_team_id', $teamId));
     }
 
+    /**
+     * Rywal, który też jest naszą drużyną: wpisany w meczu albo rozpoznany po nazwie z drużyn rozgrywek
+     * (np. „LOMS Joker Piła II” = kadeci, gdy tak ich nazwano w Rozgrywkach).
+     */
+    public function ownOpponentTeam(): ?Team
+    {
+        if ($this->guest_team_id) {
+            return $this->guestTeam;
+        }
+
+        if (! $this->competition || blank($this->opponent)) {
+            return null;
+        }
+
+        $key = ScheduleImporter::key($this->opponent);
+
+        return $this->competition->teams->first(fn (Team $team) => $team->id !== $this->team_id && collect(preg_split('/[;\n]+/', (string) $team->pivot?->external_name) ?: [])
+            ->push($team->pivot?->display_name, $team->name)
+            ->filter()
+            ->contains(fn (string $name) => ScheduleImporter::key(trim($name)) === $key));
+    }
+
+    /**
+     * Herb rywala: z bazy rywali, a gdy rywal to nasza drużyna albo inna drużyna klubu - herb klubu.
+     */
+    public function opponentLogoPath(): ?string
+    {
+        return $this->opponentTeam?->logoPath()
+            ?? $this->ownOpponentTeam()?->logoPath()
+            ?? (collect([$this->opponent])->filter()->contains(fn (string $name) => Str::contains(ScheduleImporter::key($name), app(SiteSettings::class)->clubNameKeys()))
+                ? (app(SiteSettings::class)->get('logo') ?: asset('img/logo-256.webp'))
+                : null);
+    }
+
     public function involvesTeam(?Team $team): bool
     {
         return $team !== null && in_array($team->id, [$this->team_id, $this->guest_team_id], true);

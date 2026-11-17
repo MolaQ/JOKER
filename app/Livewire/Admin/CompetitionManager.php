@@ -181,6 +181,9 @@ class CompetitionManager extends Component
             ],
         ])->all());
 
+        $competition->unsetRelation('teams');
+        $competition->linkGuestTeams();
+
         if ($cancelled = $competition->applyWithdrawals()) {
             $this->toast('Zmieniono mecze z wycofanymi drużynami: '.$cancelled.'.');
         }

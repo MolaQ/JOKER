@@ -5,7 +5,7 @@
 
     [$homeName, $awayName] = $game->sidesNames();
     $ourLogo = $game->team?->logoPath();
-    $opponentLogo = $game->opponentTeam?->logoPath();
+    $opponentLogo = $game->opponentLogoPath();
     $sides = $game->is_home
         ? [[$homeName, $ourLogo, true], [$awayName, $opponentLogo, false]]
         : [[$homeName, $opponentLogo, false], [$awayName, $ourLogo, true]];
