@@ -47,10 +47,16 @@ class ThumbnailData
      */
     public static function fromGame(Game $game): array
     {
-        $game->loadMissing(['team', 'opponentTeam.club', 'competition']);
+        $game->loadMissing(['team', 'opponentTeam.club', 'competition.teams']);
         $ours = self::ours($game->ourLabel()['name'], $game->team);
-        $rival = $game->opponentTeam;
-        $opponent = self::side($game->opponentDisplayName(), $rival?->logoPath(), self::rivalColor($rival), $rival ? 'rival:'.$rival->id : '');
+        // Rywal z bazy; gdy mecz nie ma go przypisanego, szukamy po nazwie (też po dawnych nazwach).
+        $rival = $game->opponentTeam ?? (filled($game->opponent) ? RivalTeam::with('club')->find(RivalTeam::findByName((string) $game->opponent)?->id) : null);
+        $ownOpponent = $rival ? null : $game->ownOpponentTeam();
+
+        // Rywal to nasza druga drużyna (np. kadeci jako „LOMS Joker Piła II”) albo inna drużyna klubu: herb klubu.
+        $opponent = $ownOpponent || (! $rival && $game->opponentLogoPath())
+            ? self::ours($game->opponentDisplayName(), $ownOpponent)
+            : self::side($game->opponentDisplayName(), $rival?->logoPath(), self::rivalColor($rival), $rival ? 'rival:'.$rival->id : '');
         [$home, $away] = $game->is_home ? [$ours, $opponent] : [$opponent, $ours];
 
         return [

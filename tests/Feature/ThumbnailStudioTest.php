@@ -189,3 +189,15 @@ test('the game search ignores Polish letters and finds games by date', function 
     $studio->set('fSearch', '2026-11-15')->assertSee('Piątka Turek')->assertDontSee('Łódzki Klub');
     $studio->set('fSearch', '15 listopada')->assertSee('Piątka Turek')->assertDontSee('Łódzki Klub');
 });
+
+test('the second team gets a logo: rival found by name, or our club crest in a club derby', function () {
+    $season = Season::create(['name' => '2030/2031', 'start_date' => '2030-09-01', 'end_date' => '2031-06-30', 'is_current' => false]);
+    $team = Team::create(['name' => 'Juniorzy II', 'slug' => 'juniorzy-ii-thumb', 'category' => 'junior']);
+    RivalTeam::create(['full_name' => 'KS Kórnik', 'logo_path' => 'rivals/kornik.png']);
+
+    $byName = Game::factory()->create(['team_id' => $team->id, 'season_id' => $season->id, 'opponent' => 'KS Kórnik', 'opponent_team_id' => null, 'is_home' => true]);
+    expect(ThumbnailData::fromGame($byName)['away']['logo'])->toContain('rivals/kornik.png');
+
+    $derby = Game::factory()->create(['team_id' => $team->id, 'season_id' => $season->id, 'opponent' => 'LOMS Joker Piła II', 'opponent_team_id' => null, 'is_home' => true]);
+    expect(ThumbnailData::fromGame($derby)['away']['logo'])->not->toBe('');
+});
