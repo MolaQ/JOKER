@@ -9,7 +9,12 @@
     <x-photo :src="$group->photoUrl()" :alt="$group->name" eager width="1800" height="1000" class="absolute inset-0 -z-20 h-full w-full opacity-60" />
     <div class="absolute inset-0 -z-10 bg-gradient-to-t from-ink via-ink/70 to-ink/30"></div>
     <div class="container-site pt-24 pb-14 lg:pt-36 lg:pb-20">
-        <a href="{{ route('mini.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ __($site['mini_title']) }}</a>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <a href="{{ route('mini.index') }}" class="text-sm text-zinc-400 transition hover:text-white">← {{ __($site['mini_title']) }}</a>
+            @can('mini.manage')
+                <a href="{{ route('admin.mini.index', ['section' => 'grupa', 'group' => $group->id, 'pane' => 'dzieci']) }}" class="rounded-full bg-white/10 px-4 py-1.5 text-sm font-semibold text-white ring-1 ring-white/20 hover:bg-white/20">✎ {{ __('Edytuj dzieci w panelu') }}</a>
+            @endcan
+        </div>
         @if($group->ageLine())<p class="eyebrow mt-6">{{ $group->ageLine() }}</p>@endif
         <h1 class="heading-xl mt-3">{{ $group->name }}</h1>
         <x-mini-players :group="$group" size="lg" class="mt-4" />

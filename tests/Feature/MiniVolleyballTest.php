@@ -8,8 +8,10 @@ use App\Models\MiniTripTeam;
 use App\Models\Player;
 use App\Models\Team;
 use App\Models\User;
+use App\Permission;
 use App\Support\AgeColors;
 use App\Support\SiteSettings;
+use App\UserRole;
 use Livewire\Livewire;
 
 test('the migration prepares four hidden groups', function () {
@@ -156,4 +158,16 @@ test('a team player can also play in a mini group without leaving the team', fun
     $tripTeam = $trip->teams()->create(['mini_group_id' => $group->id, 'name' => 'Joker 1']);
     Livewire::test(MiniVolleyballManager::class)->set('tripId', $trip->id)->assertSee('Młodzicy')->call('togglePlayer', $tripTeam->id, $player->id);
     expect($tripTeam->players()->pluck('players.id')->all())->toBe([$player->id]);
+});
+
+test('koordynator mini z uprawnieniem do minisiatkówki ma na stronie grupy skrót do edycji dzieci w panelu', function () {
+    $group = MiniGroup::create(['name' => 'Skrótowa grupa', 'slug' => 'skrotowa-grupa', 'players_on_court' => 1, 'is_active' => true]);
+    $coordinator = User::factory()->create(['role' => UserRole::MiniCoordinator]);
+    $panelLink = e(route('admin.mini.index', ['section' => 'grupa', 'group' => $group->id, 'pane' => 'dzieci']));
+
+    $this->actingAs($coordinator)->get(route('mini.show', $group))->assertOk()->assertDontSee('Edytuj dzieci w panelu');
+
+    $coordinator->permissionOverrides()->create(['permission' => Permission::MiniVolleyball, 'allowed' => true]);
+    $this->actingAs($coordinator->fresh())->get(route('mini.show', $group))->assertSee('Edytuj dzieci w panelu')->assertSee($panelLink, false);
+    $this->get(route('admin.mini.index', ['section' => 'grupa', 'group' => $group->id, 'pane' => 'dzieci']))->assertOk()->assertSee('Gra też w grupach');
 });
