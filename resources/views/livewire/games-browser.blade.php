@@ -217,71 +217,84 @@
                 $wins = $finished->filter(fn ($game) => in_array($game->outcome(), ['win', 'derby'], true))->count();
                 $count = $month['games']->count();
             @endphp
-            <article class="mt-14 first:mt-4" wire:key="month-{{ $month['key'] }}" aria-label="{{ $month['month']->translatedFormat('F Y') }}">
-                {{-- Kartka kalendarza ściennego --}}
-                <div class="relative rounded-3xl bg-white shadow-xl shadow-zinc-900/5 ring-1 ring-zinc-200">
-                    <div class="pointer-events-none absolute inset-x-6 -top-3 flex justify-between sm:inset-x-12" aria-hidden="true">
-                        @for($ring = 0; $ring < 12; $ring++)
-                            <span @class(['h-7 w-2.5 rounded-full bg-gradient-to-b from-zinc-200 via-zinc-400 to-zinc-600 ring-2 ring-white', 'hidden sm:block' => $ring % 2 === 1])></span>
+            <article class="mt-14 first:mt-4 lg:grid lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start lg:gap-8" wire:key="month-{{ $month['key'] }}" aria-label="{{ $month['month']->translatedFormat('F Y') }}">
+                {{-- Mała kartka kalendarza: w dniu kółko z liczbą wydarzeń, im więcej, tym ciemniejszy niebieski. Kliknięcie otwiera okno dnia. --}}
+                <div class="relative mx-auto max-w-md rounded-3xl bg-white shadow-xl shadow-zinc-900/5 ring-1 ring-zinc-200 lg:sticky lg:top-48 lg:max-w-none">
+                    <div class="pointer-events-none absolute inset-x-8 -top-2.5 flex justify-between" aria-hidden="true">
+                        @for($ring = 0; $ring < 6; $ring++)
+                            <span class="h-5 w-2 rounded-full bg-gradient-to-b from-zinc-200 via-zinc-400 to-zinc-600 ring-2 ring-white"></span>
                         @endfor
                     </div>
 
-                    <header class="flex flex-wrap items-end justify-between gap-3 rounded-t-3xl bg-gradient-to-r from-club-navy via-club-navy to-sky-club px-5 pt-9 pb-5 text-white sm:px-8">
-                        <h2 class="font-display leading-none font-bold uppercase">
-                            <span class="block text-4xl sm:text-6xl">{{ $month['month']->translatedFormat('F') }}</span>
-                            <span class="mt-1 block text-lg tracking-[0.3em] text-sky-club-light">{{ $month['month']->year }}</span>
+                    <header class="rounded-t-3xl bg-gradient-to-r from-club-navy via-club-navy to-sky-club px-5 pt-7 pb-4 text-white">
+                        <h2 class="flex items-baseline justify-between gap-3 font-display leading-none font-bold uppercase">
+                            <span class="text-3xl">{{ $month['month']->translatedFormat('F') }}</span>
+                            <span class="text-base tracking-[0.3em] text-sky-club-light">{{ $month['month']->year }}</span>
                         </h2>
-                        <p class="text-sm text-white/85">
+                        <p class="mt-2 text-xs text-white/85">
                             {{ trans_choice(':count mecz|:count mecze|:count meczów', $count) }}@if($month['tournaments']->isNotEmpty()) · {{ trans_choice('{1} :count turniej|[2,4] :count turnieje|[0,*] :count turniejów', $month['tournaments']->count()) }}@endif @if($month['mini']->isNotEmpty()) · {{ trans_choice('{1} :count turniej mini|[2,4] :count turnieje mini|[0,*] :count turniejów mini', $month['mini']->count()) }}@endif @if($finished->isNotEmpty()) · <span class="font-semibold text-emerald-300">{{ trans_choice('{1} :count wygrana|[0,*] :count wygranych', $wins) }}</span>@endif
                         </p>
                     </header>
 
-                    <div class="grid grid-cols-7 border-b border-zinc-200 text-center text-[11px] font-semibold tracking-wider uppercase sm:text-xs">
+                    <div class="grid grid-cols-7 px-2 pt-2 text-center text-[11px] font-semibold tracking-wider uppercase">
                         @foreach([__('Pn'), __('Wt'), __('Śr'), __('Cz'), __('Pt'), __('So'), __('Nd')] as $weekday)
-                            <div @class(['py-2', 'text-red-600' => $loop->index >= 5, 'text-zinc-500' => $loop->index < 5])>{{ $weekday }}</div>
+                            <div @class(['py-1', 'text-red-600' => $loop->index >= 5, 'text-zinc-500' => $loop->index < 5])>{{ $weekday }}</div>
                         @endforeach
                     </div>
 
-                    <div class="overflow-hidden rounded-b-3xl">
+                    <div class="grid grid-cols-7 gap-y-1 px-2 pb-3">
                         @foreach($month['weeks'] as $week)
-                            <div class="grid grid-cols-7">
-                                @foreach($week as $day)
-                                    <div @class([
-                                        'relative min-h-14 border-b border-zinc-100 p-1 sm:min-h-20 sm:p-2 lg:min-h-32',
-                                        'border-r' => ! $loop->last,
-                                        'bg-zinc-50/70' => ! $day['inMonth'],
-                                        'bg-sky-club/5' => $day['inMonth'] && $day['tiles']->isNotEmpty(),
-                                    ])>
-                                        <p @class([
-                                            'font-display text-base leading-none font-semibold tabular-nums sm:text-2xl',
+                            @foreach($week as $day)
+                                @php
+                                    $events = $day['inMonth'] ? \App\Support\CalendarTiles::eventCount($day['tiles']) : 0;
+                                    $hasBirthday = $day['inMonth'] && $day['birthdays']->isNotEmpty();
+                                @endphp
+                                <div class="flex flex-col items-center py-0.5" wire:key="day-{{ $day['date']->toDateString() }}">
+                                    @if($events || $hasBirthday)
+                                        <button type="button"
+                                            x-on:click="$dispatch('match-details', { tile: @js(\App\Support\CalendarTiles::dayPayload($day['date'], $day['tiles'], $day['birthdays'])), el: $el })"
+                                            aria-label="{{ \Illuminate\Support\Str::ucfirst($day['date']->translatedFormat('l, j F')) }}: {{ trans_choice(':count wydarzenie|:count wydarzenia|:count wydarzeń', $events) }}"
+                                            @class([
+                                                'relative grid size-10 place-items-center rounded-full font-display text-base leading-none font-semibold tabular-nums transition hover:scale-110 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-club',
+                                                'bg-sky-100 text-sky-900' => $events === 1,
+                                                'bg-sky-300 text-sky-950' => $events === 2,
+                                                'bg-sky-500 text-white' => $events === 3,
+                                                'bg-sky-700 text-white' => $events >= 4 && $events <= 5,
+                                                'bg-club-navy text-white' => $events > 5,
+                                                'bg-white text-zinc-700 ring-1 ring-zinc-200' => $events === 0,
+                                                'ring-2 ring-offset-2 ring-sky-club' => $day['isToday'],
+                                            ])>
+                                            {{ $day['date']->day }}
+                                            @if($events)
+                                                <span class="absolute -top-1 -right-1 grid size-4.5 min-w-4.5 place-items-center rounded-full bg-white px-0.5 text-[10px] font-bold text-club-navy shadow ring-1 ring-sky-200">{{ $events }}</span>
+                                            @endif
+                                            @if($hasBirthday)
+                                                <span class="absolute -bottom-1 -left-1 text-xs leading-none" aria-hidden="true">{{ $birthdayIcon }}</span>
+                                            @endif
+                                        </button>
+                                    @else
+                                        <span @class([
+                                            'grid size-10 place-items-center rounded-full font-display text-base leading-none tabular-nums',
                                             'text-zinc-300' => ! $day['inMonth'],
-                                            'text-red-600' => $day['inMonth'] && $day['date']->isWeekend(),
-                                            'text-zinc-800' => $day['inMonth'] && ! $day['date']->isWeekend(),
-                                        ])>
-                                            <span @class(['inline-flex h-7 min-w-7 items-center justify-center rounded-full sm:h-9 sm:min-w-9', 'bg-sky-club text-white' => $day['isToday']])>{{ $day['date']->day }}</span>
-                                        </p>
-
-                                        @if($day['inMonth'] && ($day['tiles']->isNotEmpty() || $day['birthdays']->isNotEmpty()))
-                                            <div class="mt-1 space-y-1 md:mt-1.5">
-                                                @foreach($day['tiles'] as $tile)
-                                                    <x-calendar.tile :tile="$tile" wire:key="tile-{{ $tile['key'] }}" />
-                                                @endforeach
-                                                @foreach($day['birthdays'] as $person)
-                                                    <a href="#urodziny-{{ $month['key'] }}" class="block truncate rounded-lg bg-(--cal-bday-bg) px-1.5 py-1 text-[11px] leading-tight text-(--cal-bday-text)" title="{{ __('Urodziny') }}: {{ $person['name'] }}{{ $person['showAge'] ? ' '.__('kończy').' '.$person['ageLabel'] : '' }} ({{ __($person['role']) }})">
-                                                        {{ $birthdayIcon }}<span class="hidden md:inline"> <span class="font-semibold">{{ $person['name'] }}</span>{{ $person['showAge'] ? ' · '.$person['age'] : '' }}</span>
-                                                    </a>
-                                                @endforeach
-                                            </div>
-                                        @endif
-                                    </div>
-                                @endforeach
-                            </div>
+                                            'text-red-500' => $day['inMonth'] && $day['date']->isWeekend(),
+                                            'text-zinc-600' => $day['inMonth'] && ! $day['date']->isWeekend(),
+                                            'ring-2 ring-sky-club font-semibold' => $day['isToday'],
+                                        ])>{{ $day['date']->day }}</span>
+                                    @endif
+                                </div>
+                            @endforeach
                         @endforeach
+                    </div>
+
+                    <div class="flex items-center justify-center gap-1.5 border-t border-zinc-100 px-4 py-2.5 text-[11px] text-zinc-500">
+                        <span>{{ __('mniej') }}</span>
+                        @foreach(['bg-sky-100', 'bg-sky-300', 'bg-sky-500', 'bg-sky-700', 'bg-club-navy'] as $shade)<span class="size-3 rounded-full {{ $shade }}"></span>@endforeach
+                        <span>{{ __('więcej meczów w dniu') }}</span>
                     </div>
                 </div>
 
-                {{-- Telefon i tablet: szczegóły meczów miesiąca pod kartką --}}
-                <ul class="mt-4 space-y-3 lg:hidden">
+                {{-- Mecze miesiąca: pod kartką na telefonie, obok niej na komputerze --}}
+                <ul class="mt-4 space-y-3 lg:mt-0">
                 @foreach($month['games'] as $game)
                     @php
                         $result = $game->ourSetsResult();
@@ -500,36 +513,81 @@
                         <button type="button" data-close x-on:click="close()" class="grid size-9 shrink-0 place-items-center rounded-full bg-white/10 text-lg hover:bg-white/20" aria-label="{{ __('Zamknij') }}">✕</button>
                     </div>
                     <div class="space-y-3 overflow-y-auto p-4">
-                        <template x-for="(match, index) in tile.matches" :key="match.id">
-                            <article class="calendar-details-rise rounded-2xl p-4 ring-1 ring-zinc-200" :style="`animation-delay: ${80 + index * 90}ms`">
-                                <div class="flex items-center justify-between gap-2 text-xs text-zinc-500">
-                                    <span class="rounded-full bg-(--tile) px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase" x-text="tile.label"></span>
-                                    <span class="truncate font-medium" x-text="match.date"></span>
-                                </div>
-                                <div class="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                                    <template x-for="side in ['home', 'away']" :key="side">
-                                        <div class="flex flex-col items-center gap-1.5 text-center text-sm leading-tight font-semibold text-zinc-900" :class="side === 'away' && 'order-3'">
-                                            <span class="relative grid size-14 place-items-center overflow-hidden rounded-full" :class="match[side].logo ? '' : 'bg-gradient-to-br from-graphite to-ink'">
-                                                <template x-if="match[side].logo"><img :src="match[side].logo" alt="" class="size-full object-contain"></template>
-                                                <template x-if="! match[side].logo"><span class="font-display text-lg font-bold text-sky-club" x-text="initials(match[side].name)"></span></template>
+                        {{-- Lista dnia: wydarzenia w skrócie, kliknięcie meczu pokazuje jego szczegóły --}}
+                        <template x-if="! selected">
+                            <div class="space-y-2">
+                                <template x-for="(match, index) in tile.matches" :key="match.id">
+                                    <button type="button" x-on:click="selected = match" class="calendar-details-rise flex w-full items-center gap-3 rounded-2xl p-3 text-left ring-1 ring-zinc-200 transition hover:bg-zinc-50 hover:ring-sky-club" :style="`animation-delay: ${60 + index * 60}ms; --tile: ${match.tileColor || tile.color}`">
+                                        <span class="h-10 w-1 shrink-0 rounded-full bg-(--tile)"></span>
+                                        <span class="min-w-0 flex-1">
+                                            <span class="block truncate text-[10px] font-bold tracking-wider text-(--tile) uppercase [filter:brightness(.8)]" x-text="match.label || tile.label"></span>
+                                            <span class="block truncate text-sm font-semibold text-zinc-900" x-text="match.home.name + ' – ' + match.away.name"></span>
+                                            <span class="block truncate text-xs text-zinc-500" x-text="match.competition"></span>
+                                        </span>
+                                        <span class="shrink-0 text-right">
+                                            <span class="block font-display text-lg leading-none font-bold tabular-nums" :class="resultClass(match)" x-text="match.mid || '–'"></span>
+                                            <span class="mt-1 flex justify-end gap-1">
+                                                <template x-for="item in match.media || []" :key="item.label"><span class="rounded-full bg-sky-club/10 px-1.5 py-0.5 text-[9px] font-semibold text-sky-club-dark" x-text="item.label"></span></template>
                                             </span>
-                                            <span x-text="match[side].name"></span>
-                                        </div>
-                                    </template>
-                                    <div class="order-2 text-center">
-                                        <p class="font-display text-3xl leading-none font-bold tabular-nums" :class="resultClass(match)" x-text="match.mid || '{{ __('vs') }}'"></p>
-                                        <p class="mt-1 text-[11px] font-semibold text-zinc-500" x-text="match.outcomeLabel"></p>
+                                        </span>
+                                        <span class="shrink-0 text-zinc-400" aria-hidden="true">›</span>
+                                    </button>
+                                </template>
+                                <template x-for="other in tile.others || []" :key="other.key">
+                                    <a :href="other.url || '#'" class="flex items-center gap-3 rounded-2xl p-3 ring-1 ring-zinc-200 transition hover:bg-zinc-50" :style="`--tile: ${other.color}`">
+                                        <span class="h-10 w-1 shrink-0 rounded-full bg-(--tile)"></span>
+                                        <span class="min-w-0 flex-1">
+                                            <span class="block truncate text-[10px] font-bold tracking-wider text-(--tile) uppercase [filter:brightness(.8)]" x-text="other.label"></span>
+                                            <span class="block truncate text-sm font-semibold text-zinc-900" x-text="other.title"></span>
+                                            <span class="block truncate text-xs text-zinc-500" x-text="other.note"></span>
+                                        </span>
+                                        <span x-show="other.url" class="shrink-0 text-zinc-400" aria-hidden="true">›</span>
+                                    </a>
+                                </template>
+                                <template x-for="person in tile.birthdays || []" :key="person.name">
+                                    <a :href="person.url || '#'" class="flex items-center gap-3 rounded-2xl bg-(--cal-bday-bg) p-3 text-sm text-(--cal-bday-text)">
+                                        <span aria-hidden="true">{{ $birthdayIcon }}</span>
+                                        <span><span class="font-semibold" x-text="person.name"></span> <span x-show="person.note" x-text="person.note"></span></span>
+                                    </a>
+                                </template>
+                            </div>
+                        </template>
+
+                        {{-- Szczegóły wybranego meczu --}}
+                        <template x-if="selected">
+                            <div x-data="{ match: selected }">
+                                <button type="button" x-show="(tile.matches?.length || 0) + (tile.others?.length || 0) + (tile.birthdays?.length || 0) > 1" x-on:click="selected = null" class="mb-3 text-sm font-semibold text-sky-club-dark hover:underline">← {{ __('Wszystkie wydarzenia dnia') }}</button>
+                                <article class="calendar-details-rise rounded-2xl p-4 ring-1 ring-zinc-200" :style="`--tile: ${match.tileColor || tile.color}`">
+                                    <div class="flex items-center justify-between gap-2 text-xs text-zinc-500">
+                                        <span class="rounded-full bg-(--tile) px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase" x-text="match.label || tile.label"></span>
+                                        <span class="truncate font-medium" x-text="match.date"></span>
                                     </div>
-                                </div>
-                                <p x-show="match.sets" class="mt-2 text-center text-xs text-zinc-500 tabular-nums" x-text="'{{ __('Sety') }}: ' + match.sets"></p>
-                                <p x-show="match.note" class="mt-1 text-center text-xs font-semibold text-amber-700" x-text="match.note"></p>
-                                <p class="mt-3 text-xs text-zinc-500"><span x-text="[match.competition, match.round].filter(Boolean).join(' · ')"></span><template x-if="match.venue"><span> · <span x-text="match.venue"></span></span></template></p>
-                                <div class="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-                                    <template x-if="match.url"><a :href="match.url" class="rounded-full bg-sky-club/10 px-3 py-1.5 text-sky-club-dark hover:bg-sky-club/20">{{ __('Szczegóły meczu') }} →</a></template>
-                                    <template x-if="match.article"><a :href="match.article" class="rounded-full bg-sky-club/10 px-3 py-1.5 text-sky-club-dark hover:bg-sky-club/20">{{ __('Czytaj artykuł') }} →</a></template>
-                                    <template x-if="match.calendar"><a :href="match.calendar" class="rounded-full bg-zinc-100 px-3 py-1.5 text-zinc-700 hover:bg-zinc-200">+ {{ __('Do kalendarza') }}</a></template>
-                                </div>
-                            </article>
+                                    <div class="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                                        <template x-for="side in ['home', 'away']" :key="side">
+                                            <div class="flex flex-col items-center gap-1.5 text-center text-sm leading-tight font-semibold text-zinc-900" :class="side === 'away' && 'order-3'">
+                                                <span class="relative grid size-14 place-items-center overflow-hidden rounded-full" :class="match[side].logo ? '' : 'bg-gradient-to-br from-graphite to-ink'">
+                                                    <template x-if="match[side].logo"><img :src="match[side].logo" alt="" class="size-full object-contain"></template>
+                                                    <template x-if="! match[side].logo"><span class="font-display text-lg font-bold text-sky-club" x-text="initials(match[side].name)"></span></template>
+                                                </span>
+                                                <span x-text="match[side].name"></span>
+                                            </div>
+                                        </template>
+                                        <div class="order-2 text-center">
+                                            <p class="font-display text-3xl leading-none font-bold tabular-nums" :class="resultClass(match)" x-text="match.mid || '{{ __('vs') }}'"></p>
+                                            <p class="mt-1 text-[11px] font-semibold text-zinc-500" x-text="match.outcomeLabel"></p>
+                                        </div>
+                                    </div>
+                                    <p x-show="match.sets" class="mt-2 text-center text-xs text-zinc-500 tabular-nums" x-text="'{{ __('Sety') }}: ' + match.sets"></p>
+                                    <p x-show="match.note" class="mt-1 text-center text-xs font-semibold text-amber-700" x-text="match.note"></p>
+                                    <p class="mt-3 text-xs text-zinc-500"><span x-text="[match.competition, match.round].filter(Boolean).join(' · ')"></span><template x-if="match.venue"><span> · <span x-text="match.venue"></span></span></template></p>
+                                    <div class="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
+                                        <template x-if="match.url"><a :href="match.url" class="rounded-full bg-ink px-3 py-1.5 text-white hover:bg-graphite">{{ __('Szczegóły meczu') }} →</a></template>
+                                        <template x-for="item in match.media || []" :key="item.label"><a :href="item.url" class="rounded-full bg-sky-club/10 px-3 py-1.5 text-sky-club-dark hover:bg-sky-club/20" x-text="item.label"></a></template>
+                                        <template x-if="match.article"><a :href="match.article" class="rounded-full bg-sky-club/10 px-3 py-1.5 text-sky-club-dark hover:bg-sky-club/20">{{ __('Czytaj artykuł') }} →</a></template>
+                                        <template x-if="match.calendar"><a :href="match.calendar" class="rounded-full bg-zinc-100 px-3 py-1.5 text-zinc-700 hover:bg-zinc-200">+ {{ __('Do kalendarza') }}</a></template>
+                                    </div>
+                                </article>
+                            </div>
                         </template>
                     </div>
                 </div>

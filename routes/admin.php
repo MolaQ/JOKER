@@ -99,6 +99,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     Route::get('/proposals/{proposal}/podglad', ContentProposalPreviewController::class)->whereNumber('proposal')->middleware('can:proposals.content')->name('content-proposals.preview');
     Route::get('/mini-approvals', ApprovalsController::class)->defaults('section', 'mini')->name('mini-approvals.index');
     Route::get('/duplicate-games', ApprovalsController::class)->defaults('section', 'duble')->name('duplicate-games.index');
+    Route::get('/missing-logos', ApprovalsController::class)->defaults('section', 'logotypy')->name('missing-logos.index');
     Route::get('/duplicate-players', ApprovalsController::class)->defaults('section', 'duble-zawodnikow')->name('duplicate-players.index');
     Route::get('/comments', ApprovalsController::class)->defaults('section', 'komentarze')->name('comments.index');
     Route::get('/reported-messages', ApprovalsController::class)->defaults('section', 'wiadomosci')->name('reported-messages.index');

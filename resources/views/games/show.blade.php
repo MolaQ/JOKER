@@ -120,7 +120,7 @@
     @endif
 
     @if(filled($game->match_report))
-        <section>
+        <section id="relacja" class="scroll-mt-32">
             <p class="eyebrow">{{ __('Relacja') }}</p>
             @if($game->match_report !== strip_tags($game->match_report))
                 <div class="prose-club mt-4 max-w-3xl">{!! \App\Support\Mentions::link(\App\Support\DeadLinks::strip(strip_tags($game->match_report, '<p><br><strong><em><b><i><u><s><mark><blockquote><hr><ul><ol><li><h2><h3><a>'))) !!}</div>

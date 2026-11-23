@@ -16,9 +16,11 @@ use App\Models\Season;
 use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\User;
+use App\Support\CalendarTiles;
 use App\Support\Media;
 use App\Support\SiteSettings;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
@@ -56,9 +58,9 @@ test('calendar marks home and away games, results with V or X and opens the newe
         ->set('period', 'all')
         ->assertSeeHtml('bg-(--cal-home-bg) text-(--cal-home-text) ring-1 ring-(--cal-home-border)')
         ->assertSeeHtml('bg-(--cal-away-bg) text-(--cal-away-text)')
-        // Kafelek kalendarza: wynik w kolorze wygranej/porażki, a okno szczegółów prowadzi do najnowszego artykułu.
-        ->assertSeeHtml('text-emerald-600">3:1</span>')
-        ->assertSeeHtml('text-red-600">3:0</span>')
+        // Kartka kalendarza: dzień z jednym meczem to jasne kółko z liczbą, a okno dnia ma wynik i link do relacji.
+        ->assertSeeHtml('bg-sky-100 text-sky-900')
+        ->assertSeeHtml('aria-label="Niedziela, 4 października: 1 wydarzenie"')
         ->assertSeeHtml('href="'.route('articles.show', $newer).'"')
         ->assertDontSeeHtml('href="'.route('articles.show', $older).'"')
         ->assertSee('Wygrana 3:1')
@@ -293,7 +295,7 @@ test('tournaments and friendlies appear in the calendar and can be filtered', fu
         ->assertSee('XII Turniej im. Włodzimierza Winklera')
         ->assertSee('2. miejsce')
         ->assertSee('Sparingowy Rywal')
-        ->assertSeeHtml('text-zinc-500">Sparing</span>')
+        ->assertSee('Sparing')
         ->set('competition', GamesBrowser::FILTER_TOURNAMENTS)
         ->assertSee('Winklera')
         ->assertSee('MKS Sulęcin')
@@ -344,4 +346,23 @@ test('w karierze zawodnika rozgrywki wspólne dla dwóch jego drużyn są tylko 
         ->assertSeeInOrder(['Kadeci X', 'III Liga Testowa', 'Juniorzy X', 'Liga Juniorów Testowa']);
 
     expect(substr_count($this->get(route('players.show', $player))->getContent(), 'III Liga Testowa'))->toBe(1);
+});
+
+test('dzień z kilkoma meczami ma ciemniejsze kółko, a okno dnia zbiera mecze z linkami do relacji i wideo', function () {
+    $first = calendarGame(['game_date' => '2026-10-17 10:00', 'status' => 'finished', 'home_score' => 3, 'away_score' => 0, 'match_report' => '<p>Relacja</p>', 'streams' => [['url' => 'https://www.youtube.com/watch?v=abcdefghijk', 'label' => '']]]);
+    calendarGame(['game_date' => '2026-10-17 14:00', 'status' => 'scheduled', 'home_score' => null, 'away_score' => null, 'opponent' => 'Drugi Rywal']);
+    calendarGame(['game_date' => '2026-10-17 18:00', 'status' => 'scheduled', 'home_score' => null, 'away_score' => null, 'opponent' => 'Trzeci Rywal']);
+
+    Livewire::test(GamesBrowser::class)
+        ->set('period', 'all')
+        ->assertSeeHtml('aria-label="Sobota, 17 października: 3 wydarzenia"')
+        ->assertSeeHtml('bg-sky-500 text-white');
+
+    $tiles = CalendarTiles::forDay(Game::whereDate('game_date', '2026-10-17')->get(), collect(), collect(), collect());
+    $day = CalendarTiles::dayPayload(Carbon::parse('2026-10-17'), $tiles, collect());
+
+    expect(CalendarTiles::eventCount($tiles))->toBe(3)
+        ->and($day['matches'])->toHaveCount(3)
+        ->and($day['matches'][0]['label'])->toBe($this->team->name)
+        ->and(collect($day['matches'][0]['media'])->pluck('url')->all())->toBe([route('games.show', $first).'#relacja', route('games.show', $first).'#transmisja']);
 });

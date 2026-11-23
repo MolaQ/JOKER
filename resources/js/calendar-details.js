@@ -1,14 +1,18 @@
 /**
- * Okno szczegółów meczów z kafelka kalendarza: wyrasta z klikniętego kafelka, mecze wjeżdżają jeden po drugim.
+ * Okno dnia z kalendarza: lista wydarzeń dnia, po kliknięciu meczu jego szczegóły: wyrasta z klikniętego kafelka, mecze wjeżdżają jeden po drugim.
  * Dane meczów przychodzą z kafelka (zdarzenie match-details), więc otwarcie nie pyta serwera.
  */
 export function registerCalendarDetails() {
     document.addEventListener('alpine:init', () => {
         window.Alpine.data('calendarDetails', () => ({
             tile: null,
+            selected: null,
             origin: null,
 
             open({ tile, el }) {
+                const items = (tile.matches?.length || 0) + (tile.others?.length || 0) + (tile.birthdays?.length || 0);
+                // Jeden mecz w dniu: od razu jego szczegóły, kilka: najpierw lista dnia.
+                this.selected = items === 1 && tile.matches?.length === 1 ? tile.matches[0] : null;
                 this.tile = tile;
                 this.origin = el;
                 document.documentElement.classList.add('overflow-hidden');

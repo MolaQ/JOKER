@@ -89,6 +89,15 @@ class Approvals
                 'visible' => fn () => $user->can('games.manage'),
                 'count' => fn () => DuplicateGames::count($user),
             ],
+            'logotypy' => [
+                'label' => 'Mecze bez logo rywala',
+                'icon' => 'photo',
+                'route' => 'admin.missing-logos.index',
+                'intro' => 'Mecze w najbliższych '.MissingLogos::DAYS.' dniach, w których rywal nie ma logo. Wgraj je z wyprzedzeniem, żeby były gotowe w miniaturach transmisji, w tabeli i na stronie meczu. Gotowe logotypy wielu klubów znajdziesz na ich stronach albo na /logotypy. Mecz znika z listy, gdy logo jest zapisane.',
+                'component' => 'admin.missing-logo-review',
+                'visible' => fn () => $user->can('competitions.manage'),
+                'count' => fn () => MissingLogos::count(),
+            ],
             'duble-zawodnikow' => [
                 'label' => 'Możliwe duble zawodników',
                 'icon' => 'user',

@@ -8,6 +8,7 @@ use App\Models\Team;
 use App\Models\Tournament;
 use App\Models\TournamentMatch;
 use App\Models\TournamentParticipant;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -121,7 +122,72 @@ class CalendarTiles
             'url' => route('games.show', $game),
             'article' => $article ? route('articles.show', $article) : null,
             'calendar' => $game->isUpcoming() ? route('games.calendar', $game) : null,
+            'media' => self::gameMedia($game, $article),
         ];
+    }
+
+    /**
+     * Co jest dopisane do meczu (relacja, wideo, zdjęcia), z linkami do sekcji strony meczu.
+     *
+     * @return list<array{label: string, url: string}>
+     */
+    private static function gameMedia(Game $game, mixed $article): array
+    {
+        $url = route('games.show', $game);
+        $galleries = $game->published_galleries_exists ?? $game->publishedGalleries()->exists();
+
+        return array_values(array_filter([
+            filled($game->match_report) ? ['label' => __('Relacja'), 'url' => $url.'#relacja'] : ($article ? ['label' => __('Relacja'), 'url' => route('articles.show', $article)] : null),
+            $game->hasStreams() ? ['label' => __('Wideo'), 'url' => $url.'#transmisja'] : null,
+            $galleries ? ['label' => __('Zdjęcia'), 'url' => $url.'#galeria'] : null,
+        ]));
+    }
+
+    /**
+     * Dane okna dnia w kalendarzu: wszystkie mecze dnia (każdy z nazwą i kolorem drużyny) oraz pozostałe wydarzenia.
+     *
+     * @param  Collection<int, array<string, mixed>>  $tiles
+     * @param  Collection<int, array<string, mixed>>  $birthdays
+     * @return array<string, mixed>
+     */
+    public static function dayPayload(CarbonInterface $date, Collection $tiles, Collection $birthdays): array
+    {
+        $matches = $tiles->where('type', 'matches')
+            ->flatMap(fn (array $tile) => collect($tile['matches'])->map(fn (array $match) => $match + ['label' => $tile['label'], 'tileColor' => $tile['color']]))
+            ->values()
+            ->all();
+
+        $others = $tiles->whereIn('type', ['mini', 'tournament'])->map(fn (array $tile) => [
+            'key' => $tile['key'],
+            'label' => $tile['type'] === 'mini' ? __('Minisiatkówka') : __('Turniej'),
+            'title' => $tile['competition'],
+            'note' => $tile['label'],
+            'color' => $tile['color'],
+            'url' => $tile['url'],
+        ])->values()->all();
+
+        return [
+            'label' => Str::ucfirst($date->translatedFormat('l, j F')),
+            'competition' => trans_choice(':count wydarzenie|:count wydarzenia|:count wydarzeń', count($matches) + count($others)),
+            'color' => '#0ea5e9',
+            'matches' => $matches,
+            'others' => $others,
+            'birthdays' => $birthdays->map(fn (array $person) => [
+                'name' => $person['name'],
+                'note' => $person['showAge'] ? __('kończy').' '.$person['ageLabel'] : null,
+                'url' => $person['url'],
+            ])->values()->all(),
+        ];
+    }
+
+    /**
+     * Liczba wydarzeń dnia (mecze, turnieje, wyjazdy minisiatkówki) do kółka w kalendarzu.
+     *
+     * @param  Collection<int, array<string, mixed>>  $tiles
+     */
+    public static function eventCount(Collection $tiles): int
+    {
+        return $tiles->sum(fn (array $tile) => $tile['type'] === 'matches' ? count($tile['matches']) : 1);
     }
 
     /**
@@ -181,6 +247,7 @@ class CalendarTiles
             'url' => $tournament->has_page ? route('tournaments.matches.show', [$tournament, $match]) : null,
             'article' => null,
             'calendar' => null,
+            'media' => [],
         ];
     }
 }
