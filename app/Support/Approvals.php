@@ -66,7 +66,7 @@ class Approvals
                 'label' => 'Propozycje treści',
                 'icon' => 'light',
                 'route' => 'admin.content-proposals.index',
-                'intro' => 'Artykuły, zdjęcia i transmisje zaproponowane przez rodziców i zawodników, także relacje i zdjęcia z turniejów minisiatkówki. Zatwierdzony artykuł od razu jest aktualnością, zdjęcia trafiają do galerii meczu albo turnieju (kliknięciem zdjęcia pomijasz je przy zatwierdzaniu), a transmisja do meczu.',
+                'intro' => 'Artykuły, zdjęcia, transmisje i logotypy rywali zaproponowane przez rodziców, zawodników i współpracowników, także relacje i zdjęcia z turniejów minisiatkówki. „Podgląd na stronie” pokazuje stronę tak, jak będzie wyglądać po zatwierdzeniu. Zatwierdzony artykuł od razu jest aktualnością, zdjęcia trafiają do galerii meczu albo turnieju (kliknięciem zdjęcia pomijasz je przy zatwierdzaniu), transmisja do meczu, a logo do drużyny rywali.',
                 'component' => 'admin.content-proposal-manager',
                 'visible' => fn () => $user->can('proposals.content'),
                 'count' => fn () => ContentProposal::pending()->count(),

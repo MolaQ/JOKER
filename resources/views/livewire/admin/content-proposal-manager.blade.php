@@ -1,6 +1,6 @@
 <div>
     <div class="flex items-center justify-between gap-3 border-b bg-white p-4">
-        <h3 class="text-lg font-semibold text-gray-900">Propozycje od rodziców i zawodników</h3>
+        <h3 class="text-lg font-semibold text-gray-900">Propozycje od rodziców, zawodników i współpracowników</h3>
         <select wire:model.live="statusFilter" class="rounded-md border-gray-300 text-sm">
             <option value="pending">Oczekujące</option>
             <option value="approved">Zatwierdzone</option>
@@ -19,14 +19,33 @@
                 </div>
 
                 <div class="min-w-0 text-sm">
-                    @if($proposal->match)
+                    @if($proposal->type === 'logo')
+                        <p class="text-gray-600">Drużyna rywali: <span class="font-medium text-gray-900">{{ $proposal->match?->full_name ?? $proposal->title }}</span></p>
+                        @if($proposal->match?->logoPath() || $proposal->match?->logoLightPath())
+                            <p class="mt-1 flex items-center gap-2 text-xs text-gray-500">Obecne logo:
+                                @foreach(array_filter([$proposal->match->logoPath(), $proposal->match->logoLightPath()]) as $current)
+                                    <img src="{{ \App\Support\Media::url($current) }}" alt="" @class(['h-10 w-10 rounded object-contain p-1 ring-1 ring-gray-200', 'bg-gray-900' => $current === $proposal->match->logoLightPath() && $current !== $proposal->match->logoPath()])>
+                                @endforeach
+                            </p>
+                        @endif
+                        <div class="mt-2 flex flex-wrap gap-3">
+                            @foreach(['logo' => 'Na jasne tło', 'logo_light' => 'Na ciemne tło (miniatury)'] as $variant => $variantLabel)
+                                @if($path = $proposal->files[$variant] ?? null)
+                                    <a href="{{ \App\Support\Media::url($path) }}" target="_blank" class="text-center text-xs text-gray-500">
+                                        <img src="{{ \App\Support\Media::url($path) }}" alt="" @class(['mb-1 h-24 w-24 rounded-md object-contain p-2 ring-1 ring-gray-200', 'bg-white' => $variant === 'logo', 'bg-gray-900' => $variant === 'logo_light'])>
+                                        {{ $variantLabel }}
+                                    </a>
+                                @endif
+                            @endforeach
+                        </div>
+                    @elseif($proposal->match)
                         <p class="text-gray-600">{{ $proposal->match instanceof \App\Models\MiniTrip ? 'Turniej' : 'Mecz' }}: <span class="font-medium text-gray-900">{{ $proposal->match->mediaLabel() }}</span></p>
                     @endif
-                    @if($proposal->title)<p class="mt-1 text-base font-semibold text-gray-900">{{ $proposal->title }}</p>@endif
+                    @if($proposal->title && $proposal->type !== 'logo')<p class="mt-1 text-base font-semibold text-gray-900">{{ $proposal->title }}</p>@endif
                     @if($proposal->excerpt)<div class="mt-1 font-medium text-gray-800 [&_p]:mb-1">{!! \App\Support\MessageHtml::render($proposal->excerpt) !!}</div>@endif
                     @if($proposal->content)<div class="mt-1 max-h-48 overflow-y-auto text-gray-700 [&_p]:mb-2 {{ \App\Support\MessageHtml::isHtml($proposal->content) ? '' : 'whitespace-pre-line' }}">{!! \App\Support\MessageHtml::render($proposal->content) !!}</div>@endif
                     @if($proposal->url)<a href="{{ $proposal->url }}" target="_blank" rel="noopener" class="mt-1 block break-all text-sky-700 underline">{{ $proposal->url }}</a>@endif
-                    @if($proposal->files)
+                    @if($proposal->files && $proposal->type !== 'logo')
                         @php($selectable = $proposal->status === 'pending' && $proposal->type === 'photos' && count($proposal->files) > 1)
                         @php($skip = $skipped[$proposal->id] ?? [])
                         @if($selectable)
@@ -56,6 +75,9 @@
 
                 <div class="text-sm">
                     @if($proposal->status === 'pending')
+                        @if(\App\Http\Controllers\Admin\ContentProposalPreviewController::previewable($proposal))
+                            <a href="{{ route('admin.content-proposals.preview', $proposal) }}" target="_blank" class="mb-2 flex w-full items-center justify-center gap-1.5 rounded-md px-3 py-1.5 font-semibold text-sky-700 ring-1 ring-sky-200 hover:bg-sky-50">👁 Podgląd na stronie</a>
+                        @endif
                         <textarea wire:model="notes.{{ $proposal->id }}" rows="2" placeholder="Notatka dla autora (opcjonalnie)" class="w-full rounded-md border-gray-300 text-sm"></textarea>
                         @if($this->canBecomeArticle($proposal))
                             <p class="mt-2 rounded-md bg-amber-50 p-2 text-xs text-amber-800">Do zdjęć dołączono tekst relacji. „Zdjęcia i artykuł” doda zdjęcia do galerii meczu i opublikuje relację w aktualnościach.</p>

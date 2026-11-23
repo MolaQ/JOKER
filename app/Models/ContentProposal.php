@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Permission;
 use App\UserRole;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -10,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Propozycja treści od rodzica lub zawodnika: artykuł, zdjęcia z meczu albo transmisja.
+ * Propozycja treści od rodzica, zawodnika albo współpracownika: artykuł, zdjęcia z meczu, transmisja albo logo rywala.
  */
 class ContentProposal extends Model
 {
@@ -20,10 +21,13 @@ class ContentProposal extends Model
 
     public const TYPE_STREAM = 'stream';
 
+    public const TYPE_LOGO = 'logo';
+
     public const TYPES = [
         self::TYPE_ARTICLE => 'Artykuł',
         self::TYPE_PHOTOS => 'Zdjęcia',
         self::TYPE_STREAM => 'Transmisja',
+        self::TYPE_LOGO => 'Logo rywala',
     ];
 
     public const STATUS_PENDING = 'pending';
@@ -73,7 +77,8 @@ class ContentProposal extends Model
     }
 
     /**
-     * Mecz, którego dotyczy propozycja: ligowy (Game) albo turniejowy (TournamentMatch).
+     * Czego dotyczy propozycja: meczu ligowego (Game), turniejowego (TournamentMatch), wyjazdu minisiatkówki (MiniTrip),
+     * a przy logo drużyny rywali (RivalTeam).
      */
     public function match(): MorphTo
     {
@@ -96,7 +101,8 @@ class ContentProposal extends Model
     }
 
     /**
-     * Rodzic proponuje artykuły, zdjęcia i transmisje, zawodnik zdjęcia i transmisje.
+     * Rodzic proponuje artykuły, zdjęcia i transmisje, zawodnik zdjęcia i transmisje,
+     * a konto z uprawnieniem „Zgłaszanie relacji, transmisji i logotypów” relacje, transmisje i logotypy rywali.
      *
      * @return list<string>
      */
@@ -106,10 +112,16 @@ class ContentProposal extends Model
             return [];
         }
 
-        return match (true) {
+        $types = match (true) {
             $user->hasRole(UserRole::Parent) => [self::TYPE_ARTICLE, self::TYPE_PHOTOS, self::TYPE_STREAM],
             $user->hasRole(UserRole::Player) => [self::TYPE_PHOTOS, self::TYPE_STREAM],
             default => [],
         };
+
+        if ($user->hasPermission(Permission::Contributions) && ! $user->isAdmin()) {
+            $types = [...$types, self::TYPE_ARTICLE, self::TYPE_STREAM, self::TYPE_LOGO];
+        }
+
+        return array_values(array_intersect(array_keys(self::TYPES), $types));
     }
 }

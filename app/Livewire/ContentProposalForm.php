@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\ContentProposal;
+use App\Models\RivalTeam;
 use App\Support\MatchPicker;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -12,7 +13,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 
 /**
- * Formularz "Zaproponuj treść" dla rodziców i zawodników. Propozycja czeka
+ * Formularz "Zaproponuj treść" dla rodziców, zawodników i współpracowników. Propozycja czeka
  * na zatwierdzenie w panelu (Propozycje treści).
  */
 class ContentProposalForm extends Component
@@ -34,6 +35,15 @@ class ContentProposalForm extends Component
 
     public array $photos = [];
 
+    /** Drużyna rywali, której logo proponujemy. */
+    public string $rival = '';
+
+    /** Logo na jasne tło. */
+    public $logo = null;
+
+    /** Wariant logo na ciemne tło (do miniatur transmisji). */
+    public $logoLight = null;
+
     public function mount(): void
     {
         $this->type = ContentProposal::typesFor(Auth::user())[0] ?? '';
@@ -47,10 +57,29 @@ class ContentProposalForm extends Component
         return MatchPicker::recent();
     }
 
+    /**
+     * Drużyny rywali do wyboru przy logo: nazwa i informacja, czy logo już jest.
+     *
+     * @return array<int, string>
+     */
+    public function rivalOptions(): array
+    {
+        return RivalTeam::with('club:id,name,logo_path')->orderBy('full_name')->get(['id', 'rival_club_id', 'full_name', 'logo_path', 'logo_light_path'])
+            ->mapWithKeys(fn (RivalTeam $team) => [$team->id => $team->full_name.($team->logoPath() ? '' : ' – '.__('brak logo'))])
+            ->all();
+    }
+
     public function submit(): void
     {
         $types = ContentProposal::typesFor(Auth::user());
         abort_if($types === [], 403);
+
+        if ($this->type === ContentProposal::TYPE_LOGO) {
+            abort_unless(in_array(ContentProposal::TYPE_LOGO, $types, true), 403);
+            $this->submitLogo();
+
+            return;
+        }
 
         $matchKeys = MatchPicker::keys($this->matchOptions());
 
@@ -100,11 +129,46 @@ class ContentProposalForm extends Component
         $this->dispatch('proposal-sent');
     }
 
+    private function submitLogo(): void
+    {
+        $this->validate([
+            'rival' => ['required', Rule::exists('rival_teams', 'id')],
+            'logo' => ['nullable', Rule::requiredIf($this->logoLight === null), 'image', 'max:2048'],
+            'logoLight' => 'nullable|image|max:2048',
+        ], [
+            'rival.required' => __('Wybierz drużynę rywali.'),
+            'logo.required' => __('Dodaj logo (zwykłe albo na ciemne tło).'),
+            'logo.max' => __('Logo może mieć najwyżej 2 MB.'),
+            'logoLight.max' => __('Logo może mieć najwyżej 2 MB.'),
+        ]);
+
+        $rival = RivalTeam::findOrFail((int) $this->rival);
+
+        ContentProposal::create([
+            'user_id' => Auth::id(),
+            'type' => ContentProposal::TYPE_LOGO,
+            'match_type' => $rival->getMorphClass(),
+            'match_id' => $rival->id,
+            'title' => $rival->full_name,
+            'files' => array_filter([
+                'logo' => $this->logo?->store('content-proposals', 'public'),
+                'logo_light' => $this->logoLight?->store('content-proposals', 'public'),
+            ]),
+        ]);
+
+        $this->reset(['rival', 'logo', 'logoLight']);
+        $this->toast(__('Dziękujemy! Propozycja czeka na zatwierdzenie.'));
+        $this->dispatch('proposal-sent');
+    }
+
     public function render(): View
     {
+        $types = ContentProposal::typesFor(Auth::user());
+
         return view('livewire.content-proposal-form', [
-            'types' => ContentProposal::typesFor(Auth::user()),
+            'types' => $types,
             'matchOptions' => $this->matchOptions(),
+            'rivalOptions' => $this->type === ContentProposal::TYPE_LOGO ? $this->rivalOptions() : [],
         ]);
     }
 }

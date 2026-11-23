@@ -7,9 +7,11 @@ use App\Models\Article;
 use App\Models\Comment;
 use App\Models\ContentProposal;
 use App\Models\Game;
+use App\Models\RivalTeam;
 use App\Models\Season;
 use App\Models\Team;
 use App\Models\User;
+use App\Permission;
 use App\UserRole;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -202,4 +204,77 @@ test('relację z wcześniej zatwierdzonych samych zdjęć można opublikować p�
     expect($article->isPublished())->toBeTrue()
         ->and($article->featured_image)->not->toBeNull()
         ->and($article->games->pluck('id')->all())->toBe([$this->game->id]);
+});
+
+test('współpracownik z uprawnieniem zgłasza relację, transmisję i logo rywala, a po zatwierdzeniu logo trafia do drużyny', function () {
+    $helper = User::factory()->fan()->create();
+    $helper->permissionOverrides()->create(['permission' => Permission::Contributions, 'allowed' => true]);
+    $rival = RivalTeam::factory()->create(['full_name' => 'MKS Rywal']);
+    $this->actingAs($helper);
+
+    expect($helper->canAccessPanel())->toBeFalse();
+
+    Livewire::test(ContentProposalForm::class)
+        ->assertViewHas('types', ['article', 'stream', 'logo'])
+        ->set('type', 'logo')
+        ->call('submit')
+        ->assertHasErrors(['rival', 'logo'])
+        ->set('rival', (string) $rival->id)
+        ->set('logo', UploadedFile::fake()->image('logo.png'))
+        ->set('logoLight', UploadedFile::fake()->image('logo-biale.png'))
+        ->call('submit')
+        ->assertHasNoErrors();
+
+    $proposal = ContentProposal::sole();
+    expect($proposal->type)->toBe('logo')->and($proposal->match->is($rival))->toBeTrue();
+
+    $this->get(route('logos.index'))->assertOk();
+
+    $this->actingAs(User::factory()->admin()->create());
+    Livewire::test(ContentProposalManager::class)->assertSee('MKS Rywal')->assertSee('Podgląd na stronie')->call('approve', $proposal->id);
+
+    $rival->refresh();
+    expect($rival->logo_path)->toStartWith('rival-teams/')
+        ->and($rival->logo_light_path)->toStartWith('rival-teams/')
+        ->and(Storage::disk('public')->exists($rival->logo_path))->toBeTrue();
+});
+
+test('bez uprawnienia nie ma logo rywala w formularzu ani dostępu do logotypów', function () {
+    $this->actingAs(User::factory()->parent()->create());
+
+    Livewire::test(ContentProposalForm::class)
+        ->assertViewHas('types', ['article', 'photos', 'stream'])
+        ->set('type', 'logo')
+        ->call('submit')
+        ->assertForbidden();
+
+    $this->get(route('logos.index'))->assertForbidden();
+});
+
+test('podgląd propozycji pokazuje prawdziwą stronę i niczego nie zapisuje', function () {
+    $parent = User::factory()->parent()->create();
+    $article = ContentProposal::create(['user_id' => $parent->id, 'type' => 'article', 'match_type' => $this->game->getMorphClass(), 'match_id' => $this->game->id, 'title' => 'Wygrana kadetów', 'content' => '<p>Świetny mecz.</p>']);
+    $stream = ContentProposal::create(['user_id' => $parent->id, 'type' => 'stream', 'match_type' => $this->game->getMorphClass(), 'match_id' => $this->game->id, 'url' => 'https://www.youtube.com/watch?v=abcdefghijk']);
+    $rival = RivalTeam::factory()->create();
+    $this->game->update(['opponent_team_id' => $rival->id]);
+    $logoPath = UploadedFile::fake()->image('logo.png')->store('content-proposals', 'public');
+    $logo = ContentProposal::create(['user_id' => $parent->id, 'type' => 'logo', 'match_type' => $rival->getMorphClass(), 'match_id' => $rival->id, 'files' => ['logo' => $logoPath]]);
+
+    $this->get(route('admin.content-proposals.preview', $article))->assertRedirect(route('login'));
+    $this->actingAs(User::factory()->fan()->create())->get(route('admin.content-proposals.preview', $article))->assertForbidden();
+
+    $this->actingAs(User::factory()->admin()->create());
+
+    $this->get(route('admin.content-proposals.preview', $article))->assertOk()->assertSee('Podgląd propozycji')->assertSee('Wygrana kadetów')->assertSee('Świetny mecz.', false);
+    $this->get(route('admin.content-proposals.preview', $stream))->assertOk()->assertSee('abcdefghijk');
+    $this->get(route('admin.content-proposals.preview', $logo))->assertOk()->assertSee(basename($logoPath));
+
+    expect(Article::count())->toBe(0)
+        ->and($this->game->fresh()->streams)->toBeNull()
+        ->and($rival->fresh()->logo_path)->toBeNull()
+        ->and(Storage::disk('public')->exists($logoPath))->toBeTrue()
+        ->and(ContentProposal::pending()->count())->toBe(3);
+
+    $article->update(['status' => ContentProposal::STATUS_APPROVED]);
+    $this->get(route('admin.content-proposals.preview', $article))->assertNotFound();
 });

@@ -14,6 +14,7 @@ enum Permission: string
     case Homepage = 'homepage.manage';
     case Comments = 'comments.moderate';
     case ContentProposals = 'proposals.content';
+    case Contributions = 'proposals.submit';
     case PhotoTags = 'photos.tags';
     case Teams = 'teams.manage';
     case AllTeams = 'teams.all';
@@ -46,7 +47,8 @@ enum Permission: string
             self::Graphics => 'Grafiki do transmisji: logotypy i miniatury YouTube',
             self::Homepage => 'Slajdy na stronie głównej',
             self::Comments => 'Moderacja komentarzy i zgłoszonych wiadomości',
-            self::ContentProposals => 'Zatwierdzanie artykułów, zdjęć i transmisji od rodziców i zawodników',
+            self::ContentProposals => 'Zatwierdzanie artykułów, zdjęć, transmisji i logotypów od rodziców, zawodników i współpracowników',
+            self::Contributions => 'Zgłaszanie relacji, transmisji i logotypów rywali (do zatwierdzenia)',
             self::PhotoTags => 'Zatwierdzanie wszystkich oznaczeń na zdjęciach',
             self::Teams => 'Drużyny, sztab i zawodnicy',
             self::AllTeams => 'Wszystkie drużyny, nie tylko własne',
@@ -85,6 +87,7 @@ enum Permission: string
             self::Graphics => 'Strony /logotypy i /miniatury. Bez tego uprawnienia nie otworzy ich nikt, także niezalogowany.',
             self::PagePreview => 'Widzi podstrony jeszcze nieopublikowane, razem z linkami w menu i stopce, i może zapisać je jako PDF do akceptacji.',
             self::MiniSubmit => 'Zakładka „Zgłoś” na stronie minisiatkówki. Zgłoszenia czekają w „Do zatwierdzenia”, chyba że zgłasza ktoś z uprawnieniem „Minisiatkówka: dzieci, wyjazdy i wyniki”.',
+            self::Contributions => 'Formularz „Zaproponuj treść” w profilu: relacja z meczu, link do transmisji, logo rywala (zwykłe i na ciemne tło do miniatur). Wszystko czeka w „Do zatwierdzenia”. Daje też pobieranie logotypów ze strony /logotypy.',
             self::WriteComments => 'Komentarze pod aktualnościami i meczami. Odbierz je, gdy ktoś łamie zasady.',
             self::WriteMessages => 'Wiadomości do innych osób i grup na stronie. Odbierz je, gdy ktoś wysyła spam albo łamie zasady.',
             default => null,
@@ -96,7 +99,7 @@ enum Permission: string
      */
     public function isPublic(): bool
     {
-        return in_array($this, [self::WriteComments, self::WriteMessages, self::MiniSubmit, self::PagePreview], true);
+        return in_array($this, [self::WriteComments, self::WriteMessages, self::MiniSubmit, self::PagePreview, self::Contributions], true);
     }
 
     public function group(): string
@@ -105,7 +108,7 @@ enum Permission: string
             self::Articles, self::Media, self::Graphics, self::Homepage, self::Comments, self::ContentProposals, self::PhotoTags => 'Treści',
             self::Teams, self::AllTeams, self::Trainings, self::Games, self::Tournaments, self::FanMvp, self::MiniVolleyball, self::MiniSubmit, self::Competitions, self::Proposals => 'Drużyny i rozgrywki',
             self::Documents, self::Sponsors => 'Klub',
-            self::WriteComments, self::WriteMessages => 'Korzystanie ze strony',
+            self::WriteComments, self::WriteMessages, self::Contributions => 'Korzystanie ze strony',
             default => 'Konta i strona',
         };
     }

@@ -16,6 +16,32 @@
                 </div>
             </fieldset>
 
+            @if($type === 'logo')
+                <div>
+                    <label class="block text-sm font-medium text-zinc-700">{{ __('Drużyna rywali') }}</label>
+                    <select wire:model="rival" class="{{ $field }}">
+                        <option value="">{{ __('Wybierz drużynę') }}</option>
+                        @foreach($rivalOptions as $id => $label)
+                            <option value="{{ $id }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    @error('rival')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                </div>
+                <div class="grid gap-4 sm:grid-cols-2">
+                    @foreach(['logo' => __('Logo na jasne tło'), 'logoLight' => __('Logo na ciemne tło (do miniatur transmisji, opcjonalnie)')] as $fileField => $fileLabel)
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-700">{{ $fileLabel }}</label>
+                            <input type="file" wire:model="{{ $fileField }}" accept="image/*" class="mt-1 block w-full text-sm">
+                            <div wire:loading wire:target="{{ $fileField }}" class="mt-1 text-sm text-zinc-500">{{ __('Wysyłanie...') }}</div>
+                            @if($this->{$fileField} && method_exists($this->{$fileField}, 'isPreviewable') && $this->{$fileField}->isPreviewable())
+                                <img src="{{ $this->{$fileField}->temporaryUrl() }}" alt="" @class(['mt-2 h-24 w-24 rounded-md object-contain p-2 ring-1 ring-zinc-200', 'bg-white' => $fileField === 'logo', 'bg-zinc-900' => $fileField === 'logoLight'])>
+                            @endif
+                            @error($fileField)<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                        </div>
+                    @endforeach
+                </div>
+                <p class="text-xs text-zinc-500">{{ __('Najlepiej PNG z przezroczystym tłem. Gotowe logotypy wszystkich klubów pobierzesz ze strony') }} <a href="{{ route('logos.index') }}" class="font-semibold text-sky-club-dark underline">/logotypy</a>.</p>
+            @else
             <div>
                 <label class="block text-sm font-medium text-zinc-700">{{ __('Mecz') }} @if($type === 'article')<span class="text-zinc-400">({{ __('opcjonalnie') }})</span>@endif</label>
                 <select wire:model="match" class="{{ $field }}">
@@ -71,6 +97,8 @@
                     @error('photos')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                     @error('photos.*')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
+            @endif
+
             @endif
 
             <button type="submit" wire:loading.attr="disabled" class="rounded-lg bg-ink px-5 py-2 font-semibold text-white hover:bg-graphite disabled:opacity-60">{{ __('Wyślij do zatwierdzenia') }}</button>

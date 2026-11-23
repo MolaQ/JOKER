@@ -119,7 +119,7 @@
 
     @if($canPropose)
         <h2 id="zaproponuj" class="mb-3 text-xl font-bold text-zinc-900">{{ __('Zaproponuj treść') }}</h2>
-        <p class="mb-3 text-sm text-zinc-600">{{ __('Relacja z meczu, zdjęcia albo link do transmisji. Po zatwierdzeniu przez klub pojawią się na stronie.') }}</p>
+        <p class="mb-3 text-sm text-zinc-600">{{ __('Relacja z meczu, zdjęcia, link do transmisji albo logo rywala. Po zatwierdzeniu przez klub pojawią się na stronie.') }}</p>
         <div class="mb-6">@livewire('content-proposal-form')</div>
     @endif
 

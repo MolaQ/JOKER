@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ApprovalsController;
+use App\Http\Controllers\Admin\ContentProposalPreviewController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\SiteUpdateChunkController;
 use App\Http\Controllers\Admin\TournamentDaySheetController;
@@ -95,6 +96,7 @@ Route::middleware(['auth', 'can:panel'])->prefix('panel')->name('admin.')->group
     Route::get('/parent-assignments', ApprovalsController::class)->defaults('section', 'rodzice')->name('parents.index');
     Route::get('/account-activations', ApprovalsController::class)->defaults('section', 'konta')->name('accounts.index');
     Route::get('/proposals', ApprovalsController::class)->defaults('section', 'propozycje')->name('content-proposals.index');
+    Route::get('/proposals/{proposal}/podglad', ContentProposalPreviewController::class)->whereNumber('proposal')->middleware('can:proposals.content')->name('content-proposals.preview');
     Route::get('/mini-approvals', ApprovalsController::class)->defaults('section', 'mini')->name('mini-approvals.index');
     Route::get('/duplicate-games', ApprovalsController::class)->defaults('section', 'duble')->name('duplicate-games.index');
     Route::get('/duplicate-players', ApprovalsController::class)->defaults('section', 'duble-zawodnikow')->name('duplicate-players.index');

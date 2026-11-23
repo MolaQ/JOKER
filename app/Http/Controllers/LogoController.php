@@ -12,7 +12,7 @@ use ZipArchive;
 
 /**
  * Strona /logotypy: logotypy klubów do pobrania (np. do transmisji). Nie trafia do wyszukiwarek
- * (noindex, robots.txt, brak w mapie strony). Tylko dla zalogowanych z uprawnieniem „Grafiki do transmisji”.
+ * (noindex, robots.txt, brak w mapie strony). Tylko dla zalogowanych z uprawnieniem „Grafiki do transmisji” albo „Zgłaszanie relacji, transmisji i logotypów”.
  */
 class LogoController extends Controller
 {
@@ -25,7 +25,7 @@ class LogoController extends Controller
             abort(redirect()->guest(route('login')));
         }
 
-        abort_unless(auth()->user()->can(Permission::Graphics->value), 403);
+        abort_unless(auth()->user()->can(Permission::Graphics->value) || auth()->user()->can(Permission::Contributions->value), 403);
     }
 
     public function index(): Response

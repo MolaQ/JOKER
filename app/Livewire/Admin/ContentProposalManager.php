@@ -6,25 +6,19 @@ use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Article;
 use App\Models\AuditLog;
 use App\Models\ContentProposal;
-use App\Models\Gallery;
 use App\Models\GalleryPhoto;
-use App\Models\Game;
-use App\Models\MiniTrip;
-use App\Models\TournamentMatch;
-use App\Support\MessageHtml;
-use App\Support\Slug;
+use App\Support\ContentProposalPublisher;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * Propozycje treści od rodziców i zawodników: artykuł staje się aktualnością,
- * zdjęcia trafiają do galerii meczu, transmisja do meczu.
+ * Propozycje treści od rodziców, zawodników i współpracowników: artykuł staje się aktualnością,
+ * zdjęcia trafiają do galerii meczu, transmisja do meczu, logo do drużyny rywali.
  */
 class ContentProposalManager extends Component
 {
@@ -91,11 +85,7 @@ class ContentProposalManager extends Component
         }
 
         DB::transaction(function () use ($proposal) {
-            $result = match ($proposal->type) {
-                ContentProposal::TYPE_ARTICLE => $this->publishArticle($proposal),
-                ContentProposal::TYPE_PHOTOS => $this->addPhotos($proposal),
-                ContentProposal::TYPE_STREAM => $this->addStream($proposal),
-            };
+            $result = (new ContentProposalPublisher)->publish($proposal);
 
             // Pliki zostały przeniesione do artykułu lub galerii.
             $proposal->files = null;
@@ -123,8 +113,9 @@ class ContentProposalManager extends Component
 
         DB::transaction(function () use ($proposal) {
             $paths = [];
-            $photos = $this->addPhotos($proposal, $paths);
-            $article = $this->createArticle($proposal, $paths[0] ?? null);
+            $publisher = new ContentProposalPublisher;
+            $photos = $publisher->addPhotos($proposal, $paths);
+            $article = $publisher->createArticle($proposal, $paths[0] ?? null);
 
             $proposal->files = null;
             $this->decide($proposal, ContentProposal::STATUS_APPROVED);
@@ -150,7 +141,7 @@ class ContentProposalManager extends Component
                 ->value('path')
             : null;
 
-        $article = $this->createArticle($proposal, $photo);
+        $article = (new ContentProposalPublisher)->createArticle($proposal, $photo);
         AuditLog::record('proposal.approved', 'Opublikowano relację z propozycji zdjęć od '.$proposal->user->name.': artykuł „'.$article->title.'”', $proposal);
 
         $this->toast('Relacja opublikowana jako artykuł.');
@@ -166,7 +157,7 @@ class ContentProposalManager extends Component
 
     public function hasArticle(ContentProposal $proposal): bool
     {
-        return Article::where('author_id', $proposal->user_id)->where('title', $this->articleTitle($proposal))->exists();
+        return Article::where('author_id', $proposal->user_id)->where('title', ContentProposalPublisher::articleTitle($proposal))->exists();
     }
 
     public function reject(int $id): void
@@ -192,125 +183,9 @@ class ContentProposalManager extends Component
         unset($this->notes[$proposal->id]);
     }
 
-    private function publishArticle(ContentProposal $proposal): string
-    {
-        $image = collect($proposal->files ?? [])->first();
-        $article = $this->createArticle($proposal, $image ? $this->move($image, 'articles') : null, copy: false);
-
-        // Film z relacji (np. turnieju minisiatkówki) trafia do transmisji turnieju i pokazuje się pod artykułem.
-        if (filled($proposal->url) && $proposal->match && method_exists($proposal->match, 'normalizedStreams')) {
-            $this->addStream($proposal);
-        }
-
-        return 'artykuł „'.$article->title.'”';
-    }
-
-    /**
-     * @param  string|null  $image  zdjęcie na dysku public; przy $copy kopiowane do articles (oryginał zostaje w galerii)
-     */
-    private function createArticle(ContentProposal $proposal, ?string $image, bool $copy = true): Article
-    {
-        // Relacja z edytora (HTML, np. z minisiatkówki) zostaje jak jest; zwykły tekst dzielimy na akapity.
-        $paragraphs = MessageHtml::isHtml((string) $proposal->content)
-            ? MessageHtml::sanitize($proposal->content)
-            : collect(preg_split('/\R{2,}/u', trim((string) $proposal->content)))
-                ->map(fn (string $paragraph) => '<p>'.nl2br(e(trim($paragraph)), false).'</p>')
-                ->implode('');
-
-        if ($image && $copy) {
-            $target = 'articles/'.Str::random(8).'-'.basename($image);
-            $image = Storage::disk('public')->copy($image, $target) ? $target : null;
-        }
-
-        $title = $this->articleTitle($proposal);
-        $article = Article::create([
-            'title' => $title,
-            'slug' => Slug::unique(Article::class, $title),
-            'excerpt' => filled($proposal->excerpt) ? MessageHtml::sanitize($proposal->excerpt) : Str::limit(trim(html_entity_decode(strip_tags(str_replace('</p>', '</p> ', (string) $proposal->content)))), 200),
-            'content' => $paragraphs,
-            'featured_image' => $image,
-            'author_id' => $proposal->user_id,
-            'status' => 'published',
-            'published_at' => now(),
-            'allow_comments' => true,
-        ]);
-
-        if ($proposal->match instanceof Game) {
-            $article->games()->attach($proposal->match->id);
-        }
-
-        if ($proposal->match instanceof MiniTrip) {
-            $article->update(['mini_trip_id' => $proposal->match->id]);
-        }
-
-        if ($proposal->match instanceof TournamentMatch && ($tournament = $proposal->match->tournament())) {
-            $article->update(['tournament_id' => $tournament->id]);
-        }
-
-        return $article;
-    }
-
-    /**
-     * Tytuł z propozycji, a gdy go brak: pierwsze zdanie relacji.
-     */
-    private function articleTitle(ContentProposal $proposal): string
-    {
-        $firstLine = Str::of(MessageHtml::plain((string) $proposal->content))->trim()->explode("\n")->first();
-
-        return trim((string) $proposal->title) ?: Str::limit(trim((string) $firstLine), 120);
-    }
-
-    /**
-     * @param  array<int, string>  $paths  ścieżki dodanych zdjęć (do zdjęcia artykułu)
-     */
-    private function addPhotos(ContentProposal $proposal, array &$paths = []): string
-    {
-        $match = $proposal->match ?? abort(422, 'Mecz tej propozycji już nie istnieje.');
-
-        /** @var Gallery $gallery */
-        $gallery = $match->galleries()->oldest('id')->first() ?? $match->galleries()->create([
-            'title' => $match instanceof MiniTrip ? 'Zdjęcia: '.$match->title : 'Zdjęcia: '.$this->matchName($match),
-            'event_date' => $match instanceof MiniTrip ? $match->starts_on : null,
-            'is_published' => true,
-        ]);
-
-        $order = (int) $gallery->photos()->max('display_order');
-
-        foreach (array_values($proposal->files ?? []) as $index => $path) {
-            $paths[] = $gallery->photos()->create([
-                'path' => $this->move($path, 'galleries/'.$gallery->id),
-                'display_order' => $order + $index + 1,
-            ])->path;
-        }
-
-        return count($proposal->files ?? []).' zdj. w galerii „'.$gallery->title.'”';
-    }
-
-    private function addStream(ContentProposal $proposal): string
-    {
-        $match = $proposal->match ?? abort(422, 'Mecz tej propozycji już nie istnieje.');
-        $streams = collect($match->streams ?? [])->push(['url' => $proposal->url, 'label' => null])->unique('url')->values()->all();
-        $match->update(['streams' => $streams]);
-
-        return 'transmisja '.$proposal->url;
-    }
-
-    private function move(string $path, string $directory): string
-    {
-        $target = $directory.'/'.basename($path);
-        Storage::disk('public')->move($path, $target);
-
-        return $target;
-    }
-
     public function matchName(?Model $match): string
     {
-        return match (true) {
-            $match instanceof Game => implode(' – ', $match->sidesNames()),
-            $match instanceof TournamentMatch => $match->homeName().' – '.$match->awayName(),
-            $match instanceof MiniTrip => $match->mediaLabel(),
-            default => '',
-        };
+        return ContentProposalPublisher::matchName($match);
     }
 
     public function render(): View
