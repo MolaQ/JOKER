@@ -6,6 +6,7 @@ use App\Livewire\Concerns\FiltersList;
 use App\Livewire\Concerns\ShowsToasts;
 use App\Models\Gallery;
 use App\Models\GalleryPhoto;
+use App\Models\MiniTrip;
 use App\Models\PhotoTag;
 use App\Models\Player;
 use App\Models\Team;
@@ -117,7 +118,7 @@ class GalleryManager extends Component
      */
     public function matchOptions(): array
     {
-        $options = MatchPicker::recent(26, 4);
+        $options = MatchPicker::recent(26, 4, withMini: true);
         $current = MatchPicker::find($this->match);
 
         if ($current && ! in_array($this->match, MatchPicker::keys($options), true)) {
@@ -149,7 +150,7 @@ class GalleryManager extends Component
             'title' => $validated['title'],
             'description' => $validated['description'] ?: null,
             'event_date' => $validated['event_date'],
-            'team_id' => $validated['team_id'] ?: ($match?->team_id ?? null),
+            'team_id' => $validated['team_id'] ?: ($match instanceof MiniTrip ? null : ($match?->team_id ?? null)),
             'match_type' => $match?->getMorphClass(),
             'match_id' => $match?->getKey(),
             'is_published' => $validated['is_published'],

@@ -15,11 +15,11 @@ class MatchPicker
     public const TYPES = ['game' => Game::class, 'tournament_match' => TournamentMatch::class, 'mini_trip' => MiniTrip::class];
 
     /**
-     * Mecze z ostatnich tygodni i najbliższych dni, pogrupowane na ligowe i turniejowe.
+     * Mecze z ostatnich tygodni i najbliższych dni, pogrupowane na ligowe i turniejowe (opcjonalnie też wyjazdy mini).
      *
      * @return array<string, array<string, string>>
      */
-    public static function recent(int $weeksBack = 6, int $weeksAhead = 2): array
+    public static function recent(int $weeksBack = 6, int $weeksAhead = 2, bool $withMini = false): array
     {
         $from = now()->subWeeks($weeksBack);
         $to = now()->addWeeks($weeksAhead);
@@ -38,6 +38,14 @@ class MatchPicker
                 ->get()
                 ->mapWithKeys(fn (TournamentMatch $match) => ['tournament_match:'.$match->id => $match->mediaLabel()])
                 ->all(),
+            // Wyjazdy minisiatkówki (turnieje dzieci) - np. do galerii.
+            __('Minisiatkówka') => $withMini && app(SiteSettings::class)['module_mini']
+                ? MiniTrip::whereBetween('starts_on', [$from->toDateString(), $to->toDateString()])
+                    ->orderByDesc('starts_on')
+                    ->get()
+                    ->mapWithKeys(fn (MiniTrip $trip) => ['mini_trip:'.$trip->id => $trip->mediaLabel()])
+                    ->all()
+                : [],
         ]);
     }
 

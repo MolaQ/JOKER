@@ -5,6 +5,7 @@ use App\Livewire\Admin\PhotoTagReview;
 use App\Livewire\PhotoTagProposal;
 use App\Models\Gallery;
 use App\Models\Game;
+use App\Models\MiniTrip;
 use App\Models\PhotoTag;
 use App\Models\Player;
 use App\Models\Season;
@@ -134,4 +135,21 @@ test('the panel creates an event gallery, uploads photos, captions and tags them
         ->and($photo->tags()->approved()->count())->toBe(1);
 
     $this->get('/panel/galleries')->assertOk();
+});
+
+test('a gallery can be attached to a mini volleyball tournament', function () {
+    $this->actingAs(User::factory()->admin()->create());
+    $trip = MiniTrip::create(['title' => 'IX Ogólnopolski Turniej Mini', 'starts_on' => now()->subDays(2)->toDateString(), 'city' => 'Piła']);
+
+    Livewire::test(GalleryManager::class)
+        ->call('create')
+        ->assertSee('IX Ogólnopolski Turniej Mini')
+        ->set('title', 'Dwójki w Pile')
+        ->set('match', 'mini_trip:'.$trip->id)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $gallery = Gallery::firstWhere('title', 'Dwójki w Pile');
+    expect($gallery->match)->toBeInstanceOf(MiniTrip::class)
+        ->and($gallery->team_id)->toBeNull();
 });
